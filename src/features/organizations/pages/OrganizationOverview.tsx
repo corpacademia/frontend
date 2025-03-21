@@ -132,6 +132,7 @@ export const OrganizationOverview: React.FC = () => {
         if(workspaceCount.data.success){
           setWorkspaceCount(workspaceCount.data.data.count)
         }
+        
         if(orgUsersCount.data.success){
           setOrgUserCount(orgUsersCount.data.data)
         }
@@ -316,7 +317,6 @@ export const OrganizationOverview: React.FC = () => {
       </div>
     </div>
   );
- 
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -325,7 +325,7 @@ export const OrganizationOverview: React.FC = () => {
           <div className="flex items-center space-x-4">
             {organization.logo ? (
               <img 
-                src={`http://localhost:3000/uploads/${getUploadedFilePath(organization.logo)}`} 
+                src={`http://localhost:3004/uploads/${getUploadedFilePath(organization.logo)}`} 
                 alt={organization.organization_name} 
                 className="h-16 w-16 rounded-lg object-cover"
               />

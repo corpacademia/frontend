@@ -39,10 +39,19 @@ export const OrgWorkspacesTab: React.FC<OrgWorkspacesTabProps> = ({ orgId }) => 
         if (response.data.success) {
           setWorkspaces(response.data.data);
         } else {
-          throw new Error('Failed to fetch workspaces');
+          // throw new Error('Failed to fetch workspaces');
+          console.warn("No workspaces found. Setting workspace to an empty list.");
         }
       } catch (err) {
-        setError('Failed to load workspaces');
+        if(err.response && err.response.status === 404){
+          console.warn("No workspaces found. Setting workspace to an empty list.");
+          setWorkspaces([]);
+
+        }
+        else{
+          setError('Failed to load workspaces');
+        }
+        
       } finally {
         setIsLoading(false);
       }

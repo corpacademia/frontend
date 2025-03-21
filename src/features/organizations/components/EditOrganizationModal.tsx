@@ -62,14 +62,14 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
             email: orgData.org_email || '',
             phone: orgData.phone_number || '',
             address: orgData.address || '',
-            website: orgData.website || '',
+            website: orgData.website_url || '',
             type: orgData.org_type || 'enterprise',
             status: orgData.status || 'active',
             orgId: orgData.org_id || ''
           });
 
           if (orgData.logo) {
-            setLogoPreview(`http://localhost:3000/uploads/${getUploadedFilePath(organization.logo)}`);
+            setLogoPreview(`http://localhost:3004/uploads/${getUploadedFilePath(organization.logo)}`);
    }
         }
       } catch (err) {
@@ -128,8 +128,10 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       if (logo) {
         formDataToSend.append('logo', logo);
       }
-
-      const response = await axios.put(`http://localhost:3000/api/v1/organization_ms/updateOrganization/${organization.id}`, formDataToSend, {
+      for (let pair of formDataToSend.entries()) {
+        console.log(pair[0], pair[1]); // Logs all form data entries
+      }
+      const response = await axios.post(`http://localhost:3000/api/v1/organization_ms/updateOrganization/${organization.id}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

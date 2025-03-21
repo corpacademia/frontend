@@ -309,17 +309,25 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`http://localhost:3000/api/v1/user_ms/getUsersFromOrganization/${orgId}`);
+  
       if (response.data.success) {
         setUsers(response.data.data);
       } else {
-        throw new Error('Failed to fetch users');
+        throw new Error("Failed to fetch users");
       }
     } catch (err) {
-      setError('Failed to load users');
+      if (err.response && err.response.status === 404) {
+        console.warn("No users found. Setting users to an empty list.");
+        setUsers([]);  // Set users to an empty array instead of stopping the UI
+      } else {
+        console.error("Failed to fetch users:", err);
+        setError("Failed to load users");
+      }
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   const handleEditUser = async (userData: Partial<User>) => {
     if (!selectedUser) return;
