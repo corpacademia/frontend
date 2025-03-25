@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { Building2, AlertCircle, UserX } from 'lucide-react';
 import axios from 'axios';
@@ -8,13 +8,17 @@ interface OrganizationAssignmentProps {
   currentOrganization?: string;
 }
 
+
+
 // Mock organizations - Replace with API call
-const availableOrganizations = [
-  { id: 'none', name: 'None (Individual User)', type: 'individual' },
-  { id: '1', name: 'TechCorp Solutions', type: 'enterprise' },
-  { id: '2', name: 'EduTech Institute', type: 'education' },
-  { id: '3', name: 'CloudSkills Academy', type: 'training' }
-];
+// const availableOrganizations = [
+//   { id: 'none', name: 'None (Individual User)', type: 'individual' },
+//   { id: '1', name: 'TechCorp Solutions', type: 'enterprise' },
+//   { id: '2', name: 'EduTech Institute', type: 'education' },
+//   { id: '3', name: 'CloudSkills Academy', type: 'training' }
+// ];
+
+
 
 export const OrganizationAssignment: React.FC<OrganizationAssignmentProps> = ({
   userId,
@@ -23,6 +27,29 @@ export const OrganizationAssignment: React.FC<OrganizationAssignmentProps> = ({
   const [selectedOrg, setSelectedOrg] = useState({});
   const [isAssigning, setIsAssigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availableOrganizations, setAvailableOrganizations] = useState([]);
+  const [isloading, setIsLoading] = useState(true);
+
+
+
+  useEffect(() => {
+    // Fetch organizations from API
+    const fetchOrganizations = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/v1/organization_ms/organizations');
+        setAvailableOrganizations(response.data.data);
+        
+      } catch (err) {
+        console.error('Failed to fetch organizations', err);
+      }
+      finally{
+        // setIsLoading(false);
+      }
+    };
+  
+    fetchOrganizations();
+  },[]);
+  
 
   const handleAssign = async () => {
     if (!selectedOrg) {
@@ -40,7 +67,6 @@ export const OrganizationAssignment: React.FC<OrganizationAssignmentProps> = ({
         userId:userId,
         values:selectedOrg,
       })
-      console.log(update_user_field)
       if(!update_user_field.data.success){
         setError('Failed to assign organization. Please try again.')
       }
@@ -52,6 +78,10 @@ export const OrganizationAssignment: React.FC<OrganizationAssignmentProps> = ({
       setIsAssigning(false);
     }
   };
+
+  if(!isloading){
+    return <div>Loading...</div>
+  }
 
   return (
     <div className="glass-panel">
@@ -93,8 +123,8 @@ export const OrganizationAssignment: React.FC<OrganizationAssignmentProps> = ({
           >
             <option value="">Select an organization</option>
             {availableOrganizations.map(org => (
-              <option key={org.id} value={[org.name,org.type]}>
-                {org.name} ({org.type})
+              <option key={org.id} value={[org.organization_name,org.org_type,org.id]}>
+                {org.organization_name} ({org.org_type})
               </option>
             ))}
           </select>

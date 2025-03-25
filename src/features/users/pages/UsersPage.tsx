@@ -34,7 +34,6 @@ export const UsersPage: React.FC = () => {
         const response = await axios.get('http://localhost:3000/api/v1/user_ms/allUsers');
         setOriginalUsers(response.data.data);
         setUsers(response.data.data);
-        
         let totalUsers = response.data.data.length;
         let activeUsers = response.data.data.filter((u) => u.status === 'active').length;
         let trainers = response.data.data.filter((u) => u.role === 'trainer').length;

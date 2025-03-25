@@ -23,7 +23,7 @@ interface User {
   email: string;
   role: string;
   status: 'active' | 'inactive';
-  lastActive: string;
+  lastactive: string;
 }
 
 interface OrgUsersTabProps {
@@ -277,7 +277,7 @@ const ViewUserModal: React.FC<ViewUserModalProps> = ({ isOpen, onClose, user }) 
 
           <div>
             <label className="block text-sm text-gray-400">Last Active</label>
-            <p className="text-lg text-gray-200">{new Date(user.lastActive).toLocaleString()}</p>
+            <p className="text-lg text-gray-200">{new Date(user.lastactive).toLocaleString()}</p>
           </div>
         </div>
 
@@ -574,7 +574,7 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
                     </span>
                   </td>
                   <td className="py-4 text-gray-400">
-                    {new Date(user.lastActive).toLocaleDateString()}
+                    {new Date(user.lastactive).toLocaleDateString()}
                   </td>
                   <td className="py-4">
                     <div className="flex items-center justify-end space-x-2">

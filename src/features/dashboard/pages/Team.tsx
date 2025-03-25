@@ -21,17 +21,10 @@ export const Team: React.FC = () => {
 
   const [admin,setAdmin] = useState({});
 
-  // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
-  // useEffect(() => {
-  //   const getUserDetails = async () => {
-  //     const response = await axios.get('http://localhost:3000/api/v1/user_profile');
-  //     setAdmin(response.data.user);
-  //   };
-  //   getUserDetails();
-  // }, []);
+// console.log(User)
   const fetchTeamMembers = async () => {
     try {
-      const user_list = await axios.get('http://localhost:3000/api/v1/aws_ms/user_profile');
+      const user_list = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
       setAdmin(user_list.data.user);
       const response = await axios.post('http://localhost:3000/api/v1/user_ms/getOrganizationUsers', {
         admin_id: user_list.data.user.id
@@ -93,7 +86,6 @@ export const Team: React.FC = () => {
   const handleViewDetails = (user: User) => {
     // Navigation is handled by the UserList component
   };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -127,6 +119,7 @@ export const Team: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={fetchTeamMembers}
+        adminDetails={admin}
       />
     </div>
   );

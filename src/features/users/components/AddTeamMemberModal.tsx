@@ -7,12 +7,14 @@ interface AddTeamMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  adminDetails: any;
 }
 
 export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
+  adminDetails
 }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -20,7 +22,6 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
     password: '',
     role: 'user'
   });
-
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,12 +59,12 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
       name: '',
       email: '',
       password: '',
-      role: 'user'
+      role: 'user',
+  
     });
     setError(null);
     setSuccess(null);
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -84,6 +85,9 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
       const response = await axios.post('http://localhost:3000/api/v1/user_ms/addOrganizationUser', {
         ...formData,
         admin_id: user_cred.data.user.id,
+        organization: user_cred.data.user.organization,
+        org_id: user_cred.data.user.org_id,
+        organization_type: user_cred.data.user.organization_type
       });
 
       if (response.data.success) {

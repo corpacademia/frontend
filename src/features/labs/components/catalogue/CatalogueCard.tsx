@@ -141,7 +141,6 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
   if (!labDetails) {
     return <div className="animate-pulse h-[320px] bg-dark-300/50 rounded-lg"></div>;
   }
-console.log(labDetails)
   return (
     <>
       <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 

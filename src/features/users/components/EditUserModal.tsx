@@ -3,25 +3,31 @@ import { X, AlertCircle, Check, Loader } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import axios from 'axios';
 
-interface AddUserModalProps {
+interface EditUserModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (user: any) => Promise<void>;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    organization?: string;
+    status: string;
+  };
 }
 
-export const AddUserModal: React.FC<AddUserModalProps> = ({
+export const EditUserModal: React.FC<EditUserModalProps> = ({
   isOpen,
   onClose,
-  onAdd
+  user
 }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
+    name: user.name,
+    email: user.email,
+    status: user.status,
+    role: user.role,
     password: '',
-    confirmPassword: '',
-    role: 'user',
-    organization: '',
-    status: 'active'
+    confirmPassword: ''
   });
 
   const [organizations, setOrganizations] = useState([]);
@@ -43,11 +49,18 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
 
     if (isOpen) {
       fetchOrganizations();
+      setFormData({
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        password: '',
+        confirmPassword: ''
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setError(null);
@@ -62,11 +75,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
       setError('Email is required');
       return false;
     }
-    if (!formData.password) {
-      setError('Password is required');
-      return false;
-    }
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password && formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return false;
     }
@@ -82,22 +91,22 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     setSuccess(null);
 
     try {
-      await onAdd(formData);
-      setSuccess('User added successfully');
-      setTimeout(() => {
-        onClose();
-        setFormData({
-          name: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          role: 'user',
-          organization: '',
-          status: 'active'
-        });
-      }, 1500);
+      const response = await axios.put(`http://localhost:3000/api/v1/user_ms/updateUser/${user.id}`, {
+        ...formData,
+        password: formData.password || undefined // Only send password if it was changed
+      });
+
+      if (response.data.success) {
+        setSuccess('User updated successfully');
+        setTimeout(() => {
+          onClose();
+          window.location.reload();
+        }, 1500);
+      } else {
+        throw new Error(response.data.message || 'Failed to update user');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add user');
+      setError(err.response?.data?.message || 'Failed to update user');
     } finally {
       setIsSubmitting(false);
     }
@@ -110,7 +119,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
       <div className="bg-dark-200 rounded-lg w-full max-w-md p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
-            <GradientText>Add New User</GradientText>
+            <GradientText>Edit User</GradientText>
           </h2>
           <button 
             onClick={onClose}
@@ -153,36 +162,6 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
               Role
             </label>
             <select
@@ -199,7 +178,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             </select>
           </div>
 
-          <div>
+          {/* <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Organization
             </label>
@@ -212,12 +191,12 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             >
               <option value="">Select Organization</option>
               {organizations.map(org => (
-                <option key={org.id} value={[org.organization_name,org.org_type,org.id]}>
+                <option key={org.id} value={org.organization_name}>
                   {org.organization_name}
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -236,6 +215,36 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
               <option value="pending">Pending</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              New Password (optional)
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
+            />
+          </div>
+
+          {formData.password && (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
+              />
+            </div>
+          )}
 
           {error && (
             <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-lg">
@@ -272,10 +281,10 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
               {isSubmitting ? (
                 <span className="flex items-center">
                   <Loader className="animate-spin h-4 w-4 mr-2" />
-                  Adding...
+                  Updating...
                 </span>
               ) : (
-                'Add User'
+                'Update User'
               )}
             </button>
           </div>

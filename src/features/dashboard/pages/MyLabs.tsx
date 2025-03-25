@@ -49,39 +49,57 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, labId, labTi
   const handleDelete = async () => {
     setIsDeleting(true);
     setNotification(null);
-
+  
     try {
-
-      const instance_details = await axios.post('http://localhost:3000/api/v1/lab_ms/awsInstanceOfUsers', {
-        lab_id: labId,
-        user_id:userId,
-      });
-      const ami = await axios.post('http://localhost:3000/api/v1/lab_ms/amiinformation', { lab_id: labId });
-      const response = await axios.post('http://localhost:3000/api/v1/aws_ms/deletevm', {
-        id: labId,
-        instance_id: instance_details.data.result.instance_id,
-        ami_id: ami.data.result.ami_id,
-        user_id: userId
-      });
-      
-      if (response.data.success) {
+      let instance_details;
+      try {
+        instance_details = await axios.post('http://localhost:3000/api/v1/lab_ms/awsInstanceOfUsers', {
+          lab_id: labId,
+          user_id: userId,
+        });
+      } catch (error) {
+        console.error("Error fetching instance details:", error);
+      }
+  
+      let ami;
+      try {
+        ami = await axios.post('http://localhost:3000/api/v1/lab_ms/amiinformation', { lab_id: labId });
+      } catch (error) {
+        console.error("Error fetching AMI details:", error);
+      }
+  
+      let response;
+      try {
+        response = await axios.post('http://localhost:3000/api/v1/aws_ms/deletevm', {
+          id: labId,
+          instance_id: instance_details?.data?.result?.instance_id || null,
+          ami_id: ami?.data?.result?.ami_id || null,
+          user_id: userId,
+        });
+      } catch (error) {
+        console.error("Error deleting VM:", error);
+      }
+  
+      if (response?.data?.success) {
         setNotification({ type: 'success', message: 'Lab deleted successfully' });
         setTimeout(() => {
           onClose();
           window.location.reload();
         }, 1500);
       } else {
-        throw new Error(response.data.message || 'Failed to delete lab');
+        throw new Error(response?.data?.message || 'Failed to delete lab');
       }
     } catch (error: any) {
+      setTimeout(() => setNotification(null), 3000);
       setNotification({
         type: 'error',
-        message: error?.data?.message || 'Failed to delete lab'
-      });
+        message: error?.data?.message || 'Failed to delete lab',
+      })
     } finally {
       setIsDeleting(false);
     }
   };
+  
 
   if (!isOpen) return null;
 

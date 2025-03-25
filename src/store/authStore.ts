@@ -35,13 +35,29 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
     logout: async () => {
       try {
-        await axios.get('http://localhost:3000/api/v1/user_ms/logout', {
-          withCredentials: true,
-        });
-        set({ user: null, isAuthenticated: false });
+        let response
+        try {
+           response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile', {
+            withCredentials: true, // include credentials if needed
+          });
+        } catch (error) {
+          console.error('Logout failed', error);
+          // set({ user: null, isAuthenticated: false });
+        }
+        if (response?.data?.user?.email) {
+          await axios.post('http://localhost:3000/api/v1/user_ms/logout', {
+            email: response.data.user.email,
+          }, {
+            withCredentials: true,
+          });
+          set({ user: null, isAuthenticated: false });
+        } else {
+          console.error("User email not found!");
+        }
+        
       } catch (error) {
         console.error('Logout failed', error);
-        set({ user: null, isAuthenticated: false }); // Ensure state is reset even if API call fails
+        // set({ user: null, isAuthenticated: false }); // Ensure state is reset even if API call fails
       }
     },
     

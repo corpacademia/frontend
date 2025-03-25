@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, AlertCircle, Check, Loader } from 'lucide-react';
-import { GradientText } from '../../../components/ui/GradientText';
+import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 
 interface EditProfileModalProps {
@@ -136,7 +136,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 required
               >
                 <option value="user">User</option>
-                <option value="orgadmin">Admin</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
 
