@@ -163,9 +163,19 @@ export const WorkspaceEditPage: React.FC = () => {
   };
 
   const extractFile_Name = (filePath: string) => {
-    const match = filePath.match(/[^\\\/]+$/);
-    return match ? match[0] : filePath;
-  };
+    try {
+        const url = new URL(filePath); // Try parsing as a URL
+        const pathname = url.pathname; // Get the path after the domain
+        const fileName = pathname.split('/').pop(); // Get the last part after '/'
+        return fileName ? decodeURIComponent(fileName) : ""; // Decode and return
+    } catch {
+        // If input is not a valid URL, fallback to regex method
+        const match = filePath.match(/[^/\\]+$/);
+        return match ? decodeURIComponent(match[0]) : "";
+    }
+};
+
+
 
   const handleUrlAdd = () => {
     if (currentUrl.trim()) {
@@ -340,11 +350,11 @@ export const WorkspaceEditPage: React.FC = () => {
                     className="flex items-center justify-between p-3 bg-dark-300/50 rounded-lg"
                   >
                     <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-300">{extractFileName(doc)}</span>
+                      <span className="text-sm text-gray-300">{extractFile_Name(doc)}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <a
-                        href={`http://localhost:3000/uploads/${extractFile_Name(doc)}`}
+                        href={`http://localhost:3005/uploads/${extractFileName(doc)}`}
                         download
                         className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
                       >

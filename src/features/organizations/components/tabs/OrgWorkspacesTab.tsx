@@ -35,7 +35,7 @@ export const OrgWorkspacesTab: React.FC<OrgWorkspacesTabProps> = ({ orgId }) => 
   useEffect(() => {
     const fetchWorkspaces = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/getOrganizationWorkspaces/${orgId}`);
+        const response = await axios.get(`http://localhost:3000/api/v1/workspace_ms/getOrganizationWorkspaces/${orgId}`);
         if (response.data.success) {
           setWorkspaces(response.data.data);
         } else {

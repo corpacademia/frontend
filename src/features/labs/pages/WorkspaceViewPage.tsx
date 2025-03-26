@@ -168,7 +168,7 @@ function extractFile_Name(filePath) {
                     <span className="text-gray-200">{extractFileName(doc)}</span>
                   </div>
                   <a
-                    href={`http://localhost:3000/uploads/${extractFile_Name(doc)}`} 
+                    href={`http://localhost:3005/uploads/${extractFile_Name(doc)}`} 
                     download
                     className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
                   >
