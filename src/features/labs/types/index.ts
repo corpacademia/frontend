@@ -3,9 +3,9 @@ export type LabType =
   | 'workspace'
   | 'catalogue' 
   | 'cloud-vm'
+  | 'cloud-slice'
   | 'dedicated-vm'
   | 'cluster'
-  | 'cloud-slice'
   | 'emulator';
 
 export type CloudProvider = 

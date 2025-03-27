@@ -2,10 +2,34 @@ import React, { useState } from 'react';
 import { GradientText } from '../../../components/ui/GradientText';
 import { LabTypeSelector } from '../components/create/LabTypeSelector';
 import { SingleVMWorkflow } from '../components/create/SingleVMWorkflow';
+import { CloudSliceWorkflow } from '../components/create/CloudSliceWorkflow';
 import { LabType } from '../types';
 
 export const CreateLabEnvironment: React.FC = () => {
   const [selectedType, setSelectedType] = useState<LabType | null>(null);
+
+  const renderWorkflow = () => {
+    if (!selectedType) {
+      return <LabTypeSelector onSelect={setSelectedType} />;
+    }
+
+    switch (selectedType) {
+      case 'single-vm':
+        return (
+          <SingleVMWorkflow 
+            onBack={() => setSelectedType(null)}
+          />
+        );
+      case 'cloud-slice':
+        return (
+          <CloudSliceWorkflow 
+            onBack={() => setSelectedType(null)}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -20,16 +44,7 @@ export const CreateLabEnvironment: React.FC = () => {
         </div>
       </div>
 
-      {!selectedType ? (
-        <LabTypeSelector onSelect={setSelectedType} />
-      ) : (
-        <>
-          {selectedType === 'single-vm' && (
-            <SingleVMWorkflow onBack={() => setSelectedType(null)} />
-          )}
-          {/* Add other workflow components for different lab types */}
-        </>
-      )}
+      {renderWorkflow()}
     </div>
   );
 };
