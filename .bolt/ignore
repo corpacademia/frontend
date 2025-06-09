@@ -1,0 +1,46 @@
+# Node modules
+node_modules/
+Client/node_modules/
+Backend/node_modules/
+
+# Build output
+dist/
+build/
+dist-ssr/
+out/
+
+# System & IDE files
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
+*.log.*
+
+# Coverage, temp, cache
+coverage/
+.tmp/
+.cache/
+.env*
+*.local
+
+# Public assets (if large)
+public/uploads/
+public/videos/
+public/assets/*
+
+# Ignore all source maps (often large and unnecessary for deploy)
+**/*.map
+
+# Ignore compiled binaries (found in esbuild, rollup, etc.)
+**/*.exe
+**/*.node
+
+# Ignore PDFs or large static files (if any present)
+**/*.pdf
+
+# Ignore test snapshots or debug data (if applicable)
+**/__snapshots__/
+**/*.test.js
+**/*.spec.js
