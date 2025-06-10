@@ -41,6 +41,7 @@ export const ClusterList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [currentUser,setCurrentUser] = useState<any>([]);
 
   useEffect(() => {
     fetchClusters();
@@ -49,10 +50,16 @@ export const ClusterList: React.FC = () => {
   const fetchClusters = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:3000/api/v1/lab_ms/getClusterLabs');
+      const userProfile = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      if(userProfile.data.success){
+        setCurrentUser(userProfile.data.user);
+      }
+      const response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/getClusterLabs',{
+        userId:userProfile.data.user.id
+      });
       
       if (response.data.success) {
-        setClusters(response.data.clusters || []);
+        setClusters(response.data.data || []);
       } else {
         setError('Failed to fetch cluster labs');
       }
@@ -65,9 +72,9 @@ export const ClusterList: React.FC = () => {
   };
 
   const filteredClusters = clusters.filter(cluster => {
-    const matchesSearch = cluster.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cluster.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || cluster.status === statusFilter;
+    const matchesSearch = cluster.lab.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         cluster.lab.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || cluster.lab.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });

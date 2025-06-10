@@ -153,6 +153,8 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   const [showFullEndDate, setShowFullEndDate] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
+  console.log(vm)
+
   function formatDate(dateString: string) {
     const date = new Date(dateString);
   
@@ -210,7 +212,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   // Check if current user can edit content
   const canEditContent = () => {
     if (!currentUser) return false;
-    return vm.user_id === currentUser.id;
+    return vm.lab.user_id === currentUser.id;
   };
 
   return (
@@ -236,9 +238,9 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
           <div className="flex justify-between items-start gap-4 mb-3">
             <div className="flex-1">
               <h3 className="text-lg font-semibold mb-1">
-                <GradientText>{vm.title}</GradientText>
+                <GradientText>{vm.lab.title}</GradientText>
               </h3>
-              <p className="text-sm text-gray-400 line-clamp-2">{vm.description}</p>
+              <p className="text-sm text-gray-400 line-clamp-2">{vm.lab.description}</p>
             </div>
             <div className="flex items-center space-x-2">
               {canEditContent() && (
@@ -250,11 +252,11 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                 </button>
               )}
               <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                vm.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
-                vm.status === 'inactive' ? 'bg-red-500/20 text-red-300' :
+                vm.lab.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
+                vm.lab.status === 'inactive' ? 'bg-red-500/20 text-red-300' :
                 'bg-amber-500/20 text-amber-300'
               }`}>
-                {vm.status}
+                {vm.lab.status}
               </span>
             </div>
           </div>
@@ -262,11 +264,11 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
           <div className="grid grid-cols-2 gap-4 mb-3">
             <div className="flex items-center text-sm text-gray-400">
               <Server className="h-4 w-4 mr-2 text-secondary-400 flex-shrink-0" />
-              <span className="truncate">{vm.platform}</span>
+              <span className="truncate">{vm.lab.platform}</span>
             </div>
             <div className="flex items-center text-sm text-gray-400">
               <LinkIcon className="h-4 w-4 mr-2 text-secondary-400 flex-shrink-0" />
-              <span className="truncate">{vm.protocol}</span>
+              <span className="truncate">{vm.lab.protocol}</span>
             </div>
             <div className="flex items-center text-sm text-gray-400">
               <Calendar className="h-4 w-4 mr-2 text-secondary-400 flex-shrink-0" />
@@ -275,7 +277,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                 onClick={() => setShowFullStartDate(!showFullStartDate)}
                 title={showFullStartDate ? "Click to collapse" : "Click to expand"}
               >
-                Start: {formatDate(vm?.startdate)}
+                Start: {formatDate(vm?.lab?.startdate)}
               </span>
             </div>
             <div className="flex items-center text-sm text-gray-400">
@@ -285,7 +287,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                 onClick={() => setShowFullEndDate(!showFullEndDate)}
                 title={showFullEndDate ? "Click to collapse" : "Click to expand"}
               >
-                End: {formatDate(vm?.enddate)}
+                End: {formatDate(vm?.lab?.enddate)}
               </span>
             </div>
           </div>
@@ -326,8 +328,8 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
           isOpen={isUserListModalOpen}
           onClose={() => setIsUserListModalOpen(false)}
           users={vm.users || []}
-          vmId={vm.lab_id}
-          vmTitle={vm.title}
+          vmId={vm.lab.labid}
+          vmTitle={vm.lab.title}
           vm={vm}
         />
       )}
@@ -337,7 +339,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
-        vmTitle={vm.title}
+        vmTitle={vm.lab.title}
       />
     </>
   );
