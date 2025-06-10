@@ -1,7 +1,5 @@
 import React from 'react';
-import { ClusterFilters } from '../components/cluster/ClusterFilters';
 import { ClusterList } from '../components/cluster/ClusterList';
-import { ClusterProvisionForm } from '../components/cluster/ClusterProvisionForm';
 import { GradientText } from '../../../components/ui/GradientText';
 import { Plus } from 'lucide-react';
 
@@ -28,12 +26,7 @@ export const ClusterPage: React.FC = () => {
         </button>
       </div>
 
-      <ClusterFilters />
       <ClusterList />
-
-      {isProvisioning && (
-        <ClusterProvisionForm onClose={() => setIsProvisioning(false)} />
-      )}
     </div>
   );
 };
