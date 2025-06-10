@@ -83,6 +83,8 @@ export const LabsPage: React.FC = () => {
       navigate('/dashboard/labs/cloud-vms');
     } else if (type === 'cloud-slice') {
       navigate('/dashboard/labs/cloud-slices');
+    } else if (type === 'cluster') {
+      navigate('/dashboard/labs/cluster');
     } else {
       setSelectedType(type);
       setActiveTab('settings');

@@ -18,6 +18,7 @@ import { OrgAdminCloudVMsPage } from '../features/labs/pages/orgadmin/CloudVMsPa
 import { CloudSlicePage } from '../features/labs/pages/CloudSlicePage';
 import { CloudSliceLabPage } from '../features/labs/pages/CloudSliceLabPage';
 import { CloudSliceModulesPage } from '../features/labs/pages/CloudSliceModulesPage';
+import { ClusterPage } from '../features/labs/pages/ClusterPage';
 import { CreateLabEnvironment } from '../features/labs/pages/CreateLabEnvironment';
 import { CreateModulesPage } from '../features/labs/pages/CreateModulesPage';
 import { CloudResources } from '../features/dashboard/pages/CloudResources';
@@ -79,6 +80,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="labs/cloud-slices" element={<CloudSlicePage />} />
         <Route path="labs/cloud-slices/:sliceId/lab" element={<CloudSliceLabPage />} />
         <Route path="labs/cloud-slices/:sliceId/modules" element={<CloudSliceModulesPage />} />
+        <Route path="labs/cluster" element={<ClusterPage />} />
         <Route path="labs/create" element={<CreateLabEnvironment />} />
         <Route path="labs/vm-session/:vmId" element={<VMSessionPage />} />
         <Route path="cloud" element={<CloudResources />} />
