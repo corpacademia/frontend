@@ -14,6 +14,7 @@ interface VM {
   port: string;
   protocol: string;
   disabled?: boolean;
+  vmid: string;
 }
 
 interface User {
@@ -46,12 +47,12 @@ const EditVMModal: React.FC<EditVMModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<VM>({
     id: vm?.id || '',
-    vmName: vm?.vmName || '',
+    vmName: vm?.vmData.vmname || '',
     username: vm?.username || '',
     password: vm?.password || '',
     ip: vm?.ip || '',
     port: vm?.port || '',
-    protocol: vm?.protocol || 'RDP',
+    protocol: vm?.vmData.protocol || 'RDP',
     disabled: vm?.disabled || false
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -197,9 +198,9 @@ const EditVMModal: React.FC<EditVMModalProps> = ({
                        text-gray-300 focus:border-primary-500/40 focus:outline-none"
               disabled={isSubmitting}
             >
-              <option value="RDP">RDP</option>
-              <option value="SSH">SSH</option>
-              <option value="VNC">VNC</option>
+              <option value="rdp">RDP</option>
+              <option value="ssh">SSH</option>
+              <option value="vnc">VNC</option>
             </select>
           </div>
 
@@ -248,7 +249,26 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const navigate = useNavigate();
 
-  console.log(users)
+  
+  // Group users by unique vmid
+  const groupedUsers = users.reduce((acc, user, index) => {
+    const userKey = `user${(index % 2) + 1}`;
+    const vmData = vm.vms.find(vmItem => vmItem.vmid === user.vmid);
+
+    if (!acc[userKey]) {
+      acc[userKey] = [];
+    }
+
+    acc[userKey].push({
+      ...user,
+      vmData,
+    });
+
+    return acc;
+  }, {} as Record<string, Array<any>>);
+
+  console.log(groupedUsers)
+
   const togglePasswordVisibility = (vmId: string) => {
     setShowPasswords(prev => ({
       ...prev,
@@ -258,7 +278,8 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
 
   const returnProtocol = (vmId)=>{
        const protocol = vm.vms.find((vm)=>vm.vmid === vmId);
-       return protocol.protocol;
+       console.log(protocol)
+       return protocol?.protocol || 'RDP';
   }
 
   const handleToggleDisable = async (vmData: VM) => {
@@ -306,10 +327,11 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
   };
 
   const handleConnectToVM = async (vmData: VM) => {
+    console.log(vmData)
     try {
       // First, get JWT token
-      const tokenResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/connectToClusterVm', {
-        Protocol: vmData.protocol || 'RDP',
+      const tokenResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/connectToDatacenterVm', {
+        Protocol: vmData.vmData?.protocol || 'RDP',
         VmId: vmData.id,
         Ip: vmData.ip,
         userName: vmData.username,
@@ -325,7 +347,7 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
             guacUrl,
             vmTitle: vm.title,
             vmId: vmId,
-            doc: vm.labguide,
+            doc: vm.lab.labguide,
             credentials: [vmData]
           }
         });
@@ -409,16 +431,16 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
             </div>
           )}
 
-          {users.length === 0 ? (
+          {Object.keys(groupedUsers).length === 0 ? (
             <div className="p-6 text-center">
               <p className="text-gray-400">No users available for this cluster</p>
             </div>
           ) : (
             <div className="space-y-6">
-              {users.map((user) => (
-                <div key={user.id} className="bg-dark-300/30 rounded-lg p-4">
+              {Object.entries(groupedUsers).map(([vmid, usersInGroup]) => (
+                <div key={vmid} className="bg-dark-300/30 rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-primary-300 mb-4">
-                    User: {user.username}
+                     {vmid} ({usersInGroup.length} user{usersInGroup.length !== 1 ? 's' : ''})
                   </h3>
                   
                   <div className="overflow-x-auto">
@@ -435,24 +457,24 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {/* {user.map((vmData) => ( */}
-                          <tr key={user.id} className="border-b border-primary-500/10">
+                        {usersInGroup.map((userWithVm) => (
+                          <tr key={`${userWithVm.id}-${userWithVm.vmData.id}`} className="border-b border-primary-500/10">
                             <td className="py-3">
-                              <div className="font-medium text-gray-300">{user.vmName}</div>
+                              <div className="font-medium text-gray-300">{userWithVm.vmData.vmname}</div>
                             </td>
                             <td className="py-3">
-                              <div className="font-medium text-gray-300">{user.username}</div>
+                              <div className="font-medium text-gray-300">{userWithVm.username}</div>
                             </td>
                             <td className="py-3">
                               <div className="flex items-center space-x-2">
                                 <span className="font-mono text-gray-300">
-                                  {showPasswords[user.id] ? user.password : '••••••••'}
+                                  {showPasswords[userWithVm.id] ? userWithVm.password : '••••••••'}
                                 </span>
                                 <button
-                                  onClick={() => togglePasswordVisibility(user.id)}
+                                  onClick={() => togglePasswordVisibility(userWithVm.id)}
                                   className="p-1 hover:bg-dark-300/50 rounded-lg transition-colors"
                                 >
-                                  {showPasswords[user.id] ? (
+                                  {showPasswords[userWithVm.id] ? (
                                     <EyeOff className="h-4 w-4 text-gray-400" />
                                   ) : (
                                     <Eye className="h-4 w-4 text-gray-400" />
@@ -461,34 +483,34 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
                               </div>
                             </td>
                             <td className="py-3">
-                              <div className="font-mono text-gray-300">{user.ip}</div>
+                              <div className="font-mono text-gray-300">{userWithVm.ip}</div>
                             </td>
                             <td className="py-3">
-                              <div className="font-mono text-gray-300">{user.port}</div>
+                              <div className="font-mono text-gray-300">{userWithVm.port}</div>
                             </td>
                             <td className="py-3">
-                              <div className="font-mono text-gray-300">{returnProtocol(user.vmid) || 'RDP'}</div>
+                              <div className="font-mono text-gray-300">{returnProtocol(userWithVm.vmid)}</div>
                             </td>
                             <td className="py-3">
                               <div className="flex items-center space-x-2">
                                 <button
-                                  onClick={() => setEditingVm(user)}
+                                  onClick={() => setEditingVm(userWithVm)}
                                   className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
                                   title="Edit VM"
                                 >
                                   <Pencil className="h-4 w-4 text-primary-400" />
                                 </button>
                                 <button
-                                  className={`p-2 rounded-lg transition-colors ${user.disabled ? 'hover:bg-green-500/10' : 'hover:bg-red-500/10'}`}
-                                  onClick={() => handleToggleDisable(user)}
-                                  disabled={processingVm === user.id}
-                                  title={user.disabled ? 'Enable VM' : 'Disable VM'}
+                                  className={`p-2 rounded-lg transition-colors ${userWithVm.vmData.disabled ? 'hover:bg-green-500/10' : 'hover:bg-red-500/10'}`}
+                                  onClick={() => handleToggleDisable(userWithVm.vmData)}
+                                  disabled={processingVm === userWithVm.vmData.id}
+                                  title={userWithVm.vmData.disabled ? 'Enable VM' : 'Disable VM'}
                                 >
-                                  <Power className={`h-4 w-4 ${processingVm === user.id ? 'animate-pulse' : ''} ${user.disabled ? 'text-green-400' : 'text-red-400'}`} />
+                                  <Power className={`h-4 w-4 ${processingVm === userWithVm.vmData.id ? 'animate-pulse' : ''} ${userWithVm.vmData.disabled ? 'text-green-400' : 'text-red-400'}`} />
                                 </button>
                                 <button
                                   className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
-                                  onClick={() => handleConnectToVM(user)}
+                                  onClick={() => handleConnectToVM(userWithVm)}
                                   title="Connect to VM"
                                 >
                                   <ConnectIcon className="h-4 w-4 text-primary-400" />
@@ -496,7 +518,7 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
                               </div>
                             </td>
                           </tr>
-                        {/* // ))} */}
+                        ))}
                       </tbody>
                     </table>
                   </div>

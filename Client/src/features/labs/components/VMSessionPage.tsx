@@ -49,7 +49,9 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Get the guacUrl from location state
- 
+  const { guacUrl, vmTitle, credentials, isGroupConnection } = location.state || {};
+  const [selectedCredential, setSelectedCredential] = useState<any>(null);
+  const [activeGuacUrl, setActiveGuacUrl] = useState<string>(guacUrl || '');
 
 useEffect(() => {
   const docs = location.state?.doc || location.state?.document || [];
@@ -59,7 +61,7 @@ useEffect(() => {
   }
 }, [location.state]);
 
-  const { guacUrl, vmTitle,credentials } = location.state || {};
+  // Already moved above
   // Credentials for the VM - multiple credentials example
   // const credentialsList = [
   //   { label: "Admin", username: 'admin', password: 'P@ssw0rd123' },
@@ -79,7 +81,7 @@ const credentialsList = credentials;
   
   useEffect(() => {
     // Check if we have the necessary data
-    if (!guacUrl) {
+    if (!guacUrl && !isGroupConnection) {
       navigate('/dashboard/labs/cloud-vms');
     } else {
       setIsLoading(false);
@@ -186,6 +188,30 @@ const credentialsList = credentials;
       return () => clearTimeout(timer);
     }
   }, [isLoading, showDocuments, splitRatio, isFullscreen]);
+
+  const handleConnectToCredential = async (credential: any) => {
+    try {
+      // First, get JWT token
+      const tokenResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/connectToDatacenterVm', {
+        Protocol: credential.vmData?.protocol || 'RDP',
+        VmId: credential.id,
+        Ip: credential.ip,
+        userName: credential.username,
+        password: credential.password,
+        port: credential.port,
+      });
+      
+      if (tokenResponse.data.success && tokenResponse.data.token) {
+        const newGuacUrl = `http://43.204.220.7:8080/guacamole/#/?token=${tokenResponse.data.token.result}`;
+        setActiveGuacUrl(newGuacUrl);
+        setSelectedCredential(credential);
+      } else {
+        throw new Error('Failed to get connection token');
+      }
+    } catch (error: any) {
+      console.error('Error connecting to VM:', error);
+    }
+  };
 
   const handlePowerAction = (action: 'restart' | 'shutdown') => {
     // In a real implementation, you would call an API to perform the action
@@ -322,39 +348,90 @@ const credentialsList = credentials;
                 {showCredentials && (
                   <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 p-3 w-96">
                     <div className="space-y-3">
-                      {credentialsList.map((cred, index) => (
-                        <div key={index} className="p-2 bg-dark-300/50 rounded-lg">
-                          {/* <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-primary-400">{cred.label}</span>
-                          </div> */}
-                          <div className="flex items-center space-x-4">
-                            <div className="flex-1">
-                              <label className="text-xs text-gray-400 block">Username</label>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-300">{cred.username}</span>
-                                <button
-                                  onClick={() => navigator.clipboard.writeText(cred.username)}
-                                  className="text-xs text-primary-400 hover:text-primary-300"
-                                >
-                                  Copy
-                                </button>
+                      {isGroupConnection ? (
+                        <>
+                          <h4 className="text-sm font-medium text-primary-400 mb-2">Select VM to Connect ({credentialsList.length} VMs)</h4>
+                          {credentialsList.map((cred, index) => (
+                            <div key={index} className={`p-2 rounded-lg cursor-pointer transition-colors ${
+                              selectedCredential?.id === cred.id 
+                                ? 'bg-primary-500/20 border border-primary-500/40' 
+                                : 'bg-dark-300/50 hover:bg-dark-300/70'
+                            }`}
+                            onClick={() => handleConnectToCredential(cred)}
+                            >
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs font-medium text-primary-400">{cred.vmData?.vmname || `VM ${index + 1}`}</span>
+                                {selectedCredential?.id === cred.id && (
+                                  <span className="text-xs text-green-400">Connected</span>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-4">
+                                <div className="flex-1">
+                                  <label className="text-xs text-gray-400 block">Username</label>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-300">{cred.username}</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(cred.username);
+                                      }}
+                                      className="text-xs text-primary-400 hover:text-primary-300"
+                                    >
+                                      Copy
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <label className="text-xs text-gray-400 block">Password</label>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-300">{cred.password}</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard.writeText(cred.password);
+                                      }}
+                                      className="text-xs text-primary-400 hover:text-primary-300"
+                                    >
+                                      Copy
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                            <div className="flex-1">
-                              <label className="text-xs text-gray-400 block">Password</label>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-300">{cred.password}</span>
-                                <button
-                                  onClick={() => navigator.clipboard.writeText(cred.password)}
-                                  className="text-xs text-primary-400 hover:text-primary-300"
-                                >
-                                  Copy
-                                </button>
+                          ))}
+                        </>
+                      ) : (
+                        credentialsList.map((cred, index) => (
+                          <div key={index} className="p-2 bg-dark-300/50 rounded-lg">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex-1">
+                                <label className="text-xs text-gray-400 block">Username</label>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-gray-300">{cred.username}</span>
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(cred.username)}
+                                    className="text-xs text-primary-400 hover:text-primary-300"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <label className="text-xs text-gray-400 block">Password</label>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-gray-300">{cred.password}</span>
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(cred.password)}
+                                    className="text-xs text-primary-400 hover:text-primary-300"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
@@ -370,7 +447,7 @@ const credentialsList = credentials;
           <div className="w-full h-[calc(100%-40px)] overflow-auto" ref={containerRef}>
             <iframe 
               ref={iframeRef}
-              src={guacUrl} 
+              src={activeGuacUrl} 
               style={{ width: '100%', height: '100%' }}
               className="border-0"
               title="VM Remote Access"
@@ -469,39 +546,90 @@ const credentialsList = credentials;
                   {showCredentials && (
                     <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 p-3 w-96">
                       <div className="space-y-3">
-                        {credentialsList.map((cred, index) => (
-                          <div key={index} className="p-2 bg-dark-300/50 rounded-lg">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-medium text-primary-400">{cred.label}</span>
-                            </div>
-                            <div className="flex items-center space-x-4">
-                              <div className="flex-1">
-                                <label className="text-xs text-gray-400 block">Username</label>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm text-gray-300">{cred.username}</span>
-                                  <button
-                                    onClick={() => navigator.clipboard.writeText(cred.username)}
-                                    className="text-xs text-primary-400 hover:text-primary-300"
-                                  >
-                                    Copy
-                                  </button>
+                        {isGroupConnection ? (
+                          <>
+                            <h4 className="text-sm font-medium text-primary-400 mb-2">Select VM to Connect ({credentialsList.length} VMs)</h4>
+                            {credentialsList.map((cred, index) => (
+                              <div key={index} className={`p-2 rounded-lg cursor-pointer transition-colors ${
+                                selectedCredential?.id === cred.id 
+                                  ? 'bg-primary-500/20 border border-primary-500/40' 
+                                  : 'bg-dark-300/50 hover:bg-dark-300/70'
+                              }`}
+                              onClick={() => handleConnectToCredential(cred)}
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-xs font-medium text-primary-400">{cred.vmData?.vmname || `VM ${index + 1}`}</span>
+                                  {selectedCredential?.id === cred.id && (
+                                    <span className="text-xs text-green-400">Connected</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                  <div className="flex-1">
+                                    <label className="text-xs text-gray-400 block">Username</label>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm text-gray-300">{cred.username}</span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigator.clipboard.writeText(cred.username);
+                                        }}
+                                        className="text-xs text-primary-400 hover:text-primary-300"
+                                      >
+                                        Copy
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="flex-1">
+                                    <label className="text-xs text-gray-400 block">Password</label>
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm text-gray-300">{cred.password}</span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigator.clipboard.writeText(cred.password);
+                                        }}
+                                        className="text-xs text-primary-400 hover:text-primary-300"
+                                      >
+                                        Copy
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex-1">
-                                <label className="text-xs text-gray-400 block">Password</label>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm text-gray-300">{cred.password}</span>
-                                  <button
-                                    onClick={() => navigator.clipboard.writeText(cred.password)}
+                            ))}
+                          </>
+                        ) : (
+                          credentialsList.map((cred, index) => (
+                            <div key={index} className="p-2 bg-dark-300/50 rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                <div className="flex-1">
+                                  <label className="text-xs text-gray-400 block">Username</label>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-300">{cred.username}</span>
+                                    <button
+                                      onClick={() => navigator.clipboard.writeText(cred.username)}
+                                      className="text-xs text-primary-400 hover:text-primary-300"
+                                    >
+                                      Copy
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <label className="text-xs text-gray-400 block">Password</label>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-300">{cred.password}</span>
+                                    <button
+                                      onClick={() => navigator.clipboard.writeText(cred.password)}
                                     className="text-xs text-primary-400 hover:text-primary-300"
-                                  >
-                                    Copy
-                                  </button>
+                                    >
+                                      Copy
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          ))
+                        )}
                       </div>
                     </div>
                   )}
@@ -542,7 +670,7 @@ const credentialsList = credentials;
             <div className="w-full h-[calc(100%-40px)] overflow-auto" ref={containerRef}>
               <iframe 
                 ref={iframeRef}
-                src={guacUrl} 
+                src={activeGuacUrl} 
                 style={{ width: '100%', height: '100%' }}
                 className="border-0"
                 title="VM Remote Access"
