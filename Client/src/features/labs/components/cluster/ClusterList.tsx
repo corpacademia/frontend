@@ -41,6 +41,7 @@ export const ClusterList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [currentUser,setCurrentUser] = useState<any>([]);
 
   useEffect(() => {
@@ -75,8 +76,9 @@ export const ClusterList: React.FC = () => {
     const matchesSearch = cluster.lab.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          cluster.lab.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || cluster.lab.status === statusFilter;
+    const matchesPlatform = platformFilter === 'all' || cluster.lab.platform.toLowerCase() === platformFilter.toLowerCase();
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesPlatform;
   });
 
   if (loading) {
@@ -122,6 +124,21 @@ export const ClusterList: React.FC = () => {
         <div className="relative">
           <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <select
+            value={platformFilter}
+            onChange={(e) => setPlatformFilter(e.target.value)}
+            className="pl-10 pr-8 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                     text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
+          >
+            <option value="all">All Platforms</option>
+            <option value="datacenter">Datacenter</option>
+            <option value="aws">AWS</option>
+            <option value="azure">Azure</option>
+          </select>
+        </div>
+        
+        <div className="relative">
+          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="pl-10 pr-8 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
@@ -158,7 +175,7 @@ export const ClusterList: React.FC = () => {
             </h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredClusters.map((cluster) => (
               <ClusterVMCard key={cluster.id} vm={cluster} />
             ))}

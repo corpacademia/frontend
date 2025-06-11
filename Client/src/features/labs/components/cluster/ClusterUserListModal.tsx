@@ -248,12 +248,18 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const navigate = useNavigate();
 
+  console.log(users)
   const togglePasswordVisibility = (vmId: string) => {
     setShowPasswords(prev => ({
       ...prev,
       [vmId]: !prev[vmId]
     }));
   };
+
+  const returnProtocol = (vmId)=>{
+       const protocol = vm.vms.find((vm)=>vm.vmid === vmId);
+       return protocol.protocol;
+  }
 
   const handleToggleDisable = async (vmData: VM) => {
     setProcessingVm(vmData.id);
@@ -429,24 +435,24 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
                         </tr>
                       </thead>
                       <tbody>
-                        {user.vms.map((vmData) => (
-                          <tr key={vmData.id} className="border-b border-primary-500/10">
+                        {/* {user.map((vmData) => ( */}
+                          <tr key={user.id} className="border-b border-primary-500/10">
                             <td className="py-3">
-                              <div className="font-medium text-gray-300">{vmData.vmName}</div>
+                              <div className="font-medium text-gray-300">{user.vmName}</div>
                             </td>
                             <td className="py-3">
-                              <div className="font-medium text-gray-300">{vmData.username}</div>
+                              <div className="font-medium text-gray-300">{user.username}</div>
                             </td>
                             <td className="py-3">
                               <div className="flex items-center space-x-2">
                                 <span className="font-mono text-gray-300">
-                                  {showPasswords[vmData.id] ? vmData.password : '••••••••'}
+                                  {showPasswords[user.id] ? user.password : '••••••••'}
                                 </span>
                                 <button
-                                  onClick={() => togglePasswordVisibility(vmData.id)}
+                                  onClick={() => togglePasswordVisibility(user.id)}
                                   className="p-1 hover:bg-dark-300/50 rounded-lg transition-colors"
                                 >
-                                  {showPasswords[vmData.id] ? (
+                                  {showPasswords[user.id] ? (
                                     <EyeOff className="h-4 w-4 text-gray-400" />
                                   ) : (
                                     <Eye className="h-4 w-4 text-gray-400" />
@@ -455,34 +461,34 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
                               </div>
                             </td>
                             <td className="py-3">
-                              <div className="font-mono text-gray-300">{vmData.ip}</div>
+                              <div className="font-mono text-gray-300">{user.ip}</div>
                             </td>
                             <td className="py-3">
-                              <div className="font-mono text-gray-300">{vmData.port}</div>
+                              <div className="font-mono text-gray-300">{user.port}</div>
                             </td>
                             <td className="py-3">
-                              <div className="font-mono text-gray-300">{vmData.protocol || 'RDP'}</div>
+                              <div className="font-mono text-gray-300">{returnProtocol(user.vmid) || 'RDP'}</div>
                             </td>
                             <td className="py-3">
                               <div className="flex items-center space-x-2">
                                 <button
-                                  onClick={() => setEditingVm(vmData)}
+                                  onClick={() => setEditingVm(user)}
                                   className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
                                   title="Edit VM"
                                 >
                                   <Pencil className="h-4 w-4 text-primary-400" />
                                 </button>
                                 <button
-                                  className={`p-2 rounded-lg transition-colors ${vmData.disabled ? 'hover:bg-green-500/10' : 'hover:bg-red-500/10'}`}
-                                  onClick={() => handleToggleDisable(vmData)}
-                                  disabled={processingVm === vmData.id}
-                                  title={vmData.disabled ? 'Enable VM' : 'Disable VM'}
+                                  className={`p-2 rounded-lg transition-colors ${user.disabled ? 'hover:bg-green-500/10' : 'hover:bg-red-500/10'}`}
+                                  onClick={() => handleToggleDisable(user)}
+                                  disabled={processingVm === user.id}
+                                  title={user.disabled ? 'Enable VM' : 'Disable VM'}
                                 >
-                                  <Power className={`h-4 w-4 ${processingVm === vmData.id ? 'animate-pulse' : ''} ${vmData.disabled ? 'text-green-400' : 'text-red-400'}`} />
+                                  <Power className={`h-4 w-4 ${processingVm === user.id ? 'animate-pulse' : ''} ${user.disabled ? 'text-green-400' : 'text-red-400'}`} />
                                 </button>
                                 <button
                                   className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
-                                  onClick={() => handleConnectToVM(vmData)}
+                                  onClick={() => handleConnectToVM(user)}
                                   title="Connect to VM"
                                 >
                                   <ConnectIcon className="h-4 w-4 text-primary-400" />
@@ -490,7 +496,7 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
                               </div>
                             </td>
                           </tr>
-                        ))}
+                        {/* // ))} */}
                       </tbody>
                     </table>
                   </div>
