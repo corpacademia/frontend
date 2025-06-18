@@ -55,11 +55,18 @@ export const ClusterList: React.FC = () => {
       if(userProfile.data.success){
         setCurrentUser(userProfile.data.user);
       }
-      const response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/getClusterLabs',{
+      let response;
+      if(userProfile.data.user.role === 'superadmin'){
+        response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/getClusterLabs',{
         userId:userProfile.data.user.id
       });
-      
-      if (response.data.success) {
+      }
+      else if(userProfile.data.user.role === 'orgadmin'){
+         response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/getOrglabs',{
+          orgId:userProfile.data.user.org_id
+         })
+      }
+       if (response?.data.success) {
         setClusters(response.data.data || []);
       } else {
         setError('Failed to fetch cluster labs');

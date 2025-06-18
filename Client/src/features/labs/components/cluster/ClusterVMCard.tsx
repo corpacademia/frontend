@@ -34,6 +34,7 @@ import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 import { ClusterUserListModal } from './ClusterUserListModal';
 import { ConvertToCatalogueModal } from '../cloudvm/ConvertToCatalogueModal';
+import { AssignUsersModal } from '../catalogue/AssignUsersModal';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { v4 as uuidv4 } from 'uuid';
@@ -174,6 +175,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   
   // Edit lab modal states
   const [isEditLabModalOpen, setIsEditLabModalOpen] = useState(false);
@@ -612,14 +614,12 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                   <Pencil className="h-4 w-4 text-primary-400" />
                 </button>
               )}
-              {canEditContent() && (
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
                 >
                   <Trash2 className="h-4 w-4 text-red-400" />
                 </button>
-              )}
               <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                 vm.lab.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
                 vm.lab.status === 'inactive' ? 'bg-red-500/20 text-red-300' :
@@ -688,7 +688,20 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
               User List
             </button>
             
-            {canEditContent() && (
+            {!canEditContent() && currentUser?.role === 'orgadmin' ? (
+              <button
+                onClick={() => setIsAssignModalOpen(true)}
+                className="w-full h-9 px-4 rounded-lg text-sm font-medium
+                         bg-gradient-to-r from-secondary-500 to-accent-500
+                         hover:from-secondary-400 hover:to-accent-400
+                         transform hover:scale-105 transition-all duration-300
+                         text-white shadow-lg shadow-secondary-500/20
+                         flex items-center justify-center"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Assign Lab
+              </button>
+            ) : canEditContent() && (
               <button
                 onClick={handleConvertToCatalogue}
                 disabled={isConverting}
@@ -737,6 +750,13 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
         onClose={() => setIsConvertModalOpen(false)}
         vmId={vm?.lab?.labid}
         isClusterDatacenterVM={true}
+      />
+
+      <AssignUsersModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        labId={vm?.lab?.labid}
+        labTitle={vm?.lab?.title}
       />
 
       {/* Add VM Modal */}
