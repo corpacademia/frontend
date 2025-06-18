@@ -52,7 +52,7 @@ const EditVMModal: React.FC<EditVMModalProps> = ({
     password: vm?.password || '',
     ip: vm?.ip || '',
     port: vm?.port || '',
-    protocol: vm?.vmData.protocol || 'RDP',
+    protocol: vm?.vmData.protocol || 'rdp',
     disabled: vm?.disabled || false
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,7 +128,8 @@ const EditVMModal: React.FC<EditVMModalProps> = ({
               className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-gray-300 focus:border-primary-500/40 focus:outline-none"
               required
-              disabled={isSubmitting}
+              // disabled={isSubmitting}
+              disabled={true}
             />
           </div>
 
@@ -196,7 +197,7 @@ const EditVMModal: React.FC<EditVMModalProps> = ({
               onChange={handleChange}
               className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-gray-300 focus:border-primary-500/40 focus:outline-none"
-              disabled={isSubmitting}
+              disabled={true}
             >
               <option value="rdp">RDP</option>
               <option value="ssh">SSH</option>
@@ -251,23 +252,22 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
 
   
   // Group users by unique vmid
-  const groupedUsers = users.reduce((acc, user, index) => {
-    const userKey = `user${(index % 2) + 1}`;
-    const vmData = vm.vms.find(vmItem => vmItem.vmid === user.vmid);
+ const groupedUsers = users.reduce((acc, user) => {
+  const groupKey = user.usergroup || 'Unknown Group';
+  const vmData = vm.vms.find(vmItem => vmItem.vmid === user.vmid);
 
-    if (!acc[userKey]) {
-      acc[userKey] = [];
-    }
+  if (!acc[groupKey]) {
+    acc[groupKey] = [];
+  }
 
-    acc[userKey].push({
-      ...user,
-      vmData,
-    });
+  acc[groupKey].push({
+    ...user,
+    vmData,
+  });
 
-    return acc;
-  }, {} as Record<string, Array<any>>);
+  return acc;
+}, {} as Record<string, Array<any>>);
 
-  console.log(groupedUsers)
 
   const togglePasswordVisibility = (vmId: string) => {
     setShowPasswords(prev => ({
@@ -278,8 +278,7 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
 
   const returnProtocol = (vmId)=>{
        const protocol = vm.vms.find((vm)=>vm.vmid === vmId);
-       console.log(protocol)
-       return protocol?.protocol || 'RDP';
+       return protocol?.protocol || 'rdp';
   }
 
   const handleToggleDisable = async (vmData: VM) => {
@@ -287,23 +286,21 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
     setNotification(null);
     
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/lab_ms/updateClusterVmCredentials', {
+      const response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/updateClusterVmCredentials', {
         id: vmData.id,
         disable: !vmData.disabled
       });
       
       if (response.data.success) {
         // Update the state to reflect the change
-        setUsers(prevUsers => 
-          prevUsers.map(user => ({
-            ...user,
-            vms: user.vms.map(vm => 
-              vm.id === vmData.id ? { ...vm, disabled: !vm.disabled } : vm
-            )
-          }))
+        setUsers(prevUsers =>
+             prevUsers.map(user =>
+            user.id === vmData.id
+          ? { ...user, disabled: !user.disabled  }
+           : user
+         )
         );
-        
-        setNotification({ 
+      setNotification({ 
           type: 'success', 
           message: `VM ${!vmData.disabled ? 'disabled' : 'enabled'} successfully` 
         });
@@ -327,11 +324,10 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
   };
 
   const handleConnectToVM = async (vmData: VM) => {
-    console.log(vmData)
     try {
       // First, get JWT token
       const tokenResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/connectToDatacenterVm', {
-        Protocol: vmData.vmData?.protocol || 'RDP',
+        Protocol: vmData.vmData?.protocol || 'rdp',
         VmId: vmData.id,
         Ip: vmData.ip,
         userName: vmData.username,
@@ -366,9 +362,23 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
     }
   };
 
+  const handleConnectGroup = (vmid: string, usersInGroup: any[]) => {
+    // Navigate to VM session page with all credentials from this group
+    navigate(`/dashboard/labs/vm-session/${vmId}`, {
+      state: { 
+        guacUrl: null, // Will be set when user selects a specific VM
+        vmTitle: vm.title,
+        vmId: vmId,
+        doc: vm.lab.labguide,
+        credentials: usersInGroup,
+        isGroupConnection: true
+      }
+    });
+  };
+
   const handleSaveVM = async (vmData: VM) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/lab_ms/editClusterVmCredentials', {
+      const response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/editClusterVmCredentials', {
         id: vmData.id,
         vmName: vmData.vmName,
         username: vmData.username,
@@ -377,17 +387,14 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
         port: vmData.port,
         protocol: vmData.protocol
       });
-
       if (response.data.success) {
         // Update the user in the local state
         setUsers(prevUsers => 
-          prevUsers.map(user => ({
-            ...user,
-            vms: user.vms.map(vm => 
-              vm.id === vmData.id ? { ...vm, ...vmData } : vm
-            )
-          }))
-        );
+             prevUsers.map(user =>
+             user.id === response.data.data.id ? response.data.data : user
+           )
+      );
+
         
         return response.data;
       } else {
@@ -439,9 +446,18 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
             <div className="space-y-6">
               {Object.entries(groupedUsers).map(([vmid, usersInGroup]) => (
                 <div key={vmid} className="bg-dark-300/30 rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-primary-300 mb-4">
-                     {vmid} ({usersInGroup.length} user{usersInGroup.length !== 1 ? 's' : ''})
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-primary-300">
+                       {vmid} ({usersInGroup.length} user{usersInGroup.length !== 1 ? 's' : ''})
+                    </h3>
+                    <button
+                      onClick={() => handleConnectGroup(vmid, usersInGroup)}
+                      className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded-lg text-white font-medium text-sm transition-colors flex items-center space-x-2"
+                    >
+                      <ConnectIcon className="h-4 w-4" />
+                      <span>Connect Group</span>
+                    </button>
+                  </div>
                   
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -501,12 +517,12 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
                                   <Pencil className="h-4 w-4 text-primary-400" />
                                 </button>
                                 <button
-                                  className={`p-2 rounded-lg transition-colors ${userWithVm.vmData.disabled ? 'hover:bg-green-500/10' : 'hover:bg-red-500/10'}`}
-                                  onClick={() => handleToggleDisable(userWithVm.vmData)}
-                                  disabled={processingVm === userWithVm.vmData.id}
-                                  title={userWithVm.vmData.disabled ? 'Enable VM' : 'Disable VM'}
+                                  className={`p-2 rounded-lg transition-colors ${userWithVm.disabled ? 'hover:bg-green-500/10' : 'hover:bg-red-500/10'}`}
+                                  onClick={() => handleToggleDisable(userWithVm)}
+                                  disabled={processingVm === userWithVm.id}
+                                  title={userWithVm.disabled ? 'Enable VM' : 'Disable VM'}
                                 >
-                                  <Power className={`h-4 w-4 ${processingVm === userWithVm.vmData.id ? 'animate-pulse' : ''} ${userWithVm.vmData.disabled ? 'text-green-400' : 'text-red-400'}`} />
+                                  <Power className={`h-4 w-4 ${processingVm === userWithVm.id ? 'animate-pulse' : ''} ${userWithVm.disabled ? 'text-green-400' : 'text-red-400'}`} />
                                 </button>
                                 <button
                                   className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"

@@ -1,4 +1,3 @@
-
 import { GradientText } from '../../../../../components/ui/GradientText';
 import React, { useState } from 'react';
 import { 
@@ -9,7 +8,8 @@ import {
   Trash2,
   User,
   Calendar,
-  Clock
+  Clock,
+  Users
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -32,6 +32,7 @@ interface ClusterConfigProps {
     numberOfVMs: number;
     vms: VM[];
     users: Array<{
+      groupName: string;
       userVMs: UserVM[];
     }>;
     startDate?: string;
@@ -59,8 +60,9 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ config, onChange }
   
   // Step 2: Configure Users
   const [numberOfUsers, setNumberOfUsers] = useState(1);
-  const [users, setUsers] = useState<Array<{ userVMs: UserVM[] }>>([
+  const [users, setUsers] = useState<Array<{ groupName: string; userVMs: UserVM[] }>>([
     { 
+      groupName: 'User Group 1',
       userVMs: [
         { vmId: vms[0].id, username: '', password: '', ip: '', port: '3389' }
       ] 
@@ -160,9 +162,9 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ config, onChange }
     const renamedVMs = updatedVMs.map((vm, idx) => {
       // Only rename if it follows the pattern "VM X"
       if (/^VM \d+$/.test(vm.name)) {
-        return { ...vm, id: idx, name: `VM ${idx + 1}` };
+        return { ...vm, id: uuidv4(), name: `VM ${idx + 1}` };
       }
-      return { ...vm, id: idx };
+      return { ...vm, id: uuidv4() };
     });
     
     setVMs(renamedVMs);
@@ -214,7 +216,10 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ config, onChange }
             port: defaultPort
           };
         });
-        newUsers.push({ userVMs });
+        newUsers.push({ 
+          groupName: `User Group ${i + 1}`,
+          userVMs 
+        });
       }
       setUsers(newUsers);
     } else if (newCount < users.length) {
@@ -231,6 +236,17 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ config, onChange }
     updatedUsers.splice(userIndex, 1);
     setUsers(updatedUsers);
     setNumberOfUsers(updatedUsers.length);
+  };
+
+  // Handle user group name change
+  const handleUserGroupNameChange = (userIndex: number, groupName: string) => {
+    const updatedUsers = [...users];
+    updatedUsers[userIndex] = {
+      ...updatedUsers[userIndex],
+      groupName: groupName
+    };
+    setUsers(updatedUsers);
+    setError(null);
   };
 
   // Handle user VM field change
@@ -279,6 +295,14 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ config, onChange }
       }
     }
     
+    // Check if all user groups have names
+    for (let userIndex = 0; userIndex < users.length; userIndex++) {
+      if (!users[userIndex].groupName) {
+        setError(`Please provide a group name for User ${userIndex + 1}`);
+        return false;
+      }
+    }
+    
     // Check if all user VM fields are filled
     for (let userIndex = 0; userIndex < users.length; userIndex++) {
       const user = users[userIndex];
@@ -309,6 +333,7 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ config, onChange }
       endDate,
       endTime
     };
+    console.log(users)
     // Store in localStorage
     const storedData = JSON.parse(localStorage.getItem('formData') || '{}');
     const updatedData = { ...storedData, clusterConfig };
@@ -546,6 +571,23 @@ export const ClusterConfig: React.FC<ClusterConfigProps> = ({ config, onChange }
                         <Trash2 className="h-4 w-4" />
                       </button>
                     )}
+                  </div>
+                  
+                  {/* User Group Name Field */}
+                  <div className="mb-6">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Users className="h-4 w-4 text-blue-500" />
+                      <label className="block text-sm font-medium text-gray-300">User Group Name</label>
+                    </div>
+                    <input
+                      type="text"
+                      value={user.groupName}
+                      onChange={(e) => handleUserGroupNameChange(userIndex, e.target.value)}
+                      className="w-full px-4 py-2 bg-black border border-gray-600 rounded-lg
+                               text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      placeholder={`User Group ${userIndex + 1}`}
+                      required
+                    />
                   </div>
                   
                   <div className="space-y-6">

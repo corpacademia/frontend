@@ -9,6 +9,7 @@ interface ConvertToCatalogueModalProps {
   vmId: string;
   amiId?: string;
   isDatacenterVM?: boolean;
+  isClusterDatacenterVM?: boolean;
 }
 
 interface Organization {
@@ -128,7 +129,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   onClose,
   vmId,
   amiId,
-  isDatacenterVM = false
+  isDatacenterVM = false,
+  isClusterDatacenterVM = false,
 }) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -218,7 +220,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
       setError('Organization is required');
       return false;
     }
-    if (!isDatacenterVM) {
+    if (!isDatacenterVM && !isClusterDatacenterVM) {
       if (formData.numberOfDays < 1) {
         setError('Number of days must be at least 1');
         return false;
@@ -237,11 +239,11 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
+ console.log(vmId)
     setIsLoading(true);
     setError(null);
     setSuccess(null);
-
+    
     try {
       const org_details = await axios.post('http://localhost:3000/api/v1/organization_ms/getOrgDetails', {
         org_id: formData.organizationId
@@ -257,7 +259,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             })
             if(labUpdate.data.success){
               const orgAssignment = await axios.post('http://localhost:3000/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment',{
-                labId: vmId,
+                 labId: vmId,
                  orgId: formData.organizationId, 
                  assignedBy: admin.id, 
                  catalogueName: formData.catalogueName,
@@ -282,6 +284,25 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             throw new Error('Failed to update lab configuration');
           }
          }
+         else if(isClusterDatacenterVM){
+          const vmClusterDataCenter =  await axios.post('http://localhost:3000/api/v1/vmcluster_ms/assignToOrganization',{
+            labId:vmId,
+            orgId:formData.organizationId,
+            assignedBy:admin.id,
+            software:software.filter(s => s.trim() !== ''),
+            catalogueType:formData.catalogueType,
+            catalogueName:formData.catalogueName
+          })
+           if (vmClusterDataCenter.data.success) {
+            setSuccess('Successfully converted to catalogue');
+            setTimeout(() => {
+              onClose();
+            }, 2000);
+          } else {
+            throw new Error('Failed to update lab configuration');
+          }
+         }
+
         else{
            const batch = await axios.post('http://localhost:3000/api/v1/lab_ms/batchAssignment', {
           lab_id: vmId,
@@ -395,7 +416,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
               </div>
             </div>
 
-            {!isDatacenterVM && (
+            {(!isDatacenterVM && !isClusterDatacenterVM) && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div>

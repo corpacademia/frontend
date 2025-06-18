@@ -133,7 +133,6 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
     if (config.platform === 'datacenter') {
       setIsLoading(true);
       const data = JSON.parse(localStorage.getItem("formData") || "{}");
-      console.log(data)
       try {
         // Make API call for datacenter platform
         const response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/createVMClusterDatacenterLab', {
@@ -143,7 +142,7 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
         
         if (response.data.success) {
           // Navigate to cloud VMs page on success
-          window.location.href = '/dashboard/labs/cloud-vms';
+          window.location.href = '/dashboard/labs/cluster';
           return;
         } else {
           return;

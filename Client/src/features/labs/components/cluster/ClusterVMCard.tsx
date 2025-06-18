@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../../../store/authStore';
@@ -79,6 +78,14 @@ interface UserCredential {
   password: string;
   ip: string;
   port: string;
+  protocol: string;
+  groupName?: string;
+  vmName?: string;
+}
+
+interface VMConfig {
+  id: string;
+  name: string;
   protocol: string;
 }
 
@@ -168,7 +175,6 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   
-  console.log(vm)
   // Edit lab modal states
   const [isEditLabModalOpen, setIsEditLabModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -177,15 +183,21 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
     startDate: new Date(vm.lab.startdate),
     endDate: new Date(vm.lab.enddate),
     credentials: [] as UserCredential[],
-    software: vm.software || [],
-    labGuide: vm.labguide || '',
-    userGuide: vm.userguide || ''
+    vmConfigs: [] as VMConfig[],
+    software: vm.lab.software || [],
+    labGuide: vm.lab.labguide || '',
+    userGuide: vm.lab.userguide || ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [editNotification, setEditNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [labGuideFile, setLabGuideFile] = useState<File | null>(null);
   const [userGuideFile, setUserGuideFile] = useState<File | null>(null);
-
+  // Add VM modal states
+  const [isAddVMModalOpen, setIsAddVMModalOpen] = useState(false);
+  const [newVMConfig, setNewVMConfig] = useState({
+    name: '',
+    protocol: 'RDP'
+  });
 
   function formatDate(dateString: string) {
     const date = new Date(dateString);
@@ -220,7 +232,8 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await axios.delete(`http://localhost:3000/api/v1/lab_ms/deleteClusterLab/${vm.lab_id}`);
+      console.log(vm)
+      const response = await axios.delete(`http://localhost:3000/api/v1/vmcluster_ms/deleteClusterLab/${vm?.lab?.labid}`);
       
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Cluster VM deleted successfully' });
@@ -235,26 +248,54 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
         type: 'error',
         message: error.response?.data?.message || 'Failed to delete cluster VM'
       });
+      setTimeout(()=>{
+        setNotification(null)
+      },1500)
     } finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
     }
   };
 
-  // Initialize edit form data with user credentials
+  // Initialize edit form data with user credentials and VM configs
   useEffect(() => {
     if (vm.users && vm.users.length > 0) {
-     const credentials = vm.users.map(vmItem => ({
-  id: vmItem.id,
-  username: vmItem.username,
-  password: vmItem.password,
-  ip: vmItem.ip,
-  port: vmItem.port,
-  protocol: vmItem.protocol || 'RDP'
-}));
+      const credentials = vm.users.map(vmItem => ({
+        id: vmItem.id,
+        username: vmItem.username,
+        password: vmItem.password,
+        ip: vmItem.ip,
+        port: vmItem.port,
+        protocol: vmItem.protocol || 'RDP',
+        groupName: vmItem.usergroup || '',
+        vmName: vm.vms.find(vm => vm.vmid === vmItem.vmid)?.vmname || ''
+      }));
+      
+      // Extract unique VM configurations from existing credentials
+      const vmConfigs: VMConfig[] = [];
+      const seenVMs = new Set();
+      
+   vm.users.forEach(user => {
+  const matchedVM = vm.vms.find(vmItem => vmItem.vmid === user.vmid);
+
+  if (matchedVM) {
+    const vmKey = `${matchedVM.vmname}-${matchedVM.protocol}`;
+    if (!seenVMs.has(vmKey)) {
+      seenVMs.add(vmKey);
+      vmConfigs.push({
+        id: user.vmid || uuidv4(),
+        name: matchedVM.vmname || '',
+        protocol: matchedVM.protocol
+      });
+    }
+  }
+});
+
+
       setEditFormData(prev => ({
         ...prev,
-        credentials: credentials
+        credentials: credentials,
+        vmConfigs: vmConfigs
       }));
     } else {
       // Add a default empty credential if none exist
@@ -265,8 +306,11 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
           password: '',
           ip: '',
           port: '',
-          protocol: 'RDP'
-        }]
+          protocol: 'RDP',
+          groupName: '',
+          vmName: ''
+        }],
+        vmConfigs: []
       }));
     }
   }, [vm.users]);
@@ -283,6 +327,99 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
     });
   };
 
+  const handleVMConfigChange = (index: number, field: keyof Omit<VMConfig, 'id'>, value: string) => {
+    const updatedVMConfigs = [...editFormData.vmConfigs];
+    updatedVMConfigs[index] = {
+      ...updatedVMConfigs[index],
+      [field]: value
+    };
+    
+    // Update default port for this VM in all credentials
+    if (field === 'protocol') {
+      const defaultPort = value === 'RDP' ? '3389' : value === 'SSH' ? '22' : '5900';
+      const vmName = updatedVMConfigs[index].name;
+      
+      const updatedCredentials = editFormData.credentials.map(cred => 
+        cred.vmName === vmName 
+          ? { ...cred, port: defaultPort, protocol: value }
+          : cred
+      );
+      
+      setEditFormData({
+        ...editFormData,
+        vmConfigs: updatedVMConfigs,
+        credentials: updatedCredentials
+      });
+    } else {
+      setEditFormData({
+        ...editFormData,
+        vmConfigs: updatedVMConfigs
+      });
+    }
+  };
+
+  const handleAddVMConfig = () => {
+    setIsAddVMModalOpen(true);
+  };
+
+  const handleRemoveVMConfig = (index: number) => {
+    const vmToRemove = editFormData.vmConfigs[index];
+    const updatedVMConfigs = [...editFormData.vmConfigs];
+    updatedVMConfigs.splice(index, 1);
+    
+    // Remove all credentials associated with this VM
+    const updatedCredentials = editFormData.credentials.filter(
+      cred => cred.vmName !== vmToRemove.name
+    );
+    
+    setEditFormData({
+      ...editFormData,
+      vmConfigs: updatedVMConfigs,
+      credentials: updatedCredentials
+    });
+  };
+
+  const handleConfirmAddVM = () => {
+    if (!newVMConfig.name.trim()) return;
+    
+    const newVM: VMConfig = {
+      id: uuidv4(),
+      name: newVMConfig.name,
+      protocol: newVMConfig.protocol
+    };
+    
+    // Get unique group names from existing credentials
+    const existingGroups = [...new Set(editFormData.credentials.map(cred => cred.groupName).filter(Boolean))];
+    
+    // If no groups exist, create a default one
+    const groupsToUse = existingGroups.length > 0 ? existingGroups : ['User Group 1'];
+    
+    // Create credentials for each group for this new VM
+    const defaultPort = newVMConfig.protocol === 'RDP' ? '3389' : 
+                       newVMConfig.protocol === 'SSH' ? '22' : '5900';
+    
+    const newCredentials = groupsToUse.map(groupName => ({
+      id: uuidv4(),
+      username: '',
+      password: '',
+      ip: '',
+      port: defaultPort,
+      protocol: newVMConfig.protocol,
+      groupName: groupName,
+      vmName: newVMConfig.name
+    }));
+    
+    setEditFormData({
+      ...editFormData,
+      vmConfigs: [...editFormData.vmConfigs, newVM],
+      credentials: [...editFormData.credentials, ...newCredentials]
+    });
+    
+    // Reset modal state
+    setNewVMConfig({ name: '', protocol: 'RDP' });
+    setIsAddVMModalOpen(false);
+  };
+
   const handleAddCredential = () => {
     setEditFormData({
       ...editFormData,
@@ -294,7 +431,9 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
           password: '',
           ip: '',
           port: '',
-          protocol: 'RDP'
+          protocol: 'RDP',
+          groupName: '',
+          vmName: ''
         }
       ]
     });
@@ -359,7 +498,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       
       // Create FormData for file uploads
       const formData = new FormData();
-      formData.append('labId', vm.lab_id);
+      formData.append('labId', vm.lab.labid);
       formData.append('title', editFormData.title);
       formData.append('description', editFormData.description);
       formData.append('startDate', formattedStartDate);
@@ -367,6 +506,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       const software = editFormData.software.filter(s => s.trim() !== '');
       formData.append('software', JSON.stringify(software));
       formData.append('credentials', JSON.stringify(editFormData.credentials));
+      formData.append('vmConfigs', JSON.stringify(editFormData.vmConfigs));
  
       // Always include existing file references if available
       if (editFormData.labGuide) {
@@ -383,7 +523,6 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       if (userGuideFile) {
         formData.append('userGuide', userGuideFile);
       }
-
       // Update lab details
       const labResponse = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/updateClusterLab', formData, {
         headers: {
@@ -404,6 +543,9 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
         type: 'error',
         message: error.response?.data?.message || 'Failed to update lab'
       });
+      setTimeout(()=>{
+        setEditNotification(null);
+      },1500)
     } finally {
       setIsEditing(false);
     }
@@ -425,10 +567,15 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
     return vm.lab.user_id === currentUser.id;
   };
 
-  //give all the protocols
-  const returnAllProtocols = ()=>{
-
-  }
+  // Group credentials by VM name for better organization
+  const groupedCredentials = editFormData.credentials.reduce((acc, cred, index) => {
+    const vmName = cred.vmName || 'Unassigned';
+    if (!acc[vmName]) {
+      acc[vmName] = [];
+    }
+    acc[vmName].push({ ...cred, originalIndex: index });
+    return acc;
+  }, {} as Record<string, Array<UserCredential & { originalIndex: number }>>);
   return (
     <>
       <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-secondary-500/10 
@@ -588,14 +735,82 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       <ConvertToCatalogueModal
         isOpen={isConvertModalOpen}
         onClose={() => setIsConvertModalOpen(false)}
-        vmId={vm?.lab_id}
-        isDatacenterVM={true}
+        vmId={vm?.lab?.labid}
+        isClusterDatacenterVM={true}
       />
+
+      {/* Add VM Modal */}
+      {isAddVMModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
+          <div className="bg-dark-200 rounded-lg w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">
+                <GradientText>Add VM Configuration</GradientText>
+              </h2>
+              <button 
+                onClick={() => setIsAddVMModalOpen(false)}
+                className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  VM Name
+                </label>
+                <input
+                  type="text"
+                  value={newVMConfig.name}
+                  onChange={(e) => setNewVMConfig({...newVMConfig, name: e.target.value})}
+                  placeholder="Enter VM name"
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Protocol
+                </label>
+                <select
+                  value={newVMConfig.protocol}
+                  onChange={(e) => setNewVMConfig({...newVMConfig, protocol: e.target.value})}
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                >
+                  <option value="RDP">RDP</option>
+                  <option value="SSH">SSH</option>
+                  <option value="VNC">VNC</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-4 mt-6">
+              <button
+                onClick={() => setIsAddVMModalOpen(false)}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmAddVM}
+                disabled={!newVMConfig.name.trim()}
+                className="btn-primary"
+              >
+                Add VM & Generate Credentials
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Lab Modal */}
       {isEditLabModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-dark-200 rounded-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-dark-200 rounded-lg w-full max-w-4xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold">
                 <GradientText>Edit Lab</GradientText>
@@ -627,7 +842,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Lab Title
@@ -688,6 +903,64 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                 </div>
               </div>
 
+              {/* VM Configurations Section */}
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <label className="block text-sm font-medium text-gray-300">
+                    VM Configurations
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddVMConfig}
+                    className="text-sm text-primary-400 hover:text-primary-300 flex items-center"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add VM
+                  </button>
+                </div>
+                
+                {editFormData.vmConfigs.map((vmConfig, index) => (
+                  <div key={vmConfig.id} className="p-4 bg-dark-300/50 rounded-lg mb-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-sm font-medium text-gray-300">VM {index + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVMConfig(index)}
+                        className="p-1 hover:bg-red-500/10 rounded-lg text-red-400"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">VM Name</label>
+                        <input
+                          type="text"
+                          value={vmConfig.name}
+                          onChange={(e) => handleVMConfigChange(index, 'name', e.target.value)}
+                          className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                   text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Protocol</label>
+                        <select
+                          value={vmConfig.protocol}
+                          onChange={(e) => handleVMConfigChange(index, 'protocol', e.target.value)}
+                          className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                   text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                        >
+                          <option value="RDP">RDP</option>
+                          <option value="SSH">SSH</option>
+                          <option value="VNC">VNC</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               {/* Software Section */}
               <div>
                 <div className="flex justify-between items-center mb-2">
@@ -732,28 +1005,30 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                     Lab Guide
                   </label>
                   <div className="flex flex-col space-y-2">
-                    {vm.labguide && editFormData.labGuide && (
-                      <div className="flex items-center justify-between p-2 bg-dark-300/50 rounded-lg">
-                        <span className="text-sm text-gray-300 truncate">{extractFileName(editFormData.labGuide)}</span>
-                        <div className="flex items-center space-x-1">
-                          <a 
-                            href={`http://localhost:3000/uploads/${extractFileName(editFormData.labGuide)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1 hover:bg-primary-500/10 rounded-lg"
-                          >
-                            <Download className="h-4 w-4 text-primary-400" />
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => setEditFormData({...editFormData, labGuide: ''})}
-                            className="p-1 hover:bg-red-500/10 rounded-lg"
-                          >
-                            <X className="h-4 w-4 text-red-400" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                    {vm.lab.labguide && editFormData.labGuide.map((labguide)=>(
+                                          (
+                                          <div className="flex items-center justify-between p-2 bg-dark-300/50 rounded-lg">
+                                            <span className="text-sm text-gray-300 truncate">{extractFileName(labguide)}</span>
+                                            <div className="flex items-center space-x-1">
+                                              <a 
+                                                href={`http://localhost:3000/uploads/${extractFileName(labguide)}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-1 hover:bg-primary-500/10 rounded-lg"
+                                              >
+                                                <Download className="h-4 w-4 text-primary-400" />
+                                              </a>
+                                              <button
+                                                type="button"
+                                                onClick={() => setEditFormData({...editFormData, labGuide: []})}
+                                                className="p-1 hover:bg-red-500/10 rounded-lg"
+                                              >
+                                                <X className="h-4 w-4 text-red-400" />
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )
+                                        ))}
                     <div className="flex items-center space-x-2">
                       <input
                         type="file"
@@ -780,12 +1055,12 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                     User Guide
                   </label>
                   <div className="flex flex-col space-y-2">
-                    {vm.userguide && editFormData.userGuide && (
+                    {vm.lab.userguide && editFormData.userGuide.map  ((userguide)=>(
                       <div className="flex items-center justify-between p-2 bg-dark-300/50 rounded-lg">
-                        <span className="text-sm text-gray-300 truncate">{extractFileName(editFormData.userGuide)}</span>
+                        <span className="text-sm text-gray-300 truncate">{extractFileName(userguide)}</span>
                         <div className="flex items-center space-x-1">
                           <a 
-                            href={`http://localhost:3000/uploads/${extractFileName(editFormData.userGuide)}`}
+                            href={`http://localhost:3000/uploads/${extractFileName(userguide)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 hover:bg-primary-500/10 rounded-lg"
@@ -801,7 +1076,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                           </button>
                         </div>
                       </div>
-                    )}
+                    ))}
                     <div className="flex items-center space-x-2">
                       <input
                         type="file"
@@ -824,8 +1099,9 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                 </div>
               </div>
 
+              {/* User Credentials Section - Organized by VM */}
               <div>
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex justify-between items-center mb-4">
                   <label className="block text-sm font-medium text-gray-300">
                     User Credentials
                   </label>
@@ -835,80 +1111,103 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                     className="text-sm text-primary-400 hover:text-primary-300 flex items-center"
                   >
                     <Plus className="h-4 w-4 mr-1" />
-                    Add Credential
+                    Add Individual Credential
                   </button>
                 </div>
                 
-                {editFormData.credentials.map((cred, index) => (
-                  <div key={index} className="p-4 bg-dark-300/50 rounded-lg mb-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="text-sm font-medium text-gray-300">Credential {index + 1}</h4>
-                      {editFormData.credentials.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveCredential(index)}
-                          className="p-1 hover:bg-red-500/10 rounded-lg text-red-400"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
+                {Object.entries(groupedCredentials).map(([vmName, credentials]) => (
+                  <div key={vmName} className="mb-6">
+                    <h3 className="text-md font-medium text-gray-200 mb-3 flex items-center">
+                      <Server className="h-4 w-4 mr-2 text-primary-400" />
+                      {vmName}
+                    </h3>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Username</label>
-                        <input
-                          type="text"
-                          value={cred.username}
-                          onChange={(e) => handleCredentialChange(index, 'username', e.target.value)}
-                          className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                                   text-gray-300 focus:border-primary-500/40 focus:outline-none"
-                        />
+                    {credentials.map((cred) => (
+                      <div key={cred.originalIndex} className="p-4 bg-dark-300/50 rounded-lg mb-4">
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="text-sm font-medium text-gray-300">
+                            {cred.groupName || 'Unnamed Group'}
+                          </h4>
+                          {editFormData.credentials.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveCredential(cred.originalIndex)}
+                              className="p-1 hover:bg-red-500/10 rounded-lg text-red-400"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">User Group Name</label>
+                            <input
+                              type="text"
+                              value={cred.groupName || ''}
+                              onChange={(e) => handleCredentialChange(cred.originalIndex, 'groupName', e.target.value)}
+                              placeholder="Enter user group name"
+                              className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">VM Name</label>
+                            <select
+                              value={cred.vmName || ''}
+                              onChange={(e) => handleCredentialChange(cred.originalIndex, 'vmName', e.target.value)}
+                              className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                            >
+                              <option value="">Select VM</option>
+                              {editFormData.vmConfigs.map((vm) => (
+                                <option key={vm.id} value={vm.name}>{vm.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">Username</label>
+                            <input
+                              type="text"
+                              value={cred.username}
+                              onChange={(e) => handleCredentialChange(cred.originalIndex, 'username', e.target.value)}
+                              className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">Password</label>
+                            <input
+                              type="text"
+                              value={cred.password}
+                              onChange={(e) => handleCredentialChange(cred.originalIndex, 'password', e.target.value)}
+                              className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">IP Address</label>
+                            <input
+                              type="text"
+                              value={cred.ip}
+                              onChange={(e) => handleCredentialChange(cred.originalIndex, 'ip', e.target.value)}
+                              className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-400 mb-1">Port</label>
+                            <input
+                              type="text"
+                              value={cred.port}
+                              onChange={(e) => handleCredentialChange(cred.originalIndex, 'port', e.target.value)}
+                              className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Password</label>
-                        <input
-                          type="text"
-                          value={cred.password}
-                          onChange={(e) => handleCredentialChange(index, 'password', e.target.value)}
-                          className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                                   text-gray-300 focus:border-primary-500/40 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">IP Address</label>
-                        <input
-                          type="text"
-                          value={cred.ip}
-                          onChange={(e) => handleCredentialChange(index, 'ip', e.target.value)}
-                          className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                                   text-gray-300 focus:border-primary-500/40 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Port</label>
-                        <input
-                          type="text"
-                          value={cred.port}
-                          onChange={(e) => handleCredentialChange(index, 'port', e.target.value)}
-                          className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                                   text-gray-300 focus:border-primary-500/40 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 mb-1">Protocol</label>
-                        <select
-                          value={cred.protocol || 'RDP'}
-                          onChange={(e) => handleCredentialChange(index, 'protocol', e.target.value)}
-                          className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                                   text-gray-300 focus:border-primary-500/40 focus:outline-none"
-                        >
-                          <option value="RDP">RDP</option>
-                          <option value="SSH">SSH</option>
-                          <option value="VNC">VNC</option>
-                        </select>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 ))}
               </div>
