@@ -538,7 +538,8 @@ export const MyLabs: React.FC = () => {
 
     try {
       const instanceId = cloudInstanceDetails?.instance_id;
-
+      console.log('Instance ID:', instanceId);
+      console.log(isStop)
       if (isStop) {
         const stop =await axios.post('http://localhost:3000/api/v1/aws_ms/stopInstance', {
           instance_id: instanceId

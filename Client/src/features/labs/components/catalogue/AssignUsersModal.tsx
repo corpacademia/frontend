@@ -145,6 +145,9 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
       }
     }
 
+    else if(type === 'cluster'){
+    }
+
     else{
      const response = await axios.post('http://localhost:3000/api/v1/lab_ms/assignlab', {
         lab: lab?.lab_id,
