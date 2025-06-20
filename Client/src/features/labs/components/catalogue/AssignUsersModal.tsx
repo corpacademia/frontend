@@ -146,6 +146,24 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
     }
 
     else if(type === 'cluster'){
+      const response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/assignCluster', {
+        labId: lab?.labid,
+        userId: selectedUsers,
+        assignedBy: admin.id,
+        startDate: lab?.startdate,
+        endDate: lab?.enddate,
+        orgId:users[0]?.org_id
+      });
+      if (response.data.success) {
+        setNotification({ type: 'success', message: 'Lab assigned successfully' });
+        setTimeout(() => {
+          setNotification(null);
+          onClose();
+          setSelectedUsers([]);
+        }, 3000);
+      } else {
+        throw new Error(response.data.message || 'Failed to assign lab');
+      }
     }
 
     else{

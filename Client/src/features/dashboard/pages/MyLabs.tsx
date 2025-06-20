@@ -8,6 +8,7 @@ import {
 import axios from 'axios';
 import { CloudSliceCard } from '../../labs/components/user/CloudSliceCard';
 import { DatacenterVMCard } from '../../labs/components/user/DatacenterVMCard';
+import { VMClusterSingleVMCard } from '../../labs/components/user/VMClusterSingleVMCard';
 import { useNavigate } from 'react-router-dom';
 
 interface Instance {
@@ -179,9 +180,11 @@ export const MyLabs: React.FC = () => {
   const [labs, setLabs] = useState([]);
   const [cloudSliceLabs, setCloudSliceLabs] = useState([]);
   const [datacenterVMs, setDatacenterVMs] = useState([]);
+  const [clusterVMs, setClusterVMs] = useState([]);
   const [filteredLabs, setFilteredLabs] = useState([]);
   const [filteredCloudSliceLabs, setFilteredCloudSliceLabs] = useState([]);
   const [filteredDatacenterVMs, setFilteredDatacenterVMs] = useState([]);
+  const [filteredClusterVMs, setFilteredClusterVMs] = useState([]);
   const [labStatus, setLabStatus] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [cloudInstanceDetails, setCloudInstanceDetails] = useState<LabDetails | undefined>(undefined);
@@ -319,6 +322,44 @@ export const MyLabs: React.FC = () => {
         console.error('Error fetching datacenter VMs:', err);
       }
 
+      // Fetch cluster VMs
+      try {
+        const res = await axios.post(
+          `http://localhost:3000/api/v1/vmcluster_ms/getUserAssignedClusterLabs/${user.id}`
+        );
+        if (res.data.success) {
+          const clusterDetails = await Promise.all(
+            res.data.data.map(async (assignment: any) => {
+              try {
+                const clusterRes = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/getClusterLabOnId', {
+                  labId: assignment.labid,
+                });
+
+                if (clusterRes.data.success) {
+                  const usersRes = await axios.post(
+                    'http://localhost:3000/api/v1/vmcluster_ms/getUserAssignedClusterCredsToUser',
+                    { labId: assignment.labid, userId: user.id }
+                  );
+
+                  return {
+                    ...clusterRes.data.data[0],
+                    users: usersRes.data.success ? usersRes.data.data : [],
+                  };
+                }
+              } catch (err) {
+                console.error(`Error fetching cluster/creds for lab ${assignment.labid}:`, err);
+              }
+              return null;
+            })
+          );
+          const cleanClusters = clusterDetails.filter(Boolean);
+          setClusterVMs(cleanClusters);
+          setFilteredClusterVMs(cleanClusters);
+        }
+      } catch (err) {
+        console.error('Error fetching cluster VMs:', err);
+      }
+
       // Optional: Check status of each lab
       for (const lab of updatedLabs) {
         try {
@@ -408,7 +449,28 @@ export const MyLabs: React.FC = () => {
     }
     
     setFilteredDatacenterVMs(datacenterResult);
-  }, [filters, labs, labStatus, cloudSliceLabs, datacenterVMs]);
+
+    // Filter cluster VMs
+    let clusterResult = [...clusterVMs];
+    
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      clusterResult = clusterResult.filter(lab => 
+        lab.lab?.title?.toLowerCase().includes(searchTerm) ||
+        lab.title?.toLowerCase().includes(searchTerm) ||
+        (lab.lab?.description && lab.lab.description.toLowerCase().includes(searchTerm)) ||
+        (lab.description && lab.description.toLowerCase().includes(searchTerm))
+      );
+    }
+    
+    if (filters.status) {
+      clusterResult = clusterResult.filter(lab => 
+        lab.lab?.status === filters.status || lab.status === filters.status
+      );
+    }
+    
+    setFilteredClusterVMs(clusterResult);
+  }, [filters, labs, labStatus, cloudSliceLabs, datacenterVMs, clusterVMs]);
 
   const checkLabStatus = async (labId: string) => {
     try {
@@ -832,18 +894,18 @@ export const MyLabs: React.FC = () => {
       </div>
 
       {/* Lab Cards */}
-      {filteredLabs.length === 0 && filteredCloudSliceLabs.length === 0 && filteredDatacenterVMs.length === 0 ? (
+      {filteredLabs.length === 0 && filteredCloudSliceLabs.length === 0 && filteredDatacenterVMs.length === 0 && filteredClusterVMs.length === 0 ? (
         <div className="flex flex-col items-center justify-center min-h-[400px] glass-panel">
           <FolderX className="h-16 w-16 text-gray-400 mb-4" />
           <h2 className="text-xl font-semibold mb-2">
             <GradientText>No Labs Found</GradientText>
           </h2>
           <p className="text-gray-400 text-center max-w-md mb-6">
-            {labs.length === 0 && cloudSliceLabs.length === 0 && datacenterVMs.length === 0
+            {labs.length === 0 && cloudSliceLabs.length === 0 && datacenterVMs.length === 0 && clusterVMs.length === 0
               ? "You haven't been assigned any labs yet. Check out our lab catalogue to get started."
               : "No labs match your current filters. Try adjusting your search criteria."}
           </p>
-          {labs.length === 0 && cloudSliceLabs.length === 0 && datacenterVMs.length === 0 && (
+          {labs.length === 0 && cloudSliceLabs.length === 0 && datacenterVMs.length === 0 && clusterVMs.length === 0 && (
             <a 
               href="/dashboard/labs/catalogue"
               className="btn-primary"
@@ -998,6 +1060,23 @@ export const MyLabs: React.FC = () => {
                     key={vm.id} 
                     lab={vm}
                     onDelete={handleDeleteDatacenterVM}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cluster VMs */}
+          {filteredClusterVMs.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">
+                <GradientText>VM Cluster Labs</GradientText>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredClusterVMs.map((cluster) => (
+                  <VMClusterSingleVMCard 
+                    key={cluster.id} 
+                    vm={cluster}
                   />
                 ))}
               </div>
