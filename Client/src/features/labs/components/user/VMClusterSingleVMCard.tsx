@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import {
   Server,
   Users,
@@ -10,7 +11,8 @@ import {
   LinkIcon,
   Check,
   AlertCircle,
-  Loader
+  Loader,
+  Trash2
 } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { ClusterUserListModalForUser } from './ClusterUserListModalForUser';
@@ -53,6 +55,8 @@ interface VMClusterSingleVMCardProps {
 export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm, onDelete }) => {
   const navigate = useNavigate();
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLaunching, setIsLaunching] = useState(false);
   const [notification, setNotification] = useState<{
     type: "success" | "error";
@@ -80,6 +84,38 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
 
   const handleStartLab = () => {
     setIsUserListModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await axios.delete(
+        `http://localhost:3000/api/v1/vmcluster_ms/deleteClusterLab/${vm?.lab?.labid || vm?.lab_id || vm?.id}`
+      );
+
+      if (response.data.success) {
+        setNotification({
+          type: "success",
+          message: "Lab deleted successfully",
+        });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        throw new Error(response.data.message || "Failed to delete lab");
+      }
+    } catch (error: any) {
+      setNotification({
+        type: "error",
+        message: error.response?.data?.message || "Failed to delete lab",
+      });
+      setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+    }
   };
 
   return (
@@ -118,6 +154,18 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
               </p>
             </div>
             <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setIsDeleteModalOpen(true)}
+                disabled={isDeleting}
+                className="p-1.5 hover:bg-red-500/20 rounded-lg transition-colors"
+                title="Delete Lab"
+              >
+                {isDeleting ? (
+                  <Loader className="h-4 w-4 text-red-400 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 text-red-400" />
+                )}
+              </button>
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full ${
                   vm.lab?.status === "active" || vm.status === "active"
@@ -223,6 +271,53 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
           vmTitle={vm.lab?.title || vm.title}
           vm={vm}
         />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-dark-200 rounded-xl p-6 w-full max-w-md mx-4 border border-secondary-500/20">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="flex-shrink-0 w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                <Trash2 className="h-5 w-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-white">Delete Lab</h3>
+                <p className="text-sm text-gray-400">This action cannot be undone</p>
+              </div>
+            </div>
+            
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to delete <strong>{vm.lab?.title || vm.title}</strong>? 
+              This will permanently remove the lab and all associated data.
+            </p>
+            
+            <div className="flex justify-end space-x-4">
+              <button
+                type="button"
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors flex items-center"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader className="animate-spin h-4 w-4 mr-2" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Lab"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
