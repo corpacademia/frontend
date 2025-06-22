@@ -19,7 +19,7 @@ import { ClusterUserListModalForUser } from './ClusterUserListModalForUser';
 
 interface ClusterVM {
   id: string;
-  lab_id: string;
+  labid: string;
   title: string;
   description: string;
   platform: string;
@@ -50,9 +50,10 @@ interface ClusterVM {
 interface VMClusterSingleVMCardProps {
   vm: ClusterVM;
   onDelete?: (labId: string) => void;
+  user?:any;
 }
 
-export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm, onDelete }) => {
+export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm, onDelete ,user}) => {
   const navigate = useNavigate();
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -89,8 +90,12 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await axios.delete(
-        `http://localhost:3000/api/v1/vmcluster_ms/deleteClusterLab/${vm?.lab?.labid || vm?.lab_id || vm?.id}`
+      const response = await axios.post(
+        `http://localhost:3000/api/v1/vmcluster_ms/deleteClusterLab`,{
+          labId:vm?.lab?.labid,
+          orgId:user?.org_id,
+          userId:user?.id
+        }
       );
 
       if (response.data.success) {

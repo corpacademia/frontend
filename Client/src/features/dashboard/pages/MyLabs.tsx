@@ -1077,6 +1077,7 @@ export const MyLabs: React.FC = () => {
                   <VMClusterSingleVMCard 
                     key={cluster.id} 
                     vm={cluster}
+                    user={user}
                   />
                 ))}
               </div>
