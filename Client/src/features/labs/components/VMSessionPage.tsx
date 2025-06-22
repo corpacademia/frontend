@@ -192,7 +192,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       });
 
       if (tokenResponse.data.success && tokenResponse.data.token) {
-        const newGuacUrl = `http://43.204.220.7:8080/guacamole/#/?token=${tokenResponse.data.token.result}`;
+        const newGuacUrl = `https://dcweb.golabing.ai/guacamole/#/?token=${tokenResponse.data.token.result}`;
         setActiveGuacUrl(newGuacUrl);
         setSelectedCredential(credential);
         setVmListCollapsed(true); // Collapse VM list when connecting

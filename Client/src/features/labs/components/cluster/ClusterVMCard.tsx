@@ -241,8 +241,43 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
 
   const handleDelete = async () => {
     setIsDeleting(true);
-    try {
-      console.log(vm);
+    if(!canEditContent()){
+      try {
+      const response = await axios.post(
+        `http://localhost:3000/api/v1/vmcluster_ms/deleteFromOrganization`,{
+          labId: vm?.lab?.labid,
+          orgId: currentUser?.org_id,
+          adminId: currentUser?.id
+        }
+      );
+
+      if (response.data.success) {
+        setNotification({
+          type: "success",
+          message: "Cluster VM deleted successfully",
+        });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        throw new Error(response.data.message || "Failed to delete cluster VM");
+      }
+    } 
+    catch (error: any) {
+      setNotification({
+        type: "error",
+        message: error.response?.data?.message || "Failed to delete cluster VM",
+      });
+      setTimeout(() => {
+        setNotification(null);
+      }, 1500);
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+    }
+    }
+    else{
+         try {
       const response = await axios.delete(
         `http://localhost:3000/api/v1/vmcluster_ms/deleteClusterLab/${vm?.lab?.labid}`,
       );
@@ -258,7 +293,8 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       } else {
         throw new Error(response.data.message || "Failed to delete cluster VM");
       }
-    } catch (error: any) {
+    } 
+    catch (error: any) {
       setNotification({
         type: "error",
         message: error.response?.data?.message || "Failed to delete cluster VM",
@@ -270,6 +306,8 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
     }
+    }
+   
   };
 
   // Initialize edit form data with user credentials and VM configs

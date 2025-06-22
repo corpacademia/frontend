@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
@@ -232,13 +233,13 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
       
       <div className="p-4 flex flex-col h-full">
         <div className="flex justify-between items-start gap-4 mb-3">
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold mb-1">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold mb-1 truncate">
               <GradientText>{lab.title}</GradientText>
             </h3>
             <p className="text-sm text-gray-400 line-clamp-2">{lab.description}</p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <button
               onClick={handleDeleteClick}
               disabled={isDeleting}
@@ -262,7 +263,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-4 mb-3">
           <div className="flex items-center text-sm text-gray-400">
             <Cloud className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
             <span className="truncate">{lab.provider.toUpperCase()}</span>
@@ -273,18 +274,18 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
           </div>
         </div>
         
-        <div className="grid grid-cols-1 gap-1 mb-4">
+        <div className="grid grid-cols-2 gap-2 mb-3">
           <div className="flex items-center text-sm text-gray-400">
-            <Calendar className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
-            <span className="truncate">Start: {formatDateTime(lab.startdate)}</span>
+            <Calendar className="h-4 w-4 mr-1 text-primary-400 flex-shrink-0" />
+            <span className="truncate text-xs">Start: {formatDateTime(lab.startdate)}</span>
           </div>
           <div className="flex items-center text-sm text-gray-400">
-            <Calendar className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
-            <span className="truncate">End: {formatDateTime(lab.enddate)}</span>
+            <Calendar className="h-4 w-4 mr-1 text-primary-400 flex-shrink-0" />
+            <span className="truncate text-xs">End: {formatDateTime(lab.enddate)}</span>
           </div>
         </div>
 
-        <div className="flex items-center text-sm text-gray-400 mb-4">
+        <div className="flex items-center text-sm text-gray-400 mb-3">
           {lab.modules === 'with-modules' ? (
             <Layers className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
           ) : (
@@ -295,7 +296,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
           </span>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 flex-grow">
           <h4 className="text-sm font-medium text-gray-400 mb-2">Services:</h4>
           <div className="flex flex-wrap gap-2">
             {lab.services.map((service, index) => (
@@ -310,7 +311,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
           <button
             onClick={handleLaunch}
             disabled={isLaunching}
-            className="w-full px-4 py-2 rounded-lg text-sm font-medium
+            className="w-full h-9 px-4 rounded-lg text-sm font-medium
                      bg-gradient-to-r from-primary-500 to-secondary-500
                      hover:from-primary-400 hover:to-secondary-400
                      transform hover:scale-105 transition-all duration-300
