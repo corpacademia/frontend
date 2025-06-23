@@ -108,7 +108,7 @@ export const useSignupForm = () => {
     } catch (error) {
       setErrors(prev => ({
         ...prev,
-        submit: 'Failed to create account. Please try again.',
+        submit: error?.response?.data?.error || 'Failed to create account. Please try again.',
       }));
     } finally {
       setLoading(false);

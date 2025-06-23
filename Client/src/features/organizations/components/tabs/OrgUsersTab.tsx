@@ -142,7 +142,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
             >
               <option value="user">User</option>
               <option value="trainer">Trainer</option>
-              <option value="admin">Admin</option>
+              <option value="orgadmin">Admin</option>
             </select>
           </div>
 
@@ -259,7 +259,7 @@ const ViewUserModal: React.FC<ViewUserModalProps> = ({ isOpen, onClose, user }) 
           <div>
             <label className="block text-sm text-gray-400">Role</label>
             <span className={`inline-block px-2 py-1 text-sm font-medium rounded-full ${
-              user.role === 'admin' ? 'bg-primary-500/20 text-primary-300' :
+              user.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
               user.role === 'trainer' ? 'bg-accent-500/20 text-accent-300' :
               'bg-secondary-500/20 text-secondary-300'
             }`}>
