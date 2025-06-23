@@ -14,34 +14,23 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   allowedRoles = [],
 }) => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, fetchUser } = useAuthStore();
   const location = useLocation();
-useEffect(() => {
-  const getUserDetails = async () => {
-    const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile', {
-      withCredentials: true,
-    });
-  if (!response.data.user) {
+
+  useEffect(() => {
+    // Try to fetch user details if not authenticated
+    if (!isAuthenticated) {
+      fetchUser();
+    }
+  }, [isAuthenticated, fetchUser]);
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles.length < 0 && user && !allowedRoles.includes(user.role)) {
+  if (allowedRoles.length > 0 && user && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
-
-    }
-    getUserDetails();
-}, []);
-
-  // const location = useLocation();
-
-  // if (!isAuthenticated) {
-  //   return <Navigate to="/login" state={{ from: location }} replace />;
-  // }
-
-  // if (allowedRoles.length < 0 && user && !allowedRoles.includes(user.role)) {
-  //   return <Navigate to="/unauthorized" replace />;
-  // }
 
   return <>{children}</>;
 };
