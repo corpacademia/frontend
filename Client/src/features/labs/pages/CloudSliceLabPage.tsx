@@ -198,12 +198,42 @@ export const CloudSliceLabPage: React.FC = () => {
     }
   };
   const handleGoToConsole = () => {
-   
     if (sliceDetails?.console_url) {
-      window.open(sliceDetails.console_url, '_blank');
+      // window.open(sliceDetails.console_url, '_blank');
+      const awsWindow = window.open(sliceDetails.console_url, '_blank');
+      const openedAt = Date.now();
+      const openedAtFormatted = new Date(openedAt).toLocaleString();
+      console.log(`AWS Console opened at: ${openedAtFormatted}`);
+
+      const checkClosed = setInterval(() => {
+      if (awsWindow?.closed) {
+        const closedAt = Date.now();
+        const closedAtFormatted = new Date(closedAt).toLocaleString();
+        console.log(`AWS Console closed at: ${closedAtFormatted}`);
+        const totalTime = closedAt - openedAt;
+        console.log(`AWS Console window open time: ${Math.round(totalTime / 1000)} seconds`);
+        clearInterval(checkClosed);
+      }
+}, 1000);
+
     }
     else{
-      window.open('https://console.aws.amazon.com/', '_blank');
+      // window.open('https://console.aws.amazon.com/', '_blank');
+     const awsWindow = window.open('https://console.aws.amazon.com/', '_blank');
+      const openedAt = Date.now();
+      const openedAtFormatted = new Date(openedAt).toLocaleString();
+      console.log(`AWS Console opened at: ${openedAtFormatted}`);
+
+      const checkClosed = setInterval(() => {
+      if (awsWindow?.closed) {
+        const closedAt = Date.now();
+        const closedAtFormatted = new Date(closedAt).toLocaleString();
+        console.log(`AWS Console closed at: ${closedAtFormatted}`);
+        const totalTime = closedAt - openedAt;
+        console.log(`AWS Console window open time: ${Math.round(totalTime / 1000)} seconds`);
+        clearInterval(checkClosed);
+      }
+}, 1000);
     }
   };
 

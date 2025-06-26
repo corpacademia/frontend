@@ -23,7 +23,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       fetchUser();
     }
   }, [isAuthenticated, fetchUser]);
-
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
