@@ -66,6 +66,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
         throw new Error(response.data.message || 'Failed to convert to catalogue');
       }
     } catch (err: any) {
+      console.log(err)
       setError(err.response?.data?.message || 'Failed to convert to catalogue');
     } finally {
       setIsLoading(false);

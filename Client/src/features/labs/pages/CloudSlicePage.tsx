@@ -52,10 +52,13 @@ export const CloudSlicePage: React.FC = () => {
       try {
         const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
         setUser(response.data.user);
-        const orgLabStatus = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
+        if(response.data.user.role === 'orgadmin'){
+           const orgLabStatus = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
         if(orgLabStatus.data.success){
           setOrgStatus(orgLabStatus.data.data)
         }
+        }
+       
       } catch (error) {
         console.error('Failed to fetch user profile:', error);
       }
