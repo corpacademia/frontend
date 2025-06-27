@@ -17,9 +17,13 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-export const DashboardSidebar: React.FC = () => {
+interface DashboardSidebarProps {
+  isCollapsed: boolean;
+  setIsCollapsed: (collapsed: boolean) => void;
+}
+
+export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const { user } = useAuthStore();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = {
     superadmin: [
@@ -66,18 +70,27 @@ export const DashboardSidebar: React.FC = () => {
   const currentMenuItems = menuItems[user?.role || 'user'];
 
   return (
-    <div className={`${isCollapsed ? 'w-16' : 'w-64'} bg-dark-200/80 backdrop-blur-sm border-r border-primary-500/10 h-[calc(100vh-4rem)] transition-all duration-300 relative`}>
-      <button 
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-6 bg-dark-200 border border-primary-500/20 rounded-full p-1 shadow-md z-10 hover:bg-dark-300 transition-colors"
-      >
-        {isCollapsed ? (
-          <ChevronRight className="h-4 w-4 text-primary-400" />
-        ) : (
-          <ChevronLeft className="h-4 w-4 text-primary-400" />
+    <aside className={`fixed left-0 top-0 ${isCollapsed ? 'w-16' : 'w-64'} bg-dark-200 border-r border-dark-300 h-screen overflow-y-auto z-30 transition-all duration-300`}>
+      {/* Toggle button - positioned at the top of sidebar */}
+      <div className="flex items-center justify-between p-4 border-b border-dark-300">
+        {!isCollapsed && (
+          <span className="text-lg font-bold bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
+            GoLabing.ai
+          </span>
         )}
-      </button>
-      
+        <button 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="p-2 bg-primary-500/20 border border-primary-400/50 rounded-lg shadow-md hover:bg-primary-500/30 hover:scale-105 transition-all duration-200"
+          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4 text-primary-400" />
+          ) : (
+            <ChevronLeft className="h-4 w-4 text-primary-400" />
+          )}
+        </button>
+      </div>
+
       <nav className="mt-5 px-2 overflow-y-auto h-full">
         <div className="space-y-1">
           {currentMenuItems.map((item) => (
@@ -99,6 +112,6 @@ export const DashboardSidebar: React.FC = () => {
           ))}
         </div>
       </nav>
-    </div>
+    </aside>
   );
 };

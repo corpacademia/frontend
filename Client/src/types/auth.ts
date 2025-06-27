@@ -8,6 +8,7 @@ export interface User {
   organization?: string;
   createdAt: Date;
   lastLogin?: Date;
+  profilePhoto?: string;
 }
 
 export interface AuthResponse {

@@ -25,7 +25,7 @@
     @apply content-[''] absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent
     translate-x-[-200%] animate-shimmer;
   }
-  
+
   .btn-secondary {
     @apply inline-flex items-center px-6 py-3 rounded-lg text-primary-100 font-medium
     bg-dark-400/80 hover:bg-dark-300/80 backdrop-blur-sm
@@ -97,4 +97,22 @@
   .glow-effect:hover::before {
     @apply opacity-20;
   }
+}
+
+/* Add any global styles here */
+
+/* Fixed layout styles */
+body {
+  overflow-x: hidden;
+}
+
+/* Ensure main content scrolls properly */
+.dashboard-main {
+  height: calc(100vh - 4rem);
+  overflow-y: auto;
+}
+
+/* Smooth scrolling for better UX */
+* {
+  scroll-behavior: smooth;
 }
