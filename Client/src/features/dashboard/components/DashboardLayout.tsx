@@ -15,7 +15,7 @@ export const DashboardLayout: React.FC = () => {
           isCollapsed={isSidebarCollapsed} 
           setIsCollapsed={setIsSidebarCollapsed} 
         />
-        <main className={`flex-1 p-6 pt-20 transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
+        <main className={`flex-1 p-6 pt-6 transition-all duration-300 ${isSidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
           <div className="pb-6">
             <Outlet />
           </div>

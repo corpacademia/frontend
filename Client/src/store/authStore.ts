@@ -15,6 +15,19 @@ interface AuthState {
   setSessionExpiryModal: (show: boolean) => void;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'user' | 'trainer' | 'orgadmin' | 'superadmin';
+  organization?: string;
+  phone?: string;
+  location?: string;
+  bio?: string;
+  jobTitle?: string;
+  profileImage?: string;
+}
+
 export const useAuthStore = create<AuthState>((set, get) => {
   // This IIFE runs immediately when the module is loaded.
   (async () => {

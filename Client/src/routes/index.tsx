@@ -36,6 +36,8 @@ import { ModularLabPage } from '../features/labs/components/user/ModularLabPage'
 import { LabExercisePage } from '../features/labs/components/user/LabExercisePage';
 import { QuizExercisePage } from '../features/labs/components/user/QuizExercisePage';
 import { VMSessionPage } from '../features/labs/components/VMSessionPage';
+import { ProfilePage } from '../pages/ProfilePage';
+
 
 export const AppRoutes: React.FC = () => {
   const { user } = useAuthStore();
@@ -44,7 +46,10 @@ export const AppRoutes: React.FC = () => {
     <Routes>
       <Route path="/login" element={<LoginForm />} />
       <Route path="/signup" element={<SignupForm />} />
-      
+      <Route path="/profile" element={<ProfilePage />} />
+
+      {/* Super Admin Routes */}
+
       <Route
         path="/dashboard"
         element={
@@ -89,7 +94,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="assessments" element={<Assessments />} />
         <Route path="my-labs" element={<MyLabs />} />
         <Route path="create-modules" element={<CreateModulesPage />} />
-        
+
         {/* User Lab Routes */}
         <Route path="my-labs/:labId/standard" element={<StandardLabPage />} />
         <Route path="my-labs/:labId/modules" element={<ModularLabPage />} />

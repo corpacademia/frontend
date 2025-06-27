@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { SettingsModal } from '../modals/SettingsModal';
 import { 
@@ -10,13 +10,41 @@ import {
   GraduationCapIcon,
   AwardIcon,
   CloudIcon,
-  SettingsIcon
+  SettingsIcon,
+  LogOut,
+  User,
 } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 export const Header = () => {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, logout, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleProfileClick = () => {
+    setIsDropdownOpen(false);
+    navigate('/profile');
+  };
+
+  const handleLogout = () => {
+    setIsDropdownOpen(false);
+    logout();
+    navigate('/login');
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-dark-200 border-b border-dark-300">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -28,7 +56,7 @@ export const Header = () => {
                 GoLabing.ai
               </span>
             </Link>
-            
+
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <Link 
                 to="/labs" 
@@ -71,25 +99,19 @@ export const Header = () => {
                   <LayoutDashboardIcon className="h-4 w-4 mr-1" />
                   Dashboard
                 </Link>
-                <button
-                  onClick={() => setIsSettingsOpen(true)}
-                  className="p-1 rounded-full text-gray-400 hover:text-primary-300 bg-dark-300 hover:bg-dark-100/50 transition-colors"
-                  title="Settings"
-                >
-                  <SettingsIcon className="h-6 w-6" />
-                </button>
-                <button
-                  onClick={() => logout()}
-                  className="text-sm font-medium text-gray-400 hover:text-primary-300"
-                >
-                  Logout
-                </button>
                 <Link 
                   to="/profile" 
                   className="p-1 rounded-full text-gray-400 hover:text-primary-300 bg-dark-300 hover:bg-dark-100/50 transition-colors"
                 >
                   <UserIcon className="h-6 w-6" />
                 </Link>
+                <button
+                  onClick={() => logout()}
+                  className="text-sm font-medium text-gray-400 hover:text-primary-300"
+                >
+                  Logout
+                </button>
+
               </div>
             ) : (
               <div className="flex items-center space-x-4">
