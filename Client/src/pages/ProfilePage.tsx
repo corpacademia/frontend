@@ -16,6 +16,7 @@ import {
   BookOpen,
   Activity
 } from 'lucide-react';
+import axios from 'axios';
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAuthStore();
@@ -23,7 +24,9 @@ export const ProfilePage: React.FC = () => {
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
 
+  console.log('User data:', user);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -36,6 +39,7 @@ export const ProfilePage: React.FC = () => {
   });
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [passwordVisibility, setPasswordVisibility] = useState({
     current: false,
@@ -43,9 +47,78 @@ export const ProfilePage: React.FC = () => {
     confirm: false
   });
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    return phone === '' || phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+  };
+
+  const validatePassword = (password: string): boolean => {
+    return password.length >= 8 && /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password);
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    } else if (formData.name.trim().length < 2) {
+      newErrors.name = 'Name must be at least 2 characters';
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    // Phone validation (optional but must be valid if provided)
+    if (formData.phone && !validatePhone(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number';
+    }
+
+    // Location validation (optional but minimum length if provided)
+    if (formData.location && formData.location.trim().length < 2) {
+      newErrors.location = 'Location must be at least 2 characters';
+    }
+
+    // Password validation (only if changing password)
+    if (formData.currentPassword || formData.newPassword || formData.confirmPassword) {
+      if (!formData.currentPassword) {
+        newErrors.currentPassword = 'Current password is required';
+      }
+
+      if (!formData.newPassword) {
+        newErrors.newPassword = 'New password is required';
+      } else if (!validatePassword(formData.newPassword)) {
+        newErrors.newPassword = 'Password must be at least 8 characters with uppercase, lowercase, and number';
+      }
+
+      if (!formData.confirmPassword) {
+        newErrors.confirmPassword = 'Please confirm your new password';
+      } else if (formData.newPassword !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    // Clear specific field error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,17 +129,45 @@ export const ProfilePage: React.FC = () => {
         setProfileImage(reader.result as string);
       };
       reader.readAsDataURL(file);
+      setProfilePhotoFile(file); // Store the file in state
     }
   };
 
   const handleSave = async () => {
+    if (!validateForm()) {
+      setMessage({ type: 'error', text: 'Please fix the validation errors below.' });
+      return;
+    }
+
     try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('phone', formData.phone);
+      formDataToSend.append('location', formData.location);
+      formDataToSend.append('organization', formData.organization);
+      formDataToSend.append('currentPassword', formData.currentPassword);
+      formDataToSend.append('newPassword', formData.newPassword);
+      formDataToSend.append('confirmPassword', formData.confirmPassword);
+
+      // Add profile photo if selected
+      if (profilePhotoFile) {
+        formDataToSend.append('profilePhoto', profilePhotoFile);
+      }
+      console.log('Form data to send:', formDataToSend);
+      const updateUserProfile = await axios.post('http://localhost:3000/api/v1/user_ms/update_profile', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        withCredentials: true // Include credentials for session management
+      });
       // Simulate saving data — replace this with your API call
       await new Promise(res => setTimeout(res, 1000));
 
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
       setIsEditing(false);
       setShowPasswordFields(false);
+      setErrors({});
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
     }
@@ -75,7 +176,8 @@ export const ProfilePage: React.FC = () => {
   const handleCancel = () => {
     setIsEditing(false);
     setShowPasswordFields(false);
-    setMessage(null); // clear messages on cancel
+    setMessage(null);
+    setErrors({});
     setFormData({
       name: user?.name || '',
       email: user?.email || '',
@@ -202,13 +304,20 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300"
-                    />
+                    <div>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-2 bg-dark-400/50 border rounded-lg text-gray-300 ${
+                          errors.name ? 'border-red-500' : 'border-primary-500/20'
+                        }`}
+                      />
+                      {errors.name && (
+                        <p className="mt-1 text-sm text-red-400">{errors.name}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-white bg-dark-400/30 px-4 py-2 rounded-lg">{formData.name}</p>
                   )}
@@ -218,13 +327,20 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
                   {isEditing ? (
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300"
-                    />
+                    <div>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-2 bg-dark-400/50 border rounded-lg text-gray-300 ${
+                          errors.email ? 'border-red-500' : 'border-primary-500/20'
+                        }`}
+                      />
+                      {errors.email && (
+                        <p className="mt-1 text-sm text-red-400">{errors.email}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-white bg-dark-400/30 px-4 py-2 rounded-lg">{formData.email}</p>
                   )}
@@ -234,13 +350,21 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
                   {isEditing ? (
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300"
-                    />
+                    <div>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder="Optional"
+                        className={`w-full px-4 py-2 bg-dark-400/50 border rounded-lg text-gray-300 ${
+                          errors.phone ? 'border-red-500' : 'border-primary-500/20'
+                        }`}
+                      />
+                      {errors.phone && (
+                        <p className="mt-1 text-sm text-red-400">{errors.phone}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-white bg-dark-400/30 px-4 py-2 rounded-lg">{formData.phone || 'Not provided'}</p>
                   )}
@@ -250,13 +374,21 @@ export const ProfilePage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Location</label>
                   {isEditing ? (
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300"
-                    />
+                    <div>
+                      <input
+                        type="text"
+                        name="location"
+                        value={formData.location}
+                        onChange={handleInputChange}
+                        placeholder="Optional"
+                        className={`w-full px-4 py-2 bg-dark-400/50 border rounded-lg text-gray-300 ${
+                          errors.location ? 'border-red-500' : 'border-primary-500/20'
+                        }`}
+                      />
+                      {errors.location && (
+                        <p className="mt-1 text-sm text-red-400">{errors.location}</p>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-white bg-dark-400/30 px-4 py-2 rounded-lg">{formData.location || 'Not provided'}</p>
                   )}
@@ -282,34 +414,55 @@ export const ProfilePage: React.FC = () => {
               {/* Password change (optional) */}
               {isEditing && (
                 <div className="mt-6 border-t border-gray-600 pt-6">
-                  <h4 className="text-lg font-medium text-white mb-4">Change Password</h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-medium text-white">Change Password</h4>
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordFields(!showPasswordFields)}
+                      className="flex items-center space-x-2 px-3 py-1 bg-primary-500/20 border border-primary-400/50 rounded-lg hover:bg-primary-500/30 transition-colors"
+                    >
+                      <Shield className="h-4 w-4 text-primary-400" />
+                      <span className="text-primary-400 text-sm">
+                        {showPasswordFields ? 'Cancel' : 'Change Password'}
+                      </span>
+                    </button>
+                  </div>
+                  {showPasswordFields && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {['current', 'new', 'confirm'].map(field => (
                       <div key={field} className="relative">
                         <label className="block text-sm font-medium text-gray-300 mb-2 capitalize">
                           {field} Password
                         </label>
-                        <input
-                          type={passwordVisibility[field as 'current' | 'new' | 'confirm'] ? 'text' : 'password'}
-                          name={`${field}Password`}
-                          value={formData[`${field}Password` as keyof typeof formData]}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-2 pr-10 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => togglePasswordVisibility(field as 'current' | 'new' | 'confirm')}
-                          className="absolute right-3 top-9 text-gray-400 hover:text-gray-300"
-                        >
-                          {passwordVisibility[field as 'current' | 'new' | 'confirm'] ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
+                        <div>
+                          <input
+                            type={passwordVisibility[field as 'current' | 'new' | 'confirm'] ? 'text' : 'password'}
+                            name={`${field}Password`}
+                            value={formData[`${field}Password` as keyof typeof formData]}
+                            onChange={handleInputChange}
+                            className={`w-full px-4 py-2 pr-10 bg-dark-400/50 border rounded-lg text-gray-300 ${
+                              errors[`${field}Password`] ? 'border-red-500' : 'border-primary-500/20'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility(field as 'current' | 'new' | 'confirm')}
+                            className="absolute right-3 top-9 text-gray-400 hover:text-gray-300"
+                          >
+                            {passwordVisibility[field as 'current' | 'new' | 'confirm'] ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                          {errors[`${field}Password`] && (
+                            <p className="mt-1 text-sm text-red-400">{errors[`${field}Password`]}</p>
                           )}
-                        </button>
+                        </div>
                       </div>
                     ))}
                   </div>
+                  )}
                 </div>
               )}
             </div>
