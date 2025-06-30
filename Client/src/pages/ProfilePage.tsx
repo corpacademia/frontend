@@ -25,27 +25,32 @@ export const ProfilePage: React.FC = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
-
-  console.log('User data:', user);
   const [formData, setFormData] = useState({
+    id: user?.id || '',
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
     location: user?.location || '',
     organization: user?.organization || '',
-    currentPassword: '',
+    profileImage: user?.profilephoto || '',
     newPassword: '',
     confirmPassword: ''
   });
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const [passwordVisibility, setPasswordVisibility] = useState({
-    current: false,
     new: false,
     confirm: false
   });
+
+  // Extract filename from path
+function extractFileName(filePath: string) {
+    const match = filePath.match(/[^\\\/]+$/);
+    return match ? match[0] : null;
+  }
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -89,11 +94,7 @@ export const ProfilePage: React.FC = () => {
     }
 
     // Password validation (only if changing password)
-    if (formData.currentPassword || formData.newPassword || formData.confirmPassword) {
-      if (!formData.currentPassword) {
-        newErrors.currentPassword = 'Current password is required';
-      }
-
+    if (formData.newPassword || formData.confirmPassword) {
       if (!formData.newPassword) {
         newErrors.newPassword = 'New password is required';
       } else if (!validatePassword(formData.newPassword)) {
@@ -122,16 +123,20 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        setProfileImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      setProfilePhotoFile(file); // Store the file in state
-    }
-  };
+  const file = e.target.files?.[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setProfileImage(reader.result as string);
+      setFormData(prev => ({
+        ...prev,
+        profileImage: file.name 
+      }));
+    };
+    reader.readAsDataURL(file);
+    setProfilePhotoFile(file); 
+  }
+};
 
   const handleSave = async () => {
     if (!validateForm()) {
@@ -139,27 +144,27 @@ export const ProfilePage: React.FC = () => {
       return;
     }
 
+    setIsSaving(true);
+    setMessage(null);
+
     try {
       const formDataToSend = new FormData();
+      formDataToSend.append('id', formData.id);
       formDataToSend.append('name', formData.name);
       formDataToSend.append('email', formData.email);
       formDataToSend.append('phone', formData.phone);
       formDataToSend.append('location', formData.location);
       formDataToSend.append('organization', formData.organization);
-      formDataToSend.append('currentPassword', formData.currentPassword);
-      formDataToSend.append('newPassword', formData.newPassword);
-      formDataToSend.append('confirmPassword', formData.confirmPassword);
+      formDataToSend.append('password', formData.newPassword);
 
       // Add profile photo if selected
       if (profilePhotoFile) {
         formDataToSend.append('profilePhoto', profilePhotoFile);
       }
-      console.log('Form data to send:', formDataToSend);
       const updateUserProfile = await axios.post('http://localhost:3000/api/v1/user_ms/update_profile', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
-        withCredentials: true // Include credentials for session management
       });
       // Simulate saving data — replace this with your API call
       await new Promise(res => setTimeout(res, 1000));
@@ -170,6 +175,8 @@ export const ProfilePage: React.FC = () => {
       setErrors({});
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -179,24 +186,24 @@ export const ProfilePage: React.FC = () => {
     setMessage(null);
     setErrors({});
     setFormData({
+      id: user?.id || '',
       name: user?.name || '',
       email: user?.email || '',
       phone: user?.phone || '',
       location: user?.location || '',
       organization: user?.organization || '',
-      currentPassword: '',
+      profileImage: user?.profilephoto || '',
       newPassword: '',
       confirmPassword: ''
     });
   };
 
-  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+  const togglePasswordVisibility = (field: 'new' | 'confirm') => {
     setPasswordVisibility(prev => ({
       ...prev,
       [field]: !prev[field]
     }));
   };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-400 via-dark-300 to-dark-200 p-6">
       <div className="max-w-4xl mx-auto">
@@ -212,11 +219,22 @@ export const ProfilePage: React.FC = () => {
             <div className="bg-dark-200/80 backdrop-blur-sm border border-primary-500/20 rounded-xl p-6 text-center">
               <div className="relative mx-auto mb-4 w-32 h-32">
                 <div className="w-32 h-32 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center overflow-hidden">
-                  {profileImage ? (
-                    <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="h-16 w-16 text-white" />
-                  )}
+                 {profileImage ? (
+                <img
+                    src={profileImage}
+                    alt="Profile Preview"
+                    className="w-full h-full object-cover"
+                />
+                ) : formData.profileImage ? (
+                <img
+                    src={`http://localhost:3000/api/v1/user_ms/uploads/${extractFileName(formData.profileImage)}`}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                />
+                ) : (
+                <User className="h-16 w-16 text-white" />
+                )}
+
                 </div>
                 {isEditing && (
                   <button
@@ -277,10 +295,20 @@ export const ProfilePage: React.FC = () => {
                     </button>
                     <button
                       onClick={handleSave}
-                      className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 rounded-lg hover:bg-emerald-500/30"
+                      disabled={isSaving}
+                      className="flex items-center space-x-2 px-4 py-2 bg-emerald-500/20 border border-emerald-400/50 rounded-lg hover:bg-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Save className="h-4 w-4 text-emerald-400" />
-                      <span className="text-emerald-400">Save Changes</span>
+                      {isSaving ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-emerald-400 border-t-transparent"></div>
+                          <span className="text-emerald-400">Saving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 text-emerald-400" />
+                          <span className="text-emerald-400">Save Changes</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
@@ -428,15 +456,15 @@ export const ProfilePage: React.FC = () => {
                     </button>
                   </div>
                   {showPasswordFields && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {['current', 'new', 'confirm'].map(field => (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {['new', 'confirm'].map(field => (
                       <div key={field} className="relative">
                         <label className="block text-sm font-medium text-gray-300 mb-2 capitalize">
                           {field} Password
                         </label>
                         <div>
                           <input
-                            type={passwordVisibility[field as 'current' | 'new' | 'confirm'] ? 'text' : 'password'}
+                            type={passwordVisibility[field as 'new' | 'confirm'] ? 'text' : 'password'}
                             name={`${field}Password`}
                             value={formData[`${field}Password` as keyof typeof formData]}
                             onChange={handleInputChange}
@@ -446,10 +474,10 @@ export const ProfilePage: React.FC = () => {
                           />
                           <button
                             type="button"
-                            onClick={() => togglePasswordVisibility(field as 'current' | 'new' | 'confirm')}
+                            onClick={() => togglePasswordVisibility(field as 'new' | 'confirm')}
                             className="absolute right-3 top-9 text-gray-400 hover:text-gray-300"
                           >
-                            {passwordVisibility[field as 'current' | 'new' | 'confirm'] ? (
+                            {passwordVisibility[field as 'new' | 'confirm'] ? (
                               <EyeOff className="h-4 w-4" />
                             ) : (
                               <Eye className="h-4 w-4" />
