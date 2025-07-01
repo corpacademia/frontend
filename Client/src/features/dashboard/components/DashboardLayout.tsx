@@ -10,7 +10,7 @@ export const DashboardLayout: React.FC = () => {
   return (
     <div className="min-h-screen neural-bg">
       <DashboardHeader />
-      <div className="flex">
+      <div className="flex pt-16">
         <DashboardSidebar 
           isCollapsed={isSidebarCollapsed} 
           setIsCollapsed={setIsSidebarCollapsed} 

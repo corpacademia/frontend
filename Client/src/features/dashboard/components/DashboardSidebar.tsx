@@ -70,7 +70,9 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
   const currentMenuItems = menuItems[user?.role || 'user'];
 
   return (
-    <aside className={`fixed left-0 top-16 ${isCollapsed ? 'w-16' : 'w-64'} bg-dark-200 border-r border-dark-300 h-screen overflow-y-auto z-30 transition-all duration-300`}>
+    <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-dark-200 border-r border-dark-300 transition-all duration-300 z-30 ${
+      isCollapsed ? 'w-16' : 'w-64'
+    }`}>
       {/* Toggle button - positioned at the top of sidebar */}
       <div className="flex items-center justify-between p-4 border-b border-dark-300">
         {!isCollapsed && (
