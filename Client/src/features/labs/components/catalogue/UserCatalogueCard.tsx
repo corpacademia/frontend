@@ -130,7 +130,7 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
     setIsLoading(true);
     try {
       const endpoint = isLabStarted ? 'stopLab' : 'startLab';
-      const response = await axios.post(`http://localhost:3000/api/v1/${endpoint}`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/${endpoint}`, {
         lab_id: lab.lab_id,
         user_id: user.id
       });

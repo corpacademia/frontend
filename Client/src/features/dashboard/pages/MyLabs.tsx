@@ -214,7 +214,7 @@ export const MyLabs: React.FC = () => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setUser(response.data.user);
-      const labStatus = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getUserLabStatus/${response.data.user.id}`);
+      const labStatus = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${response.data.user.id}`);
       if(labStatus.data.success){
         setUserLabStatus(labStatus?.data?.data)
       }
@@ -273,7 +273,7 @@ export const MyLabs: React.FC = () => {
 
       // Fetch cloud slice labs
       try {
-        const res = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getUserCloudSlices/${user.id}`);
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserCloudSlices/${user.id}`);
         if (res.data.success) {
           const cloudSlices = res.data.data || [];
           setCloudSliceLabs(cloudSlices);
@@ -286,7 +286,7 @@ export const MyLabs: React.FC = () => {
       // Fetch datacenter VMs
       try {
         const res = await axios.post(
-          `http://localhost:3000/api/v1/lab_ms/getUserAssignedSingleVmDatacenterLabs/${user.id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserAssignedSingleVmDatacenterLabs/${user.id}`
         );
         if (res.data.success) {
           const vmDetails = await Promise.all(
@@ -325,7 +325,7 @@ export const MyLabs: React.FC = () => {
       // Fetch cluster VMs
       try {
         const res = await axios.post(
-          `http://localhost:3000/api/v1/vmcluster_ms/getUserAssignedClusterLabs/${user.id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getUserAssignedClusterLabs/${user.id}`
         );
         if (res.data.success) {
           const clusterDetails = await Promise.all(

@@ -64,7 +64,7 @@ export const EditCloudSliceModal: React.FC<EditCloudSliceModalProps> = ({
       
       setIsLoading(true);
       try {
-        const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
         if (response.data.success) {
           const sliceData = response.data.data;
           setFormData({
@@ -143,7 +143,7 @@ export const EditCloudSliceModal: React.FC<EditCloudSliceModalProps> = ({
     setSuccess(null);
 
     try {
-      const response = await axios.put(`http://localhost:3000/api/v1/cloud_slice_ms/updateCloudSlice/${slice?.labid}`, {
+      const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSlice/${slice?.labid}`, {
         ...formData
       });
       

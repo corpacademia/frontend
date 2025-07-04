@@ -57,7 +57,7 @@ export const QuizExercisePage: React.FC = () => {
       
       setIsLoading(true);
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/quiz-exercise/${exerciseId}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/quiz-exercise/${exerciseId}`);
         if (response.data.success) {
           setQuizExercise(response.data.data);
           setCountdown(response.data.data.duration * 60); // Convert minutes to seconds
@@ -173,7 +173,7 @@ useEffect(() => {
         incorrectAnswers,
         feedback
       };
-      const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/submit-quiz/${exerciseId}`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/submit-quiz/${exerciseId}`, {
         data:result,
         moduleId,
         userId: user.id,

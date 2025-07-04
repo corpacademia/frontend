@@ -46,19 +46,19 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
 
       if (isModule && moduleId) {
         // Delete module
-        response = await axios.delete(`http://localhost:3000/api/v1/cloud_slice_ms/deleteModule/${moduleId}`);
+        response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteModule/${moduleId}`);
       } else if (isExercise) {
         // Delete exercise
         const exerciseId = moduleId; // In this case, moduleId is actually the exerciseId
-        response = await axios.delete(`http://localhost:3000/api/v1/cloud_slice_ms/deleteExercise/${exerciseId}`);
+        response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteExercise/${exerciseId}`);
       } else if (isLabContent) {
         // Delete lab exercise content
         const exerciseId = moduleId; // In this case, moduleId is actually the exerciseId
-        response = await axios.delete(`http://localhost:3000/api/v1/cloud_slice_ms/deleteLabExercise/${exerciseId}`);
+        response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteLabExercise/${exerciseId}`);
       } else if (isQuiz) {
         // Delete quiz content
         const exerciseId = moduleId; // In this case, moduleId is actually the exerciseId
-        response = await axios.delete(`http://localhost:3000/api/v1/cloud_slice_ms/deleteQuizExercise/${exerciseId}`);
+        response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteQuizExercise/${exerciseId}`);
       } else {
         // Fallback to the original onConfirm if we can't determine the type
         onConfirm();

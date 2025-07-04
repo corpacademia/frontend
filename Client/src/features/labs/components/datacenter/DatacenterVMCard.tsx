@@ -423,7 +423,7 @@ if (userGuideFile) {
 
   const handleSaveUser = async (userData: any) => {
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/lab_ms/editSingleVmDatacenterCreds`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/editSingleVmDatacenterCreds`, {
         labId: vm.lab_id,
         id: userData.id,
         username: userData.username,
@@ -454,7 +454,7 @@ if (userGuideFile) {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await axios.delete(`http://localhost:3000/api/v1/lab_ms/deleteSingleVMDatacenterLab/${vm.lab_id}`);
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVMDatacenterLab/${vm.lab_id}`);
       
       if (response.data.success) {
         setNotification({ type: 'success', message: 'VM deleted successfully' });
@@ -480,7 +480,7 @@ if (userGuideFile) {
     setIsDeleting(true);
     try {
       // Different API endpoint for users who didn't create the VM
-      const response = await axios.post(`http://localhost:3000/api/v1/lab_ms/deleteAssignedSingleVMDatacenterLab`,{
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteAssignedSingleVMDatacenterLab`,{
         labId:vm.lab_id,
         orgId:currentUser.org_id
       });
@@ -882,7 +882,7 @@ function extractFileName(filePath: string) {
                         <span className="text-sm text-gray-300 truncate">{extractFileName(labguide)}</span>
                         <div className="flex items-center space-x-1">
                           <a 
-                            href={`http://localhost:3000/uploads/${extractFileName(labguide)}`}
+                            href={`${import.meta.env.VITE_BACKEND_URL}/uploads/${extractFileName(labguide)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 hover:bg-primary-500/10 rounded-lg"
@@ -932,7 +932,7 @@ function extractFileName(filePath: string) {
                         <span className="text-sm text-gray-300 truncate">{extractFileName(userguide)}</span>
                         <div className="flex items-center space-x-1">
                           <a 
-                            href={`http://localhost:3000/uploads/${extractFileName(userguide)}`}
+                            href={`${import.meta.env.VITE_BACKEND_URL}/uploads/${extractFileName(userguide)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 hover:bg-primary-500/10 rounded-lg"

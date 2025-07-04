@@ -42,7 +42,7 @@ export const OrgDocumentsTab: React.FC<OrgDocumentsTabProps> = ({ orgId }) => {
 
   const fetchDocuments = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/v1/organization_ms/getOrganizationDocuments/${orgId}`);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrganizationDocuments/${orgId}`);
       if (response.data.success) {
         setDocuments(response.data.data);
       } else {
@@ -83,7 +83,7 @@ export const OrgDocumentsTab: React.FC<OrgDocumentsTabProps> = ({ orgId }) => {
     formData.append('orgId', orgId);
 
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/organization_ms/uploadOrganizationDocuments`, formData, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/uploadOrganizationDocuments`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -110,7 +110,7 @@ export const OrgDocumentsTab: React.FC<OrgDocumentsTabProps> = ({ orgId }) => {
     setSuccess(null);
 
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/organization_ms/deleteOrganizationDocuments`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/deleteOrganizationDocuments`, {
         orgId,
         documentIds: selectedDocuments
       });

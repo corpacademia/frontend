@@ -56,7 +56,7 @@ export const useUserLabs = (userId: string) => {
         console.error('Error fetching labs', error);
       }
       try {
-        const cloudslicelab = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getUserCloudSlices/${userId}`);
+        const cloudslicelab = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserCloudSlices/${userId}`);
         if(cloudslicelab.data.success){
           setLabs(
             cloudslicelab.data.data.map((lab: any) => ({
@@ -66,7 +66,7 @@ export const useUserLabs = (userId: string) => {
           );
           
         }
-        const cloudsliceLabStatus = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getUserLabStatus/${userId}`);
+        const cloudsliceLabStatus = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${userId}`);
         if(cloudsliceLabStatus.data.success){
           setLabStatus(cloudsliceLabStatus.data.data);
         }

@@ -70,7 +70,7 @@ export const ModularLabPage: React.FC = () => {
     if (!labDetails && labId) {
       const fetchLabDetails = async () => {
         try {
-          const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/getCloudSliceDetails/${labDetails.labid}`);
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${labDetails.labid}`);
           if (response.data.success) {
             setLabDetails(response.data.data);
           } else {
@@ -96,7 +96,7 @@ export const ModularLabPage: React.FC = () => {
       try {
         // 1) Fetch modules
         const response = await axios.get(
-          `http://localhost:3000/api/v1/cloud_slice_ms/getModules/${labDetails.labid}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getModules/${labDetails.labid}`
         );
         if (!response.data.success) {
           throw new Error(response.data.message || 'Failed to fetch modules');
@@ -111,7 +111,7 @@ export const ModularLabPage: React.FC = () => {
           modulesData.map(async (module) => {
             // quiz statuses
             const quizPromise = axios
-              .post(`http://localhost:3000/api/v1/cloud_slice_ms/getUserQuizData`, {
+              .post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserQuizData`, {
                 moduleId: module.id,
                 userId: user.id
               })
@@ -120,7 +120,7 @@ export const ModularLabPage: React.FC = () => {
   
             // lab statuses
             const labPromise = axios
-              .post(`http://localhost:3000/api/v1/cloud_slice_ms/getUserLabStatus`, {
+              .post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus`, {
                 moduleId: module.id,
                 userId: user.id
               })
@@ -194,7 +194,7 @@ export const ModularLabPage: React.FC = () => {
       
       setIsLoadingExercises(true);
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/lab-exercises/${activeModuleId}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/lab-exercises/${activeModuleId}`);
         if (response.data.success) {
           const labExercisesData = response.data.data || [];
           const labExercisesMap: Record<string, any> = {};
@@ -221,7 +221,7 @@ export const ModularLabPage: React.FC = () => {
       
       setIsLoadingExercises(true);
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/quiz-exercises/${activeModuleId}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/quiz-exercises/${activeModuleId}`);
         if (response.data.success) {
           const quizExercisesData = response.data.data || [];
           const quizExercisesMap: Record<string, any> = {};

@@ -37,7 +37,7 @@ export const OrgBillingTab: React.FC<OrgBillingTabProps> = ({ orgId }) => {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/organization_ms/getOrganizationTransactions/${orgId}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrganizationTransactions/${orgId}`);
         if (response.data.success) {
           setTransactions(response.data.data);
         } else {
@@ -77,7 +77,7 @@ export const OrgBillingTab: React.FC<OrgBillingTabProps> = ({ orgId }) => {
     setSuccess(null);
 
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/organization_ms/deleteOrganizationTransactions`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/deleteOrganizationTransactions`, {
         orgId,
         transactionIds: selectedTransactions
       });
@@ -98,7 +98,7 @@ export const OrgBillingTab: React.FC<OrgBillingTabProps> = ({ orgId }) => {
 
   const handleExportBilling = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/v1/organization_ms/exportBilling/${orgId}`, {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/exportBilling/${orgId}`, {
         responseType: 'blob'
       });
 

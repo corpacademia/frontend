@@ -54,7 +54,7 @@ export const LabExercisePage: React.FC = () => {
         setUser(userResponse.data.user);
         
         // Check if IAM account is already created
-        const accountStatusResponse = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getUserLabStatus/${userResponse.data.user.id}`);
+        const accountStatusResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${userResponse.data.user.id}`);
         const accountData = accountStatusResponse.data.data.find((lab)=>lab.labid === labDetails.labid);
         
         if (accountData && accountData.username && accountData.password && accountData.console_url) {
@@ -122,7 +122,7 @@ export const LabExercisePage: React.FC = () => {
           );
 
           // Get the updated account details
-          const accountDetailsResponse = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getUserLabStatus/${user.id}`);
+          const accountDetailsResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${user.id}`);
           setCredentials(accountDetailsResponse.data.data.find((lab)=>lab.labid === labDetails.labid));
           setAccountCreated(true);
           

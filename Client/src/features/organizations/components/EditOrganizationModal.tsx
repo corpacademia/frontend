@@ -131,7 +131,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       for (let pair of formDataToSend.entries()) {
         console.log(pair[0], pair[1]); // Logs all form data entries
       }
-      const response = await axios.post(`http://localhost:3000/api/v1/organization_ms/updateOrganization/${organization.id}`, formDataToSend, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/updateOrganization/${organization.id}`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

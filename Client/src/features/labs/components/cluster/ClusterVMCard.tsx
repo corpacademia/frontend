@@ -244,7 +244,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
     if(!canEditContent()){
       try {
       const response = await axios.post(
-        `http://localhost:3000/api/v1/vmcluster_ms/deleteFromOrganization`,{
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteFromOrganization`,{
           labId: vm?.lab?.labid,
           orgId: currentUser?.org_id,
           adminId: currentUser?.id
@@ -279,7 +279,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
     else{
          try {
       const response = await axios.delete(
-        `http://localhost:3000/api/v1/vmcluster_ms/deleteClusterLab/${vm?.lab?.labid}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab/${vm?.lab?.labid}`,
       );
 
       if (response.data.success) {
@@ -1180,7 +1180,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                           </span>
                           <div className="flex items-center space-x-1">
                             <a
-                              href={`http://localhost:3000/uploads/${extractFileName(labguide)}`}
+                              href={`${import.meta.env.VITE_BACKEND_URL}/uploads/${extractFileName(labguide)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1 hover:bg-primary-500/10 rounded-lg"
@@ -1238,7 +1238,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                           </span>
                           <div className="flex items-center space-x-1">
                             <a
-                              href={`http://localhost:3000/uploads/${extractFileName(userguide)}`}
+                              href={`${import.meta.env.VITE_BACKEND_URL}/uploads/${extractFileName(userguide)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1 hover:bg-primary-500/10 rounded-lg"

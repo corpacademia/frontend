@@ -224,7 +224,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/organization_ms/deleteAssessment`,{
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/deleteAssessment`,{
         lab_id:assessment.lab_id,
         admin_id:admin.id,
       });

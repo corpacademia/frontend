@@ -227,7 +227,7 @@ function extractFileName(filePath: string) {
                 />
                 ) : formData.profileImage ? (
                 <img
-                    src={`http://localhost:3000/api/v1/user_ms/uploads/${extractFileName(formData.profileImage)}`}
+                    src={`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/uploads/${extractFileName(formData.profileImage)}`}
                     alt="Profile"
                     className="w-full h-full object-cover"
                 />

@@ -35,7 +35,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
             axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
               admin_id: user.id,
             }),
-            axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getAllCloudSliceLabs`),
+            axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAllCloudSliceLabs`),
           ]);
           const allLabs: any[] = [];
     
@@ -67,7 +67,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
             axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
               admin_id: user.id,
             }),
-            axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabDetails/${user.org_id}`),
+            axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabDetails/${user.org_id}`),
           ]);
     
           const allLabs: any[] = [];

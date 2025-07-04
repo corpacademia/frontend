@@ -91,7 +91,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     setSuccess(null);
 
     try {
-      const response = await axios.put(`http://localhost:3000/api/v1/user_ms/updateUser/${user.id}`, {
+      const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/updateUser/${user.id}`, {
         ...formData,
         password: formData.password || undefined // Only send password if it was changed
       });

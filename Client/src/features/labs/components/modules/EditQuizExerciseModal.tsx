@@ -237,7 +237,7 @@ export const EditQuizExerciseModal: React.FC<EditQuizExerciseModalProps> = ({
           console.log(exerciseId)
           // Update existing quiz
           setIsLoading(true);
-          const response = await axios.put(`http://localhost:3000/api/v1/cloud_slice_ms/updateQuizExercise`, {
+          const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateQuizExercise`, {
             ...formData,
             exerciseId:formData.exerciseId
           });
@@ -256,7 +256,7 @@ export const EditQuizExerciseModal: React.FC<EditQuizExerciseModalProps> = ({
           // Create new quiz - directly using a single endpoint
           setIsLoading(true);
           // Create the exercise and quiz in a single request
-          const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/createQuizExercise`, {
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createQuizExercise`, {
             title: exerciseTitle,
             type: 'questions',
             order: 1, // Default order

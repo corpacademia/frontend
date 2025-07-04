@@ -64,7 +64,7 @@ export const WorkspacePage: React.FC = () => {
         // Using mock data for now
 
 
-        const response = await axios.get(`http://localhost:3000/api/v1/workspace_ms/getWorkspaceOnUserId/${user.id}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/workspace_ms/getWorkspaceOnUserId/${user.id}`);
         if(response.data.success){
           setWorkspaces(response.data.data);
         }
@@ -102,7 +102,7 @@ export const WorkspacePage: React.FC = () => {
 
   const handleDelete = async (ids: string[]) => {
     try {
-      const delete_workspace = await axios.post(`http://localhost:3000/api/v1/workspace_ms/deleteWorkspace`,{
+      const delete_workspace = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/workspace_ms/deleteWorkspace`,{
         ids
       });
        

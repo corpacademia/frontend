@@ -39,7 +39,7 @@ export const DeleteCloudSliceModal: React.FC<DeleteCloudSliceModalProps> = ({
       });
       }
       
-      const response = await axios.delete(`http://localhost:3000/api/v1/cloud_slice_ms/deleteCloudSlice/${sliceId}`);
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteCloudSlice/${sliceId}`);
 
       if (response.data.success) {
         setSuccess('Cloud slice deleted successfully');

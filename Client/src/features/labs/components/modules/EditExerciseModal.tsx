@@ -62,7 +62,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
 
         // Update existing exercise
         try {
-          const response = await axios.put(`http://localhost:3000/api/v1/cloud_slice_ms/updateExercise`, {
+          const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateExercise`, {
             ...formData,
             moduleId
           });
@@ -81,7 +81,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
         // For new exercises
         try {
           // Create new exercise
-          const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/createExercise`, {
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createExercise`, {
             title: formData.type === 'lab' ? 'New Lab Exercise' : 'New Quiz',
             description: '',
             type: formData.type,

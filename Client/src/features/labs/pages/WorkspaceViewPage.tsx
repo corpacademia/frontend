@@ -40,7 +40,7 @@ export const WorkspaceViewPage: React.FC = () => {
   useEffect(() => {
     const fetchWorkspace = async () => {
       try {
-       const response = await axios.get(`http://localhost:3000/api/v1/workspace_ms/getWorkspaceOnId/${workspaceId}`);
+       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/workspace_ms/getWorkspaceOnId/${workspaceId}`);
        if(response.data.success){
          setWorkspace(response.data.data);}
 

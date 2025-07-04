@@ -34,7 +34,7 @@ export const EditStorageModal: React.FC<EditStorageModalProps> = ({
     setNotification(null);
 
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/updateLabStorage`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/updateLabStorage`, {
         new_volume_size: currentStorage + storageChange,
         lab_id: lab_id,
       });

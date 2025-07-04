@@ -57,7 +57,7 @@ export const CloudSliceLabPage: React.FC = () => {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setCurrentUser(response.data.user);
         if(response.data.user.role === 'orgadmin'){
-          const orgLabDetails = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
+          const orgLabDetails = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
           if(orgLabDetails.data.success){
 
             setOrgLabStatus(orgLabDetails.data.data.find((lab)=>lab.labid === sliceId));
@@ -79,7 +79,7 @@ export const CloudSliceLabPage: React.FC = () => {
       const fetchSliceDetails = async () => {
         setIsLoading(true);
         try {
-          const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/getCloudSliceDetails/${sliceId}`);
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${sliceId}`);
           if (response.data.success) {
             setSliceDetails(response.data.data);
             setSelectedServices(response.data.data.services || []);
@@ -162,12 +162,12 @@ export const CloudSliceLabPage: React.FC = () => {
     setNotification(null);
     
     try {
-      const updateServices = await axios.post(`http://localhost:3000/api/v1/aws_ms/editAwsServices`,{
+      const updateServices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/editAwsServices`,{
         userName:sliceDetails.username,
         services:selectedServices
       })
       if(updateServices.data.success){
-        const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/updateCloudSliceServices/${sliceId}`, {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceServices/${sliceId}`, {
           services: selectedServices
         });
         

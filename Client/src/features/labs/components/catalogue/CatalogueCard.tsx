@@ -120,7 +120,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await axios.delete(`http://localhost:3000/api/v1/aws_ms/deleteLab/${lab.lab_id}`);
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deleteLab/${lab.lab_id}`);
       
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Lab deleted successfully' });

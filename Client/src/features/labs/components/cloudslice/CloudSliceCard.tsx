@@ -107,7 +107,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
     if(user.role === 'superadmin'){
       try {
         // Always fetch lab details first
-        const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
         
         if (!response.data.success) {
           throw new Error(response.data.message || 'Failed to fetch lab details');
@@ -177,7 +177,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
     else{
       try {
         // Always fetch lab details first
-        const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
         
         if (!response.data.success) {
           throw new Error(response.data.message || 'Failed to fetch lab details');
@@ -308,7 +308,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
           userName:creds?.username
         })
       }
-        const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/orgAdminDeleteCloudSlice/${slice.id}`, {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/orgAdminDeleteCloudSlice/${slice.id}`, {
           orgId: user.org_id
         });
         if (response?.data.success) {

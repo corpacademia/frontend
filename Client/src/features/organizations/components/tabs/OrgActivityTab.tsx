@@ -39,7 +39,7 @@ export const OrgActivityTab: React.FC<OrgActivityTabProps> = ({ orgId }) => {
 
   const fetchActivities = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/v1/organization_ms/getOrganizationActivities/${orgId}`);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrganizationActivities/${orgId}`);
       if (response.data.success) {
         setActivities(response.data.data);
       } else {
@@ -76,7 +76,7 @@ export const OrgActivityTab: React.FC<OrgActivityTabProps> = ({ orgId }) => {
     setSuccess(null);
 
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/organization_ms/deleteOrganizationActivities`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/deleteOrganizationActivities`, {
         orgId,
         activityIds: selectedActivities
       });
@@ -97,7 +97,7 @@ export const OrgActivityTab: React.FC<OrgActivityTabProps> = ({ orgId }) => {
 
   const handleExportLog = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/api/v1/organization_ms/exportActivityLog/${orgId}`, {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/exportActivityLog/${orgId}`, {
         responseType: 'blob'
       });
 

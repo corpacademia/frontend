@@ -91,7 +91,7 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
     setIsDeleting(true);
     try {
       const response = await axios.post(
-        `http://localhost:3000/api/v1/vmcluster_ms/deleteClusterLab`,{
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`,{
           labId:vm?.lab?.labid,
           orgId:user?.org_id,
           userId:user?.id

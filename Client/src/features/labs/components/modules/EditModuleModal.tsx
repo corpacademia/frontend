@@ -64,7 +64,7 @@ export const EditModuleModal: React.FC<EditModuleModalProps> = ({
       // If it's an update operation
       if (module?.id) {
         try {
-          const response = await axios.put(`http://localhost:3000/api/v1/cloud_slice_ms/updateModule`, formData);
+          const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateModule`, formData);
           
           if (response.data.success) {
             // Save module
@@ -79,7 +79,7 @@ export const EditModuleModal: React.FC<EditModuleModalProps> = ({
       } else {
         // For new modules
         try {
-          const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/createModule`, formData);
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createModule`, formData);
           
           if (response.data.success) {
             // Save module with the ID from the response

@@ -92,7 +92,7 @@ export const CloudSliceModulesPage: React.FC = () => {
       if (!sliceId) return;
       
       try {
-        const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/getCloudSliceDetails/${sliceId}`);
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${sliceId}`);
         if (response.data.success) {
           setSliceDetails(response.data.data);
         }
@@ -110,7 +110,7 @@ export const CloudSliceModulesPage: React.FC = () => {
       setIsLoadingModules(true);
       setError(null);
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getModules/${sliceId}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getModules/${sliceId}`);
         if (response.data.success) {
           setModules(Array.isArray(response.data.data) ? response.data.data : [response.data.data] || []);
           if (response.data.data && response.data.data.length > 0) {
@@ -145,7 +145,7 @@ export const CloudSliceModulesPage: React.FC = () => {
       
       setIsLoadingLabExercises(true);
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/lab-exercises/${activeModule}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/lab-exercises/${activeModule}`);
         if (response.data.success) {
           const labExercisesData = response.data.data || [];
           const labExercisesMap: Record<string, LabExercise> = {};
@@ -173,7 +173,7 @@ export const CloudSliceModulesPage: React.FC = () => {
       
       setIsLoadingQuizExercises(true);
       try {
-        const response = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/quiz-exercises/${activeModule}`);
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/quiz-exercises/${activeModule}`);
         if (response.data.success) {
           const quizExercisesData = response.data.data || [];
           const quizExercisesMap: Record<string, QuizExercise> = {};
@@ -247,7 +247,7 @@ export const CloudSliceModulesPage: React.FC = () => {
   const handleSaveModule = async(module: Module) => {
     if (selectedModule) {
       // Update existing module
-      const result = await axios.put(`http://localhost:3000/api/v1/cloud_slice_ms/updateModule`, module);
+      const result = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateModule`, module);
       if(result.data.success){
         setModules(modules.map(m => m.id === module.id ? module : m));
         showNotification('success', 'Module updated successfully');

@@ -10,8 +10,6 @@ import axios from 'axios';
 
 export const LoginForm: React.FC = () => {
   const { formData, errors, loading, handleChange, handleSubmit } = useLoginForm();
-
-  console.log(import.meta.env.VITE_BACKEND_URL)
  
   
  return (

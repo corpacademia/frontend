@@ -65,7 +65,7 @@ export const UserListModal: React.FC<UserListModalProps> = ({
     setSuccess(null);
     
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/lab_ms/updateSingleVmDatacenterLabCreds`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterLabCreds`, {
           id:userId,
           disable:true
       });
@@ -99,7 +99,7 @@ export const UserListModal: React.FC<UserListModalProps> = ({
     setSuccess(null);
     
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/lab_ms/updateSingleVmDatacenterLabCreds`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterLabCreds`, {
           id:userId,
           disable:false
       });

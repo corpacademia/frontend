@@ -53,7 +53,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
       try {
         setChecking(true);
         if(user.role === 'superadmin'){
-          const createdByAccountStatus = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/getCloudSliceDetails/${labId}`);
+          const createdByAccountStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${labId}`);
           const status = createdByAccountStatus.data.data
           if(createdByAccountStatus.data.success){
              if(status.username != null && status.password !=null && status.console_url){
@@ -69,7 +69,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
           }
         }
         else{
-          const orgAccountStatus = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabs/${user.org_id}`)
+          const orgAccountStatus = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${user.org_id}`)
           const status = orgAccountStatus.data.data.find((lab)=>lab.labid === labId);
           if(orgAccountStatus.data.success){
             if(status.username != null && status.password !=null && status.console_url){

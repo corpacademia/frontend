@@ -247,7 +247,7 @@ export const EditLabExerciseModal: React.FC<EditLabExerciseModalProps> = ({
           formDataToSend.append('exerciseId', exerciseId);
           formDataToSend.append('labExerciseId', labExercise.id);
           
-          const response = await axios.put(`http://localhost:3000/api/v1/cloud_slice_ms/updateLabExercise`, 
+          const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabExercise`, 
             formDataToSend, 
             {
               headers: {
@@ -285,7 +285,7 @@ export const EditLabExerciseModal: React.FC<EditLabExerciseModalProps> = ({
           formDataToSend.append('duration', exerciseDuration.toString());
           formDataToSend.append('exerciseId', exerciseId); // Extract module ID from exerciseId
           
-          const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/createLabExercise`, 
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createLabExercise`, 
             formDataToSend,
             {
               headers: {

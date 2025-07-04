@@ -53,7 +53,7 @@ export const CloudSlicePage: React.FC = () => {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
         if(response.data.user.role === 'orgadmin'){
-           const orgLabStatus = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
+           const orgLabStatus = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
         if(orgLabStatus.data.success){
           setOrgStatus(orgLabStatus.data.data)
         }
@@ -100,7 +100,7 @@ export const CloudSlicePage: React.FC = () => {
       else if (user.role === 'orgadmin') {
 
         try {
-          const getOrgAssignedSlices = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabs/${user.org_id}`);
+          const getOrgAssignedSlices = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${user.org_id}`);
           
           if (getOrgAssignedSlices.data.success) {
             const orgSlices = [];
@@ -112,7 +112,7 @@ export const CloudSlicePage: React.FC = () => {
               }
               
               try {
-                const response = await axios.post(`http://localhost:3000/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
+                const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
                 if (response.data.success) {
                   orgSlices.push(response.data.data);
                 }
@@ -216,7 +216,7 @@ export const CloudSlicePage: React.FC = () => {
      
 
       // 2. Delete lab (cloud slice)
-      await axios.delete(`http://localhost:3000/api/v1/cloud_slice_ms/deleteCloudSlice/${slice.labid}`);
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteCloudSlice/${slice.labid}`);
     });
 
     await Promise.all(promises);

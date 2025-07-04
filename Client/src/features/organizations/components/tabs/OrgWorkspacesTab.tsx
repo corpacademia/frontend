@@ -38,7 +38,7 @@ export const OrgWorkspacesTab: React.FC<OrgWorkspacesTabProps> = ({ orgId }) => 
     const fetchWorkspaces = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:3000/api/v1/workspace_ms/getOrganizationWorkspaces/${orgId}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/workspace_ms/getOrganizationWorkspaces/${orgId}`
         );
         if (response.data.success) {
           setWorkspaces(response.data.data);
@@ -80,7 +80,7 @@ export const OrgWorkspacesTab: React.FC<OrgWorkspacesTabProps> = ({ orgId }) => 
     setSuccess(null);
 
     try {
-      const response = await axios.post(`http://localhost:3000/api/v1/deleteOrganizationWorkspaces`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/deleteOrganizationWorkspaces`, {
         orgId,
         workspaceIds: selectedWorkspaces,
       });
