@@ -32,7 +32,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/organization_ms/organizations');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
         if (response.data.success) {
           setOrganizations(response.data.data);
         }

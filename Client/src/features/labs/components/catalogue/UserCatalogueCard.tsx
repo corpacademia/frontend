@@ -33,7 +33,7 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
 
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setUser(response.data.user);
     };
     getUserDetails();
@@ -43,7 +43,7 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
   useEffect(() => {
     const fetchSoftware = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/lab_ms/getSoftwareDetails');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSoftwareDetails`);
         if (response.data.success) {
           const labSoftware = response.data.data.find((s: any) => s.lab_id === lab.lab_id);
           if (labSoftware) {
@@ -83,7 +83,7 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
   const handleBuyLab = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/purchaseLab', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/purchaseLab`, {
         lab_id: lab.lab_id,
         user_id: user.id
       });
@@ -106,7 +106,7 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
   const handleLaunchVM = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/launchVM', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/launchVM`, {
         lab_id: lab.lab_id,
         user_id: user.id
       });

@@ -66,7 +66,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
       setNotification(null);
       
       try {
-        const response = await axios.post('http://localhost:3000/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment', {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
            isrunning: false,
           userId:lab.userscredentials[0].assigned_to,
           labId: lab.lab_id
@@ -98,7 +98,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
       setNotification(null);
       
       try {
-        const response = await axios.post('http://localhost:3000/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment', {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
           
           isrunning: true,
           userId:lab.userscredentials[0].assigned_to,
@@ -114,7 +114,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
           // Update local state
           lab.isrunning = true;
           // Navigate to VM session page
-        const tokenResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/connectToDatacenterVm', {
+        const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
         Protocol: lab.protocol || 'RDP',
         VmId:lab.userscredentials[0].id,
         Ip: lab.userscredentials[0].ip,

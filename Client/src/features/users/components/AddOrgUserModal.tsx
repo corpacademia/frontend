@@ -78,9 +78,9 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const orgDetails = await axios.post('http://localhost:3000/api/v1/organization_ms/getOrgDetails', {
+      const orgDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
         org_id: orgId})
-      const response = await axios.post('http://localhost:3000/api/v1/user_ms/addOrganizationUser', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addOrganizationUser`, {
         ...formData,
         admin_id: adminDetails.id,
         organization: orgDetails.data.data.organization,

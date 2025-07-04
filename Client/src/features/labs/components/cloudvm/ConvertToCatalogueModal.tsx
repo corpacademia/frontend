@@ -144,7 +144,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   const [admin,setAdmin] = useState({});
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(response.data.user);
     };
     getUserDetails();
@@ -153,7 +153,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/organization_ms/organizations');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
         if (response.data.success) {
           setOrganizations(response.data.data);
         }
@@ -179,7 +179,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   const handleInputChange = async(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     try {
-      const org_details = await axios.post('http://localhost:3000/api/v1/organization_ms/getOrgDetails', {
+      const org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
         org_id: formData.organizationId
       });
       if(org_details.data.success){
@@ -245,27 +245,27 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
     setSuccess(null);
     
     try {
-      const org_details = await axios.post('http://localhost:3000/api/v1/organization_ms/getOrgDetails', {
+      const org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
         org_id: formData.organizationId
       });
 
       if (org_details.data.success) {
         setOrg_details(org_details.data.data);
         if(isDatacenterVM){
-            const labUpdate = await axios.post('http://localhost:3000/api/v1/lab_ms/updatesinglevmdatacenter', {
+            const labUpdate = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updatesinglevmdatacenter`, {
                 software:software.filter(s => s.trim() !== ''), 
                 catalogueType: formData.catalogueType, 
                 labId: vmId,
             })
             if(labUpdate.data.success){
-              const orgAssignment = await axios.post('http://localhost:3000/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment',{
+              const orgAssignment = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`,{
                  labId: vmId,
                  orgId: formData.organizationId, 
                  assignedBy: admin.id, 
                  catalogueName: formData.catalogueName,
               })
               if(orgAssignment.data.success){
-                const assingCredsToOrg = await axios.post('http://localhost:3000/api/v1/lab_ms/assignLabCredsToOrg',{
+                const assingCredsToOrg = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabCredsToOrg`,{
                 labId: vmId,
                 orgAssigned: org_details.data.data.id, 
                 assignedBy: admin.id,
@@ -285,7 +285,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           }
          }
          else if(isClusterDatacenterVM){
-          const vmClusterDataCenter =  await axios.post('http://localhost:3000/api/v1/vmcluster_ms/assignToOrganization',{
+          const vmClusterDataCenter =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`,{
             labId:vmId,
             orgId:formData.organizationId,
             assignedBy:admin.id,
@@ -304,7 +304,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
          }
 
         else{
-           const batch = await axios.post('http://localhost:3000/api/v1/lab_ms/batchAssignment', {
+           const batch = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, {
           lab_id: vmId,
           admin_id: org_details.data.data.org_admin,
           org_id: org_details.data.data.id,
@@ -316,7 +316,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           software: software.filter(s => s.trim() !== ''),
         });
         if (batch.data.success) {
-          const updateLabConfig = await axios.post('http://localhost:3000/api/v1/lab_ms/updateConfigOfLabs', {
+          const updateLabConfig = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateConfigOfLabs`, {
             lab_id: vmId,
             admin_id: admin.id,
             config_details: {

@@ -51,18 +51,18 @@ export const ClusterList: React.FC = () => {
   const fetchClusters = async () => {
     try {
       setLoading(true);
-      const userProfile = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const userProfile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       if(userProfile.data.success){
         setCurrentUser(userProfile.data.user);
       }
       let response;
       if(userProfile.data.user.role === 'superadmin'){
-        response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/getClusterLabs',{
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabs`,{
         userId:userProfile.data.user.id
       });
       }
       else if(userProfile.data.user.role === 'orgadmin'){
-         response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/getOrglabs',{
+         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,{
           orgId:userProfile.data.user.org_id
          })
       }

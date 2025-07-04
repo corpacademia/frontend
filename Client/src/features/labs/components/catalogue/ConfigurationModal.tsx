@@ -76,7 +76,7 @@ export const ConfigurationModal: React.FC<ConfigurationModalProps> = ({
     // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
     useEffect(() => {
       const getUserDetails = async () => {
-        const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
       };
       getUserDetails();
@@ -90,7 +90,7 @@ export const ConfigurationModal: React.FC<ConfigurationModalProps> = ({
         'days': configDetails.numberOfDays
       };
       
-      const updateConfig = await axios.post('http://localhost:3000/api/v1/lab_ms/updateConfigOfLabs', {
+      const updateConfig = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateConfigOfLabs`, {
         lab_id: lab.lab_id,
         admin_id: user.id,
         config_details: configs,
@@ -100,11 +100,11 @@ export const ConfigurationModal: React.FC<ConfigurationModalProps> = ({
         onClose();
       }
       try {
-        const ami = await axios.post('http://localhost:3000/api/v1/lab_ms/amiInformation',{lab_id:lab.lab_id})
+        const ami = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiInformation`,{lab_id:lab.lab_id})
         
         if(ami.data.success){
           try {
-            const golden_instance = await axios.post('http://localhost:3000/api/v1/aws_ms/goldenToInstance',{
+            const golden_instance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/goldenToInstance`,{
               instance_type : lab.instance,
               ami_id:ami.data.result.ami_id,
               no_instance:configDetails.numberOfUsers,

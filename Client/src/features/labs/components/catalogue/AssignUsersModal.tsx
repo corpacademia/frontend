@@ -38,7 +38,7 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
   // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(response.data.user);
     };
     getUserDetails();
@@ -47,7 +47,7 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
   React.useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.post('http://localhost:3000/api/v1/user_ms/getOrganizationUsers', {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationUsers`, {
           admin_id: admin.id
         });
         setUsers(response.data.data);
@@ -68,7 +68,7 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
     setNotification(null);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/initiate-payment', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/initiate-payment`, {
         lab_id: lab?.lab_id,
         user_id: admin.id,
         amount: 1000 // Amount in smallest currency unit
@@ -105,7 +105,7 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
     try {
       
     if(type ==='cloudslice'){
-      const response = await axios.post('http://localhost:3000/api/v1/cloud_slice_ms/assignCloudSlice', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/assignCloudSlice`, {
         lab: lab?.labid,
         userId: selectedUsers,
         assign_admin_id: admin.id,
@@ -125,7 +125,7 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
     }
 
     else if(type ==='datacenter'){
-      const response = await axios.post('http://localhost:3000/api/v1/lab_ms/assignSingleVmDatacenterLabToUser', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignSingleVmDatacenterLabToUser`, {
         labId:lab?.lab_id,
         orgId:users[0]?.org_id,
         userId:selectedUsers,
@@ -146,7 +146,7 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
     }
 
     else if(type === 'cluster'){
-      const response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/assignCluster', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignCluster`, {
         labId: lab?.labid,
         userId: selectedUsers,
         assignedBy: admin.id,
@@ -167,7 +167,7 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
     }
 
     else{
-     const response = await axios.post('http://localhost:3000/api/v1/lab_ms/assignlab', {
+     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignlab`, {
         lab: lab?.lab_id,
         userId: selectedUsers,
         assign_admin_id: admin.id

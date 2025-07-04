@@ -15,7 +15,7 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ config, on
   useEffect(() => {
     const getUserDetails = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
       } catch (err) {
         console.error('Error fetching user profile:', err);
@@ -27,7 +27,7 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ config, on
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const response = await axios.post('http://localhost:3000/api/v1/lab_ms/getInstances', {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getInstances`, {
           cloud: config.cloudProvider,
           cpu: config.vmSize.cpu,
           ram: config.vmSize.ram,
@@ -43,7 +43,7 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ config, on
 
   const deleteLabData = async (lab_id: string) => {
     try {
-      await axios.delete("http://localhost:3000/api/v1/aws_ms/deleteLab", { data: { lab_id } });
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deleteLab`, { data: { lab_id } });
     } catch (err) {
       console.error("Failed to delete lab data", err);
     }
@@ -58,7 +58,7 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ config, on
     const data = JSON.parse(localStorage.getItem("formData") || "{}");
 
     try {
-      const response = await axios.post("http://localhost:3000/api/v1/lab_ms/labconfig", {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/labconfig`, {
         data,
         user: user_cred,
       });
@@ -73,23 +73,23 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ config, on
 
       setIsLoading(false); // End loading after onConfirm is called
 
-      const pythonRes = await axios.post("http://localhost:3000/api/v1/aws_ms/python", {
+      const pythonRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/python`, {
         cloudPlatform: config.cloudProvider,
         lab_id,
       });
 
-      const tfRes = await axios.post("http://localhost:3000/api/v1/aws_ms/pythontf", { lab_id });
+      const tfRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/pythontf`, { lab_id });
 
       if (!tfRes.data.success) {
         await deleteLabData(lab_id);
         throw new Error("Terraform apply failed");
       }
 
-      const instancedetails = await axios.post("http://localhost:3000/api/v1/lab_ms/awsCreateInstanceDetails", {
+      const instancedetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
         lab_id,
       });
 
-      await axios.post("http://localhost:3000/api/v1/aws_ms/decryptPassword", {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/decryptPassword`, {
         lab_id,
         public_ip: instancedetails.data.result.public_ip,
         instance_id: instancedetails.data.result.instance_id,

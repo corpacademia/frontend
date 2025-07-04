@@ -50,7 +50,7 @@ export const CloudSlicePage: React.FC = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
         if(response.data.user.role === 'orgadmin'){
            const orgLabStatus = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
@@ -76,7 +76,7 @@ export const CloudSlicePage: React.FC = () => {
     try {
       let allSlices: CloudSlice[] = [];
       if(user.role === 'superadmin'){
-        const response = await axios.get('http://localhost:3000/api/v1/cloud_slice_ms/getCloudSlices', {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlices`, {
           params: { userId: user.id }
         });
   

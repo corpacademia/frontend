@@ -51,7 +51,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       
       setIsLoading(true);
       try {
-        const response = await axios.post('http://localhost:3000/api/v1/organization_ms/getOrgDetails', {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
           org_id: organization.id
         });
 

@@ -27,7 +27,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   const [admin,setAdmin] = useState({});
    useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/aws_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/user_profile`);
       setAdmin(response.data.user);
     };
     getUserDetails();
@@ -36,7 +36,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   useEffect(() => {
     const fetch = async () => {
       try {
-        const data = await axios.post('http://localhost:3000/api/v1/lab_ms/getLabsConfigured', {
+        const data = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
           admin_id: admin.id
         });
         setAvailableLabs(data.data.data);
@@ -57,7 +57,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
     setPaymentMessage(null);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/initiate-payment', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/initiate-payment`, {
         lab_id: selectedLab,
         user_id: userId,
         amount: 1000 // Amount in smallest currency unit (e.g., paise)
@@ -73,7 +73,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
           order_id: response.data.orderId,
           handler: async (response: any) => {
             try {
-              const verifyResponse = await axios.post('http://localhost:3000/api/v1/verify-payment', {
+              const verifyResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/verify-payment`, {
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature
@@ -128,7 +128,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
     setSelectedLabDetails(lab);
 
     try {
-      const assign = await axios.post('http://localhost:3000/api/v1/lab_ms/assignlab', {
+      const assign = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignlab`, {
         lab: lab,
         duration: duration,
         userId: userId,

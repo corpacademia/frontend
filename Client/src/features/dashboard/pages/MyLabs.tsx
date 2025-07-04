@@ -57,7 +57,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, labId, labTi
     try {
       let instance_details;
       try {
-        instance_details = await axios.post('http://localhost:3000/api/v1/lab_ms/awsInstanceOfUsers', {
+        instance_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsInstanceOfUsers`, {
           lab_id: labId,
           user_id: userId,
         });
@@ -67,14 +67,14 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, labId, labTi
   
       let ami;
       try {
-        ami = await axios.post('http://localhost:3000/api/v1/lab_ms/amiinformation', { lab_id: labId });
+        ami = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: labId });
       } catch (error) {
         console.error("Error fetching AMI details:", error);
       }
   
       let response;
       try {
-        response = await axios.post('http://localhost:3000/api/v1/aws_ms/deletevm', {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deletevm`, {
           id: labId,
           instance_id: instance_details?.data?.result?.instance_id || null,
           ami_id: ami?.data?.result?.ami_id || null,
@@ -212,7 +212,7 @@ export const MyLabs: React.FC = () => {
 
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setUser(response.data.user);
       const labStatus = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getUserLabStatus/${response.data.user.id}`);
       if(labStatus.data.success){
@@ -234,14 +234,14 @@ export const MyLabs: React.FC = () => {
 
       // Fetch catalogues, assigned labs, and software - isolated per call
       try {
-        const res = await axios.get('http://localhost:3000/api/v1/lab_ms/getCatalogues');
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCatalogues`);
         cats = res.data.data;
       } catch (err) {
         console.error('Failed to fetch catalogues:', err);
       }
 
       try {
-        const res = await axios.post('http://localhost:3000/api/v1/lab_ms/getAssignedLabs', { userId: user.id });
+        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssignedLabs`, { userId: user.id });
         labss = res.data.data;
         setLabStatus(labss); // safe to set even if others fail
       } catch (err) {
@@ -249,7 +249,7 @@ export const MyLabs: React.FC = () => {
       }
 
       try {
-        const res = await axios.get('http://localhost:3000/api/v1/lab_ms/getSoftwareDetails');
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSoftwareDetails`);
         softwareData = res.data.data;
       } catch (err) {
         console.error('Failed to fetch software details:', err);
@@ -292,13 +292,13 @@ export const MyLabs: React.FC = () => {
           const vmDetails = await Promise.all(
             res.data.data.map(async (assignment: any) => {
               try {
-                const vmRes = await axios.post('http://localhost:3000/api/v1/lab_ms/getSingleVmDatacenterLabOnId', {
+                const vmRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`, {
                   labId: assignment.labid,
                 });
 
                 if (vmRes.data.success) {
                   const credsRes = await axios.post(
-                    'http://localhost:3000/api/v1/lab_ms/getUserAssignedSingleVMDatacenterCredsToUser',
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserAssignedSingleVMDatacenterCredsToUser`,
                     { labId: assignment.labid, userId: user.id }
                   );
 
@@ -331,13 +331,13 @@ export const MyLabs: React.FC = () => {
           const clusterDetails = await Promise.all(
             res.data.data.map(async (assignment: any) => {
               try {
-                const clusterRes = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/getClusterLabOnId', {
+                const clusterRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabOnId`, {
                   labId: assignment.labid,
                 });
 
                 if (clusterRes.data.success) {
                   const usersRes = await axios.post(
-                    'http://localhost:3000/api/v1/vmcluster_ms/getUserAssignedClusterCredsToUser',
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getUserAssignedClusterCredsToUser`,
                     { labId: assignment.labid, userId: user.id }
                   );
 
@@ -474,7 +474,7 @@ export const MyLabs: React.FC = () => {
 
   const checkLabStatus = async (labId: string) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/aws_ms/checkLabStatus', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/checkLabStatus`, {
         lab_id: labId,
         user_id: user.id
       });
@@ -505,8 +505,8 @@ export const MyLabs: React.FC = () => {
   
     try {
       const [ami, labConfig] = await Promise.all([
-        axios.post('http://localhost:3000/api/v1/lab_ms/amiinformation', { lab_id: lab.lab_id }),
-        axios.post('http://localhost:3000/api/v1/lab_ms/getAssignLabOnId', { labId: lab.lab_id ,userId:user.id}),
+        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: lab.lab_id }),
+        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssignLabOnId`, { labId: lab.lab_id ,userId:user.id}),
         
       ]);
       if (!ami.data.success) {
@@ -514,7 +514,7 @@ export const MyLabs: React.FC = () => {
       }
   
       // First API: Launch instance (Keep loading active)
-      const response = await axios.post('http://localhost:3000/api/v1/aws_ms/launchInstance', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`, {
         name: user.name,
         ami_id: ami.data.result.ami_id,
         user_id: user.id,
@@ -589,7 +589,7 @@ export const MyLabs: React.FC = () => {
       }
     }));
 
-    const cloudinstanceDetails = await axios.post('http://localhost:3000/api/v1/aws_ms/getAssignedInstance', {
+    const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
       user_id: user.id,
       lab_id: lab.lab_id,
     })
@@ -603,11 +603,11 @@ export const MyLabs: React.FC = () => {
       console.log('Instance ID:', instanceId);
       console.log(isStop)
       if (isStop) {
-        const stop =await axios.post('http://localhost:3000/api/v1/aws_ms/stopInstance', {
+        const stop =await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
           instance_id: instanceId
         });
         if(stop.data.success){
-          await axios.post('http://localhost:3000/api/v1/lab_ms/updateawsInstanceOfUsers',{
+          await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
             lab_id:lab.lab_id,
             user_id:user.id,
             state:false,
@@ -642,14 +642,14 @@ export const MyLabs: React.FC = () => {
       }
 
     
-      const checkInstanceAlreadyStarted = await axios.post('http://localhost:3000/api/v1/lab_ms/checkisstarted',{
+      const checkInstanceAlreadyStarted = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkisstarted`,{
         type:'user',
         id:cloudinstanceDetails?.data.data.instance_id,
       })
       if(checkInstanceAlreadyStarted.data.isStarted === false){
        
           console.log('stop')
-          const response = await axios.post('http://localhost:3000/api/v1/aws_ms/runSoftwareOrStop', {
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
             os_name: lab.os,
             instance_id: cloudinstanceDetails?.data.data.instance_id,
             hostname: cloudinstanceDetails?.data.data.public_ip,
@@ -658,7 +658,7 @@ export const MyLabs: React.FC = () => {
           });
           
         if (response.data.response.success && response.data.response.jwtToken) {
-          await axios.post('http://localhost:3000/api/v1/lab_ms/updateawsInstanceOfUsers',{
+          await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
             lab_id:lab.lab_id,
             user_id:user.id,
             state:true,
@@ -681,7 +681,7 @@ export const MyLabs: React.FC = () => {
       else{
         console.log('run')
         
-        const restart = await axios.post('http://localhost:3000/api/v1/aws_ms/restart_instance', {
+        const restart = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`, {
           instance_id: cloudinstanceDetails?.data.data.instance_id,
           user_type:'user'
         });
@@ -689,12 +689,12 @@ export const MyLabs: React.FC = () => {
 
   
         if (restart.data.success ) {
-          const cloudInstanceDetails = await axios.post('http://localhost:3000/api/v1/aws_ms/getAssignedInstance', {
+          const cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
             user_id: user.id,
             lab_id: lab.lab_id,
           })
           if(cloudInstanceDetails.data.success){
-            const response = await axios.post('http://localhost:3000/api/v1/aws_ms/runSoftwareOrStop', {
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
               os_name: lab.os,
               instance_id: cloudinstanceDetails?.data.data.instance_id,
               hostname: cloudInstanceDetails?.data.data.public_ip,
@@ -703,7 +703,7 @@ export const MyLabs: React.FC = () => {
             });
             if(response.data.success){
               //update database that the instance is started
-              await axios.post('http://localhost:3000/api/v1/lab_ms/updateawsInstanceOfUsers',{
+              await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
                 lab_id:lab.lab_id,
                 user_id:user.id,
                 state:true,
@@ -787,11 +787,11 @@ export const MyLabs: React.FC = () => {
     const acountDetails = labStatus.find((lab) => lab.labid === labId)
     try {
       let response;
-      const deleteIam = await axios.post('http://localhost:3000/api/v1/aws_ms/deleteIamAccount', {
+      const deleteIam = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deleteIamAccount`, {
         userName: acountDetails.username
       })
       if (deleteIam.data.success) {
-        response = await axios.post('http://localhost:3000/api/v1/cloud_slice_ms/deleteUserCloudSlice', {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
           userId: user.id,
           labId: labId
         })
@@ -807,7 +807,7 @@ export const MyLabs: React.FC = () => {
   
   const handleDeleteDatacenterVM = async (labId: string) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment`, {
         labId: labId,
         userId: user.id
       });

@@ -75,7 +75,7 @@ export const EditLabExerciseModal: React.FC<EditLabExerciseModalProps> = ({
     const fetchAwsServiceCategories = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/cloud_slice_ms/getAwsServices');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAwsServices`);
         if (response.data.success) {
           const categories: Record<string, Service[]> = {};
           

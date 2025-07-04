@@ -286,7 +286,7 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
     setNotification(null);
     
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/updateClusterVmCredentials', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateClusterVmCredentials`, {
         id: vmData.id,
         disable: !vmData.disabled
       });
@@ -326,7 +326,7 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
   const handleConnectToVM = async (vmData: VM) => {
     try {
       // First, get JWT token
-      const tokenResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/connectToDatacenterVm', {
+      const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
         Protocol: vmData.vmData?.protocol || 'rdp',
         VmId: vmData.id,
         Ip: vmData.ip,
@@ -378,7 +378,7 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
 
   const handleSaveVM = async (vmData: VM) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/vmcluster_ms/editClusterVmCredentials', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/editClusterVmCredentials`, {
         id: vmData.id,
         vmName: vmData.vmName,
         username: vmData.username,

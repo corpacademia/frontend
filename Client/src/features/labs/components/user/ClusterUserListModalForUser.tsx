@@ -77,7 +77,7 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
   const handleConnectToVM = async (vmData: VM) => {
     try {
       // First, get JWT token
-      const tokenResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/connectToDatacenterVm', {
+      const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
         Protocol: vmData.vmData?.protocol || 'rdp',
         VmId: vmData.id,
         Ip: vmData.ip,

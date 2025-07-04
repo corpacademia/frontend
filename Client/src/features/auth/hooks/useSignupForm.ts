@@ -82,7 +82,7 @@ export const useSignupForm = () => {
     try {
 
       // const response = await authApi.login(formData.email, formData.password);
-      const res = await axios.post('http://localhost:3000/api/v1/user_ms/signup',{
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/signup`,{
          name:formData.name,
          email:formData.email,
          password:formData.password,
@@ -91,7 +91,7 @@ export const useSignupForm = () => {
       })
       if(res.data.success){
         if(formData.isNewOrganization){
-          const updateOrgAdmin = await axios.post('http://localhost:3000/api/v1/organization_ms/updateOrgAdmin',{
+          const updateOrgAdmin = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/updateOrgAdmin`,{
           orgAdmin:res.data.result.id,
           Id:formData.organization.id
         })

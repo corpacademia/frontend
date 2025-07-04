@@ -63,7 +63,7 @@ export const StandardLabPage: React.FC = () => {
     const fetchUserDetails = async()=>{
       try {
         setIsLoading(true);
-        const user_details = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+        const user_details = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(user_details.data.user)
         const userLabStatus = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getUserLabStatus/${user_details.data.user.id}`);
         if(userLabStatus.data.success){

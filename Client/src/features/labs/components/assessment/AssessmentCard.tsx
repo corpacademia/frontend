@@ -65,7 +65,7 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) =>
   // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(response.data.user);
     };
     getUserDetails();
@@ -74,7 +74,7 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) =>
   //Get the organization details
   useEffect(()=>{
     const fetchOrg=async()=>{
-      const organizationDetails = await axios.post('http://localhost:3000/api/v1/organization_ms/getOrgDetails',{
+      const organizationDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`,{
         org_id:assessment.config_details.organizationId
       })
       setOrgDetails(organizationDetails.data.data)
@@ -88,7 +88,7 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) =>
       try {
         console.log("Fetching lab details...");
         const fetchLabDetails = await axios.post(
-          "http://localhost:3000/api/v1/lab_ms/getLabOnId",
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`,
           {
             labId: assessment.lab_id, // Pass your lab ID here
           }
@@ -142,7 +142,7 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) =>
  
    //api endpoint for sending mail
    const mail = async (formData)=>{
-    const emailResponse = await axios.post('http://localhost:3000/api/v1/sendmail', formData, {
+    const emailResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/sendmail`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -182,7 +182,7 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) =>
         
           try {
             console.log("Inserting users...");
-            const insertUsersResponse = await axios.post('http://localhost:3000/api/v1/user_ms/insertUsers', {
+            const insertUsersResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/insertUsers`, {
               users: users,
               organization: orgDetails.organization_name,
               admin_id: admin.id,
@@ -204,7 +204,7 @@ export const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment }) =>
             
         
             console.log("Assigning lab...");
-            const assignLabResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/assignlab', {
+            const assignLabResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignlab`, {
               lab: assessment.lab_id,
               duration: 60,
               userId: users,

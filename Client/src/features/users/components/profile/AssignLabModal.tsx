@@ -32,7 +32,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
         console.log(user.role)
         if(user.role ==='superadmin'){
           const [standardResult, cloudResult] = await Promise.allSettled([
-            axios.post('http://localhost:3000/api/v1/lab_ms/getLabsConfigured', {
+            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
               admin_id: user.id,
             }),
             axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getAllCloudSliceLabs`),
@@ -64,7 +64,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
         }
         else{
           const [standardResult, cloudResult] = await Promise.allSettled([
-            axios.post('http://localhost:3000/api/v1/lab_ms/getLabsConfigured', {
+            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
               admin_id: user.id,
             }),
             axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabDetails/${user.org_id}`),
@@ -169,7 +169,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
       if (selectedLabDetails.type === 'cloudslice') {
         const formattedStart = formatDate(startTime!);
         const formattedEnd = formatDate(endTime!);
-        res = await axios.post('http://localhost:3000/api/v1/cloud_slice_ms/assignCloudSlice', {
+        res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/assignCloudSlice`, {
           lab: selectedLabDetails.labid,
           start_date: formattedStart,
           end_date: formattedEnd,
@@ -177,7 +177,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
           assign_admin_id: user.id
         });
       } else {
-        res = await axios.post('http://localhost:3000/api/v1/lab_ms/assignlab', {
+        res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignlab`, {
           lab: selectedLabDetails,
           duration,
           userId,

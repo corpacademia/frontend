@@ -29,11 +29,12 @@ interface User {
 }
 
 export const useAuthStore = create<AuthState>((set, get) => {
+  
   // This IIFE runs immediately when the module is loaded.
   (async () => {
     set({ isLoading: true });
     try {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile', {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`, {
         withCredentials: true,
         timeout: 10000, // 10 second timeout
       });
@@ -74,7 +75,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         let response
         try {
-           response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile', {
+           response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`, {
             withCredentials: true, // include credentials if needed
           });
         } catch (error) {
@@ -82,7 +83,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           // set({ user: null, isAuthenticated: false });
         }
         if (response?.data?.user?.email) {
-          await axios.post('http://localhost:3000/api/v1/user_ms/logout', {
+          await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/logout`, {
             email: response.data.user.email,
           }, {
             withCredentials: true,
@@ -126,7 +127,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     fetchUser: async () => {
       try {
         set({ isLoading: true });
-        const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile', {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`, {
           withCredentials: true,
           timeout: 10000,
         });

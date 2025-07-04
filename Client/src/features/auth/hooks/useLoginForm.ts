@@ -32,7 +32,7 @@ export const useLoginForm = () => {
   // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
   // useEffect(() => {
   //   const getUserDetails = async () => {
-  //     const response = await axios.get('http://localhost:3000/api/v1/user_profile');
+  //     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_profile`);
   //     setAdmin(response.data.user);
   //   };
   //   getUserDetails();
@@ -71,7 +71,7 @@ export const useLoginForm = () => {
       // const response1 = await authApi.login(formData.email, formData.password);
       // console.log(response1)
       // login(response1.user);
-      const response = await axios.post('http://localhost:3000/api/v1/user_ms/login',
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/login`,
         {
           email:formData.email,
           password:formData.password,

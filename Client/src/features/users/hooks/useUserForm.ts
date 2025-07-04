@@ -33,7 +33,7 @@ export const useUserForm = (
 
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setUser(response.data.user);
     };
     getUserDetails();
@@ -78,7 +78,7 @@ export const useUserForm = (
     try {
       await onSubmit(formData);
       const user = user_cred;
-      const result = await axios.post('http://localhost:3000/api/v1/user_ms/addUser',{
+      const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addUser`,{
            formData:formData,
            user:user.id
       })

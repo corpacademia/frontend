@@ -82,7 +82,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       }
 
       const response = await axios.put(
-        `http://localhost:3000/api/v1/user_ms/updateProfile/${user.id}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/updateProfile/${user.id}`,
         formDataToSend,
         {
           headers: { 'Content-Type': 'multipart/form-data' },

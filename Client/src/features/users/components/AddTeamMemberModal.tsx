@@ -80,9 +80,9 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
 
     // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
     
-        const user_cred = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+        const user_cred = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setAdmin(user_cred.data.user);
-      const response = await axios.post('http://localhost:3000/api/v1/user_ms/addOrganizationUser', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addOrganizationUser`, {
         ...formData,
         admin_id: user_cred.data.user.id,
         organization: user_cred.data.user.organization,

@@ -204,7 +204,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setCurrentUser(response.data.user);
       } catch (error) {
         console.error('Failed to fetch current user:', error);
@@ -356,7 +356,7 @@ if (userGuideFile) {
 }
 
       // Update lab details
-      const labResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/updateSingleVmDatacenterLab', formData, {
+      const labResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterLab`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -369,7 +369,7 @@ if (userGuideFile) {
       // for (const cred of editFormData.credentials) {
       //   if (cred.id) {
       //     // Update existing credential
-      //     await axios.post('http://localhost:3000/api/v1/lab_ms/editSingleVmDatacenterCreds', {
+      //     await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/editSingleVmDatacenterCreds`, {
       //       labId: vm.lab_id,
       //       id: cred.id,
       //       username: cred.username,
@@ -380,7 +380,7 @@ if (userGuideFile) {
       //     });
       //   } else if (cred.username && cred.password && cred.ip && cred.port) {
       //     // Create new credential only if all required fields are filled
-      //     await axios.post('http://localhost:3000/api/v1/lab_ms/addSingleVmDatacenterCreds', {
+      //     await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/addSingleVmDatacenterCreds`, {
       //       labId: vm.lab_id,
       //       username: cred.username,
       //       password: cred.password,

@@ -54,7 +54,7 @@ export const CloudSliceLabPage: React.FC = () => {
     const fetchCurrentUser = async () => {
       try {
         setFetching(true);
-        const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setCurrentUser(response.data.user);
         if(response.data.user.role === 'orgadmin'){
           const orgLabDetails = await axios.get(`http://localhost:3000/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
@@ -117,7 +117,7 @@ export const CloudSliceLabPage: React.FC = () => {
   useEffect(() => {
     const fetchServiceCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/cloud_slice_ms/getAwsServices');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAwsServices`);
         if (response.data.success) {
           const awsServiceCategories = await extractAwsServices(response.data.data);
           setServiceCategories(awsServiceCategories);

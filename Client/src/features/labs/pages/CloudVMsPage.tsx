@@ -30,7 +30,7 @@ export const CloudVMsPage: React.FC = () => {
   const [admin,setAdmin] = useState({});
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/aws_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/user_profile`);
       setAdmin(response.data.user);
     };
     getUserDetails();
@@ -39,7 +39,7 @@ export const CloudVMsPage: React.FC = () => {
   useEffect(() => {
     const fetchVMs = async () => {
       try {
-        const response = await axios.post('http://localhost:3000/api/v1/lab_ms/getLabsConfigured', {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
           admin_id: admin.id
         });
 

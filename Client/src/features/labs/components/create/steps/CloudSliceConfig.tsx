@@ -151,7 +151,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       try {
         console.log(config)
         const user_profile = await axios.get(`http://localhost:3000/api/v1/user_ms/user_profile`);
-        const result = await axios.post('http://localhost:3000/api/v1/cloud_slice_ms/createCloudSliceLab', {
+        const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createCloudSliceLab`, {
           createdBy: user_profile.data.user.id,
           labData: config
         });

@@ -74,7 +74,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   const [admin,setAdmin] = useState({});
   // useEffect(() => {
   //   const getUserDetails = async () => {
-  //     const response = await axios.get('http://localhost:3000/api/v1/user_profile');
+  //     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_profile`);
   //     setAdmin(response.data.user);
   //   };
   //   getUserDetails();
@@ -84,7 +84,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   useEffect(() => {
     const fetchOrg = async () => {
       if (assessment.config_details?.organizationId) {
-        const organizationDetails = await axios.post('http://localhost:3000/api/v1/organization_ms/getOrgDetails', {
+        const organizationDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
           org_id: assessment.config_details.organizationId
         });
         setOrgDetails(organizationDetails.data.data);
@@ -96,9 +96,9 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const user_cred = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+        const user_cred = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(user_cred.data.user);
-        const response = await axios.post('http://localhost:3000/api/v1/user_ms/getOrganizationUsers', {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationUsers`, {
           admin_id: user_cred.data.user.id
         });
         setUsers(response.data.data);
@@ -124,7 +124,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
     const fetch = async () => {
       try {
         const fetchLabDetails = await axios.post(
-          "http://localhost:3000/api/v1/lab_ms/getLabOnId",
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`,
           {
             labId: assessment.lab_id,
           }
@@ -154,7 +154,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
     setNotification(null);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/initiate-payment', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/initiate-payment`, {
         lab_id: assessment.lab_id,
         user_id: admin.id,
         amount: 1000 // Amount in smallest currency unit (e.g., paise)
@@ -196,7 +196,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
     setNotification(null);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/lab_ms/assignlab', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignlab`, {
         lab: assessment.lab_id,
         userId: selectedUsers,
         assign_admin_id: admin.id

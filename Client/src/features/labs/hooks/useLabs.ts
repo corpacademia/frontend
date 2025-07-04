@@ -35,7 +35,7 @@ export const useLabs = () => {
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        const catalogues = await axios.get("http://localhost:3000/api/v1/lab_ms/getPublicCatalogues")
+        const catalogues = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getPublicCatalogues`)
         setLabs(catalogues.data.data)
 
       } finally {

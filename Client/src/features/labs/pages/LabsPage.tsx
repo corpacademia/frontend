@@ -97,7 +97,7 @@ export const LabsPage: React.FC = () => {
       setLoading(true);
       try {
         // Simulate an API call to fetch lab counts
-        const user_profile = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile'); // Replace with actual API endpoint
+        const user_profile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`); // Replace with actual API endpoint
       
         const response = await axios.get(`http://localhost:3000/api/v1/lab_ms/getCountoflabs/${user_profile.data.user.id}`); // Replace with actual API endpoint
         

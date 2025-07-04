@@ -50,7 +50,7 @@ export const LabExercisePage: React.FC = () => {
     const checkAccountStatus = async () => {
       try {
         setIsCheckingAccount(true);
-        const userResponse = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+        const userResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(userResponse.data.user);
         
         // Check if IAM account is already created
@@ -99,7 +99,7 @@ export const LabExercisePage: React.FC = () => {
     try {
       if (!accountCreated) {
         // Create IAM user account if not already created
-        const createIamResponse = await axios.post('http://localhost:3000/api/v1/aws_ms/createIamUser', {
+        const createIamResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
           userName: user.name,
           services: exercise?.services || [],
           role: user.role,
@@ -110,7 +110,7 @@ export const LabExercisePage: React.FC = () => {
         if (createIamResponse.data.success) {
           console.log(moduleId,exerciseId)
           const submit = await axios.post(
-            'http://localhost:3000/api/v1/cloud_slice_ms/addLabStatusOfUser',
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/addLabStatusOfUser`,
             {
               module_id: moduleId,
               exercise_id: exerciseId,
@@ -127,7 +127,7 @@ export const LabExercisePage: React.FC = () => {
           setAccountCreated(true);
           
           // Update lab status
-          await axios.post('http://localhost:3000/api/v1/cloud_slice_ms/updateLabStatusOfUser', {
+          await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`, {
             status: 'active',
             launched: true,
             isRunning: true,
@@ -144,7 +144,7 @@ export const LabExercisePage: React.FC = () => {
         }
       } else if (buttonLabel === 'Resume Lab') {
         const submit = await axios.post(
-          'http://localhost:3000/api/v1/cloud_slice_ms/addLabStatusOfUser',
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/addLabStatusOfUser`,
           {
             module_id: moduleId,
             exercise_id: exerciseId,
@@ -155,12 +155,12 @@ export const LabExercisePage: React.FC = () => {
           }
         );
         // Resume lab that was previously stopped
-        await axios.post('http://localhost:3000/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser', {
+        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser`, {
           isRunning: true,
           labId: labDetails?.labid,
           userId: user?.id
         });
-        const editAwsServices = await axios.post('http://localhost:3000/api/v1/aws_ms/addAwsServices',{
+        const editAwsServices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/addAwsServices`,{
           userName:credentials.username,
           services:exercise.services
         });
@@ -187,7 +187,7 @@ export const LabExercisePage: React.FC = () => {
     
     try {
       // Update lab running state to false
-      await axios.post('http://localhost:3000/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser', {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser`, {
         isRunning: false,
         labId: labDetails?.labid,
         userId: user?.id
@@ -223,7 +223,7 @@ export const LabExercisePage: React.FC = () => {
         throw new Error("Missing required submission data.");
       }
       const submit = await axios.post(
-        'http://localhost:3000/api/v1/cloud_slice_ms/addLabStatusOfUser',
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/addLabStatusOfUser`,
         {
           module_id: moduleId,
           exercise_id: exerciseId,
@@ -236,7 +236,7 @@ export const LabExercisePage: React.FC = () => {
   
   
       if (submit.data.success) {
-        const deleteAwsServices = await axios.post('http://localhost:3000/api/v1/aws_ms/deleteAwsServices',{
+        const deleteAwsServices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deleteAwsServices`,{
           userName:credentials.username,
         });
         setNotification({ type: 'success', message: 'Exercise submitted successfully' });

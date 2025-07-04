@@ -24,7 +24,7 @@ export const DeploymentStatus: React.FC<DeploymentStatusProps> = ({ config }) =>
   // Function to check script execution status
   const fetchProgress = async () => {
     try {
-      const data = await axios.post('http://localhost:3000/api/v1/aws_ms/labprogress',{
+      const data = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/labprogress`,{
         lab_id: config.lab_id,
       });
       let step =0;

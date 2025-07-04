@@ -229,7 +229,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
     const fetchCurrentUser = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3000/api/v1/user_ms/user_profile",
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`,
         );
         setCurrentUser(response.data.user);
       } catch (error) {
@@ -597,7 +597,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       }
       // Update lab details
       const labResponse = await axios.post(
-        "http://localhost:3000/api/v1/vmcluster_ms/updateClusterLab",
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateClusterLab`,
         formData,
         {
           headers: {

@@ -29,22 +29,22 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId }) => {
       
       if (lab.type === 'cloudslice') {
         // Delete cloud slice lab
-        response = await axios.post('http://localhost:3000/api/v1/cloud_slice_ms/deleteUserCloudSlice', {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
           userId: userId,
           labId: lab.labid
         });
       } else if(lab.type === 'singlevm') {
         // Delete standard lab
-        const instanceDetails = await axios.post('http://localhost:3000/api/v1/lab_ms/awsInstanceOfUsers', {
+        const instanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsInstanceOfUsers`, {
           lab_id: lab.lab_id,
           user_id: userId,
         });
         
-        const ami = await axios.post('http://localhost:3000/api/v1/lab_ms/amiinformation', { 
+        const ami = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { 
           lab_id: lab.lab_id 
         });
         
-        response = await axios.post('http://localhost:3000/api/v1/aws_ms/deletevm', {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deletevm`, {
           id: lab.lab_id,
           instance_id: instanceDetails?.data?.result?.instance_id || null,
           ami_id: ami?.data?.result?.ami_id || null,
@@ -123,7 +123,7 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId }) => {
     setNotification(null);
 
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/cloud_slice_ms/updateUserCloudSliceTimes', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateUserCloudSliceTimes`, {
         userId: userId,
         labId: editingLab.labid,
         startDate: formatDate(startTime),

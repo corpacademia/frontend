@@ -128,7 +128,7 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
   useEffect(()=>{
     const getAwsServices = async () =>{
       try {
-        const fetch = await axios.get('http://localhost:3000/api/v1/cloud_slice_ms/getAwsServices');
+        const fetch = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAwsServices`);
         const awsServiceCategories = await extractAwsServices(fetch.data.data);
     
         setAwsServices(awsServiceCategories);

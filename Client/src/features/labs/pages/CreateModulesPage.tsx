@@ -142,7 +142,7 @@ export const CreateModulesPage: React.FC = () => {
     // Fetch AWS service categories
     const fetchAwsServiceCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/cloud_slice_ms/getAwsServices');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAwsServices`);
         if (response.data.success) {
           const categories: Record<string, Service[]> = {};
           
@@ -661,7 +661,7 @@ export const CreateModulesPage: React.FC = () => {
     
     try {
       // Get the current user
-      const userResponse = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const userResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       const userId = userResponse.data.user.id;
       
       // Prepare data for submission
@@ -694,7 +694,7 @@ export const CreateModulesPage: React.FC = () => {
       
       // Submit to backend
       const response = await axios.post(
-        'http://localhost:3000/api/v1/cloud_slice_ms/createLabModules', 
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createLabModules`, 
         formData,
         {
           headers: {

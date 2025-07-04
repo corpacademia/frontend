@@ -59,7 +59,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
              if(status.username != null && status.password !=null && status.console_url){
               setCredentials(status);
               setAccountCreated(true);
-              const editAwsServices = await axios.post('http://localhost:3000/api/v1/aws_ms/editAwsServices',{
+              const editAwsServices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/editAwsServices`,{
                 userName:status.username,
                 services:labExercise.services
               });
@@ -75,7 +75,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
             if(status.username != null && status.password !=null && status.console_url){
               setCredentials(status)
               setAccountCreated(true);
-              const editAwsServices = await axios.post('http://localhost:3000/api/v1/aws_ms/editAwsServices',{
+              const editAwsServices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/editAwsServices`,{
                 userName:status.username,
                 services:labExercise.services
               });
@@ -103,7 +103,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
     try {
       let response;
       if(user.role === 'superadmin'){
-        response = await axios.post('http://localhost:3000/api/v1/aws_ms/createIamUser', {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
           userName: user.name, 
           services: labExercise?.services || [],
           role: user.role,
@@ -111,7 +111,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
         });
       }
       else if(user.role === 'orgadmin'){
-        response = await axios.post('http://localhost:3000/api/v1/aws_ms/createIamUser', {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
           userName: user.name, 
           services: labExercise?.services || [],
           role: user.role,

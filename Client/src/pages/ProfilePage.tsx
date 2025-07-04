@@ -161,7 +161,7 @@ function extractFileName(filePath: string) {
       if (profilePhotoFile) {
         formDataToSend.append('profilePhoto', profilePhotoFile);
       }
-      const updateUserProfile = await axios.post('http://localhost:3000/api/v1/user_ms/update_profile', formDataToSend, {
+      const updateUserProfile = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/update_profile`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },

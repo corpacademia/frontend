@@ -31,7 +31,7 @@ export const Organizations: React.FC = () => {
 
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(response.data.user);
     };
     getUserDetails();
@@ -39,7 +39,7 @@ export const Organizations: React.FC = () => {
 
   const fetchOrganizations = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/v1/organization_ms/organizations');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
       if (response.data.success) {
         setOrganizations(response.data.data || []);
         setFilteredOrganizations(response.data.data || []);

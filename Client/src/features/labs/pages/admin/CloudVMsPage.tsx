@@ -55,7 +55,7 @@ export const AdminCloudVMsPage: React.FC = () => {
   // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(response.data.user);
     };
     getUserDetails();
@@ -64,7 +64,7 @@ export const AdminCloudVMsPage: React.FC = () => {
   useEffect(() => {
   const fetchCloudVMs = async () => {
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/lab_ms/getLabsConfigured', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
         admin_id: admin.id,
       });
 
@@ -89,7 +89,7 @@ export const AdminCloudVMsPage: React.FC = () => {
 
   const fetchDatacenterVMs = async () => {
     try {
-      const dcResponse = await axios.post('http://localhost:3000/api/v1/lab_ms/getDatacenterLabOnAdminId', {
+      const dcResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabOnAdminId`, {
         adminId: admin?.id,
       });
 
@@ -98,7 +98,7 @@ export const AdminCloudVMsPage: React.FC = () => {
           dcResponse.data.data.map(async (vm: DatacenterVM) => {
             try {
               const credsResponse = await axios.post(
-                'http://localhost:3000/api/v1/lab_ms/getDatacenterLabCreds',
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
                 { labId: vm.lab_id }
               );
 

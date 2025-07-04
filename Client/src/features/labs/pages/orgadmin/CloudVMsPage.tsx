@@ -71,7 +71,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
   
   useEffect(() => {
     const getUserDetails = async () => {
-      const response = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(response.data.user);
     };
     getUserDetails();
@@ -80,7 +80,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
  useEffect(() => {
   const fetchAssessmentVMs = async (adminId: string) => {
     try {
-      const response = await axios.post('http://localhost:3000/api/v1/lab_ms/getAssessments', {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssessments`, {
         admin_id: adminId,
       });
 
@@ -104,7 +104,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
   const fetchDatacenterVMs = async (orgId: string) => {
     try {
       const datacenterResponse = await axios.post(
-        'http://localhost:3000/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab',
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab`,
         { orgId }
       );
 
@@ -113,13 +113,13 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
           datacenterResponse.data.data.map(async (assignment: any) => {
             try {
               const vmResponse = await axios.post(
-                'http://localhost:3000/api/v1/lab_ms/getSingleVmDatacenterLabOnId',
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`,
                 { labId: assignment.labid }
               );
 
               if (vmResponse.data.success) {
                 const credsResponse = await axios.post(
-                  'http://localhost:3000/api/v1/lab_ms/getDatacenterLabCreds',
+                  `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
                   { labId: assignment.labid }
                 );
 
@@ -153,7 +153,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
 
   const fetchAllVMs = async () => {
     try {
-      const admin = await axios.get('http://localhost:3000/api/v1/user_ms/user_profile');
+      const admin = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       const user = admin.data?.user;
 
       if (user?.id && user?.org_id) {

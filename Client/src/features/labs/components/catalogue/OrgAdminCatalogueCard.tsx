@@ -25,7 +25,7 @@ export const OrgAdminCatalogueCard: React.FC<OrgAdminCatalogueCardProps> = ({
   useEffect(() => {
     const fetchSoftware = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/v1/lab_ms/getSoftwareDetails');
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSoftwareDetails`);
         if (response.data.success) {
           const labSoftware = response.data.data.find((s: any) => s.lab_id === lab.lab_id);
           if (labSoftware) {
