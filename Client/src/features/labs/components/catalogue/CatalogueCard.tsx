@@ -71,7 +71,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
         else{
           console.error('Error fetching software details:', error);
         }
-        
+
       }
     };
 
@@ -121,7 +121,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
     setIsDeleting(true);
     try {
       const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deleteLab/${lab.lab_id}`);
-      
+
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Lab deleted successfully' });
         setTimeout(() => window.location.reload(), 1500);
@@ -165,7 +165,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
             <span className="text-sm">{notification.message}</span>
           </div>
         )}
-        
+
         <div className="p-4 flex flex-col h-full">
           <div className="flex justify-between items-start gap-4 mb-3">
             <div className="flex-1">

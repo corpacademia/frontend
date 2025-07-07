@@ -307,7 +307,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       setIsDeleteModalOpen(false);
     }
     }
-   
+
   };
 
   // Initialize edit form data with user credentials and VM configs
@@ -704,14 +704,14 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                   <Pencil className="h-4 w-4 text-primary-400" />
                 </button>
               )}
-              
+
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
                 >
                   <Trash2 className="h-4 w-4 text-red-400" />
                 </button>
-              
+
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full ${
                   vm.lab.status === "active"
