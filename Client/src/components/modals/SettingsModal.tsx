@@ -165,7 +165,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             {/* Form Fields */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-100 mb-2">
                   Full Name
                 </label>
                 <div className="relative">
@@ -175,14 +175,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300 focus:border-primary-500/40 focus:outline-none transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-dark-400/70 border border-primary-500/30 rounded-lg text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none transition-colors"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-100 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
@@ -192,7 +192,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300 focus:border-primary-500/40 focus:outline-none transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-dark-400/70 border border-primary-500/30 rounded-lg text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none transition-colors"
                     required
                   />
                 </div>
