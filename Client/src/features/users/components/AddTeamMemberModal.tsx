@@ -160,7 +160,7 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-100 mb-2">
                 Email Address
               </label>
               <input
@@ -168,8 +168,8 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none
+                className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                         text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none
                          disabled:opacity-50 disabled:cursor-not-allowed"
                 required
                 disabled={isSubmitting}
@@ -177,7 +177,7 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-100 mb-2">
                 Password
               </label>
               <input
@@ -185,8 +185,8 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none
+                className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                         text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none
                          disabled:opacity-50 disabled:cursor-not-allowed"
                 required
                 disabled={isSubmitting}

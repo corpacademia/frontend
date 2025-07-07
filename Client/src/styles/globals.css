@@ -129,7 +129,7 @@
   }
 
   .card-subtitle {
-    @apply text-sm text-gray-400 line-clamp-2;
+    @apply text-sm text-gray-200 line-clamp-2;
   }
 
   .card-actions {
@@ -149,7 +149,7 @@
   }
 
   .metric-label {
-    @apply text-xs sm:text-sm text-gray-400 mb-1 sm:mb-0;
+    @apply text-xs sm:text-sm text-gray-200 mb-1 sm:mb-0;
   }
 
   .metric-value {

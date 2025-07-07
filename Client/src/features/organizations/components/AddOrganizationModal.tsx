@@ -220,7 +220,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-100 mb-1">
                 Email Address
               </label>
               <div className="relative">
@@ -229,16 +229,16 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-9 pr-3 py-1.5 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                  className="w-full pl-9 pr-3 py-1.5 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                           text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none"
                   required
                 />
-                <Mail className="absolute left-2.5 top-2 h-4 w-4 text-gray-500" />
+                <Mail className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-100 mb-1">
                 Phone Number
               </label>
               <div className="relative">
@@ -247,10 +247,10 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full pl-9 pr-3 py-1.5 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                  className="w-full pl-9 pr-3 py-1.5 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                           text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none"
                 />
-                <Phone className="absolute left-2.5 top-2 h-4 w-4 text-gray-500" />
+                <Phone className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" />
               </div>
             </div>
 
