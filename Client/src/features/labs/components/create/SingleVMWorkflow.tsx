@@ -9,6 +9,7 @@ import { DocumentUploader } from './steps/DocumentUploader';
 import { DatacenterConfig } from './steps/DatacenterConfig';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import axios from 'axios';
+import { GuacamoleConfig } from './GuacamoleConfig';
 
 interface SingleVMWorkflowProps {
   onBack: () => void;
@@ -36,6 +37,10 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       endTime: '',
       protocol: 'rdp',
       users: [{ ip: '', port: '3389', username: '', password: '' }]
+    },
+    guacamole: {
+      name: '',
+      url: ''
     }
   });
 
@@ -141,7 +146,7 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
           data:data,
           user:user.id
         });
-        
+
         if (response.data.success) {
           // Navigate to cloud VMs page on success
           window.location.href = '/dashboard/labs/cloud-vms';

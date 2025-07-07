@@ -36,6 +36,12 @@ export interface Lab {
   rating?: number;
   totalEnrollments?: number;
   
+  // Guacamole configuration
+  guacamole?: {
+    name: string;
+    url: string;
+  };
+  
   // Specific fields based on lab type
   cloudProvider?: CloudProvider;
   emulatorType?: EmulatorType;

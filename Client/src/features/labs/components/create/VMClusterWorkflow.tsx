@@ -34,7 +34,9 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
       vms: [
         { name: 'VM 1', username: '', password: '', ip: '', port: '22' },
       ],
-    }
+    },
+    guacamoleName: '',
+    guacamoleUrl: ''
   });
 
   useEffect(() => {
@@ -139,7 +141,7 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
           data: data,
           userId: user.id
         });
-        
+
         if (response.data.success) {
           // Navigate to cloud VMs page on success
           window.location.href = '/dashboard/labs/cluster';

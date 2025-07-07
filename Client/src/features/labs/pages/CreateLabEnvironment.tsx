@@ -9,6 +9,17 @@ import { LabType } from '../types';
 export const CreateLabEnvironment: React.FC = () => {
   const [selectedType, setSelectedType] = useState<LabType | null>(null);
 
+  const handleLabCreated = (labData: any) => {
+    console.log('Lab created with Guacamole config:', labData);
+    // Ensure Guacamole configuration is included in the lab data
+    if (labData.guacamole) {
+      console.log('Guacamole Name:', labData.guacamole.name);
+      console.log('Guacamole URL:', labData.guacamole.url);
+    }
+    // Handle successful lab creation
+    // Navigate to lab list or show success message
+  };
+
   const renderWorkflow = () => {
     if (!selectedType) {
       return <LabTypeSelector onSelect={setSelectedType} />;

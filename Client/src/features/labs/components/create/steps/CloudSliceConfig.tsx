@@ -60,6 +60,8 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
   const [credits, setCredits] = useState(100); // Example credit amount
   const [labType, setLabType] = useState<'without-modules' | 'with-modules'>('without-modules');
   const [accountType, setAccountType] = useState<'iam' | 'organization'>('iam');
+  const [guacamoleName, setGuacamoleName] = useState('');
+  const [guacamoleUrl, setGuacamoleUrl] = useState('');
 
 
   const filteredRegions = regions.filter(region => 
@@ -92,12 +94,12 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       setError('Please select a region');
       return;
     }
-    
+
     if (selectedServices.length === 0 && labType === 'without-modules') {
       setError('Please select at least one service');
       return;
     }
-    
+
     if (!startDate || !endDate) {
       setError('Please specify start and end dates');
       return;
@@ -144,7 +146,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
           createdBy: user_profile.data.user.id,
           labData: config
         });
-        
+
         if (result.data.success) {
           // For labs without modules, show success message
           setSuccess('Cloud slice created successfully!');
@@ -184,7 +186,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       {/* Lab Type Selection */}
       <div className="glass-panel space-y-4">
         <h3 className="text-lg font-semibold text-gray-200">Lab Type</h3>
-        
+
         <div className="flex flex-col space-y-3">
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
@@ -200,7 +202,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
               <p className="text-sm text-gray-400">Standard lab with all services and functionalities</p>
             </div>
           </label>
-          
+
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
               type="radio"
@@ -221,7 +223,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       {/* Account Type Selection */}
       <div className="glass-panel space-y-4">
         <h3 className="text-lg font-semibold text-gray-200">Account Type</h3>
-        
+
         <div className="flex flex-col space-y-3">
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
@@ -237,7 +239,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
               <p className="text-sm text-gray-400">Standard AWS account with IAM users and roles</p>
             </div>
           </label>
-          
+
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
               type="radio"
@@ -263,7 +265,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       {labType === 'without-modules' && (
         <div className="glass-panel space-y-4">
           <h3 className="text-lg font-semibold text-gray-200">Credits Configuration</h3>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -292,7 +294,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       {labType === 'without-modules' && (
         <div className="glass-panel space-y-4">
           <h3 className="text-lg font-semibold text-gray-200">AWS Services</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left Column - Categories Dropdown */}
             <div className="space-y-4">
@@ -440,7 +442,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       {/* Region Selection - Show for both lab types */}
       <div className="glass-panel space-y-4">
         <h3 className="text-lg font-semibold text-gray-200">Region Selection</h3>
-        
+
         <div className="relative">
           <button
             onClick={() => setShowRegionDropdown(!showRegionDropdown)}
@@ -498,7 +500,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         ) : (
           <h3 className="text-lg font-semibold text-gray-200">Duration</h3>
         )}
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -556,6 +558,35 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
             </select>
           </div>
         )}
+      </div>
+
+      {/* Guacamole Configuration */}
+      <div className="glass-panel space-y-4">
+        <h3 className="text-lg font-semibold text-gray-200">Guacamole Configuration</h3>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Guacamole Name
+          </label>
+          <input
+            type="text"
+            value={guacamoleName}
+            onChange={(e) => setGuacamoleName(e.target.value)}
+            className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                     text-gray-300 focus:border-primary-500/40 focus:outline-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            Guacamole URL
+          </label>
+          <input
+            type="text"
+            value={guacamoleUrl}
+            onChange={(e) => setGuacamoleUrl(e.target.value)}
+            className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                     text-gray-300 focus:border-primary-500/40 focus:outline-none"
+          />
+        </div>
       </div>
 
       {error && (
