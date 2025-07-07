@@ -1,9 +1,9 @@
 import React from 'react';
 import { GradientText } from '../../../../../components/ui/GradientText';
-import { Clock, BookOpen, FileText } from 'lucide-react';
+import { Clock, BookOpen, FileText, Monitor, Globe } from 'lucide-react';
 
 interface LabDetailsInputProps {
-  onNext: (details: { title: string; description: string; duration: number }) => void;
+  onNext: (details: { title: string; description: string; duration: number; guacamole: { name: string; url: string } }) => void;
 }
 
 export const LabDetailsInput: React.FC<LabDetailsInputProps> = ({ onNext }) => {
@@ -12,12 +12,17 @@ export const LabDetailsInput: React.FC<LabDetailsInputProps> = ({ onNext }) => {
     description: '',
     duration: 60 // Default duration in minutes
   });
+  const [guacamole, setGuacamole] = React.useState({
+    name: '',
+    url: ''
+  });
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const labDetailsWithGuacamole = { ...details, guacamole };
     const prevData = JSON.parse(localStorage.getItem('formData')) || {}
-    const updatedData = {...prevData, details};
+    const updatedData = {...prevData, details: labDetailsWithGuacamole};
     localStorage.setItem('formData',JSON.stringify(updatedData))
-    onNext(details);
+    onNext(labDetailsWithGuacamole);
   };
 
   return (
@@ -59,6 +64,54 @@ export const LabDetailsInput: React.FC<LabDetailsInputProps> = ({ onNext }) => {
                        focus:ring-2 focus:ring-primary-500/20 transition-colors resize-none"
               required
             />
+          </div>
+
+          {/* Guacamole Configuration */}
+          <div className="space-y-4 p-4 bg-dark-300/30 rounded-lg border border-primary-500/10">
+            <h3 className="text-lg font-semibold text-gray-200 flex items-center">
+              <Monitor className="h-5 w-5 mr-2 text-primary-400" />
+              Guacamole Configuration
+            </h3>
+            
+            <div>
+              <label className="flex items-center text-gray-300 mb-2">
+                <Monitor className="h-4 w-4 mr-2" />
+                Guacamole Name
+              </label>
+              <input
+                type="text"
+                value={guacamole.name}
+                onChange={(e) => setGuacamole(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter Guacamole instance name"
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none
+                         focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                required
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Unique name to identify this Guacamole instance
+              </p>
+            </div>
+
+            <div>
+              <label className="flex items-center text-gray-300 mb-2">
+                <Globe className="h-4 w-4 mr-2" />
+                Guacamole URL
+              </label>
+              <input
+                type="url"
+                value={guacamole.url}
+                onChange={(e) => setGuacamole(prev => ({ ...prev, url: e.target.value }))}
+                placeholder="https://guacamole.example.com"
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none
+                         focus:ring-2 focus:ring-primary-500/20 transition-colors"
+                required
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Full URL to access the Guacamole instance
+              </p>
+            </div>
           </div>
 
           {/* <div>
