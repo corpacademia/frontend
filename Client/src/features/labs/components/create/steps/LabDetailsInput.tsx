@@ -34,34 +34,35 @@ export const LabDetailsInput: React.FC<LabDetailsInputProps> = ({ onNext }) => {
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div>
-            <label className="flex items-center text-gray-300 mb-2">
-              <BookOpen className="h-4 w-4 mr-2" />
+            <label className="flex items-center text-gray-100 mb-2 font-medium">
+              <FileText className="h-4 w-4 mr-2 text-primary-400" />
               Lab Title
             </label>
             <input
               type="text"
               value={details.title}
               onChange={(e) => setDetails(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Enter lab title"
-              className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                       text-gray-300 focus:border-primary-500/40 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500/20 transition-colors"
+              placeholder="Enter lab title..."
+              className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                       text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none
+                       focus:ring-2 focus:ring-primary-500/30 transition-colors"
               required
             />
           </div>
 
           <div>
-            <label className="flex items-center text-gray-300 mb-2">
-              <FileText className="h-4 w-4 mr-2" />
+            <label className="flex items-center text-gray-100 mb-2 font-medium">
+              <BookOpen className="h-4 w-4 mr-2 text-primary-400" />
               Description
             </label>
             <textarea
               value={details.description}
               onChange={(e) => setDetails(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter lab description"
-              className="w-full h-32 px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                       text-gray-300 focus:border-primary-500/40 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500/20 transition-colors resize-none"
+              placeholder="Describe what this lab covers..."
+              rows={3}
+              className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                       text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none
+                       focus:ring-2 focus:ring-primary-500/30 transition-colors resize-none"
               required
             />
           </div>
@@ -72,7 +73,7 @@ export const LabDetailsInput: React.FC<LabDetailsInputProps> = ({ onNext }) => {
               <Monitor className="h-5 w-5 mr-2 text-primary-400" />
               Guacamole Configuration
             </h3>
-            
+
             <div>
               <label className="flex items-center text-gray-300 mb-2">
                 <Monitor className="h-4 w-4 mr-2" />
