@@ -84,7 +84,7 @@ export const DashboardHeader: React.FC = () => {
                     <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center overflow-hidden flex-shrink-0">
                       {user?.profilephoto ? (
                         <img
-                          src={`/api/v1/user_ms/uploads/${extractFileName(user.profilephoto)}`}
+                          src={`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/uploads/${extractFileName(user.profilephoto)}`}
                           alt="Profile"
                           className="w-full h-full object-cover"
                         />

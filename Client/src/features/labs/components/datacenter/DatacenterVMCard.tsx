@@ -882,7 +882,7 @@ function extractFileName(filePath: string) {
                         <span className="text-sm text-gray-300 truncate">{extractFileName(labguide)}</span>
                         <div className="flex items-center space-x-1">
                           <a 
-                            href={`${import.meta.env.VITE_BACKEND_URL}/uploads/${extractFileName(labguide)}`}
+                            href={`${import.meta.env.VITE_BACKEND_URL}/${extractFileName(labguide)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 hover:bg-primary-500/10 rounded-lg"
@@ -932,7 +932,7 @@ function extractFileName(filePath: string) {
                         <span className="text-sm text-gray-300 truncate">{extractFileName(userguide)}</span>
                         <div className="flex items-center space-x-1">
                           <a 
-                            href={`${import.meta.env.VITE_BACKEND_URL}/uploads/${extractFileName(userguide)}`}
+                            href={`${import.meta.env.VITE_BACKEND_URL}/${extractFileName(userguide)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 hover:bg-primary-500/10 rounded-lg"

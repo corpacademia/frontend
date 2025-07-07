@@ -1180,7 +1180,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                           </span>
                           <div className="flex items-center space-x-1">
                             <a
-                              href={`${import.meta.env.VITE_BACKEND_URL}/uploads/${extractFileName(labguide)}`}
+                              href={`${import.meta.env.VITE_BACKEND_URL}/${extractFileName(labguide)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1 hover:bg-primary-500/10 rounded-lg"
@@ -1238,7 +1238,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                           </span>
                           <div className="flex items-center space-x-1">
                             <a
-                              href={`${import.meta.env.VITE_BACKEND_URL}/uploads/${extractFileName(userguide)}`}
+                              href={`${import.meta.env.VITE_BACKEND_URL}/${extractFileName(userguide)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1 hover:bg-primary-500/10 rounded-lg"

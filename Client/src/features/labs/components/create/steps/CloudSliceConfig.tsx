@@ -38,17 +38,7 @@ interface Service {
   category: string;
   description: string;
 }
-
-const regions = [
-  { code: 'us-east-1', name: 'US East (N. Virginia)', location: 'Northern Virginia' },
-  { code: 'us-west-2', name: 'US West (Oregon)', location: 'Oregon' },
-  { code: 'eu-west-1', name: 'Europe (Ireland)', location: 'Ireland' },
-  { code: 'ap-southeast-1', name: 'Asia Pacific (Singapore)', location: 'Singapore' },
-  { code: 'ap-northeast-1', name: 'Asia Pacific (Tokyo)', location: 'Tokyo' },
-  { code: 'eu-central-1', name: 'Europe (Frankfurt)', location: 'Frankfurt' },
-  { code: 'ap-south-1', name: 'Asia Pacific (Mumbai)', location: 'Mumbai' },
-  { code: 'sa-east-1', name: 'South America (São Paulo)', location: 'São Paulo' }
-];
+const regions = import.meta.env.VITE_AWS_REGIONS ? JSON.parse(import.meta.env.VITE_AWS_REGIONS) : [];
 
 export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labDetails, awsServiceCategories }) => {
   const navigate = useNavigate();
@@ -149,7 +139,6 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       }
 
       try {
-        console.log(config)
         const user_profile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createCloudSliceLab`, {
           createdBy: user_profile.data.user.id,
