@@ -30,21 +30,21 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setDocumentError(null);
-    
+
     if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
-    
+
     const files = Array.from(e.dataTransfer.files);
-    
+
     // Validate file types
     const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     const invalidFiles = files.filter(file => !allowedTypes.includes(file.type));
-    
+
     if (invalidFiles.length > 0) {
       setDocumentError('Only PDF and Word documents are allowed');
       setTimeout(() => setDocumentError(null), 5000);
       return;
     }
-    
+
     // Validate file sizes (1GB limit)
     const oversizedFiles = files.filter(file => file.size > 1 * 1024 * 1024 * 1024);
     if (oversizedFiles.length > 0) {
@@ -52,7 +52,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
       setTimeout(() => setDocumentError(null), 5000);
       return;
     }
-    
+
     if (type === 'document') {
       const updatedDocs = [...documents, ...files];
       setDocuments(updatedDocs);
@@ -186,46 +186,46 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
   const convertTextToPdf = (text: string, type: 'document' | 'guide'): File => {
     const doc = new jsPDF();
     const title = type === 'document' ? 'Lab Document' : 'User Guide';
-    
+
     // Add title
     doc.setFontSize(16);
     doc.text(title, 20, 20);
-    
+
     // Add content with word wrapping
     doc.setFontSize(12);
     const splitText = doc.splitTextToSize(text, 170);
     doc.text(splitText, 20, 30);
-    
+
     // Generate file name
     const fileName = type === 'document' 
       ? `lab-document-${Date.now()}.pdf` 
       : `user-guide-${Date.now()}.pdf`;
-    
+
     // Convert to blob and then to File
     const pdfBlob = doc.output('blob');
     const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
-    
+
     return pdfFile;
   };
 
   const handleTextSubmit = (type: 'document' | 'guide') => {
     const text = type === 'document' ? documentText : userGuideText;
-    
+
     if (!text.trim()) {
       setDocumentError(`Please enter some text for the ${type === 'document' ? 'document' : 'guide'}`);
       setTimeout(() => setDocumentError(null), 5000);
       return;
     }
-    
+
     try {
       const pdfFile = convertTextToPdf(text, type);
-      
+
       if (type === 'document') {
         const updatedDocs = [...documents, pdfFile];
         setDocuments(updatedDocs);
         onDocumentsChange(updatedDocs);
         setDocumentText('');
-        
+
         // Update localStorage
         const storedData = JSON.parse(localStorage.getItem('formData') || '{}');
         const reader = new FileReader();
@@ -238,7 +238,7 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
             size: pdfFile.size,
             content: base64Content
           };
-          
+
           const updatedData = {
             ...storedData,
             labGuides: [...existingBase64Docs, newFileData],
@@ -251,7 +251,7 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
         setUserGuides(updatedGuides);
         onUserGuidesChange(updatedGuides);
         setUserGuideText('');
-        
+
         // Update localStorage
         const storedData = JSON.parse(localStorage.getItem('formData') || '{}');
         const reader = new FileReader();
@@ -264,7 +264,7 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
             size: pdfFile.size,
             content: base64Content
           };
-          
+
           const updatedData = {
             ...storedData,
             userGuides: [...existingBase64Guides, newFileData],
@@ -358,8 +358,8 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
               <div key={index} className="flex items-center justify-between p-3 bg-dark-300/50 rounded-lg">
                 <div className="flex items-center">
                   <FileText className="h-5 w-5 text-primary-400 mr-2" />
-                  <span className="text-sm text-gray-300 truncate max-w-md">{file.name}</span>
-                  <span className="ml-2 text-xs text-gray-500">({(file.size / (1024 * 1024) ).toFixed(1)} MB)</span>
+                  <span className="text-sm text-white truncate max-w-md">{file.name}</span>
+                  <span className="ml-2 text-xs text-gray-300">({(file.size / (1024 * 1024) ).toFixed(1)} MB)</span>
                 </div>
                 <button
                   type="button"
@@ -382,7 +382,7 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
       <p className="text-gray-400 mb-6">
         Upload documents and guides for your lab environment. These will be available to users during the lab session.
       </p>
-      
+
       {documentError && (
         <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-lg mb-6">
           <div className="flex items-center space-x-2 text-red-400">
@@ -391,7 +391,7 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
           </div>
         </div>
       )}
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
           {renderDocumentUploader('document')}

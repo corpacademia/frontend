@@ -1,3 +1,7 @@
+` tags.
+
+```
+<replit_final_file>
 import React from 'react';
 import { Lab } from '../../../types';
 import { Clock, Tag, BookOpen } from 'lucide-react';
@@ -26,7 +30,7 @@ export const LabCard: React.FC<LabCardProps> = ({ lab, onSelect }) => {
           {lab.status}
         </span>
       </div>
-      
+
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm text-gray-400 mb-4">
         <div className="flex items-center">
           <Clock className="h-4 w-4 mr-1 text-primary-400 flex-shrink-0" />
@@ -58,7 +62,7 @@ export const LabCard: React.FC<LabCardProps> = ({ lab, onSelect }) => {
           </div>
         </div>
       )}
-      
+
       <div className="mb-4 flex-grow">
         <div className="flex flex-wrap gap-2">
           {lab.technologies.map((tech) => (
@@ -70,7 +74,7 @@ export const LabCard: React.FC<LabCardProps> = ({ lab, onSelect }) => {
           ))}
         </div>
       </div>
-      
+
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 
                     pt-4 border-t border-primary-500/10">
         <span className="text-lg font-bold order-2 sm:order-1">

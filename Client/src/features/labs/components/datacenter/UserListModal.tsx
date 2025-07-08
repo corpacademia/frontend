@@ -38,7 +38,6 @@ export const UserListModal: React.FC<UserListModalProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const navigate = useNavigate();
-
   // Fetch current user to check permissions
   React.useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -142,7 +141,7 @@ export const UserListModal: React.FC<UserListModalProps> = ({
       });
       if (tokenResponse.data.success && tokenResponse.data.token) {
         // Then connect to VM using the token
-        const guacUrl = `http://43.204.220.7:8080/guacamole/#/?token=${tokenResponse.data.token.result}`;
+        const guacUrl = `${vm?.guacamole_url}${tokenResponse.data.token.result}`;
           navigate(`/dashboard/labs/vm-session/${vmId}`, {
             state: { 
               guacUrl,

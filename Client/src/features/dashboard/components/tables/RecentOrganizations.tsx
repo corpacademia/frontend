@@ -18,7 +18,7 @@ export const RecentOrganizations: React.FC = () => {
         </h2>
         <Building2 className="h-5 w-5 text-primary-400" />
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -38,7 +38,7 @@ export const RecentOrganizations: React.FC = () => {
                 <td className="py-4">{org.labs}</td>
                 <td className="py-4">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    org.status === 'active' 
+                    org.status === 'active'
                       ? 'bg-primary-500/20 text-primary-300'
                       : 'bg-accent-500/20 text-accent-300'
                   }`}>

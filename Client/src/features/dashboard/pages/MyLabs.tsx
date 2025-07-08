@@ -600,8 +600,6 @@ export const MyLabs: React.FC = () => {
 
     try {
       const instanceId = cloudInstanceDetails?.instance_id;
-      console.log('Instance ID:', instanceId);
-      console.log(isStop)
       if (isStop) {
         const stop =await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
           instance_id: instanceId
@@ -665,9 +663,8 @@ export const MyLabs: React.FC = () => {
             isStarted:false
           })
           
-          // const guacUrl = `http://192.168.1.210:8080/guacamole/#/?token=${response.data.response.jwtToken}`;
-          // window.open(guacUrl, '_blank');
-           const guacUrl = `http://51.52.53.245:8080/guacamole/#/?token=${response.data.response.jwtToken}`;
+           const guacUrl = `${lab.guacamole_url}${response.data.response.jwtToken}`;
+           console.log(guacUrl)
           navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
             state: { 
               guacUrl,
@@ -709,9 +706,7 @@ export const MyLabs: React.FC = () => {
                 state:true,
                 isStarted:true
               })
-              // const guacUrl = `http://192.168.1.210:8080/guacamole/#/?token=${response.data.response.jwtToken}`;
-              // window.open(guacUrl, '_blank');
-              const guacUrl = `http://43.204.220.7:8080/guacamole/#/?token=${response.data.response.jwtToken}`;
+              const guacUrl = `${lab.guacamole_url}${response.data.response.jwtToken}`;
               
           navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
             state: { 

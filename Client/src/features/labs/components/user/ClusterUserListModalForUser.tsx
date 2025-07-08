@@ -88,7 +88,7 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
       
       if (tokenResponse.data.success && tokenResponse.data.token) {
         // Then connect to VM using the token
-        const guacUrl = `http://43.204.220.7:8080/guacamole/#/?token=${tokenResponse.data.token.result}`;
+        const guacUrl = `${vm.lab?.guacamole_url}${tokenResponse.data.token.result}`;
         navigate(`/dashboard/labs/vm-session/${vmId}`, {
           state: { 
             guacUrl,

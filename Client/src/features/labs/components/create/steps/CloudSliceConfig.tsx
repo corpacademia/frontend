@@ -61,7 +61,6 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
   const [labType, setLabType] = useState<'without-modules' | 'with-modules'>('without-modules');
   const [accountType, setAccountType] = useState<'iam' | 'organization'>('iam');
 
-
   const filteredRegions = regions.filter(region => 
     region.name.toLowerCase().includes(regionSearch.toLowerCase()) ||
     region.location.toLowerCase().includes(regionSearch.toLowerCase())
@@ -124,7 +123,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         endDate,
         labType,
         credits: credits ? credits : 0,
-        accountType
+        accountType,
       };
 
       // Only add cleanupPolicy for labs without modules

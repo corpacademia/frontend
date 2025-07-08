@@ -65,7 +65,6 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
   } | null>(null);
   const [showFullStartDate, setShowFullStartDate] = useState(false);
   const [showFullEndDate, setShowFullEndDate] = useState(false);
-
   function formatDate(dateString: string) {
     const date = new Date(dateString);
 

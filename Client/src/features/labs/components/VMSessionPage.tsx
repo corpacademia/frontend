@@ -73,7 +73,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   }, [location.state]);
 
   const credentialsList = credentials;
-  
+  console.log(guacUrl)
   // Available resolutions
   const resolutions = [
     '800x600',

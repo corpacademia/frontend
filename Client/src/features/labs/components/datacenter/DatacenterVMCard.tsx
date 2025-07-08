@@ -165,7 +165,6 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
   const [vmUsers, setVmUsers] = useState<Array<any>>(vm.userscredentials || []);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [software, setSoftware] = useState<string[]>(vm.software || []);
-  
   // Edit lab modal states
   const [isEditLabModalOpen, setIsEditLabModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({

@@ -18,7 +18,7 @@ export const RecentUsers: React.FC = () => {
         </h2>
         <Users className="h-5 w-5 text-primary-400" />
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>

@@ -49,6 +49,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
   const [showFullStartDate, setShowFullStartDate] = useState(false);
   const [showFullEndDate, setShowFullEndDate] = useState(false);
 
+
   const handleStartLab = async () => {
     if(lab.userscredentials[0].disabled){
          setNotification({
@@ -126,7 +127,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
       
       if (tokenResponse.data.success && tokenResponse.data.token) {
         // Then connect to VM using the token
-        const guacUrl = `http://43.204.220.7:8080/guacamole/#/?token=${tokenResponse.data.token.result}`;
+        const guacUrl = `${lab?.guacamole_url}${tokenResponse.data.token.result}`;
           navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
             state: { 
               guacUrl,

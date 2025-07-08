@@ -166,8 +166,8 @@ export const UserList: React.FC<UserListProps> = ({
                       </span>
                     </div>
                     <div>
-                      <p className="text-gray-200 font-medium">{user.name || 'Unnamed User'}</p>
-                      <div className="flex items-center text-sm text-gray-400">
+                      <p className="text-white font-medium">{user.name || 'Unnamed User'}</p>
+                      <div className="flex items-center text-sm text-gray-300">
                         <Mail className="h-3 w-3 mr-1" />
                         {user.email}
                       </div>

@@ -82,7 +82,6 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
   const [labDetails, setLabDetails] = useState<LabDetails | null>(null);
   const [buttonLabel, setButtonLabel] = useState<'Launch Software' | 'Stop'>('Launch Software');
   const [showFullAmiId, setShowFullAmiId] = useState(false);
-
   const [admin,setAdmin] = useState({});
   useEffect(() => {
     const getUserDetails = async () => {
@@ -187,34 +186,34 @@ useEffect(() => {
 
   const handleLaunchSoftware = async () => {
     setIsLaunchProcessing(true);
-  
+
     try {
       if (buttonLabel === 'Stop') {
         // Stop the Instance
         const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
           instance_id: instanceDetails?.instance_id,
         });
-  
+
         if (stopResponse.data.success) {
           await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
             lab_id: vm.lab_id,
             state: false,
             isStarted:true
           });
-  
+
           setButtonLabel('Launch Software');
           setNotification({
             type: 'success',
             message: 'Software stopped successfully',
           });
-  
+
           setIsLaunchProcessing(false);
           return; // Exit early since we don't need to continue
         } else {
           throw new Error(stopResponse.data.message || 'Failed to stop Instance');
         }
       }
-      
+
       //check the instance is already started once
       const checkInstanceAlreadyStarted = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkisstarted`,{
         type:'lab',
@@ -229,23 +228,23 @@ useEffect(() => {
         password: instanceDetails?.password,
         buttonState: buttonLabel,
       });
-  
+
       if (launchResponse.data.response.success) {
         await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
           lab_id: vm.lab_id,
           state: true,
           isStarted:false
         });
-  
+
         setButtonLabel('Stop');
         setNotification({
           type: 'success',
           message: 'Software launched successfully',
         });
-  
+
         // Navigate to Guacamole frame page instead of opening in new tab
         if (launchResponse.data.response.jwtToken) {
-          const guacUrl = `http://43.204.220.7:8080/guacamole/#/?token=${launchResponse.data.response.jwtToken}`;
+          const guacUrl = `${vm?.guacamole_url}${launchResponse.data.response.jwtToken}`;
           navigate(`/dashboard/labs/vm-session/${vm.lab_id}`, {
             state: { 
               guacUrl,
@@ -286,16 +285,16 @@ useEffect(() => {
           state: true,
           isStarted:true
         });
-  
+
         setButtonLabel('Stop');
         setNotification({
           type: 'success',
           message: 'Software launched successfully',
         });
-  
+
         // Navigate to Guacamole frame page instead of opening in new tab
         if (launchResponse.data.response.jwtToken) {
-          const guacUrl = `http://43.204.220.7:8080/guacamole/#/?token=${launchResponse.data.response.jwtToken}`;
+          const guacUrl = `${vm?.guacamole_url}${launchResponse.data.response.jwtToken}`;
           navigate(`/dashboard/labs/vm-session/${vm.lab_id}`, {
             state: { 
               guacUrl,
@@ -309,10 +308,10 @@ useEffect(() => {
         throw new Error(launchResponse.data.response.message || 'Failed to launch software');
       }
         }
-      
+
       }
 
-      
+
     } catch (error) {
       setNotification({
         type: 'error',
@@ -323,7 +322,7 @@ useEffect(() => {
       setTimeout(() => setNotification(null), 3000);
     }
   };
-  
+
 
   const handleVMGoldenImage = async () => {
     setIsProcessing(true);
@@ -332,7 +331,7 @@ useEffect(() => {
        const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
         lab_id: vm.lab_id
       });
-      
+
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createGoldenImage`, {
         instance_id: result.data.result.instance_id,
         lab_id: vm.lab_id
@@ -383,7 +382,7 @@ useEffect(() => {
         instance_id: instanceDetails?.instance_id,
         ami_id: amiId,
       });
-      
+
       if (response.data.success) {
         setNotification({ type: 'success', message: 'VM deleted successfully' });
         setTimeout(() => window.location.reload(), 1500);
@@ -413,7 +412,7 @@ useEffect(() => {
       </div>
     );
   }
- 
+
   return (
     <>
       <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
@@ -432,6 +431,7 @@ useEffect(() => {
             <span className="text-sm">{notification.message}</span>
           </div>
         )}
+
         
         <div className="p-4 flex flex-col h-full">
           <div className="flex justify-between items-start gap-4 mb-3">

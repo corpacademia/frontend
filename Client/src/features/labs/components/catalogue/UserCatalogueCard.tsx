@@ -66,7 +66,7 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
           lab_id: lab.lab_id,
           user_id: user.id
         });
-        
+
         if (response.data.success) {
           setIsLabPurchased(true);
           setIsVMLaunched(true);
@@ -170,7 +170,7 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
           <span className="text-sm">{notification.message}</span>
         </div>
       )}
-      
+
       <div className="p-4 flex flex-col h-full">
         <div className="flex justify-between items-start gap-4 mb-3">
           <div className="flex-1">

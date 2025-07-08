@@ -82,6 +82,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   const [user, setUser] = useState<any>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -98,7 +99,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   const getOrgLabStatus = (labId) => {
     return orgStatus.find(org => org.labid === labId);
   }
-  
+
 
   const handleLaunch = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -108,11 +109,11 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
       try {
         // Always fetch lab details first
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
-        
+
         if (!response.data.success) {
           throw new Error(response.data.message || 'Failed to fetch lab details');
         }
-    
+
         // If already launched, skip creation and status update
         if (slice.launched) {
           const targetPath = slice.modules === 'without-modules'
@@ -121,7 +122,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
           window.location.href = targetPath;
           return;
         }
-    
+
         // If not launched, create IAM user and update lab status
         if (slice.modules === 'without-modules') {
           const createIamAccount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
@@ -130,22 +131,22 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
             role:user.role,
             labid:slice.labid
           });
-    
+
           if (!createIamAccount.data.success) {
             throw new Error(createIamAccount.data.message || 'Failed to create IAM user');
           }
-    
+
           const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatus`, {
             labId: slice.labid,
             createdBy: slice.createdby,
             status: 'active',
             launched: true
           });
-    
+
           if (!updateLabStatus.data.success) {
             throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
           }
-    
+
           window.location.href = `/dashboard/labs/cloud-slices/${slice.labid}/lab`;
         } else {
           const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatus`, {
@@ -154,13 +155,13 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
             status: 'active',
             launched: true
           });
-    
+
           if (!updateLabStatus.data.success) {
             throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
           }
           window.location.href = `/dashboard/labs/cloud-slices/${slice.labid}/modules`;
         }
-    
+
       } catch (error: any) {
         setNotification({ 
           type: 'error', 
@@ -178,7 +179,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
       try {
         // Always fetch lab details first
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
-        
+
         if (!response.data.success) {
           throw new Error(response.data.message || 'Failed to fetch lab details');
         }
@@ -191,7 +192,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
           window.location.href = targetPath;
           return;
         }
-    
+
         // If not launched, create IAM user and update lab status
         if (slice.modules === 'without-modules') {
           const createIamAccount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
@@ -201,22 +202,22 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
             labid:slice.labid,
             orgid:user.org_id
           });
-    
+
           if (!createIamAccount.data.success) {
             throw new Error(createIamAccount.data.message || 'Failed to create IAM user');
           }
-    
+
           const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
             labId: slice.labid,
             orgId:getOrgLabStatus(slice.labid).orgid,
             status: 'active',
             launched: true,
           });
-    
+
           if (!updateLabStatus.data.success) {
             throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
           }
-    
+
           window.location.href = `/dashboard/labs/cloud-slices/${slice.labid}/lab`;
         } else {
           const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
@@ -225,13 +226,13 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
             status: 'active',
             launched: true,
           });
-    
+
           if (!updateLabStatus.data.success) {
             throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
           }
           window.location.href = `/dashboard/labs/cloud-slices/${slice.labid}/modules`;
         }
-    
+
       } catch (error: any) {
         setNotification({ 
           type: 'error', 
@@ -244,23 +245,23 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
         setIsLaunching(false);
       }
     }
-   
+
   };
-  
+
   function formatDateTime(dateString) {
     const date = new Date(dateString);
-  
+
     const year = date.getFullYear();
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
     const day = `${date.getDate()}`.padStart(2, '0');
-  
+
     let hours = date.getHours();
     const minutes = `${date.getMinutes()}`.padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
-  
+
     hours = hours % 12 || 12; // Convert 0 to 12 for 12AM
     hours = `${hours}`.padStart(1, '0');
-  
+
     return `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
   }
 
@@ -298,10 +299,10 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   };
   const confirmDelete = async () => {
     setIsDeleting(true);
-    
+
     try {
       // Use different API endpoint if user is orgadmin and not creator
-      const creds = orgStatus.find((cred: any) => cred.labid === slice.labid);
+      const creds = orgStatus?.find((cred: any) => cred.labid === slice.labid);
       if (isOrgAdminNotCreator) {
         if(creds?.username != null) {
         const deleteIam = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deleteIamAccount`,{
@@ -358,7 +359,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
             <span className="text-xs">{notification.message}</span>
           </div>
         )}
-        
+
         <div className="p-3 flex flex-col h-full">
           <div className="flex justify-between items-start gap-2 mb-2">
             <div className="flex items-start">
@@ -435,7 +436,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
                 {slice.modules === 'with-modules' ? 'Modular Lab' : 'Standard Lab'}
               </span>
             </div>
-            
+
             <div className="flex items-center">
               {getAccountTypeIcon()}
               <span className="truncate">
@@ -505,7 +506,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
 )}
 
               </button>
-              
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -553,11 +554,11 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
                 <X className="h-5 w-5 text-gray-400" />
               </button>
             </div>
-            
+
             <p className="text-gray-300 mb-6">
               Are you sure you want to delete <span className="font-semibold">{slice.title}</span>? This action cannot be undone.
             </p>
-            
+
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
