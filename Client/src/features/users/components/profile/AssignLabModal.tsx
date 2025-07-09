@@ -29,13 +29,18 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        console.log(user.role)
         if(user.role ==='superadmin'){
-          const [standardResult, cloudResult] = await Promise.allSettled([
+          const [standardResult, cloudResult,singleVMDatacenter,vmclusterDatacenter] = await Promise.allSettled([
             axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
               admin_id: user.id,
             }),
             axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAllCloudSliceLabs`),
+            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabs`,{
+              userId: user.id,
+            }),
+            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabDetails`,{
+              userId: user.id,
+            }),
           ]);
           const allLabs: any[] = [];
     
@@ -59,6 +64,26 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
             );
           } else {
             console.warn('Failed to fetch cloudslice labs:', cloudResult);
+          }
+          if (singleVMDatacenter.status === 'fulfilled' && singleVMDatacenter.value.data.success) {
+            allLabs.push(
+              ...singleVMDatacenter.value.data.data.map((lab: any) => ({
+                ...lab,
+                type: 'singlevm',
+              }))
+            );
+          } else {
+            console.warn('Failed to fetch single VM datacenter labs:', singleVMDatacenter);
+          }
+          if (vmclusterDatacenter.status === 'fulfilled' && vmclusterDatacenter.value.data.success) {
+            allLabs.push(
+              ...vmclusterDatacenter.value.data.data.map((lab: any) => ({
+                ...lab,
+                type: 'vmcluster',
+              }))
+            );
+          } else {
+            console.warn('Failed to fetch VM cluster labs:', vmclusterDatacenter);
           }
           setAvailableLabs(allLabs);
         }

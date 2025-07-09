@@ -12,7 +12,7 @@ export const SignupForm: React.FC = () => {
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState('');
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
-  
+
   useEffect(() => {
     // Fetch organizations when component mounts
     const fetchOrganizations = async () => {
@@ -25,7 +25,7 @@ export const SignupForm: React.FC = () => {
         console.error('Failed to fetch organizations:', err);
       }
     };
-    
+
     fetchOrganizations();
   }, []);
 
@@ -37,7 +37,7 @@ export const SignupForm: React.FC = () => {
         ...prev,
         organization: organizationValue,
       }));
-    
+
     // If "Add New Organization" is selected, open the modal
     if (value === 'new') {
       setIsAddOrgModalOpen(true);
@@ -68,7 +68,7 @@ export const SignupForm: React.FC = () => {
         console.error('Failed to fetch organizations:', err);
       }
     };
-    
+
     fetchOrganizations();
   };
   return (
@@ -130,9 +130,9 @@ export const SignupForm: React.FC = () => {
                 onChange={handleChange}
                 required
               />
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-white mb-2">
                   Organization (Optional)
                 </label>
                 <select
@@ -141,16 +141,17 @@ export const SignupForm: React.FC = () => {
                   onChange={(e) => {
                        handleOrgChange(e); 
                           }}
-                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                  className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                           text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none
+                           focus:ring-2 focus:ring-primary-500/30 transition-colors"
                 >
-                  <option value="">Select an organization</option>
+                  <option value="" className="bg-dark-400 text-white">Select an organization</option>
                   {organizations.map(org => (
-                    <option key={org.id} value={org.id}>
+                    <option key={org.id} value={org.id} className="bg-dark-400 text-white">
                       {org?.organization_name}
                     </option>
                   ))}
-                  <option value="new">+ Add New Organization</option>
+                  <option value="new" className="bg-dark-400 text-white">+ Add New Organization</option>
                 </select>
               </div>
             </div>
@@ -185,7 +186,7 @@ export const SignupForm: React.FC = () => {
           </p>
         </div>
       </div>
-      
+
       <AddOrganizationModal
         isOpen={isAddOrgModalOpen}
         onClose={() => setIsAddOrgModalOpen(false)}
