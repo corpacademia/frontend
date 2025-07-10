@@ -37,6 +37,7 @@ interface Service {
   name: string;
   category: string;
   description: string;
+  services_prefix:string;
 }
 const regions = import.meta.env.VITE_AWS_REGIONS ? JSON.parse(import.meta.env.VITE_AWS_REGIONS) : [];
 
@@ -117,7 +118,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         description: labDetails.description,
         platform: labDetails.platform,
         cloudProvider: labDetails.cloudProvider,
-        services: selectedServices.map(s => s.name),
+        services: selectedServices.map(s => s.services_prefix),
         region: selectedRegion,
         startDate,
         endDate,

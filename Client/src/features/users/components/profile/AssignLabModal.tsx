@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, BookOpen, AlertCircle, Clock } from 'lucide-react';
+import { X, BookOpen, AlertCircle, ChevronDown } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
@@ -10,22 +10,41 @@ interface AssignLabModalProps {
   onClose: () => void;
   userId: string;
   user: any;
+  userDetails?: any; // Optional prop for user details
 }
 
 export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   isOpen,
   onClose,
   userId,
-  user
+  user,
+  userDetails,
 }) => {
   const [selectedLab, setSelectedLab] = useState<string>('');
   const [selectedLabDetails, setSelectedLabDetails] = useState<any>(null);
-  const [duration, setDuration] = useState<number>(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [availableLabs, setAvailableLabs] = useState<any[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [filteredLabs, setFilteredLabs] = useState<any[]>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  
+ 
+  // Filter labs based on search term
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredLabs(availableLabs);
+    } else {
+      const filtered = availableLabs.filter(lab => 
+        lab.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        lab.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredLabs(filtered);
+    }
+  }, [searchTerm, availableLabs]);
+
   useEffect(() => {
     const fetchLabs = async () => {
       try {
@@ -86,6 +105,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
             console.warn('Failed to fetch VM cluster labs:', vmclusterDatacenter);
           }
           setAvailableLabs(allLabs);
+          setFilteredLabs(allLabs);
         }
         else{
           const [standardResult, cloudResult] = await Promise.allSettled([
@@ -119,6 +139,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
             console.warn('Failed to fetch cloudslice labs:', cloudResult);
           }
           setAvailableLabs(allLabs);
+          setFilteredLabs(allLabs);
         }
         
       } catch (err) {
@@ -133,16 +154,27 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   useEffect(() => {
     const lab = availableLabs.find(l => (l.lab_id ?? l.labid) === selectedLab);
     setSelectedLabDetails(lab);
+      setStartTime(lab?.startdate);
+      setEndTime(lab?.enddate);
+
   }, [selectedLab, availableLabs]);
 
   useEffect(() => {
     if (!isOpen) {
       setSelectedLab('');
       setSelectedLabDetails(null);
-      setDuration(0);
       setStartTime(null);
       setEndTime(null);
       setError(null);
+      setSearchTerm('');
+      setIsDropdownOpen(false);
+    } else {
+
+      // Set default start time to current time and end time to 2 hours later
+      const now = new Date();
+      const defaultEndTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
+      setStartTime(now);
+      setEndTime(defaultEndTime);
     }
   }, [isOpen]);
 
@@ -170,30 +202,24 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
 
     setError(null);
 
-    if (selectedLabDetails.type === 'cloudslice') {
-      if (!startTime || !endTime) {
-        setError('Please select a valid start and end time');
-        return;
-      }
-      if (endTime <= startTime) {
-        setError('End time must be after start time');
-        return;
-      }
+    // Always validate start and end time for all lab types
+    if (!startTime || !endTime) {
+      setError('Please select a valid start and end time');
+      return;
+    }
+    if (endTime <= startTime) {
+      setError('End time must be after start time');
+      return;
     }
 
-    if (selectedLabDetails.type === 'standard') {
-      if (!duration || duration <= 0) {
-        setError('Please enter a valid duration');
-        return;
-      }
-    }
+    
 
     try {
       setIsAssigning(true);
       let res;
       if (selectedLabDetails.type === 'cloudslice') {
-        const formattedStart = formatDate(startTime!);
-        const formattedEnd = formatDate(endTime!);
+        const formattedStart = startTime;
+        const formattedEnd = endTime;
         res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/assignCloudSlice`, {
           lab: selectedLabDetails.labid,
           start_date: formattedStart,
@@ -201,19 +227,42 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
           userId,
           assign_admin_id: user.id
         });
-      } else {
+      } 
+      else if(selectedLabDetails.type === 'singlevm') {
+        console.log(selectedLabDetails)
+        res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignSingleVmDatacenterLabToUser`, {
+          labId: selectedLabDetails.lab_id,
+          orgId: userDetails?.user?.org_id,
+          userId:userId,
+          assignedBy: user.id,
+          startDate: startTime,
+          endDate: endTime
+        })
+      }
+      else if(selectedLabDetails.type === 'vmcluster'){
+            res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignCluster`,{
+              labId:selectedLabDetails.labid,
+              userId,
+              assignedBy:user.id,
+              startDate:startTime,
+              endDate:endTime,
+              orgId:userDetails?.user?.org_id
+            })
+      }
+
+      else {
         res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignlab`, {
-          lab: selectedLabDetails,
-          duration,
+          lab: selectedLabDetails.lab_id,
           userId,
           assign_admin_id: user.id
         });
       }
 
-      if (res.data.success) {
+      if (res?.data.success) {
         onClose();
       }
     } catch (error: any) {
+      console.error('Error assigning lab:', error);
       setError(error.response?.data?.message || 'Failed to assign lab');
     } finally {
       setIsAssigning(false);
@@ -221,7 +270,6 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   };
 
   if (!isOpen) return null;
-  console.log(availableLabs)
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-dark-200 rounded-lg w-full max-w-2xl p-6">
@@ -239,73 +287,91 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
 
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Select Lab
+            <label className="block text-sm font-medium text-white mb-2">
+              Search and Select Lab
             </label>
-            <select
-              value={selectedLab}
-              onChange={(e) => setSelectedLab(e.target.value)}
-              className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                       text-gray-300 focus:border-primary-500/40 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500/20 transition-colors"
-            >
-              <option value="">Select a lab</option>
-              {availableLabs.map(lab => (
-                <option key={lab.lab_id ?? lab.labid} value={lab.lab_id ?? lab.labid}>
-                  {lab.title}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search labs by title or description..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                  className="w-full px-4 py-2 pr-10 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                           text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none
+                           focus:ring-2 focus:ring-primary-500/30 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+              
+              {isDropdownOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-dark-200 border border-primary-500/20 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {filteredLabs.length > 0 ? (
+                    filteredLabs.map(lab => (
+                      <button
+                        key={lab.lab_id ?? lab.labid}
+                        type="button"
+                        onClick={() => {
+                          setSelectedLab(lab.lab_id ?? lab.labid);
+                          setIsDropdownOpen(false);
+                          setSearchTerm(lab.title);
+                        }}
+                        className="w-full text-left px-4 py-2 hover:bg-dark-300/50 transition-colors text-white border-b border-primary-500/10 last:border-b-0"
+                      >
+                        <div className="font-medium">{lab.title}</div>
+                        {lab.description && (
+                          <div className="text-sm text-gray-400 truncate">{lab.description}</div>
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-gray-400">No labs found</div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
-          {selectedLabDetails?.type === 'cloudslice' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Start Time</label>
-                <DatePicker
-                  selected={startTime}
-                  onChange={(date: Date) => setStartTime(date)}
-                  showTimeSelect
-                  timeIntervals={15}
-                  minDate={new Date()}
-                  dateFormat="Pp"
-                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                            text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">End Time</label>
-                <DatePicker
-                  selected={endTime}
-                  onChange={(date: Date) => setEndTime(date)}
-                  showTimeSelect
-                  timeIntervals={15}
-                  minDate={startTime || new Date()}
-                  dateFormat="Pp"
-                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                            text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                />
-              </div>
-            </div>
-          ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Duration (minutes)
-              </label>
-              <div className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-primary-400" />
-                <input
-                  type="number"
-                  min="1"
-                  value={duration}
-                  onChange={(e) => setDuration(parseInt(e.target.value))}
-                  placeholder="Enter duration"
-                  className="flex-1 px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                             text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
-                />
-              </div>
+              <label className="block text-sm font-medium text-white mb-2">Start Time</label>
+              <DatePicker
+                selected={startTime}
+                onChange={(date: Date) => setStartTime(date)}
+                showTimeSelect
+                timeIntervals={15}
+                minDate={new Date()}
+                dateFormat="Pp"
+                className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                          text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              />
             </div>
-          )}
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">End Time</label>
+              <DatePicker
+                selected={endTime}
+                onChange={(date: Date) => setEndTime(date)}
+                showTimeSelect
+                timeIntervals={15}
+                minDate={startTime || new Date()}
+                dateFormat="Pp"
+                className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
+                          text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              />
+            </div>
+          </div>
+
+          
 
           {selectedLab && (
             <div className="p-4 bg-dark-300/50 rounded-lg">

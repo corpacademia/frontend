@@ -14,12 +14,14 @@ interface Service {
   name: string;
   category: string;
   description: string;
+  services_prefix:string;
 }
 
 interface AwsService {
   name: string;
   category: string;
   description: string;
+  services_prefix:string;
 }
 
 interface CategorizedServices {
@@ -112,13 +114,13 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
   };
 
  //extract the aws services
- const extractAwsServices = async (awsServices: { services: string; description: string; category: string }[]): Promise<CategorizedServices> => {
+ const extractAwsServices = async (awsServices: { services: string; description: string; category: string;services_prefix:string }[]): Promise<CategorizedServices> => {
   const servicess: CategorizedServices = {};
-  awsServices.forEach(({ services, description, category }) => {
+  awsServices.forEach(({ services, description, category ,services_prefix}) => {
     if (servicess[category]) {
-      servicess[category].push({ name: services, category: category, description: description });
+      servicess[category].push({ name: services, category: category, description: description ,services_prefix:services_prefix});
     } else {
-      servicess[category] = [{ name: services, category: category, description: description }];
+      servicess[category] = [{ name: services, category: category, description: description,services_prefix:services_prefix }];
     }
   });
 

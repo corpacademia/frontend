@@ -51,7 +51,7 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
     setIsSubmitting(true);
     setError(null);
     setApiError(null);
-
+    console.log(exercise)
     try {
       // For editing an existing exercise
       if (exercise) {
@@ -77,7 +77,8 @@ export const EditExerciseModal: React.FC<EditExerciseModalProps> = ({
         } catch (err: any) {
           setApiError(err.response?.data?.message || 'An error occurred while updating the exercise');
         }
-      } else {
+      } 
+      else {
         // For new exercises
         try {
           // Create new exercise

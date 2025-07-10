@@ -90,6 +90,7 @@ interface Service {
   name: string;
   category: string;
   description: string;
+  services_prefix:string;
 }
 
 export const CreateModulesPage: React.FC = () => {
@@ -154,7 +155,8 @@ export const CreateModulesPage: React.FC = () => {
             categories[service.category].push({
               name: service.services,
               category: service.category,
-              description: service.description
+              description: service.description,
+              services_prefix:service.services_prefix
             });
           });
           
@@ -503,7 +505,6 @@ export const CreateModulesPage: React.FC = () => {
       [exerciseId]: true
     }));
   };
-
   const toggleServiceForExercise = (
     moduleIndex: number,
     exerciseIndex: number,
@@ -1327,7 +1328,7 @@ export const CreateModulesPage: React.FC = () => {
                                                 onChange={() => toggleServiceForExercise(
                                                   currentModuleIndex,
                                                   exerciseIndex,
-                                                  service.name
+                                                  service.services_prefix
                                                 )}
                                                 className="form-checkbox h-4 w-4 text-primary-500 rounded 
                                                          border-gray-500/20 focus:ring-primary-500"

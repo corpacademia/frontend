@@ -9,9 +9,10 @@ import axios from 'axios';
 
 interface UserLabsSectionProps {
   userId: string;
+  user:any;
 }
 
-export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId }) => {
+export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user}) => {
   const { labs, labStatus, isLoading, admin } = useUserLabs(userId);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -21,6 +22,7 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId }) => {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  
   const handleDelete = async (lab: any) => {
     setIsDeleting(lab.lab_id || lab.labid);
     setNotification(null);
@@ -52,13 +54,13 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId }) => {
         });
       }
       
-      if (response.data.success) {
+      if (response?.data.success) {
         setNotification({ type: 'success', message: 'Lab deleted successfully' });
         setTimeout(() => {
           window.location.reload();
         }, 1500);
       } else {
-        throw new Error(response.data.message || 'Failed to delete lab');
+        throw new Error(response?.data.message || 'Failed to delete lab');
       }
     } catch (error: any) {
       setNotification({
@@ -236,6 +238,7 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId }) => {
         onClose={() => setIsAssignModalOpen(false)}
         userId={userId}
         user={admin}
+        userDetails={user}
       />
 
       {/* Edit Modal for Cloud Slice Labs */}

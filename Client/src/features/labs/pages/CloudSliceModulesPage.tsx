@@ -215,15 +215,12 @@ export const CloudSliceModulesPage: React.FC = () => {
   // Check if current user can edit content
   const canEditContent = () => {
     if (!currentUser || !sliceDetails) return false;
-    
     // Super admin can edit anything
     if (currentUser.role === 'superadmin') return true;
-    
     // Org admin can only edit content they created
     if (currentUser.role === 'orgadmin') {
       return sliceDetails.createdby === currentUser.id;
     }
-    
     return false;
   };
 
@@ -303,16 +300,16 @@ export const CloudSliceModulesPage: React.FC = () => {
     // If it's a lab exercise, open the lab exercise modal
     if (exercise.type === 'lab') {
       setSelectedExercise(exercise);
-      setTimeout(() => {
-        setIsEditLabExerciseModalOpen(true);
-      }, 100);
+      // setTimeout(() => {
+      //   setIsEditLabExerciseModalOpen(true);
+      // }, 100);
     } 
     // If it's a quiz, open the quiz modal
     else if (exercise.type === 'questions') {
       setSelectedExercise(exercise);
-      setTimeout(() => {
-        setIsEditQuizExerciseModalOpen(true);
-      }, 100);
+      // setTimeout(() => {
+      //   setIsEditQuizExerciseModalOpen(true);
+      // }, 100);
     }
   };
 
@@ -605,8 +602,10 @@ export const CloudSliceModulesPage: React.FC = () => {
                   {canEditContent() && (
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => handleEditModule(getActiveModule()!)}
-                        className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                      onClick={() => {
+                      handleEditModule(getActiveModule()!);
+                      }}  
+                      className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
                       >
                         <Pencil className="h-4 w-4 text-primary-400" />
                       </button>

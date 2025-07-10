@@ -23,6 +23,7 @@ interface ServiceCategory {
   services: {
     name: string;
     description: string;
+    services_prefix:string;
   }[];
 }
 
@@ -100,13 +101,13 @@ export const CloudSliceLabPage: React.FC = () => {
   }, [sliceId, sliceDetails]);
 
    //extract the aws services
- const extractAwsServices = async (awsServices: { services: string; description: string; category: string }[]): Promise<CategorizedServices> => {
+ const extractAwsServices = async (awsServices: { services: string; description: string; category: string ,services_prefix:string}[]): Promise<CategorizedServices> => {
   const servicess: CategorizedServices = {};
-  awsServices.forEach(({ services, description, category }) => {
+  awsServices.forEach(({ services, description, category ,services_prefix}) => {
     if (servicess[category]) {
-      servicess[category].push({ name: services, category: category, description: description });
+      servicess[category].push({ name: services, category: category, description: description,services_prefix:services_prefix });
     } else {
-      servicess[category] = [{ name: services, category: category, description: description }];
+      servicess[category] = [{ name: services, category: category, description: description,services_prefix:services_prefix }];
     }
   });
 
@@ -488,7 +489,7 @@ export const CloudSliceLabPage: React.FC = () => {
                                 <input
                                   type="checkbox"
                                   checked={selectedServices.includes(service.name)}
-                                  onChange={() => handleServiceToggle(service.name)}
+                                  onChange={() => handleServiceToggle(service.services_prefix)}
                                   className="form-checkbox h-4 w-4 text-primary-500 rounded 
                                            border-gray-500/20 focus:ring-primary-500"
                                 />

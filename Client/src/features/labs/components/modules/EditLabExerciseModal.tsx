@@ -37,6 +37,9 @@ export const EditLabExerciseModal: React.FC<EditLabExerciseModalProps> = ({
   sliceDetails,
   onSave
 }) => {
+
+  
+
   const [formData, setFormData] = useState<LabExercise>({
     id: '',
     exercise_id: '',
@@ -87,7 +90,8 @@ export const EditLabExerciseModal: React.FC<EditLabExerciseModalProps> = ({
             categories[service.category].push({
               name: service.services,
               category: service.category,
-              description: service.description
+              description: service.description,
+              services_prefix:service.services_prefix
             });
           });
           setAvailableCategories(categories);
@@ -753,7 +757,7 @@ export const EditLabExerciseModal: React.FC<EditLabExerciseModalProps> = ({
                               <input
                                 type="checkbox"
                                 checked={formData.services.includes(service.name)}
-                                onChange={() => handleServiceToggle(service.name)}
+                                onChange={() => handleServiceToggle(service?.services_prefix)}
                                 className="form-checkbox h-4 w-4 text-primary-500 rounded 
                                          border-gray-500/20 focus:ring-primary-500"
                               />
