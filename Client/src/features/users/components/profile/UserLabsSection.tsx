@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useUserLabs } from '../../hooks/useUserLabs';
 import { GradientText } from '../../../../components/ui/GradientText';
-import { BookOpen, Plus, Trash2, Pencil, Loader, AlertCircle, Check, X } from 'lucide-react';
+import { BookOpen, Plus, Trash2, Pencil, Loader, AlertCircle, Check, X, Clock } from 'lucide-react';
 import { AssignLabModal } from './AssignLabModal';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -22,6 +22,7 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
   
   const handleDelete = async (lab: any) => {
     setIsDeleting(lab.lab_id || lab.labid);
@@ -52,6 +53,19 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
           ami_id: ami?.data?.result?.ami_id || null,
           user_id: userId,
         });
+      }
+      else if(lab.type === 'singlevm-datacenter'){
+            response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment`,{
+                 labId:lab.labid,
+                 userId:userId
+                })
+      }
+      else if(lab.type === 'vmcluster-datacenter'){
+         response =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`,{
+          labId:lab.labid,
+          orgId:user.org_id,
+          userId:userId
+         })
       }
       
       if (response?.data.success) {
@@ -90,24 +104,24 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
     return `${year}/${month}/${day}, ${formattedHours}:${minutes} ${ampm}`;
   };
 
-  const handleEdit = (lab: any) => {
-    setEditingLab(lab);
-    const labStatusDetails = labStatus.find((l) => l.labid === lab.labid);
-  
-    if (labStatusDetails?.start_date) {
-      setStartTime(new Date(labStatusDetails.start_date));
-    } else {
-      setStartTime(null);
-    }
-  
-    if (labStatusDetails?.end_date) {
-      setEndTime(new Date(labStatusDetails.end_date));
-    } else {
-      setEndTime(null);
-    }
-  
-    setIsEditModalOpen(true);
-  };
+ const handleEdit = (lab: any) => {
+  setEditingLab(lab);
+
+  // Find matching lab status entry
+  const labStatusDetails = labStatus.find((l) => l.labid === lab.labid);
+
+  // Parse start time if available
+  const startDateStr = labStatusDetails?.start_date || labStatusDetails?.startdate;
+  setStartTime(startDateStr ? new Date(startDateStr) : null);
+
+  // Parse end time if available
+  const endDateStr = labStatusDetails?.end_date || labStatusDetails?.enddate;
+  setEndTime(endDateStr ? new Date(endDateStr) : null);
+
+  // Open modal
+  setIsEditModalOpen(true);
+};
+
   
 
   const handleSaveEdit = async () => {
@@ -125,14 +139,34 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
     setNotification(null);
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateUserCloudSliceTimes`, {
+      let response;
+
+      if(editingLab.type === 'cloudslice'){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateUserCloudSliceTimes`, {
         userId: userId,
         labId: editingLab.labid,
         startDate: formatDate(startTime),
         endDate: formatDate(endTime)
       });
+      }
+      else if(editingLab.type === 'singlevm-datacenter'){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMDatacenterLabTime`, {
+        userId: userId,
+        labId: editingLab.labid,
+        startTime: formatDate(startTime),
+        endTime: formatDate(endTime)
+      });
+      }
+      else if(editingLab.type === 'vmcluster-datacenter' ){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserLabTimingsOfVMClusterDatacenter`, {
+        userId: userId,
+        labId: editingLab.labid,
+        startTime: formatDate(startTime),
+        endTime: formatDate(endTime)
+        });
+      }
 
-      if (response.data.success) {
+      if (response?.data.success) {
         setNotification({ type: 'success', message: 'Lab times updated successfully' });
         setTimeout(() => {
           setIsEditModalOpen(false);
@@ -140,13 +174,16 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
           setNotification(null)
         }, 1500);
       } else {
-        throw new Error(response.data.message || 'Failed to update lab times');
+        throw new Error(response?.data.message || 'Failed to update lab times');
       }
     } catch (error: any) {
-      setNotification({
+      setTimeout(() => {
+          setNotification({
         type: 'error',
         message: error.response?.data?.message || 'Failed to update lab times'
       });
+        }, 1500);
+      
     } finally {
       setIsEditing(false);
     }
@@ -189,49 +226,64 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
       )}
 
       <div className="space-y-4">
-        {labs.map((lab, index) => (
-          <div key={lab.lab_id || lab.labid} className="p-4 bg-dark-300/50 rounded-lg hover:bg-dark-300 transition-colors relative">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-3">
-                <BookOpen className="h-5 w-5 text-primary-400" />
-                <div>
-                  <h3 className="font-medium text-gray-200">{lab.title}</h3>
-                  <p className="text-sm text-gray-400">{lab.description}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                {lab.type === 'cloudslice' && (
-                  <button
-                    onClick={() => handleEdit(lab)}
-                    className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
-                    disabled={isDeleting === (lab.lab_id || lab.labid)}
-                  >
-                    <Pencil className="h-4 w-4 text-primary-400" />
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDelete(lab)}
-                  className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
-                  disabled={isDeleting === (lab.lab_id || lab.labid)}
-                >
-                  {isDeleting === (lab.lab_id || lab.labid) ? (
-                    <Loader className="h-4 w-4 text-red-400 animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4 text-red-400" />
-                  )}
-                </button>
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  labStatus[index]?.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' :
-                  labStatus[index]?.status === 'in_progress' ? 'bg-amber-500/20 text-amber-300' :
-                  'bg-primary-500/20 text-primary-300'
-                }`}>
-                  {labStatus[index]?.status}
-                </span>
-              </div>
-            </div>
+  {labs.map((lab, index) => (
+    <div
+      key={lab.lab_id || lab.labid}
+      className="p-4 bg-dark-300/50 rounded-lg hover:bg-dark-300 transition-colors relative"
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex items-center space-x-3">
+          <BookOpen className="h-5 w-5 text-primary-400" />
+          <div>
+            <h3 className="font-medium text-gray-200">{lab.title}</h3>
+            <p className="text-sm text-gray-400">{lab.description}</p>
+            {lab.enddate && (
+          <div className="flex items-center space-x-1 mt-1 text-xs text-gray-600">
+            <Clock className="h-4 w-4 text-gray-600" />
+            <span>Due : {new Date(lab.enddate || lab.end_date).toLocaleString()}</span>
           </div>
-        ))}
+        )}
+
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          {lab && (
+            <button
+              onClick={() => handleEdit(lab)}
+              className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+              disabled={isDeleting === (lab.lab_id || lab.labid)}
+            >
+              <Pencil className="h-4 w-4 text-primary-400" />
+            </button>
+          )}
+          <button
+            onClick={() => handleDelete(lab)}
+            className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
+            disabled={isDeleting === (lab?.lab_id || lab?.labid)}
+          >
+            {isDeleting === (lab?.lab_id || lab?.labid) ? (
+              <Loader className="h-4 w-4 text-red-400 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4 text-red-400" />
+            )}
+          </button>
+          <span
+            className={`px-2 py-1 text-xs font-medium rounded-full ${
+              labStatus[index]?.status === 'completed'
+                ? 'bg-emerald-500/20 text-emerald-300'
+                : labStatus[index]?.status === 'in_progress'
+                ? 'bg-amber-500/20 text-amber-300'
+                : 'bg-primary-500/20 text-primary-300'
+            }`}
+          >
+            {labStatus[index]?.status}
+          </span>
+        </div>
       </div>
+    </div>
+  ))}
+</div>
+
 
       <AssignLabModal 
         isOpen={isAssignModalOpen}
@@ -331,14 +383,17 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
                   className="btn-secondary"
                   disabled={isEditing}
                 >
-                  Cancel
+                  <GradientText>Cancel</GradientText>
+                  
                 </button>
                 <button
                   onClick={handleSaveEdit}
                   disabled={isEditing}
                   className="btn-primary"
                 >
-                  {isEditing ? (
+                  <GradientText>
+                    {isEditing ? (
+                    
                     <span className="flex items-center">
                       <Loader className="animate-spin h-4 w-4 mr-2" />
                       Saving...
@@ -346,6 +401,8 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
                   ) : (
                     'Save Changes'
                   )}
+                  </GradientText>
+                  
                 </button>
               </div>
             </div>

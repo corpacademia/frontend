@@ -229,7 +229,6 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
         });
       } 
       else if(selectedLabDetails.type === 'singlevm') {
-        console.log(selectedLabDetails)
         res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignSingleVmDatacenterLabToUser`, {
           labId: selectedLabDetails.lab_id,
           orgId: userDetails?.user?.org_id,
@@ -263,7 +262,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
       }
     } catch (error: any) {
       console.error('Error assigning lab:', error);
-      setError(error.response?.data?.message || 'Failed to assign lab');
+      setError(error.response?.data?.error || 'Failed to assign lab');
     } finally {
       setIsAssigning(false);
     }
@@ -406,14 +405,16 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
 
           <div className="flex justify-end space-x-4">
             <button onClick={onClose} className="btn-secondary">
-              Cancel
+              <GradientText>Cancel</GradientText>
+              
             </button>
             <button
               onClick={handleAssign}
               disabled={isAssigning}
               className="btn-primary"
             >
-              {isAssigning ? 'Assigning...' : 'Assign Lab'}
+              <GradientText>{isAssigning ? 'Assigning...' : 'Assign Lab'}</GradientText>
+              
             </button>
           </div>
         </div>
