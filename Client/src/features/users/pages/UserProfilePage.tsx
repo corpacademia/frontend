@@ -32,9 +32,9 @@ export const UserProfilePage: React.FC = () => {
     fetchCurrentUser();
   }, []);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading user profile</div>;
-  if (!user) return <div>User not found</div>;
+  if (isLoading) return <div className="text-white">Loading...</div>;
+  if (error) return <div className="text-red-400">Error loading user profile</div>;
+  if (!user) return <div className="text-gray-300">User not found</div>;
 
   const isOrgAdmin = currentUser?.role === 'orgadmin';
   const isSuperAdmin = currentUser?.role === 'superadmin';

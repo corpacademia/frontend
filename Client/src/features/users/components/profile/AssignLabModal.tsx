@@ -4,6 +4,7 @@ import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { LabDetails } from '../../../labs/components/LabDetails';
 
 interface AssignLabModalProps {
   isOpen: boolean;
@@ -108,11 +109,17 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
           setFilteredLabs(allLabs);
         }
         else{
-          const [standardResult, cloudResult] = await Promise.allSettled([
+          const [standardResult, cloudResult,singleVMDatacenter,vmClusterDatacenter] = await Promise.allSettled([
             axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
               admin_id: user.id,
             }),
             axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabDetails/${user.org_id}`),
+            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab`,{
+              orgId:user?.org_id
+            }),
+            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,{
+              orgId:user?.org_id
+            })
           ]);
     
           const allLabs: any[] = [];
@@ -138,6 +145,42 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
           } else {
             console.warn('Failed to fetch cloudslice labs:', cloudResult);
           }
+          if (singleVMDatacenter.status === 'fulfilled' && singleVMDatacenter.value.data.success) {
+            const detailFetches = singleVMDatacenter.value.data.data.map((lab: any) =>
+              axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`, {
+                labId: lab?.labid,
+              })
+            );
+
+            const detailResults = await Promise.allSettled(detailFetches);
+            detailResults.forEach((result, index) => {
+              if (result.status === 'fulfilled' && result.value.data.success) {
+                allLabs.push({
+                  ...result.value.data.data,
+                  ...singleVMDatacenter.value.data.data[index],
+                  type: 'singlevm',
+           });
+            } else {
+              console.warn(`Failed to fetch single VM datacenter lab details for lab_id=${singleVMDatacenter.value.data.data[index].labid}`);
+            }
+          });
+            }
+
+          else{
+            console.warn('Failed to fetch single vm labs:',singleVMDatacenter)
+          }
+          if(vmClusterDatacenter?.status === 'fulfilled' && vmClusterDatacenter?.value.data.success){
+              vmClusterDatacenter.value.data.data.map((lab:any)=>{
+                allLabs.push({
+                  ...lab.lab,
+                  ...lab.org,
+                  type:'vmcluster'
+                })
+              })
+          }
+          else{
+            console.warn("Failed to fetch vmcluster labs:",vmClusterDatacenter)
+          }
           setAvailableLabs(allLabs);
           setFilteredLabs(allLabs);
         }
@@ -152,12 +195,14 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   
 
   useEffect(() => {
-    const lab = availableLabs.find(l => (l.lab_id ?? l.labid) === selectedLab);
-    setSelectedLabDetails(lab);
-      setStartTime(lab?.startdate);
-      setEndTime(lab?.enddate);
+  const lab = availableLabs.find(l => (l.lab_id ?? l.labid) === selectedLab);
+  setSelectedLabDetails(lab);
 
-  }, [selectedLab, availableLabs]);
+  // Safely parse the dates if they exist
+  setStartTime(lab?.startdate ? new Date(lab.startdate) : null);
+  setEndTime(lab?.enddate ? new Date(lab.enddate) : null);
+}, [selectedLab, availableLabs]);
+
 
   useEffect(() => {
     if (!isOpen) {
@@ -349,7 +394,8 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
                 onChange={(date: Date) => setStartTime(date)}
                 showTimeSelect
                 timeIntervals={15}
-                minDate={new Date()}
+                minDate={startTime}
+                maxDate={endTime}
                 dateFormat="Pp"
                 className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
                           text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
@@ -363,6 +409,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
                 showTimeSelect
                 timeIntervals={15}
                 minDate={startTime || new Date()}
+                maxDate={endTime}
                 dateFormat="Pp"
                 className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
                           text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"

@@ -157,12 +157,11 @@ export const useUserLabs = (userId: string) => {
       `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${userId}`
     );
    // base status
-
    const allStatuses = [
   ...labss,
-  ...singleVMDatacenterLabs,
-  ...(cloudSliceStatusResponse.data.success ? cloudSliceStatusResponse.data.data : []),
-  ...vmClusterDatacenterLabs
+  ...(cloudslicelabResponse.data.success ? cloudslicelabResponse.data.data : []),
+  ...(singleVMDatacenterLabResponse.data.data ? singleVMDatacenterLabResponse.data.data : []),
+  ...(vmclusterDatacenter.data.success ? vmclusterDatacenter.data.data : [])
 ];
 
 
