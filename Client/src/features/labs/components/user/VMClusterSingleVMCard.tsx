@@ -26,7 +26,7 @@ interface ClusterVM {
   protocol: string;
   startdate: string;
   enddate: string;
-  status: "active" | "inactive" | "pending";
+  status: "started" | "not-started" | "expired";
   users: Array<{
     id: string;
     username: string;
@@ -172,9 +172,9 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
               </button>
               <span
                 className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  vm.lab?.status === "active" || vm.status === "active"
+                  vm.lab?.status === "started" || vm.status === "started"
                     ? "bg-emerald-500/20 text-emerald-300"
-                    : vm.lab?.status === "inactive" || vm.status === "inactive"
+                    : vm.lab?.status === "expired" || vm.status === "expired"
                       ? "bg-red-500/20 text-red-300"
                       : "bg-amber-500/20 text-amber-300"
                 }`}

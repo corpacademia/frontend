@@ -26,13 +26,13 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [availableLabs, setAvailableLabs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filteredLabs, setFilteredLabs] = useState<any[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   
- 
   // Filter labs based on search term
   useEffect(() => {
     if (!searchTerm) {
@@ -257,9 +257,75 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
       return;
     }
 
-    
-
-    try {
+    if(userDetails?.user?.role === 'orgadmin'){
+      
+      try {
+        setIsAssigning(true);
+        let res;  
+        if(selectedLabDetails.type === 'cloudslice'){
+          res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`,{
+            sliceId:selectedLabDetails?.labid,
+            organizationId:userDetails?.user?.org_id,
+            userId:user.id,
+            startDate:startTime,
+            endDate:selectedLabDetails?.enddate
+          })
+        }
+        else if(selectedLabDetails.type === 'singlevm'){
+           res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`,{
+            labId:selectedLabDetails?.lab_id,
+            orgId:userDetails?.user?.org_id,
+            assignedBy:user.id,
+            startDate:startTime,
+            endDate:selectedLabDetails?.enddate
+           })
+        }
+        else if(selectedLabDetails.type === 'vmcluster'){
+            res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`,{
+              labId:selectedLabDetails?.labid,
+              orgId:userDetails?.user?.org_id,
+              assignedBy:user?.id,
+              startDate:startTime,
+              endDate:selectedLabDetails?.enddate
+            })
+        }
+        else{
+            res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, {
+              lab_id: selectedLabDetails?.lab_id,
+              admin_id: userDetails?.user?.id,
+              org_id: userDetails?.user?.org_id,
+              configured_by: user?.id,
+              startdate:startTime,
+              enddate:selectedLabDetails?.enddate
+        });
+        }
+        if(res?.data?.success){
+          setSuccess("Successfully assigned lab")
+          setTimeout(()=>{
+            setSuccess(null)
+            onClose();
+          },2000)
+          
+        }
+        else{
+          setError(res?.data?.message || 'Lab Already Assigned');
+        setTimeout(()=>{
+        setError(null);
+      },2000)
+        }
+      } catch (error:any) {
+        console.error('Error assigning lab:', error);
+        setError(error.response?.data?.error || 'Failed to assign lab');
+        setTimeout(()=>{
+        setError(null);
+      },2000)
+      }
+      finally{
+        setIsAssigning(false);
+      }
+    }
+    else{
+      try {
       setIsAssigning(true);
       let res;
       if (selectedLabDetails.type === 'cloudslice') {
@@ -298,19 +364,30 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
         res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignlab`, {
           lab: selectedLabDetails.lab_id,
           userId,
-          assign_admin_id: user.id
+          assign_admin_id: user.id,
+          startDate:startTime,
+          endDate:endTime
         });
       }
 
       if (res?.data.success) {
-        onClose();
+        setSuccess("Successfully assigned lab")
+        setTimeout(()=>{
+            setSuccess(null)
+            onClose();
+          },1000)
       }
     } catch (error: any) {
       console.error('Error assigning lab:', error);
       setError(error.response?.data?.error || 'Failed to assign lab');
+      setTimeout(()=>{
+        setError(null);
+      },2000)
     } finally {
       setIsAssigning(false);
     }
+    }
+    
   };
 
   if (!isOpen) return null;
@@ -446,6 +523,14 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
               <div className="flex items-center space-x-2">
                 <AlertCircle className="h-5 w-5 text-red-400" />
                 <span className="text-red-200">{error}</span>
+              </div>
+            </div>
+          )}
+          {success && (
+            <div className="p-4 bg-green-900/20 border border-green-500/20 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-green-400" />
+                <span className="text-green-200">{success}</span>
               </div>
             </div>
           )}

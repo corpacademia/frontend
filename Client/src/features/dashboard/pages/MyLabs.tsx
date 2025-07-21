@@ -264,10 +264,9 @@ export const MyLabs: React.FC = () => {
         const software = softwareData.find((s) => s.lab_id === lab.lab_id);
         return {
           ...lab,
-          software: software ? [software.software] : []
+          software: software ? software.software : []
         };
       });
-
       setLabs(updatedLabs);
       setFilteredLabs(updatedLabs);
 
@@ -286,7 +285,7 @@ export const MyLabs: React.FC = () => {
       // Fetch datacenter VMs
       try {
         const res = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserAssignedSingleVmDatacenterLabs/${user.id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserAssignedSingleVmDatacenterLabs/${user?.id}`
         );
         if (res.data.success) {
           const vmDetails = await Promise.all(
@@ -304,6 +303,7 @@ export const MyLabs: React.FC = () => {
 
                   return {
                     ...vmRes.data.data,
+                    ...assignment,
                     userscredentials: credsRes.data.success ? credsRes.data.data : [],
                   };
                 }
@@ -340,9 +340,14 @@ export const MyLabs: React.FC = () => {
                     `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getUserAssignedClusterCredsToUser`,
                     { labId: assignment.labid, userId: user.id }
                   );
-
+                  
                   return {
                     ...clusterRes.data.data[0],
+                    lab:{
+                      ...clusterRes.data.data[0].lab,
+                      ...assignment,
+                    },
+                    
                     users: usersRes.data.success ? usersRes.data.data : [],
                   };
                 }
@@ -663,7 +668,7 @@ export const MyLabs: React.FC = () => {
             isStarted:false
           })
           
-           const guacUrl = `${lab.guacamole_url}${response.data.response.jwtToken}`;
+           const guacUrl = `${lab.guacamole_url}?token=${response.data.response.jwtToken}`;
            console.log(guacUrl)
           navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
             state: { 
@@ -706,7 +711,7 @@ export const MyLabs: React.FC = () => {
                 state:true,
                 isStarted:true
               })
-              const guacUrl = `${lab.guacamole_url}${response.data.response.jwtToken}`;
+              const guacUrl = `${lab.guacamole_url}?token=${response.data.response.jwtToken}`;
               
           navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
             state: { 
@@ -873,8 +878,9 @@ export const MyLabs: React.FC = () => {
             >
               <option value="">All Status</option>
               <option value="completed">Completed</option>
-              <option value="in_progress">In Progress</option>
-              <option value="pending">Pending</option>
+              <option value="expired">Expired</option>
+              <option value="not-started">Not Started</option>
+              <option value="started">Started</option>
             </select>
 
             <button 
@@ -963,9 +969,9 @@ export const MyLabs: React.FC = () => {
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             labStatus[index]?.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' :
                             labStatus[index]?.status === 'in_progress' ? 'bg-amber-500/20 text-amber-300' :
-                            'bg-primary-500/20 text-primary-300'
+                            'bg-emerald-500/20 text-emerald-300'
                           }`}>
-                            {labStatus[index]?.status || 'Not Started'}
+                            {labStatus[index]?.status || 'not-started'}
                           </span>
                         </div>
                       </div>

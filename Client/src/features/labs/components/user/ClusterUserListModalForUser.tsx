@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, LinkIcon as ConnectIcon, Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
@@ -43,8 +43,16 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [userData,setUserData] = useState<any>(null);
   const navigate = useNavigate();
 
+ useEffect(()=>{
+   const fetchUserProfile = async () => {
+     const userProfile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
+     setUserData(userProfile.data.user);
+   };
+   fetchUserProfile();
+ },[])
   // Group users by unique vmid
   const groupedUsers = users.reduce((acc, user) => {
     const groupKey = user.usergroup || 'Unknown Group';
@@ -73,7 +81,6 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
     const protocol = vm.vms?.find((vm) => vm.vmid === vmId);
     return protocol?.protocol || 'rdp';
   };
-
   const handleConnectToVM = async (vmData: VM) => {
     try {
       // First, get JWT token
@@ -85,10 +92,15 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
         password: vmData.password,
         port: vmData.port,
       });
-      
       if (tokenResponse.data.success && tokenResponse.data.token) {
+        const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserVMClusterDatacenterStatus`,{
+          labId:vm?.lab?.labid,
+          userId:userData.id,
+          status:'started'
+        });
+
         // Then connect to VM using the token
-        const guacUrl = `${vm.lab?.guacamole_url}${tokenResponse.data.token.result}`;
+        const guacUrl = `${vm.lab?.guacamole_url}?token=${tokenResponse.data.token.result}`;
         navigate(`/dashboard/labs/vm-session/${vmId}`, {
           state: { 
             guacUrl,
@@ -113,7 +125,14 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
     }
   };
 
-  const handleConnectGroup = (vmid: string, usersInGroup: any[]) => {
+  const handleConnectGroup = async (vmid: string, usersInGroup: any[]) => {
+    const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserVMClusterDatacenterStatus`,{
+          labId:vm?.lab?.labid,
+          userId:userData.id,
+          status:'started'
+        });
+    
+    
     // Navigate to VM session page with all credentials from this group
     navigate(`/dashboard/labs/vm-session/${vmId}`, {
       state: { 

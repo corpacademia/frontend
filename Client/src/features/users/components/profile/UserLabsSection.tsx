@@ -14,7 +14,7 @@ interface UserLabsSectionProps {
 }
 
 export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user}) => {
-  const { labs, labStatus, isLoading, admin } = useUserLabs(userId);
+  const { labs, labStatus, isLoading, admin } = useUserLabs(userId,user);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLab, setEditingLab] = useState<any>(null);
@@ -29,6 +29,52 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
   const handleDelete = async (lab: any) => {
     setIsDeleting(lab.lab_id || lab.labid);
     setNotification(null);
+    //if its organization admin
+   if(user?.user?.role === 'orgadmin' ){
+      try {
+        let response;
+        if(lab.type === 'singlevm'){
+          response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/deleteAssessment`,{
+          lab_id:lab?.lab_id,
+          admin_id:user?.user?.id,
+      });
+        }
+        else if(lab.type === 'singlevm-datacenter'){
+          response =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteAssignedSingleVMDatacenterLab`,{
+             labId:lab?.labid,
+             orgId:user?.user?.org_id
+          })
+        }
+        else if(lab.type === 'vmcluster-datacenter'){
+           response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteFromOrganization`,{
+            labId:lab?.labid,
+            orgId:user?.user?.org_id,
+            adminId:user?.user?.id
+           })
+        }
+        else{
+          response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/orgAdminDeleteCloudSlice/${lab?.labid}`,{
+            orgId:user?.user?.org_id
+          })
+        }
+
+        if (response?.data?.success) {
+        setNotification({ type: 'success', message: 'Lab deleted successfully' });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      }
+      } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to delete lab'
+      });
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setIsDeleting(null);
+    }
+   }
+   else{
     try {
       let response;
 
@@ -87,6 +133,8 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
     } finally {
       setIsDeleting(null);
     }
+   }
+    
   };
 
   const formatDate = (date: Date): string => {
@@ -108,7 +156,6 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
 
  const handleEdit = (lab: any) => {
   setEditingLab(lab);
-
   // Find matching lab status entry
   const labStatusDetails = labStatus.find((l) => l.labid === lab.labid);
 
@@ -117,7 +164,7 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
   setStartTime(startDateStr ? new Date(startDateStr) : null);
 
   // Parse end time if available
-  const endDateStr = labStatusDetails?.end_date || labStatusDetails?.enddate;
+  const endDateStr = labStatusDetails?.end_date || labStatusDetails?.enddate || labStatusDetails?.completion_date;
   setEndTime(endDateStr ? new Date(endDateStr) : null);
 
   // Open modal
@@ -129,43 +176,58 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
   const handleSaveEdit = async () => {
     if (!editingLab || !startTime || !endTime) {
       setNotification({ type: 'error', message: 'Please select valid start and end times' });
+       setTimeout(() => setNotification(null), 3000);
       return;
     }
 
     if (endTime <= startTime) {
       setNotification({ type: 'error', message: 'End time must be after start time' });
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
 
     setIsEditing(true);
     setNotification(null);
 
-    try {
+    if(user?.user?.role === 'orgadmin'){
+       try {
       let response;
 
       if(editingLab.type === 'cloudslice'){
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateUserCloudSliceTimes`, {
-        userId: userId,
+        identifier: user?.user?.org_id,
         labId: editingLab.labid,
         startDate: formatDate(startTime),
-        endDate: formatDate(endTime)
+        endDate: formatDate(endTime),
+        type:'org'
       });
       }
       else if(editingLab.type === 'singlevm-datacenter'){
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMDatacenterLabTime`, {
-        userId: userId,
+        identifier: user?.user?.org_id,
         labId: editingLab.labid,
         startTime: formatDate(startTime),
-        endTime: formatDate(endTime)
+        endTime: formatDate(endTime),
+        type:'org'
       });
       }
       else if(editingLab.type === 'vmcluster-datacenter' ){
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserLabTimingsOfVMClusterDatacenter`, {
-        userId: userId,
+        identifier: user?.user?.org_id,
         labId: editingLab.labid,
         startTime: formatDate(startTime),
-        endTime: formatDate(endTime)
+        endTime: formatDate(endTime),
+        type:'org'
         });
+      }
+      else{
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserLabTimingsOfAwsSingleVMDatacenter`, {
+        identifier: user?.user?.org_id,
+        labId: editingLab.lab_id,
+        startTime: formatDate(startTime),
+        endTime: formatDate(endTime),
+        type:'org'
+      });
       }
 
       if (response?.data.success) {
@@ -189,6 +251,72 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
     } finally {
       setIsEditing(false);
     }
+    }
+    
+    else{
+      try {
+      let response;
+
+      if(editingLab.type === 'cloudslice'){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateUserCloudSliceTimes`, {
+        identifier: userId,
+        labId: editingLab.labid,
+        startDate: formatDate(startTime),
+        endDate: formatDate(endTime),
+        type:'user'
+      });
+      }
+      else if(editingLab.type === 'singlevm-datacenter'){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMDatacenterLabTime`, {
+        identifier: userId,
+        labId: editingLab.labid,
+        startTime: formatDate(startTime),
+        endTime: formatDate(endTime),
+        type:'user'
+      });
+      }
+      else if(editingLab.type === 'vmcluster-datacenter' ){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserLabTimingsOfVMClusterDatacenter`, {
+        identifier: userId,
+        labId: editingLab.labid,
+        startTime: formatDate(startTime),
+        endTime: formatDate(endTime),
+        type:'user'
+        });
+      }
+      else{
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserLabTimingsOfAwsSingleVMDatacenter`, {
+        identifier: userId,
+        labId: editingLab.lab_id,
+        startTime: formatDate(startTime),
+        endTime: formatDate(endTime),
+        type:'user'
+      });
+      }
+
+      if (response?.data.success) {
+        setNotification({ type: 'success', message: 'Lab times updated successfully' });
+        setTimeout(() => {
+          setIsEditModalOpen(false);
+          // window.location.reload();
+          setNotification(null)
+        }, 1500);
+      } else {
+        throw new Error(response?.data.message || 'Failed to update lab times');
+      }
+    } catch (error: any) {
+      setTimeout(() => {
+          setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to update lab times'
+      });
+        }, 1500);
+
+    } finally {
+      setIsEditing(false);
+    }
+    }
+    
   };
   // Pagination logic
   const indexOfLastLab = currentPage * itemsPerPage;
@@ -205,7 +333,6 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
   const endIndex = Math.min(startIndex + itemsPerPage, labs.length);
 
   if (isLoading) return <div>Loading labs...</div>;
-
   return (
     <div className="glass-panel">
       <div className="flex justify-between items-center mb-6">

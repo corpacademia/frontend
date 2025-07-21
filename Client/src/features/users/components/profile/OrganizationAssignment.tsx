@@ -82,7 +82,7 @@ export const OrganizationAssignment: React.FC<OrganizationAssignmentProps> = ({
   if(!isloading){
     return <div>Loading...</div>
   }
-
+  
   return (
     <div className="glass-panel">
       <h2 className="text-xl font-semibold mb-6">

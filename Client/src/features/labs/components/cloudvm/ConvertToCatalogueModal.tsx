@@ -216,10 +216,10 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
       setError('Catalogue name is required');
       return false;
     }
-    if (!formData.organizationId) {
-      setError('Organization is required');
-      return false;
-    }
+    // if (!formData.organizationId) {
+    //   setError('Organization is required');
+    //   return false;
+    // }
     if (!isDatacenterVM && !isClusterDatacenterVM) {
       if (formData.numberOfDays < 1) {
         setError('Number of days must be at least 1');
@@ -239,12 +239,12 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
- console.log(vmId)
     setIsLoading(true);
     setError(null);
     setSuccess(null);
     
-    try {
+    if(formData.organizationId){
+      try {
       const org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
         org_id: formData.organizationId
       });
@@ -256,13 +256,16 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 software:software.filter(s => s.trim() !== ''), 
                 catalogueType: formData.catalogueType, 
                 labId: vmId,
+                catalogueName: formData.catalogueName,
             })
             if(labUpdate.data.success){
               const orgAssignment = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`,{
                  labId: vmId,
                  orgId: formData.organizationId, 
-                 assignedBy: admin.id, 
-                 catalogueName: formData.catalogueName,
+                 assignedBy: admin.id,
+                 startDate:labUpdate?.data?.data?.startdate,
+                 endDate:labUpdate?.data?.data?.enddate 
+                 
               })
               if(orgAssignment.data.success){
                 const assingCredsToOrg = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabCredsToOrg`,{
@@ -285,13 +288,19 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           }
          }
          else if(isClusterDatacenterVM){
-          const vmClusterDataCenter =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`,{
+           const updateCatalogueDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateVMClusterDatacenterCatalogueDetails`,{
+                catalogueName:formData.catalogueName,
+                catalogueType:formData.catalogueType,
+                software:software.filter(s => s.trim() !== ''),
+                labId:vmId
+              })
+          if(updateCatalogueDetails?.data?.success){
+            const vmClusterDataCenter =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`,{
             labId:vmId,
             orgId:formData.organizationId,
-            assignedBy:admin.id,
-            software:software.filter(s => s.trim() !== ''),
-            catalogueType:formData.catalogueType,
-            catalogueName:formData.catalogueName
+            assignedBy:admin?.id,
+            startDate:updateCatalogueDetails?.data?.data?.startdate,
+            endDate:updateCatalogueDetails?.data?.data?.enddate
           })
            if (vmClusterDataCenter.data.success) {
             setSuccess('Successfully converted to catalogue');
@@ -301,24 +310,35 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           } else {
             throw new Error('Failed to update lab configuration');
           }
+          }
+          
          }
 
         else{
-           const batch = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, {
-          lab_id: vmId,
-          admin_id: org_details.data.data.org_admin,
-          org_id: org_details.data.data.id,
-          config_details: {
-            ...formData,
-            numberOfInstances: formData.hoursPerDay // Map hoursPerDay to numberOfInstances
-          },
-          configured_by: admin.id,
-          software: software.filter(s => s.trim() !== ''),
+          const updateCatalogueDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateCatalogueDetails`,{
+            catalogueName:formData.catalogueName,
+            numberOfDays:formData.numberOfDays,
+            hoursPerDay:formData.hoursPerDay,
+            expiresIn:formData.expiresIn,
+            software:software.filter(s => s.trim() !== ''),
+            catalogueType:formData.catalogueType,
+            labId:vmId
+          })
+          let batch;
+          if(formData.organizationId && updateCatalogueDetails.data.success){
+              batch = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, {
+              lab_id: vmId,
+              admin_id: org_details.data.data.org_admin,
+              org_id: org_details.data.data.id,
+              configured_by: admin?.id,
+              enddate:formData.expiresIn
         });
-        if (batch.data.success) {
+          }
+           
+        if (batch?.data.success) {
           const updateLabConfig = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateConfigOfLabs`, {
             lab_id: vmId,
-            admin_id: admin.id,
+            admin_id: admin?.id,
             config_details: {
               ...formData,
               numberOfInstances: formData.hoursPerDay // Map hoursPerDay to numberOfInstances
@@ -334,7 +354,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             throw new Error('Failed to update lab configuration');
           }
         } else {
-          throw new Error(batch.data.message || 'Failed to create batch assignment');
+          throw new Error(batch?.data?.error || batch?.data?.message || 'Failed to create batch assignment');
         }
         }
        
@@ -346,6 +366,82 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
     } finally {
       setIsLoading(false);
     }
+    }
+    else{
+      try {
+          if(isDatacenterVM){
+            const labUpdate = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updatesinglevmdatacenter`, {
+                software:software.filter(s => s.trim() !== ''), 
+                catalogueType: formData.catalogueType, 
+                labId: vmId,
+                catalogueName: formData.catalogueName,
+            });
+            if(labUpdate.data.success){
+              setSuccess("Successfully converted to catalogue");
+              setTimeout(()=>{
+                onClose();
+              },2000)
+            }
+            else{
+              setError("Failed to convert to catalogue");
+              setTimeout(()=>{
+                setError(null)
+              },2000)
+            }
+          }
+          else if(isClusterDatacenterVM){
+              const updateCatalogueDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateVMClusterDatacenterCatalogueDetails`,{
+                catalogueName:formData.catalogueName,
+                catalogueType:formData.catalogueType,
+                software:software.filter(s => s.trim() !== ''),
+                labId:vmId
+              })
+              if(updateCatalogueDetails.data.success){
+                setSuccess("Successfully updated catalogue");
+                setTimeout(()=>{
+                  setSuccess(null)
+                  onClose();
+                },2000)
+              }
+              else{
+                setError('Failed to update catalogue');
+                setTimeout(()=>{
+                  setError(null);
+                },2000)
+              }
+           }
+          else{
+           const updateCatalogueDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateCatalogueDetails`,{
+            catalogueName:formData.catalogueName,
+            numberOfDays:formData.numberOfDays,
+            hoursPerDay:formData.hoursPerDay,
+            expiresIn:formData.expiresIn,
+            software:software.filter(s => s.trim() !== ''),
+            catalogueType:formData.catalogueType,
+            labId:vmId
+          });
+          if(updateCatalogueDetails.data.success){
+            setSuccess("Successfully converted to catalogue");
+            setTimeout(()=>{
+              onClose();
+            },2000)
+          }
+          else{
+            setError("Failed to convert to catalogue");
+            setTimeout(()=>{
+              setError(null);
+            },2000)
+          }
+          }
+          
+      } catch (error:any) {
+        setError(error?.message || 'Failed to convert to catalogue')
+      }
+      finally{
+        setIsLoading(false);
+      }
+    }
+    
   };
 
   if (!isOpen) return null;
@@ -393,6 +489,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                          text-gray-300 focus:border-primary-500/40 focus:outline-none"
                 >
                   <option value="">Select an organization</option>
+                  
                   {organizations.map(org => (
                     <option key={org.id} value={org.id}>{org.organization_name}</option>
                   ))}
@@ -534,14 +631,16 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 onClick={onClose}
                 className="btn-secondary"
               >
-                Cancel
+                <GradientText>Cancel</GradientText>
+                
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={isLoading}
                 className="btn-primary"
               >
-                {isLoading ? (
+                <GradientText>
+                   {isLoading ? (
                   <span className="flex items-center">
                     <Loader className="animate-spin h-4 w-4 mr-2" />
                     Converting...
@@ -549,6 +648,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 ) : (
                   'Create Catalogue'
                 )}
+                </GradientText>
+               
               </button>
             </div>
           </div>

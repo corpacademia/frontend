@@ -29,7 +29,7 @@ interface DatacenterVMCardProps {
     protocol: string;
     startdate: string;
     enddate: string;
-    status: 'active' | 'inactive' | 'pending';
+    status: 'started' | 'expired' | 'not-started';
     creds_id: string;
     isrunning: boolean;
     software?: string[];
@@ -127,7 +127,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
       
       if (tokenResponse.data.success && tokenResponse.data.token) {
         // Then connect to VM using the token
-        const guacUrl = `${lab?.guacamole_url}${tokenResponse.data.token.result}`;
+        const guacUrl = `${lab?.guacamole_url}?token=${tokenResponse.data.token.result}`;
           navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
             state: { 
               guacUrl,
@@ -224,8 +224,8 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
               )}
             </button>
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-              lab.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
-              lab.status === 'inactive' ? 'bg-red-500/20 text-red-300' :
+              lab.status === 'started' ? 'bg-emerald-500/20 text-emerald-300' :
+              lab.status === 'expired' ? 'bg-red-500/20 text-red-300' :
               'bg-amber-500/20 text-amber-300'
             }`}>
               {lab.status}

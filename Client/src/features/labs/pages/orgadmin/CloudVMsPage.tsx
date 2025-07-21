@@ -85,7 +85,29 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
       });
 
       if (response.data.success) {
-        setVMs(response.data.data);
+        const updatedData = await Promise.all(
+  response.data.data.map(async (lab: any) => {
+    try {
+      const data = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`, {
+        labId: lab.lab_id,
+      });
+
+      if (data.data.success) {
+        return {
+          ...data.data.data,
+          ...lab
+        };
+      } else {
+        return lab;
+      }
+    } catch (err) {
+      console.error('Failed to fetch lab details for', lab.lab_id, err);
+      return lab; 
+    }
+  })
+);
+
+        setVMs(updatedData);
       } else {
         setError('Failed to fetch assessment VMs');
       }
@@ -122,9 +144,9 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
                   `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
                   { labId: assignment.labid }
                 );
-
                 return {
                   ...vmResponse.data.data,
+                  ...assignment,
                   userscredentials: credsResponse.data.success ? credsResponse.data.data : [],
                 };
               }
@@ -136,7 +158,6 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
             }
           })
         );
-
         setDatacenterVMs(vmDetails.filter(Boolean));
       }
     } catch (dcErr) {

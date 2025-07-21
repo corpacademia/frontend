@@ -114,7 +114,7 @@ export const CloudSlicePage: React.FC = () => {
               try {
                 const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
                 if (response.data.success) {
-                  orgSlices.push(response.data.data);
+                  orgSlices.push(...response.data.data,...slice);
                 }
               } catch (error) {
                 console.error(`Error fetching details for slice ${slice.labid}:`, error);

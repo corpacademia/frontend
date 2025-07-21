@@ -141,7 +141,7 @@ export const UserListModal: React.FC<UserListModalProps> = ({
       });
       if (tokenResponse.data.success && tokenResponse.data.token) {
         // Then connect to VM using the token
-        const guacUrl = `${vm?.guacamole_url}${tokenResponse.data.token.result}`;
+        const guacUrl = `${vm?.guacamole_url}?token=${tokenResponse.data.token.result}`;
           navigate(`/dashboard/labs/vm-session/${vmId}`, {
             state: { 
               guacUrl,

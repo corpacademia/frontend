@@ -71,7 +71,10 @@ export const UserProfilePage: React.FC = () => {
       {user.user.role === 'trainer' ? (
         <TrainerStats userId={userId!} />
       ) : user.user.role === 'orgadmin' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <UserLabsSection userId={userId!} user={user!}/>
         <OrgAdminStats userId={userId!} />
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

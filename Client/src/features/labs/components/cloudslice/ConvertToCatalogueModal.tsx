@@ -14,6 +14,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   onClose,
   sliceId
 }) => {
+  const [catalogueName, setCatalogueName] = useState('');
   const [organization, setOrganization] = useState('');
   const [isPublic, setIsPublic] = useState('no');
   const [organizations, setOrganizations] = useState<any[]>([]);
@@ -39,22 +40,63 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   }, [isOpen]);
 
   const handleSubmit = async () => {
-    if (!organization) {
-      setError('Please select an organization');
-      return;
-    }
-
     setIsLoading(true);
     setError(null);
     setSuccess(null);
 
-    try {
+    if (!catalogueName.trim()) {
+      setError('Catalogue name and organization are required');
+      setTimeout(() => setError(null), 1500);
+      setIsLoading(false);
+      return;
+    }
+    if(!organization){
+        try {
+          const updateCatalogue =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudsliceCatalogueDetails`,{
+              catalogueName:catalogueName,
+              catalogueType:isPublic ? 'public' :'private',
+              labId:sliceId
+           })
+           if(updateCatalogue?.data?.success){
+            setSuccess("Successfully updated catalogue");
+            setTimeout(()=>{
+              onClose();
+            },1000)
+            // onClose();
+           }
+           else{
+            setError("Failed to update catalogue");
+             setTimeout(()=>{
+            setError(null);
+          },2000)
+           }
+        } catch (error:any) {
+          console.log(error);
+          setError("Failed to update catalogue");
+          setTimeout(()=>{
+            setError(null);
+          },2000)
+        }
+        finally{
+          setIsLoading(false);
+        }
+    }
+   else{
+     try {
       const user_profile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`, {
-        sliceId,
-        organizationId: organization,
-        userId: user_profile.data.user.id,
-        isPublic: isPublic === 'yes'
+      const updateCatalogue =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudsliceCatalogueDetails`,{
+        catalogueName:catalogueName,
+        catalogueType:isPublic ? 'public' :'private',
+        labId:sliceId
+      })
+      
+      if(updateCatalogue?.data?.success){
+         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`, {
+              sliceId:sliceId,
+              organizationId: organization,
+              userId: user_profile.data.user.id,
+              startDate:updateCatalogue?.data?.data?.startdate,
+              endDate:updateCatalogue?.data?.data?.enddate
       });
 
       if (response.data.success) {
@@ -63,14 +105,20 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           onClose();
         }, 2000);
       } else {
-        throw new Error(response.data.message || 'Failed to convert to catalogue');
+        setError(response.data.message || 'Failed to convert to catalogue');
+        setTimeout(() => setError(null), 1500);
       }
+      }
+     
     } catch (err: any) {
-      console.log(err)
-      setError(err.response?.data?.message || 'Failed to convert to catalogue');
+      console.log(err);
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to convert to catalogue');
+      setTimeout(() => setError(null), 1500);
     } finally {
       setIsLoading(false);
     }
+   }
+   
   };
 
   if (!isOpen) return null;
@@ -84,7 +132,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             <h2 className="text-xl font-semibold">
               <GradientText>Convert to Catalogue</GradientText>
             </h2>
-            <button 
+            <button
               onClick={onClose}
               className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
             >
@@ -93,6 +141,20 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           </div>
 
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Catalogue Name
+              </label>
+              <input
+                type="text"
+                value={catalogueName}
+                onChange={(e) => setCatalogueName(e.target.value)}
+                placeholder="Enter catalogue name"
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+              />
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Organization
@@ -168,14 +230,17 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 className="btn-secondary"
                 disabled={isLoading}
               >
-                Cancel
+                <GradientText>
+                  Cancel
+                </GradientText>
+                
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={isLoading}
                 className="btn-primary"
-              >
-                {isLoading ? (
+              ><GradientText>
+                 {isLoading ? (
                   <span className="flex items-center">
                     <Loader className="animate-spin h-4 w-4 mr-2" />
                     Converting...
@@ -183,6 +248,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 ) : (
                   'Submit'
                 )}
+              </GradientText>
+               
               </button>
             </div>
           </div>

@@ -25,7 +25,7 @@ interface CloudSliceCardProps {
     provider: 'aws' | 'azure' | 'gcp' | 'oracle' | 'ibm' | 'alibaba';
     region: string;
     services: string[];
-    status: 'active' | 'inactive' | 'pending' | 'expired';
+    status: 'started' | 'not-started' | 'pending' | 'expired';
     startdate: string;
     enddate: string;
     modules: 'without-modules' | 'with-modules';
@@ -254,8 +254,8 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
             </button>
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${
               selectedLab.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
-              selectedLab.status === 'inactive' ? 'bg-red-500/20 text-red-300' :
-              selectedLab.status === 'expired' ? 'bg-gray-500/20 text-gray-300' :
+              selectedLab.status === 'expired' ? 'bg-red-500/20 text-red-300' :
+              selectedLab.status === 'not-started' ? 'bg-gray-500/20 text-gray-300' :
               'bg-amber-500/20 text-amber-300'
             }`}>
               {selectedLab.status}
