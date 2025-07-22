@@ -12,6 +12,7 @@ import { UsersPage } from '../features/users/pages/UsersPage';
 import { UserProfilePage } from '../features/users/pages/UserProfilePage';
 import { LabsPage } from '../features/labs/pages/LabsPage';
 import { CataloguePage } from '../features/labs/pages/CataloguePage';
+import { PublicCataloguePage } from '../features/labs/components/catalogue/PublicCataloguePage';
 import { OrgAdminCataloguePage } from '../features/labs/pages/OrgAdminCataloguePage';
 import { AdminCloudVMsPage } from '../features/labs/pages/admin/CloudVMsPage';
 import { OrgAdminCloudVMsPage } from '../features/labs/pages/orgadmin/CloudVMsPage';
@@ -102,7 +103,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="my-labs/:labId/quiz/:exerciseId" element={<QuizExercisePage />} />
       </Route>
 
-      <Route path="/" element={<LoginForm />} />
+      <Route path="/" element={<PublicCataloguePage />} />
     </Routes>
   );
 };

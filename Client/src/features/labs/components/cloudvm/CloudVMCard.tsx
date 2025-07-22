@@ -82,6 +82,8 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
   const [labDetails, setLabDetails] = useState<LabDetails | null>(null);
   const [buttonLabel, setButtonLabel] = useState<'Launch Software' | 'Stop'>('Launch Software');
   const [showFullAmiId, setShowFullAmiId] = useState(false);
+  const [showFullTitle, setShowFullTitle] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   const [admin,setAdmin] = useState({});
   useEffect(() => {
     const getUserDetails = async () => {
@@ -415,7 +417,7 @@ useEffect(() => {
 
   return (
     <>
-      <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
+      <div className="flex flex-col min-h-[320px] max-h-fit overflow-hidden rounded-xl border border-primary-500/10 
                     hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
                     transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
                     hover:translate-y-[-2px] group relative">
@@ -434,14 +436,35 @@ useEffect(() => {
 
         
         <div className="p-4 flex flex-col h-full">
-          <div className="flex justify-between items-start gap-4 mb-3">
-            <div className="flex-1">
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex-1 min-w-0 pr-4">
               <h3 className="text-lg font-semibold mb-1">
-                <GradientText>{vm.title}</GradientText>
+                <GradientText>
+                  <span 
+                    className="cursor-pointer hover:text-primary-300 transition-colors"
+                    onClick={() => setShowFullTitle(!showFullTitle)}
+                    title={showFullTitle ? "Click to collapse" : "Click to expand"}
+                  >
+                    {showFullTitle ? vm.title : (vm.title.length > 30 ? vm.title.substring(0, 30) + '...' : vm.title)}
+                  </span>
+                </GradientText>
               </h3>
-              <p className="text-sm text-gray-400 line-clamp-2">{vm.description}</p>
+              <p 
+                className="text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition-colors"
+                onClick={() => setShowFullDescription(!showFullDescription)}
+                title={showFullDescription ? "Click to collapse" : "Click to expand"}
+              >
+                {showFullDescription ? vm.description : (vm.description.length > 80 ? vm.description.substring(0, 80) + '...' : vm.description)}
+              </p>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                vm.status === 'running' ? 'bg-emerald-500/20 text-emerald-300' :
+                vm.status === 'stopped' ? 'bg-red-500/20 text-red-300' :
+                'bg-amber-500/20 text-amber-300'
+              }`}>
+                {vm.status}
+              </span>
               <button
                 onClick={() => setIsEditModalOpen(true)}
                 className="p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
@@ -454,46 +477,39 @@ useEffect(() => {
               >
                 <Trash2 className="h-4 w-4 text-red-400" />
               </button>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                vm.status === 'running' ? 'bg-emerald-500/20 text-emerald-300' :
-                vm.status === 'stopped' ? 'bg-red-500/20 text-red-300' :
-                'bg-amber-500/20 text-amber-300'
-              }`}>
-                {vm.status}
-              </span>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center text-sm text-gray-400">
-              <Cpu className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
-              <span className="truncate">{vm.cpu} vCPU</span>
+              <Cpu className="h-4 w-4 mr-2 text-primary-400" />
+              <span>{vm.cpu} vCPU</span>
             </div>
             <div className="flex items-center text-sm text-gray-400">
-              <Tag className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
-              <span className="truncate">{vm.ram}GB RAM</span>
+              <Tag className="h-4 w-4 mr-2 text-primary-400" />
+              <span>{vm.ram}GB RAM</span>
             </div>
             <div className="flex items-center text-sm text-gray-400">
-              <Server className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
+              <Server className="h-4 w-4 mr-2 text-primary-400" />
               <span className="truncate">Instance: {vm.instance}</span>
             </div>
             <div className="flex items-center text-sm text-gray-400">
-              <HardDrive className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
-              <span className="truncate">Storage: {vm.storage}GB</span>
+              <HardDrive className="h-4 w-4 mr-2 text-primary-400" />
+              <span>Storage: {vm.storage}GB</span>
             </div>
-            <div className="flex items-center text-sm text-gray-400">
-              <Hash className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
+            <div className="flex items-center text-sm text-gray-400 col-span-2">
+              <Hash className="h-4 w-4 mr-2 text-primary-400" />
               <span className="truncate">ID: {instanceDetails?.instance_id || 'N/A'}</span>
             </div>
             {amiId && (
-              <div className="flex items-center text-sm text-gray-400">
-                <FileCode className="h-4 w-4 mr-2 text-primary-400 flex-shrink-0" />
+              <div className="flex items-center text-sm text-gray-400 col-span-2">
+                <FileCode className="h-4 w-4 mr-2 text-primary-400" />
                 <span 
                   className="truncate cursor-pointer hover:text-primary-300"
                   onClick={() => setShowFullAmiId(!showFullAmiId)}
                   title={showFullAmiId ? "Click to collapse" : "Click to expand"}
                 >
-                  {showFullAmiId ? amiId : `AMI: ${amiId.length > 10 ? amiId.substring(0, 10) + '...' : amiId}`}
+                  {showFullAmiId ? amiId : `AMI: ${amiId.length > 15 ? amiId.substring(0, 15) + '...' : amiId}`}
                 </span>
               </div>
             )}
@@ -501,11 +517,11 @@ useEffect(() => {
 
           <div className="mt-auto pt-3 border-t border-primary-500/10">
             <div className="flex flex-col space-y-2">
-              <div className="flex justify-between gap-2">
+              <div className="flex gap-2">
                 <button 
                   onClick={handleLaunchSoftware}
                   disabled={isProcessing}
-                  className={`h-9 px-4 rounded-lg text-sm font-medium flex-1
+                  className={`flex-1 h-9 px-4 rounded-lg text-sm font-medium
                            ${buttonLabel === 'Stop' 
                              ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
                              : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
@@ -530,7 +546,7 @@ useEffect(() => {
                 <button 
                   onClick={handleVMGoldenImage}
                   disabled={isProcessing}
-                  className="h-9 px-4 rounded-lg text-sm font-medium flex-1
+                  className="flex-1 h-9 px-4 rounded-lg text-sm font-medium
                            bg-primary-500/20 text-primary-300 hover:bg-primary-500/30
                            transition-colors flex items-center justify-center
                            disabled:opacity-50 disabled:cursor-not-allowed"
