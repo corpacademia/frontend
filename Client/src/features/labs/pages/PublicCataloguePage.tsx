@@ -1,0 +1,1 @@
+const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'orgsuperadmin';

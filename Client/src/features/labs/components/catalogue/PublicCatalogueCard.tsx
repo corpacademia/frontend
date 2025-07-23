@@ -42,7 +42,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
 }) => {
   const { user, isAuthenticated } = useAuthStore();
   const [isHovered, setIsHovered] = useState(false);
-  const isSuperAdmin = user?.role === 'superadmin';
+  const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'orgsuperadmin';
 
   const getLevelColor = (level: string) => {
     switch (level.toLowerCase()) {

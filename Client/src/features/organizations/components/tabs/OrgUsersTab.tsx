@@ -258,7 +258,7 @@ const ViewUserModal: React.FC<ViewUserModalProps> = ({ isOpen, onClose, user }) 
 
           <div>
             <label className="block text-sm text-gray-400">Role</label>
-            <span className={`inline-block px-2 py-1 text-sm font-medium rounded-full ${
+            <span className={`px-2 py-1 text-sm font-medium rounded-full ${
               user.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
               user.role === 'trainer' ? 'bg-accent-500/20 text-accent-300' :
               'bg-secondary-500/20 text-secondary-300'
@@ -324,7 +324,7 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${orgId}`);
-  
+
       if (response.data.success) {
         setUsers(response.data.data);
       } else {
@@ -342,7 +342,7 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
       setIsLoading(false);
     }
   };
-  
+
 
   const handleEditUser = async (userData: Partial<User>) => {
     if (!selectedUser) return;
@@ -354,7 +354,7 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
       if (response.data.success) {
         setSuccess('User updated successfully');
         fetchUsers();
-  
+
         setTimeout(() => setSuccess(null), 3000);
         return response.data;
       } else {
@@ -362,7 +362,7 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to update user');
-  
+
       setTimeout(() => setError(null), 3000);
       throw err;
     }
@@ -403,29 +403,29 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
 
   const handleDeleteSelected = async () => {
     if (!selectedUsers.length) return;
-  
+
     setIsDeleting(true);
     setError(null);
     setSuccess(null);
-  
+
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/deleteOrganizationUsers`, {
         orgId:orgId,
         userIds: selectedUsers 
       });
-  
+
       if (response.data.success) {
         setUsers(prev => prev.filter(user => !selectedUsers.includes(user.id)));
         setSelectedUsers([]);
         setSuccess('Selected users deleted successfully');
-  
+
         setTimeout(() => setSuccess(null), 3000);
       } else {
         throw new Error(response.data.message || 'Failed to delete users');
       }
     } catch (err) {
       setError('Failed to delete selected users');
-  
+
       setTimeout(() => setError(null), 3000);
     } finally {
       setIsDeleting(false);
@@ -436,25 +436,25 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('orgId', orgId);
-  
+
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization/${orgId}/users/import`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
-  
+
       if (response.data.success) {
         setSuccess('Users imported successfully');
         fetchUsers();
-  
+
         setTimeout(() => setSuccess(null), 3000);
       } else {
         throw new Error(response.data.message || 'Failed to import users');
       }
     } catch (err) {
       setError('Failed to import users');
-  
+
       setTimeout(() => setError(null), 3000);
     }
   };
@@ -569,11 +569,11 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
                   </td>
                   <td className="py-4">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      user.role === 'admin' 
-                        ? 'bg-primary-500/20 text-primary-300'
-                        : 'bg-secondary-500/20 text-secondary-300'
+                      user.role === 'orgsuperadmin' ? 'bg-gradient-to-r from-primary-500/20 to-accent-500/20 text-primary-300 border border-primary-500/30' :
+                      user.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
+                      'bg-secondary-500/20 text-secondary-300'
                     }`}>
-                      {user.role}
+                      {user.role === 'orgsuperadmin' ? 'Org Super Admin' : user.role}
                     </span>
                   </td>
                   <td className="py-4">

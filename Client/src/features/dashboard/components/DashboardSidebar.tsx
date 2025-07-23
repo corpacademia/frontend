@@ -37,6 +37,19 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
       { icon: Settings, label: 'Settings', path: '/dashboard/settings' }
     ],
+    orgsuperadmin: [
+      { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
+      { icon: Building2, label: 'My Organization', path: '/dashboard/my-organization' },
+      { icon: Users, label: 'Organization Admins', path: '/dashboard/org-admins' },
+      { icon: Users, label: 'All Users', path: '/dashboard/all-users' },
+      { icon: BookOpen, label: 'Labs', path: '/dashboard/labs' },
+      { icon: FolderOpen, label: 'Workspaces', path: '/dashboard/labs/workspace' },
+      { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },
+      { icon: Award, label: 'Assessments', path: '/dashboard/assessments' },
+      { icon: Cloud, label: 'Cloud Resources', path: '/dashboard/cloud' },
+      { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
+      { icon: Settings, label: 'Organization Settings', path: '/dashboard/org-settings' }
+    ],
     orgadmin: [
       { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
       { icon: Users, label: 'Team', path: '/dashboard/team' },
