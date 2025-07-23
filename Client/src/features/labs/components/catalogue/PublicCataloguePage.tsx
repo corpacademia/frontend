@@ -196,10 +196,10 @@ export const PublicCataloguePage: React.FC = () => {
         <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-display font-bold mb-6">
-              <GradientText>Course Catalogue</GradientText>
+              <GradientText>Lab Catalogue</GradientText>
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Discover our comprehensive collection of professional training courses and certifications. 
+              Discover our comprehensive collection of professional training labs and certifications. 
               Master new skills with expert-led training and hands-on labs.
             </p>
 
@@ -210,14 +210,14 @@ export const PublicCataloguePage: React.FC = () => {
                   <BookOpen className="h-6 w-6 text-primary-400 mr-2" />
                   <span className="text-2xl font-bold text-white">{stats.totalCourses}</span>
                 </div>
-                <p className="text-sm text-gray-400">Courses</p>
+                <p className="text-sm text-gray-400">Labs</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
                   <Users className="h-6 w-6 text-primary-400 mr-2" />
                   <span className="text-2xl font-bold text-white">{stats.totalStudents.toLocaleString()}</span>
                 </div>
-                <p className="text-sm text-gray-400">Students</p>
+                <p className="text-sm text-gray-400">Candidates</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center mb-2">
@@ -231,7 +231,7 @@ export const PublicCataloguePage: React.FC = () => {
                   <TrendingUp className="h-6 w-6 text-primary-400 mr-2" />
                   <span className="text-2xl font-bold text-white">{stats.freeCourses}</span>
                 </div>
-                <p className="text-sm text-gray-400">Free Courses</p>
+                <p className="text-sm text-gray-400">Free Labs</p>
               </div>
             </div>
           </div>
@@ -243,13 +243,13 @@ export const PublicCataloguePage: React.FC = () => {
         {/* Admin Controls */}
         {isSuperAdmin && (
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-2xl font-bold text-white">Manage Courses</h2>
+            <h2 className="text-2xl font-bold text-white">Manage Labs</h2>
             <button
               onClick={handleAddNewCourse}
               className="btn-primary flex items-center space-x-2"
             >
               <Plus className="h-4 w-4" />
-              <span>Add New Course</span>
+              <span>Add New Lab</span>
             </button>
           </div>
         )}
@@ -263,7 +263,7 @@ export const PublicCataloguePage: React.FC = () => {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-gray-400">
-            Showing {filteredCourses.length} of {courses.length} courses
+            Showing {filteredCourses.length} of {courses.length} Labs
           </p>
         </div>
 
