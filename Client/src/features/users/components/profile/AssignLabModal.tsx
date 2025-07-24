@@ -49,12 +49,14 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        if(user.role ==='superadmin'){
+        if(user.role ==='superadmin' || user.role === 'orgsuperadmin'){
           const [standardResult, cloudResult,singleVMDatacenter,vmclusterDatacenter] = await Promise.allSettled([
             axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
               admin_id: user.id,
             }),
-            axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAllCloudSliceLabs`),
+            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAllCloudSliceLabs`,{
+              userId: user.id,
+            }),
             axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabs`,{
               userId: user.id,
             }),

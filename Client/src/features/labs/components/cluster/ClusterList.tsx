@@ -56,7 +56,7 @@ export const ClusterList: React.FC = () => {
         setCurrentUser(userProfile.data.user);
       }
       let response;
-      if(userProfile.data.user.role === 'superadmin'){
+      if(userProfile.data.user.role === 'superadmin' || userProfile.data.user.role === 'orgsuperadmin'){
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabs`,{
         userId:userProfile.data.user.id
       });

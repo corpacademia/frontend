@@ -19,7 +19,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'trainer' | 'orgadmin' | 'superadmin';
+  role: 'user' | 'trainer' | 'orgadmin' | 'superadmin' | 'orgsuperadmin';
   organization?: string;
   phone?: string;
   location?: string;

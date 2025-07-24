@@ -90,7 +90,7 @@ export const AppRoutes: React.FC = () => {
         } />
         <Route 
           path="labs/cloud-vms" 
-          element={user?.role === 'superadmin' ? <AdminCloudVMsPage /> : <OrgAdminCloudVMsPage />} 
+          element={user?.role === 'superadmin' || user?.role === 'orgsuperadmin' ? <AdminCloudVMsPage /> : <OrgAdminCloudVMsPage />} 
         />
         <Route path="labs/cloud-slices" element={<CloudSlicePage />} />
         <Route path="labs/cloud-slices/:sliceId/lab" element={<CloudSliceLabPage />} />

@@ -214,7 +214,6 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     const matchesType = filters.type === 'all' || filters.type === 'datacenter';
     return matchesSearch && matchesStatus && matchesType;
   });
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">

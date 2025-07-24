@@ -108,7 +108,7 @@ const canEditContent = () => {
     e.stopPropagation();
     setIsLaunching(true);
     setNotification(null);
-    if(user.role === 'superadmin'){
+    if(user.role === 'superadmin' || user.role === 'orgsuperadmin') {
       try {
         // Always fetch lab details first
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
@@ -403,12 +403,12 @@ const canEditContent = () => {
                 <Trash2 className="h-3.5 w-3.5 text-red-400" />
               </button>
               <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                userRole === 'superadmin' ? slice.status : getOrgLabStatus(slice.labid).status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
-                userRole === 'superadmin' ? slice.status : getOrgLabStatus(slice.labid).status === 'pending' ? 'bg-red-500/20 text-red-300' :
-                userRole === 'superadmin' ? slice.status : getOrgLabStatus(slice.labid).status === 'inactive' ? 'bg-gray-500/20 text-gray-300' :
+                userRole === 'superadmin' || userRole === 'orgsuperadmin' ? slice.status : getOrgLabStatus(slice.labid).status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
+                userRole === 'superadmin' || userRole === 'orgsuperadmin' ? slice.status : getOrgLabStatus(slice.labid).status === 'pending' ? 'bg-red-500/20 text-red-300' :
+                userRole === 'superadmin' || userRole === 'orgsuperadmin' ? slice.status : getOrgLabStatus(slice.labid).status === 'inactive' ? 'bg-gray-500/20 text-gray-300' :
                 'bg-amber-500/20 text-amber-300'
               }`}>
-                {userRole === 'superadmin' ? slice.status : getOrgLabStatus(slice.labid).status}
+                {userRole === 'superadmin' || userRole === 'orgsuperadmin' ? slice.status : getOrgLabStatus(slice.labid).status}
               </span>
             </div>
           </div>
@@ -482,7 +482,7 @@ const canEditContent = () => {
   <Loader className="animate-spin h-3.5 w-3.5" />
 ) : (
   <>
-    {userRole === 'superadmin' ? (
+    {userRole === 'superadmin' || userRole === 'orgsuperadmin' ? (
       slice.launched ? (
         <>
           <Square className="h-3.5 w-3.5 mr-1.5" />

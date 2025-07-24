@@ -42,13 +42,12 @@ export const Organizations: React.FC = () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
       if (response.data.success) {
         let orgData = response.data.data || [];
-        
         // Filter organizations based on user role
         if (admin.role === 'orgsuperadmin') {
           // Show only the organization the orgsuperadmin belongs to
           orgData = orgData.filter((org: any) => 
-            org.organization_name === admin.organization || 
-            org.id === admin.organizationId
+            org.organization_name === admin.organization_name || 
+            org.id === admin.org_id
           );
         }
         

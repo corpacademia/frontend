@@ -75,7 +75,7 @@ export const CloudSlicePage: React.FC = () => {
     
     try {
       let allSlices: CloudSlice[] = [];
-      if(user.role === 'superadmin'){
+      if(user.role === 'superadmin' || user.role === 'orgsuperadmin') {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlices`, {
           params: { userId: user.id }
         });
@@ -101,7 +101,7 @@ export const CloudSlicePage: React.FC = () => {
 
         try {
           const getOrgAssignedSlices = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${user.org_id}`);
-          
+
           if (getOrgAssignedSlices.data.success) {
             const orgSlices = [];
             
@@ -114,7 +114,7 @@ export const CloudSlicePage: React.FC = () => {
               try {
                 const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
                 if (response.data.success) {
-                  orgSlices.push(...response.data.data,...slice);
+                  orgSlices.push({...response.data.data,...slice});
                 }
               } catch (error) {
                 console.error(`Error fetching details for slice ${slice.labid}:`, error);

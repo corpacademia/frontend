@@ -124,7 +124,7 @@ export const AllUsersPage: React.FC = () => {
     try {
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadOrgUsers`, {
         users: uploadedUsers,
-        organizationId: user?.organization_id,
+        organizationId: user?.org_id,
         createdBy: user
       });
 
