@@ -46,7 +46,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: FolderOpen, label: 'Workspaces', path: '/dashboard/labs/workspace' },
       { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },
       { icon: Award, label: 'Assessments', path: '/dashboard/assessments' },
-      { icon: Cloud, label: 'Cloud Resources', path: '/dashboard/cloud' },
+      { icon: Brain, label: 'AI Lab Builder', path: '/dashboard/lab-builder' },
       { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
       { icon: Settings, label: 'Organization Settings', path: '/dashboard/org-settings' }
     ],
