@@ -13,7 +13,8 @@ import {
   AlertCircle,
   Mail,
   User,
-  Lock
+  Lock,
+  Building2
 } from 'lucide-react';
 import axios from 'axios';
 import { AddOrgUserModal } from '../../../users/components/AddOrgUserModal';
@@ -142,7 +143,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
             >
               <option value="user">User</option>
               <option value="trainer">Trainer</option>
-              <option value="orgadmin">Admin</option>
+              <option value="orgadmin">Organization Admin</option>
               <option value="orgsuperadmin">Organization Super Admin</option>
             </select>
           </div>
@@ -470,6 +471,56 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
 
   return (
     <div className="space-y-6">
+      {/* Organization Overview */}
+      <div className="glass-panel">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">
+            <GradientText>My Organization</GradientText>
+          </h3>
+          <Building2 className="h-6 w-6 text-primary-400" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-400">{users.length}</div>
+            <div className="text-sm text-gray-400">Total Users</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-emerald-400">
+              {users.filter(u => u.status === 'active').length}
+            </div>
+            <div className="text-sm text-gray-400">Active Users</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-accent-400">
+              {users.filter(u => u.role === 'orgadmin' || u.role === 'orgsuperadmin').length}
+            </div>
+            <div className="text-sm text-gray-400">Administrators</div>
+          </div>
+        </div>
+        {admin && (
+          <div className="mt-4 pt-4 border-t border-primary-500/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-400">Organization Name</p>
+                <p className="font-medium text-gray-200">{admin.organization || 'Not Set'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400">Your Role</p>
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                  admin.role === 'orgsuperadmin' ? 'bg-gradient-to-r from-primary-500/20 to-accent-500/20 text-primary-300 border border-primary-500/30' :
+                  admin.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
+                  'bg-secondary-500/20 text-secondary-300'
+                }`}>
+                  {admin.role === 'orgsuperadmin' ? 'Organization Super Admin' : 
+                   admin.role === 'orgadmin' ? 'Organization Admin' :
+                   admin.role}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">
           <GradientText>Users & Admins</GradientText>
@@ -603,6 +654,7 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
                       <button 
                         onClick={() => handleViewUser(user)}
                         className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                        title="View User Details"
                       >
                         <Eye className="h-4 w-4 text-primary-400" />
                       </button>
@@ -612,17 +664,16 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
                           setIsEditModalOpen(true);
                         }}
                         className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                        title="Edit User Profile & Role"
                       >
                         <Pencil className="h-4 w-4 text-primary-400" />
                       </button>
                       <button
                         onClick={() => handleSelectUser(user.id)}
                         className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
+                        title="Select for Deletion"
                       >
                         <Trash2 className="h-4 w-4 text-red-400" />
-                      </button>
-                      <button className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors">
-                        <MoreVertical className="h-4 w-4 text-gray-400" />
                       </button>
                     </div>
                   </td>

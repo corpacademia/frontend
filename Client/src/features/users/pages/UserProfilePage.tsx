@@ -37,8 +37,9 @@ export const UserProfilePage: React.FC = () => {
   if (!user) return <div className="text-gray-300">User not found</div>;
 
   const isOrgAdmin = currentUser?.role === 'orgadmin';
+  const isOrgSuperAdmin = currentUser?.role === 'orgsuperadmin';
   const isSuperAdmin = currentUser?.role === 'superadmin';
-  const canEditUser = isOrgAdmin || isSuperAdmin;
+  const canEditUser = isOrgAdmin || isOrgSuperAdmin || isSuperAdmin;
 
   return (
     <div className="space-y-6">
