@@ -38,8 +38,8 @@ import { LabExercisePage } from '../features/labs/components/user/LabExercisePag
 import { QuizExercisePage } from '../features/labs/components/user/QuizExercisePage';
 import { VMSessionPage } from '../features/labs/components/VMSessionPage';
 import { ProfilePage } from '../pages/ProfilePage';
-import { OrgAdminsPage } from '../features/users/pages/OrgAdminsPage';
-import { AllUsersPage } from '../features/users/pages/AllUsersPage';
+import { OrgAdminsPage } from '../features/dashboard/pages/OrgAdminsPage';
+import { AllUsersPage } from '../features/dashboard/pages/AllUsersPage';
 
 
 export const AppRoutes: React.FC = () => {
@@ -97,8 +97,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="assessments" element={<Assessments />} />
         <Route path="my-labs" element={<MyLabs />} />
         <Route path="create-modules" element={<CreateModulesPage />} />
-              <Route path="/org-admins" element={<OrgAdminsPage />} />
-              <Route path="/all-users" element={<AllUsersPage />} />
+        <Route path="org-admins" element={<OrgAdminsPage />} />
+        <Route path="all-users" element={<AllUsersPage />} />
 
         {/* User Lab Routes */}
         <Route path="my-labs/:labId/standard" element={<StandardLabPage />} />

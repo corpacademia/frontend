@@ -32,9 +32,8 @@ export const OrgAdminsPage: React.FC = () => {
       try {
         // Fetch organization admins for the current organization
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrgAdmins/${user?.organization_id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.org_id}`
         );
-        
         if (response.data.success) {
           const admins = response.data.data.filter(u => u.role === 'orgadmin');
           setOrgAdmins(admins);
@@ -52,10 +51,10 @@ export const OrgAdminsPage: React.FC = () => {
       }
     };
 
-    if (user?.organization_id) {
+    if (user?.org_id) {
       fetchOrgAdmins();
     }
-  }, [user?.organization_id]);
+  }, [user?.org_id]);
 
   const handleFilterChange = (update: { key: string; value: string }) => {
     const updatedFilters = { ...filters, [update.key]: update.value };

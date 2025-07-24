@@ -34,7 +34,7 @@ export const AllUsersPage: React.FC = () => {
       try {
         // Fetch all users from the organization
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.organization_id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.org_id}`
         );
         
         if (response.data.success) {
@@ -54,10 +54,10 @@ export const AllUsersPage: React.FC = () => {
       }
     };
 
-    if (user?.organization_id) {
+    if (user?.org_id) {
       fetchAllOrgUsers();
     }
-  }, [user?.organization_id]);
+  }, [user?.org_id]);
 
   const handleFilterChange = (update: { key: string; value: string }) => {
     const updatedFilters = { ...filters, [update.key]: update.value };

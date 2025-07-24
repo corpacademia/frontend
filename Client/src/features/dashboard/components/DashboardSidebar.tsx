@@ -79,9 +79,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: Cloud, label: 'Cloud Usage', path: '/dashboard/cloud-usage' }
     ]
   };
-
   const currentMenuItems = menuItems[user?.role || 'user'];
-
   return (
     <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-dark-200 border-r border-dark-300 transition-all duration-300 z-30 ${
       isCollapsed ? 'w-16' : 'w-64'
