@@ -143,6 +143,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
               <option value="user">User</option>
               <option value="trainer">Trainer</option>
               <option value="orgadmin">Admin</option>
+              <option value="orgsuperadmin">Organization Super Admin</option>
             </select>
           </div>
 
@@ -571,9 +572,12 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                       user.role === 'orgsuperadmin' ? 'bg-gradient-to-r from-primary-500/20 to-accent-500/20 text-primary-300 border border-primary-500/30' :
                       user.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
+                      user.role === 'trainer' ? 'bg-accent-500/20 text-accent-300' :
                       'bg-secondary-500/20 text-secondary-300'
                     }`}>
-                      {user.role === 'orgsuperadmin' ? 'Org Super Admin' : user.role}
+                      {user.role === 'orgsuperadmin' ? 'Org Super Admin' : 
+                       user.role === 'orgadmin' ? 'Admin' :
+                       user.role === 'trainer' ? 'Trainer' : 'User'}
                     </span>
                   </td>
                   <td className="py-4">

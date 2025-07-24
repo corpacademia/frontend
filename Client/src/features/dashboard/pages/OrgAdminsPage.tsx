@@ -161,7 +161,7 @@ export const OrgAdminsPage: React.FC = () => {
             <Shield className="h-5 w-5 text-emerald-400" />
           </div>
           <p className="text-sm font-semibold text-emerald-300">
-            Organization Super Admin
+            {user?.role === 'orgsuperadmin' ? 'Organization Super Admin' : 'Super Admin'}
           </p>
         </div>
       </div>
@@ -184,7 +184,10 @@ export const OrgAdminsPage: React.FC = () => {
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddOrgAdmin}
         defaultRole="orgadmin"
-        roleOptions={[{ value: 'orgadmin', label: 'Organization Admin' }]}
+        roleOptions={[
+          { value: 'orgadmin', label: 'Organization Admin' },
+          { value: 'orgsuperadmin', label: 'Organization Super Admin' }
+        ]}
       />
     </div>
   );
