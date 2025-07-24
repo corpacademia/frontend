@@ -259,9 +259,10 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 catalogueName: formData.catalogueName,
             })
             if(labUpdate.data.success){
+              const targetOrgId = admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId;
               const orgAssignment = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`,{
                  labId: vmId,
-                 orgId: formData.organizationId, 
+                 orgId: targetOrgId, 
                  assignedBy: admin.id,
                  startDate:labUpdate?.data?.data?.startdate,
                  endDate:labUpdate?.data?.data?.enddate 
@@ -270,7 +271,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
               if(orgAssignment.data.success){
                 const assingCredsToOrg = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabCredsToOrg`,{
                 labId: vmId,
-                orgAssigned: org_details.data.data.id, 
+                orgAssigned: targetOrgId, 
                 assignedBy: admin.id,
               })
               if(assingCredsToOrg.data.success){

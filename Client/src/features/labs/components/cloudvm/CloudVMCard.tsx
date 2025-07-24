@@ -434,7 +434,7 @@ useEffect(() => {
           </div>
         )}
 
-        
+
         <div className="p-4 flex flex-col h-full">
           <div className="flex justify-between items-start mb-3">
             <div className="flex-1 min-w-0 pr-4">

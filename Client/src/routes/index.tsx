@@ -40,6 +40,8 @@ import { VMSessionPage } from '../features/labs/components/VMSessionPage';
 import { ProfilePage } from '../pages/ProfilePage';
 import { OrgAdminsPage } from '../features/dashboard/pages/OrgAdminsPage';
 import { AllUsersPage } from '../features/dashboard/pages/AllUsersPage';
+import { OrgSuperAdminCataloguePage } from '../features/labs/pages/OrgSuperAdminCataloguePage';
+import { PrivateRoute } from '../components/auth/PrivateRoute';
 
 
 export const AppRoutes: React.FC = () => {
@@ -79,8 +81,13 @@ export const AppRoutes: React.FC = () => {
         <Route path="labs/workspace/:workspaceId/edit" element={<WorkspaceEditPage />} />
         <Route 
           path="labs/catalogue" 
-          element={user?.role === 'orgadmin' ? <OrgAdminCataloguePage /> : <CataloguePage />} 
+          element={<PublicCataloguePage />} 
         />
+        <Route path="labs/org-catalogue" element={
+          <PrivateRoute allowedRoles={['orgsuperadmin']}>
+            <OrgSuperAdminCataloguePage />
+          </PrivateRoute>
+        } />
         <Route 
           path="labs/cloud-vms" 
           element={user?.role === 'superadmin' ? <AdminCloudVMsPage /> : <OrgAdminCloudVMsPage />} 

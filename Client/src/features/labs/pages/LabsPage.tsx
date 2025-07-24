@@ -98,16 +98,16 @@ export const LabsPage: React.FC = () => {
       try {
         // Simulate an API call to fetch lab counts
         const user_profile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`); // Replace with actual API endpoint
-      
+
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCountoflabs/${user_profile.data.user.id}`,{
           user : user_profile.data.user
         }); // Replace with actual API endpoint
-        
+
         setLabCounts((prev) => ({
           ...prev, // keep all old fields
           ...response.data.data.counts // overwrite only fields present in response
         }));
-        
+
       } catch (error) {
         console.error('Error fetching lab counts:', error);
       } finally {
@@ -136,7 +136,7 @@ export const LabsPage: React.FC = () => {
             Monitor and manage all lab environments
           </p>
         </div>
-        
+
         <div className="flex space-x-4">
           <button 
             onClick={() => navigate('/dashboard/labs/catalogue')}

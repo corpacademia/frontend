@@ -644,8 +644,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
 
   // Check if current user can edit content
   const canEditContent = () => {
-    if (!currentUser) return false;
-    return vm.lab.user_id === currentUser.id;
+    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin';
   };
 
   // Group credentials by VM name for better organization
@@ -946,7 +945,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
               <h2 className="text-xl font-semibold">
                 <GradientText>Edit Lab</GradientText>
               </h2>
-              <button
+              The code has been updated to include orgsuperadmin role for lab edits and catalogue conversions.<button
                 onClick={() => setIsEditLabModalOpen(false)}
                 className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
               >

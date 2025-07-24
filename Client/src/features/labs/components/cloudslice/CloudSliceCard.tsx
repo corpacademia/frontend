@@ -100,6 +100,9 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
     return orgStatus.find(org => org.labid === labId);
   }
 
+const canEditContent = () => {
+    return user?.role === 'superadmin' || user?.role === 'orgsuperadmin';
+  };
 
   const handleLaunch = async (e: React.MouseEvent) => {
     e.stopPropagation();

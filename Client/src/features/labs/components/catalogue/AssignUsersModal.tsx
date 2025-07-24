@@ -47,16 +47,27 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
   React.useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationUsers`, {
-          admin_id: admin.id
-        });
-        setUsers(response.data.data);
+        let response;
+        if(admin.role === 'orgsuperadmin') {
+          // Fetch organization admins for orgsuperadmin
+          response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationAdmins`, {
+            org_id: admin.org_id
+          });
+        } else {
+          // Fetch organization users for other admins
+          response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationUsers`, {
+            admin_id: admin.id
+          });
+        }
+        setUsers(response.data.data || []);
       } catch (error) {
         console.error('Error fetching users:', error);
       }
     };
-    fetchUsers();
-  }, [admin.id]);
+    if(admin.id) {
+      fetchUsers();
+    }
+  }, [admin.id, admin.role, admin.org_id]);
 
   const handlePayment = async () => {
     if (selectedUsers.length === 0) {

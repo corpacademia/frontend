@@ -126,7 +126,7 @@ export const CreateCatalogueModal: React.FC<CreateCatalogueModalProps> = ({
         duration:existingCatalogue.duration,
         user: admin.id
       });
-      
+
       if (response.data.success) {
 
         const createNewInstance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createNewInstance`,{
@@ -138,26 +138,25 @@ export const CreateCatalogueModal: React.FC<CreateCatalogueModalProps> = ({
         })
 
         if(createNewInstance.data.success){
+          // If orgsuperadmin, assign to their organization
+          if(admin.role === 'orgsuperadmin') {
+            const orgAssignment = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabToOrganization`, {
+              labId: response.data.output.lab_id,
+              orgId: admin.org_id,
+              assignedBy: admin.id
+            });
+          }
 
           setSuccess('Catalogue created successfully');
           setTimeout(() => {
             onSuccess?.();
             handleClose();
           }, 1500);
-
-        //   const instancedetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/awsCreateInstanceDetails`,{
-        //   lab_id:response.data.output.lab_id
-        // })
-        // const decrypt_password = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/decryptPassword`,{
-        //   lab_id:response.data.output.lab_id,
-        //   public_ip:instancedetails.data.result.public_ip,
-        //   instance_id:instancedetails.data.result.instance_id,
-        // });
         }
 
-        
 
-      
+
+
       } else {
         throw new Error(response.data.message || 'Failed to create catalogue');
       }

@@ -184,18 +184,18 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
 
   function formatDate(dateString:string) {
     const date = new Date(dateString);
-  
+
     const year = date.getFullYear();
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
     const day = `${date.getDate()}`.padStart(2, '0');
-  
+
     let hours = date.getHours();
     const minutes = `${date.getMinutes()}`.padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
-  
+
     hours = hours % 12 || 12; // Convert 0 to 12 for 12AM
     hours = `${hours}`.padStart(1, '0');
-  
+
     return `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
   }
 
@@ -272,7 +272,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
 
   const handleRemoveCredential = (index: number) => {
     if (editFormData.credentials.length <= 1) return;
-    
+
     const updatedCredentials = [...editFormData.credentials];
     updatedCredentials.splice(index, 1);
     setEditFormData({
@@ -326,7 +326,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
       // Format dates for API
       const formattedStartDate = formatDate(editFormData.startDate);
       const formattedEndDate = formatDate(editFormData.endDate);
-      
+
       // Create FormData for file uploads
       const formData = new FormData();
       formData.append('labId', vm.lab_id);
@@ -337,7 +337,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
       const software = editFormData.software.filter(s => s.trim() !== '');
       formData.append('software', JSON.stringify(software));
       formData.append('credentials', JSON.stringify(editFormData.credentials));
- 
+
     // Always include existing file references if available
 if (editFormData.labGuide) {
   formData.append('existingLabGuide', editFormData.labGuide); // string, e.g., filename or path
@@ -439,7 +439,7 @@ if (userGuideFile) {
             user.id === userData.id ? { ...user, ...userData } : user
           )
         );
-        
+
         return response.data;
       } else {
         throw new Error(response.data.message || 'Failed to update user');
@@ -454,7 +454,7 @@ if (userGuideFile) {
     setIsDeleting(true);
     try {
       const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVMDatacenterLab/${vm.lab_id}`);
-      
+
       if (response.data.success) {
         setNotification({ type: 'success', message: 'VM deleted successfully' });
         setTimeout(() => {
@@ -483,7 +483,7 @@ if (userGuideFile) {
         labId:vm.lab_id,
         orgId:currentUser.org_id
       });
-      
+
       if (response.data.success) {
         setNotification({ type: 'success', message: 'VM deleted successfully' });
         setTimeout(() => {
@@ -514,11 +514,7 @@ function extractFileName(filePath: string) {
 
   // Check if current user can edit content
   const canEditContent = () => {
-    if (!currentUser) return false;
-    
-    // Check if the current user created this VM
-    // This is where we implement the check for user_id matching
-    return vm.user_id === currentUser.id;
+    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin';
   };
 
   return (
@@ -539,7 +535,7 @@ function extractFileName(filePath: string) {
             <span className="text-sm">{notification.message}</span>
           </div>
         )}
-        
+
         <div className="p-4 flex flex-col h-full">
           <div className="flex justify-between items-start gap-4 mb-3">
             <div className="flex-1">
@@ -640,7 +636,7 @@ function extractFileName(filePath: string) {
               <Users className="h-4 w-4 mr-2" />
               User List
             </button>
-            
+
             {canEditContent() ? (
               <button
                 onClick={handleConvertToCatalogue}
@@ -846,7 +842,7 @@ function extractFileName(filePath: string) {
                     Add Software
                   </button>
                 </div>
-                
+
                 {editFormData.software.map((sw, index) => (
                   <div key={index} className="flex items-center space-x-2 mb-2">
                     <input
@@ -919,7 +915,7 @@ function extractFileName(filePath: string) {
                     </div>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     User Guide
@@ -985,7 +981,7 @@ function extractFileName(filePath: string) {
                     Add Credential
                   </button>
                 </div>
-                
+
                 {editFormData.credentials.map((cred, index) => (
                   <div key={index} className="p-4 bg-dark-300/50 rounded-lg mb-4">
                     <div className="flex justify-between items-center mb-3">
@@ -1000,7 +996,7 @@ function extractFileName(filePath: string) {
                         </button>
                       )}
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-xs text-gray-400 mb-1">Username</label>
