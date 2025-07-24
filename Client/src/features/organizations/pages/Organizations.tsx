@@ -41,10 +41,20 @@ export const Organizations: React.FC = () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
       if (response.data.success) {
-        setOrganizations(response.data.data || []);
-        setFilteredOrganizations(response.data.data || []);
+        let orgData = response.data.data || [];
         
-        const orgData = response.data.data || [];
+        // Filter organizations based on user role
+        if (admin.role === 'orgsuperadmin') {
+          // Show only the organization the orgsuperadmin belongs to
+          orgData = orgData.filter((org: any) => 
+            org.organization_name === admin.organization || 
+            org.id === admin.organizationId
+          );
+        }
+        
+        setOrganizations(orgData);
+        setFilteredOrganizations(orgData);
+        
         setStats({
           totalOrganizations: orgData.length,
           activeUsers: orgData.reduce((acc: number, org: any) => acc + (org.usersCount || 0), 0),
@@ -100,14 +110,18 @@ export const Organizations: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-display font-bold">
-          <GradientText>Organizations</GradientText>
+          <GradientText>
+            {admin.role === 'orgsuperadmin' ? 'My Organization' : 'Organizations'}
+          </GradientText>
         </h1>
-        <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="btn-primary"
-        >
-          Add Organization
-        </button>
+        {admin.role !== 'orgsuperadmin' && (
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="btn-primary"
+          >
+            Add Organization
+          </button>
+        )}
       </div>
 
       <OrganizationStats stats={stats} />

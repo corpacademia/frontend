@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Organization } from '../types';
-import { Building2, MoreVertical, ExternalLink, Pencil, Trash2, AlertCircle, Check, Loader } from 'lucide-react';
-import { formatDate } from '../../../utils/date';
+import { MoreVertical, Pencil, Trash2, ExternalLink, AlertCircle, Check, Loader } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../../store/authStore';
 import axios from 'axios';
+import { Building2 } from 'lucide-react';
+import { formatDate } from '../../../utils/date';
 
 interface OrganizationListProps {
   organizations: Organization[];
@@ -20,6 +22,8 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const { user } = useAuthStore();
+  const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
 
   const handleViewDetails = (org: Organization) => {
     navigate(`/dashboard/organizations/${org.id}`);
@@ -125,14 +129,16 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
         <table className="w-full">
           <thead>
             <tr className="text-left text-sm text-gray-400 border-b border-primary-500/10">
-              <th className="pb-4 pl-4">
-                <input
-                  type="checkbox"
-                  checked={organizations.length > 0 && selectedOrgs.length === organizations.length}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="rounded border-gray-400 text-primary-500 focus:ring-primary-500"
-                />
-              </th>
+              {!isOrgSuperAdmin && (
+                <th className="pb-4 pl-4">
+                  <input
+                    type="checkbox"
+                    checked={organizations.length > 0 && selectedOrgs.length === organizations.length}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="rounded border-gray-400 text-primary-500 focus:ring-primary-500"
+                  />
+                </th>
+              )}
               <th className="pb-4">Organization</th>
               <th className="pb-4">Type</th>
               <th className="pb-4">Users</th>
@@ -150,14 +156,16 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                 className="border-b border-primary-500/10 hover:bg-dark-300/50 transition-colors cursor-pointer"
                 onClick={() => handleViewDetails(org)}
               >
-                <td className="py-4 pl-4">
-                  <input
-                    type="checkbox"
-                    checked={selectedOrgs.includes(org.id)}
-                    onChange={(e) => handleSelectOrg(org.id, e)}
-                    className="rounded border-gray-400 text-primary-500 focus:ring-primary-500"
-                  />
-                </td>
+                {!isOrgSuperAdmin && (
+                  <td className="py-4 pl-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedOrgs.includes(org.id)}
+                      onChange={(e) => handleSelectOrg(org.id, e)}
+                      className="rounded border-gray-400 text-primary-500 focus:ring-primary-500"
+                    />
+                  </td>
+                )}
                 <td className="py-4">
                   <div className="flex items-center space-x-3">
                     <Building2 className="h-5 w-5 text-primary-400" />
