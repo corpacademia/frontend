@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { LoginForm } from '../features/auth/components/LoginForm';
 import { SignupForm } from '../features/auth/components/SignupForm';
+import { SignupEmailForm } from '../features/auth/components/SignupEmailForm';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { DashboardLayout } from '../features/dashboard/components/DashboardLayout';
 import { SuperAdminDashboard } from '../features/dashboard/pages/SuperAdminDashboard';
@@ -50,7 +51,8 @@ export const AppRoutes: React.FC = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginForm />} />
-      <Route path="/signup" element={<SignupForm />} />
+      <Route path="/signup" element={<SignupEmailForm />} />
+      <Route path="/signupprofile" element={<SignupForm />} />
       <Route path="/profile" element={<ProfilePage />} />
 
       {/* Super Admin Routes */}

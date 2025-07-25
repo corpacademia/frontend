@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSignupForm } from '../hooks/useSignupForm';
 import { FormInput } from './FormInput';
 import { BeakerIcon, AlertCircle } from 'lucide-react';
@@ -8,10 +8,29 @@ import { AddOrganizationModal } from '../../../features/organizations/components
 import axios from 'axios';
 
 export const SignupForm: React.FC = () => {
-  const { formData,setFormData, errors, loading, handleChange, handleSubmit } = useSignupForm();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const email = location.state?.email;
+  
+  // Redirect to signup if no email is provided
+  useEffect(() => {
+    if (!email) {
+      navigate('/signup');
+      return;
+    }
+  }, [email, navigate]);
+
+  const { formData, setFormData, errors, loading, handleChange, handleSubmit } = useSignupForm();
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState('');
   const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
+
+  // Set email from navigation state
+  useEffect(() => {
+    if (email) {
+      setFormData(prev => ({ ...prev, email }));
+    }
+  }, [email, setFormData]);
 
   useEffect(() => {
     // Fetch organizations when component mounts
@@ -77,11 +96,16 @@ export const SignupForm: React.FC = () => {
         <div className="flex flex-col items-center">
           <BeakerIcon className="h-12 w-12 text-primary-400" />
           <h2 className="mt-6 text-center text-4xl font-display font-bold">
-            <GradientText>Join GoLabing.ai</GradientText>
+            <GradientText>Complete Your Profile</GradientText>
           </h2>
           <p className="mt-2 text-center text-sm text-gray-400">
-            Begin your AI-powered learning journey
+            Almost there! Fill in your details to get started
           </p>
+          {email && (
+            <p className="mt-1 text-center text-sm text-primary-400">
+              {email}
+            </p>
+          )}
         </div>
 
         <GlowingBorder>
@@ -94,17 +118,6 @@ export const SignupForm: React.FC = () => {
                 label="Full Name"
                 value={formData.name}
                 error={errors.name}
-                onChange={handleChange}
-                required
-              />
-
-              <FormInput
-                id="email"
-                name="email"
-                type="email"
-                label="Email address"
-                value={formData.email}
-                error={errors.email}
                 onChange={handleChange}
                 required
               />
@@ -182,6 +195,12 @@ export const SignupForm: React.FC = () => {
             Already have an account?{' '}
             <Link to="/login" className="font-medium text-primary-400 hover:text-primary-300 transition-colors">
               Sign in
+            </Link>
+          </p>
+          <p className="text-gray-400 mt-2">
+            Want to use a different email?{' '}
+            <Link to="/signup" className="font-medium text-primary-400 hover:text-primary-300 transition-colors">
+              Go back
             </Link>
           </p>
         </div>
