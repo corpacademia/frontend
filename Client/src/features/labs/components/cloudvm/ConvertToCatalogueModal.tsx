@@ -153,19 +153,36 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
-        if (response.data.success) {
-          setOrganizations(response.data.data);
+        // Check if user is orgsuperadmin
+        if (admin?.role === 'orgsuperadmin') {
+          // Fetch org admins for this organization
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${admin.org_id}`);
+          if (response.data.success) {
+            const orgAdmins = response.data.data.filter(user => user.role === 'orgadmin');
+            setOrganizations(orgAdmins.map((admin: any) => ({
+              id: admin.id,
+              name: `${admin.name} (${admin.email})`
+            })));
+          }
+        } else {
+          // For superadmin, fetch organizations
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
+          if (response.data.success) {
+            setOrganizations(response.data.data.map((org: org) => ({
+              id: org.id,
+              name: org.organization_name
+            })));
+          }
         }
-      } catch (error) {
-        console.error('Failed to fetch organizations:', error);
+      } catch (err) {
+        console.error('Failed to fetch organizations:', err);
       }
     };
 
-    if (isOpen) {
+    if (isOpen && admin?.id) {
       fetchOrganizations();
     }
-  }, [isOpen]);
+  }, [isOpen, admin]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -183,10 +200,10 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
         org_id: formData.organizationId
       });
       if(org_details.data.success){
-        
+
       }
     } catch (error) {
-      
+
     }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -242,7 +259,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
     setIsLoading(true);
     setError(null);
     setSuccess(null);
-    
+
     if(formData.organizationId){
       try {
       const org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
@@ -266,7 +283,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                  assignedBy: admin.id,
                  startDate:labUpdate?.data?.data?.startdate,
                  endDate:labUpdate?.data?.data?.enddate 
-                 
+
               })
               if(orgAssignment.data.success){
                 const assingCredsToOrg = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabCredsToOrg`,{
@@ -312,7 +329,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             throw new Error('Failed to update lab configuration');
           }
           }
-          
+
          }
 
         else{
@@ -335,7 +352,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
               enddate:formData.expiresIn
         });
           }
-           
+
         if (batch?.data.success) {
           const updateLabConfig = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateConfigOfLabs`, {
             lab_id: vmId,
@@ -358,7 +375,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           throw new Error(batch?.data?.error || batch?.data?.message || 'Failed to create batch assignment');
         }
         }
-       
+
       } else {
         throw new Error('Failed to fetch organization details');
       }
@@ -434,7 +451,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             },2000)
           }
           }
-          
+
       } catch (error:any) {
         setError(error?.message || 'Failed to convert to catalogue')
       }
@@ -442,7 +459,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
         setIsLoading(false);
       }
     }
-    
+
   };
 
   if (!isOpen) return null;
@@ -451,7 +468,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-        
+
         <div className="relative w-full max-w-2xl transform overflow-hidden rounded-xl bg-dark-200 p-6 space-y-4">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">
@@ -479,23 +496,26 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Organization
-                </label>
-                <select
-                  name="organizationId"
-                  value={formData.organizationId}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
-                >
-                  <option value="">Select an organization</option>
-                  
-                  {organizations.map(org => (
-                    <option key={org.id} value={org.id}>{org.organization_name}</option>
-                  ))}
-                </select>
-              </div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                {admin?.role === 'orgsuperadmin' ? 'Assign to Org Admin' : 'Organization'}
+              </label>
+              <select
+                name="organizationId"
+                value={formData.organizationId}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
+              >
+                <option value="">
+                  {admin?.role === 'orgsuperadmin' ? 'Select an org admin' : 'Select an organization'}
+                </option>
+                {organizations.map(org => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -633,7 +653,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 className="btn-secondary"
               >
                 <GradientText>Cancel</GradientText>
-                
+
               </button>
               <button
                 onClick={handleSubmit}
@@ -650,7 +670,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                   'Create Catalogue'
                 )}
                 </GradientText>
-               
+
               </button>
             </div>
           </div>

@@ -21,13 +21,32 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
-        if (response.data.success) {
-          setOrganizations(response.data.data);
+        // Get current user details
+        const userResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
+        const user = userResponse.data.user;
+        setCurrentUser(user);
+        
+        if (user?.role === 'orgsuperadmin') {
+          // Fetch org admins for this organization
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrgAdmins/${user.org_id}`);
+          if (response.data.success) {
+            const orgAdmins = response.data.data.filter(admin => admin.role === 'orgadmin');
+            setOrganizations(orgAdmins.map(admin => ({
+              id: admin.id,
+              organization_name: `${admin.first_name} ${admin.last_name} (${admin.email})`
+            })));
+          }
+        } else {
+          // For superadmin, fetch organizations
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
+          if (response.data.success) {
+            setOrganizations(response.data.data);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch organizations:', err);
@@ -157,7 +176,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Organization
+                {currentUser?.role === 'orgsuperadmin' ? 'Assign to Org Admin' : 'Organization'}
               </label>
               <select
                 value={organization}
@@ -165,7 +184,9 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-gray-300 focus:border-primary-500/40 focus:outline-none"
               >
-                <option value="">Select an organization</option>
+                <option value="">
+                  {currentUser?.role === 'orgsuperadmin' ? 'Select an org admin' : 'Select an organization'}
+                </option>
                 <option value="none">None</option>
                 {organizations.map(org => (
                   <option key={org.id} value={org.id}>
