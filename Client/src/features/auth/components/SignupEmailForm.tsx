@@ -19,13 +19,13 @@ export const SignupEmailForm: React.FC = () => {
   const sendVerificationEmail = async (emailAddress: string) => {
     try {
       // Replace with your actual API endpoint
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/send-verification`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/send-verification`, {
         email: emailAddress
       });
-      return response.data.success;
+      return response.data;
     } catch (error) {
       console.error('Failed to send verification email:', error);
-      return false;
+      return {success:false,message:error?.response?.data?.error || error?.response?.data?.message};
     }
   };
 
@@ -46,11 +46,11 @@ export const SignupEmailForm: React.FC = () => {
     setLoading(true);
     
     try {
-      const success = await sendVerificationEmail(email);
-      if (success) {
+      const data = await sendVerificationEmail(email);
+      if (data.success) {
         setShowVerification(true);
       } else {
-        setError('Failed to send verification email. Please try again.');
+        setError( data?.message || 'Failed to send verification email. Please try again.');
       }
     } catch (error) {
       setError('An error occurred. Please try again.');

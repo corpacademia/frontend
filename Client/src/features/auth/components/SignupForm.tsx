@@ -10,8 +10,15 @@ import axios from 'axios';
 export const SignupForm: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const email = location.state?.email;
-  
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+
+  const { formData, setFormData, errors, loading, handleChange, handleSubmit } = useSignupForm();
+  const [organizations, setOrganizations] = useState([]);
+  const [selectedOrg, setSelectedOrg] = useState('');
+  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+
   // Redirect to signup if no email is provided
   useEffect(() => {
     if (!email) {
@@ -20,10 +27,6 @@ export const SignupForm: React.FC = () => {
     }
   }, [email, navigate]);
 
-  const { formData, setFormData, errors, loading, handleChange, handleSubmit } = useSignupForm();
-  const [organizations, setOrganizations] = useState([]);
-  const [selectedOrg, setSelectedOrg] = useState('');
-  const [isAddOrgModalOpen, setIsAddOrgModalOpen] = useState(false);
 
   // Set email from navigation state
   useEffect(() => {
