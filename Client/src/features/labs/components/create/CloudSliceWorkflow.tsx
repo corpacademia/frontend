@@ -95,7 +95,7 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <LabDetailsInput onNext={handleLabDetails} />;
+        return <LabDetailsInput onNext={handleLabDetails} type="cloudslice"/>;
       case 2:
         return <PlatformSelector onSelect={(platform) => updateConfig({ platform })} />;
       case 3:

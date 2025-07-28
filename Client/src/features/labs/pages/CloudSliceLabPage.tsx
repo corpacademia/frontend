@@ -58,7 +58,10 @@ export const CloudSliceLabPage: React.FC = () => {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setCurrentUser(response.data.user);
         if(response.data.user.role === 'orgadmin'){
-          const orgLabDetails = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
+          const orgLabDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
+            orgId: response.data.user.org_id,
+            admin_id: response.data.user.id
+          })
           if(orgLabDetails.data.success){
 
             setOrgLabStatus(orgLabDetails.data.data.find((lab)=>lab.labid === sliceId));

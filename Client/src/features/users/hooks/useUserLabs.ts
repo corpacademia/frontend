@@ -67,10 +67,10 @@ export const useUserLabs = (userId: string,user:any) => {
         singleVMAws = detailedLabs;
         
       }
-
       //singlevmdatacenter labs
       const getSingleVMDatacenter = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab`,{
-        orgId:user?.user?.org_id
+        orgId:user?.user?.org_id,
+        created_by:user?.user?.id
       })
       let singleVMDatacenter = [];
       if(getSingleVMDatacenter.data.success){
@@ -103,7 +103,8 @@ export const useUserLabs = (userId: string,user:any) => {
       }
       //vmcluster datacenter labs
       const getVMClusterDatacenter =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,{
-        orgId:user?.user?.org_id
+        orgId:user?.user?.org_id,
+        admin_id:user?.user?.id
       })
       let vmclusterDatacenter = [];
       if(getVMClusterDatacenter.data.success){
@@ -136,7 +137,10 @@ export const useUserLabs = (userId: string,user:any) => {
       }
 
       //cloudslice aws
-      const getCloudSliceAws = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${user?.user?.org_id}`)
+      const getCloudSliceAws = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
+        orgId:user?.user?.org_id,
+        admin_id:user?.user?.id
+      })
       let cloudSliceAws = [];
       if(getCloudSliceAws.data.success){
         const detailedLabs = await Promise.all(

@@ -69,7 +69,11 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
           }
         }
         else{
-          const orgAccountStatus = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${user.org_id}`)
+          const orgAccountStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
+            orgId:user.org_id,
+            admin_id:user.id,
+          
+          })
           const status = orgAccountStatus.data.data.find((lab)=>lab.labid === labId);
           if(orgAccountStatus.data.success){
             if(status.username != null && status.password !=null && status.console_url){

@@ -193,18 +193,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
     }
   }, [isOpen]);
 
-  const handleInputChange = async(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    try {
-      const org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
-        org_id: formData.organizationId
-      });
-      if(org_details.data.success){
-
-      }
-    } catch (error) {
-
-    }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -262,12 +252,19 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
 
     if(formData.organizationId){
       try {
-      const org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
-        org_id: formData.organizationId
-      });
-
-      if (org_details.data.success) {
-        setOrg_details(org_details.data.data);
+        // Only fetch org details if user is superadmin (not orgsuperadmin)
+        // For orgsuperadmin, formData.organizationId contains admin_id, not org_id
+        let org_details = null;
+        if (admin.role !== 'orgsuperadmin') {
+          org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
+            org_id: formData.organizationId
+          });
+          
+          if (!org_details.data.success) {
+            throw new Error('Failed to fetch organization details');
+          }
+          setOrg_details(org_details.data.data);
+        }
         if(isDatacenterVM){
             const labUpdate = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updatesinglevmdatacenter`, {
                 software:software.filter(s => s.trim() !== ''), 
@@ -276,21 +273,33 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 catalogueName: formData.catalogueName,
             })
             if(labUpdate.data.success){
-              const targetOrgId = admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId;
-              const orgAssignment = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`,{
-                 labId: vmId,
-                 orgId: targetOrgId, 
-                 assignedBy: admin.id,
-                 startDate:labUpdate?.data?.data?.startdate,
-                 endDate:labUpdate?.data?.data?.enddate 
-
-              })
-              if(orgAssignment.data.success){
-                const assingCredsToOrg = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabCredsToOrg`,{
+              const orgAssignmentPayload = {
                 labId: vmId,
-                orgAssigned: targetOrgId, 
+                orgId: admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId, 
                 assignedBy: admin.id,
-              })
+                startDate: labUpdate?.data?.data?.startdate,
+                endDate: labUpdate?.data?.data?.enddate
+              };
+
+              // Add admin_id if org admin is selected (organizationId contains the admin ID when orgsuperadmin selects an org admin)
+              if (admin.role === 'orgsuperadmin' && formData.organizationId) {
+                orgAssignmentPayload.admin_id = formData.organizationId;
+              }
+
+              const orgAssignment = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`, orgAssignmentPayload)
+              if(orgAssignment.data.success){
+                const credAssignmentPayload = {
+                labId: vmId,
+                orgAssigned: admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId, 
+                assignedBy: admin.id,
+              };
+
+              // Add admin_id if org admin is selected (organizationId contains the admin ID when orgsuperadmin selects an org admin)
+              if (admin.role === 'orgsuperadmin' && formData.organizationId) {
+                credAssignmentPayload.admin_id = formData.organizationId;
+              }
+
+              const assingCredsToOrg = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabCredsToOrg`, credAssignmentPayload)
               if(assingCredsToOrg.data.success){
                 setSuccess('Successfully converted to catalogue');
                 setTimeout(() => {
@@ -313,13 +322,20 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 labId:vmId
               })
           if(updateCatalogueDetails?.data?.success){
-            const vmClusterDataCenter =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`,{
-            labId:vmId,
-            orgId:formData.organizationId,
-            assignedBy:admin?.id,
-            startDate:updateCatalogueDetails?.data?.data?.startdate,
-            endDate:updateCatalogueDetails?.data?.data?.enddate
-          })
+            const clusterAssignmentPayload = {
+              labId: vmId,
+              orgId: admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId,
+              assignedBy: admin?.id,
+              startDate: updateCatalogueDetails?.data?.data?.startdate,
+              endDate: updateCatalogueDetails?.data?.data?.enddate
+            };
+
+            // Add admin_id if org admin is selected (organizationId contains the admin ID when orgsuperadmin selects an org admin)
+            if (admin.role === 'orgsuperadmin' && formData.organizationId) {
+              clusterAssignmentPayload.admin_id = formData.organizationId;
+            }
+
+            const vmClusterDataCenter = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`, clusterAssignmentPayload)
            if (vmClusterDataCenter.data.success) {
             setSuccess('Successfully converted to catalogue');
             setTimeout(() => {
@@ -344,13 +360,15 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           })
           let batch;
           if(formData.organizationId && updateCatalogueDetails.data.success){
-              batch = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, {
-              lab_id: vmId,
-              admin_id: org_details.data.data.org_admin,
-              org_id: org_details.data.data.id,
-              configured_by: admin?.id,
-              enddate:formData.expiresIn
-        });
+              const batchAssignmentPayload = {
+                lab_id: vmId,
+                admin_id: admin.role === 'orgsuperadmin' ? formData.organizationId : org_details.data.data.org_admin,
+                org_id: admin.role === 'orgsuperadmin' ? admin.org_id : org_details.data.data.id,
+                configured_by: admin?.id,
+                enddate: formData.expiresIn
+              };
+
+              batch = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, batchAssignmentPayload);
           }
 
         if (batch?.data.success) {
@@ -376,14 +394,11 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
         }
         }
 
-      } else {
-        throw new Error('Failed to fetch organization details');
+      } catch (error: any) {
+        setError(error.message || 'Failed to convert to catalogue');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error: any) {
-      setError(error.message || 'Failed to convert to catalogue');
-    } finally {
-      setIsLoading(false);
-    }
     }
     else{
       try {

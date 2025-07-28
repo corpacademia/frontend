@@ -63,7 +63,8 @@ export const ClusterList: React.FC = () => {
       }
       else if(userProfile.data.user.role === 'orgadmin'){
          response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,{
-          orgId:userProfile.data.user.org_id
+          orgId:userProfile.data.user.org_id,
+          admin_id:userProfile.data.user.id
          })
       }
        if (response?.data.success) {

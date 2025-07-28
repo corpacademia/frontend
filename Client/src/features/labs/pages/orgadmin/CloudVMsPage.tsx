@@ -123,13 +123,12 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
       }
   };
 
-  const fetchDatacenterVMs = async (orgId: string) => {
+  const fetchDatacenterVMs = async (orgId: string, createdBy: string) => {
     try {
       const datacenterResponse = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab`,
-        { orgId }
+        { orgId, created_by: createdBy }
       );
-
       if (datacenterResponse.data.success) {
         const vmDetails = await Promise.all(
           datacenterResponse.data.data.map(async (assignment: any) => {
@@ -179,7 +178,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
 
       if (user?.id && user?.org_id) {
         fetchAssessmentVMs(user.id);
-        fetchDatacenterVMs(user.org_id);
+        fetchDatacenterVMs(user.org_id,user?.id);
       }
     } catch (err) {
       console.error('Error fetching admin profile:', err);

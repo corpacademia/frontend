@@ -5,6 +5,7 @@ import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { LabDetails } from '../../../labs/components/LabDetails';
+import { create } from 'zustand';
 
 interface AssignLabModalProps {
   isOpen: boolean;
@@ -117,10 +118,12 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
             }),
             axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabDetails/${user.org_id}`),
             axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab`,{
-              orgId:user?.org_id
+              orgId:user?.org_id,
+              created_by:user?.id
             }),
             axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,{
-              orgId:user?.org_id
+              orgId:user?.org_id,
+              admin_id:user?.id
             })
           ]);
     
@@ -268,6 +271,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
           res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`,{
             sliceId:selectedLabDetails?.labid,
             organizationId:userDetails?.user?.org_id,
+            admin_id:userDetails?.user?.id,
             userId:user.id,
             startDate:startTime,
             endDate:selectedLabDetails?.enddate
@@ -277,6 +281,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
            res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`,{
             labId:selectedLabDetails?.lab_id,
             orgId:userDetails?.user?.org_id,
+            admin_id:userDetails?.user?.id,
             assignedBy:user.id,
             startDate:startTime,
             endDate:selectedLabDetails?.enddate
@@ -286,6 +291,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
             res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`,{
               labId:selectedLabDetails?.labid,
               orgId:userDetails?.user?.org_id,
+              admin_id:userDetails?.user?.id,
               assignedBy:user?.id,
               startDate:startTime,
               endDate:selectedLabDetails?.enddate

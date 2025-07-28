@@ -79,7 +79,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   //   };
   //   getUserDetails();
   // }, []);
-
+  
 
   useEffect(() => {
     const fetchOrg = async () => {
@@ -314,8 +314,10 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
             </div>
           </div>
 
-          <div className="mb-4">
+          {assessment.software && (
+            <div className="mb-4">
             <h4 className="text-sm font-medium text-gray-400 mb-2">Software Installed:</h4>
+            
             <div className="flex flex-wrap gap-2">
               {assessment.software.map((software, index) => (
                 <span key={index} className="px-2 py-1 text-xs font-medium rounded-full bg-primary-500/20 text-primary-300">
@@ -324,6 +326,8 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
               ))}
             </div>
           </div>
+          )}
+          
 
           <div className="mt-auto pt-3 border-t border-primary-500/10">
             <button

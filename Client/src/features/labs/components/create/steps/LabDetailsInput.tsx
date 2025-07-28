@@ -4,9 +4,10 @@ import { Clock, BookOpen, FileText, Monitor, Globe } from 'lucide-react';
 
 interface LabDetailsInputProps {
   onNext: (details: { title: string; description: string; duration: number; guacamole: { name: string; url: string } }) => void;
+  type?: string; // Optional prop to handle different lab types
 }
 
-export const LabDetailsInput: React.FC<LabDetailsInputProps> = ({ onNext }) => {
+export const LabDetailsInput: React.FC<LabDetailsInputProps> = ({ onNext, type }) => {
   const [details, setDetails] = React.useState({
     title: '',
     description: '',
@@ -68,7 +69,8 @@ export const LabDetailsInput: React.FC<LabDetailsInputProps> = ({ onNext }) => {
           </div>
 
           {/* Guacamole Configuration */}
-          <div className="space-y-4 p-4 bg-dark-300/30 rounded-lg border border-primary-500/10">
+          { type !== 'cloudslice' && (
+            <div className="space-y-4 p-4 bg-dark-300/30 rounded-lg border border-primary-500/10">
             <h3 className="text-lg font-semibold text-gray-200 flex items-center">
               <Monitor className="h-5 w-5 mr-2 text-primary-400" />
               Guacamole Configuration
@@ -114,6 +116,8 @@ export const LabDetailsInput: React.FC<LabDetailsInputProps> = ({ onNext }) => {
               </p>
             </div>
           </div>
+          )}
+          
 
           {/* <div>
             <label className="flex items-center text-gray-300 mb-2">

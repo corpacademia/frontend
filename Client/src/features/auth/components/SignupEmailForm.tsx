@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BeakerIcon, AlertCircle, Mail, RefreshCw, CheckCircle, Shield, ArrowRight } from 'lucide-react';
+import { BeakerIcon, AlertCircle, Mail, RefreshCw, CheckCircle, Shield, ArrowRight, Clock } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import axios from 'axios';
 
@@ -15,6 +15,8 @@ export const SignupEmailForm: React.FC = () => {
   const [resendLoading, setResendLoading] = useState(false);
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [codeError, setCodeError] = useState('');
+  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [isExpired, setIsExpired] = useState(false);
 
   const validateEmail = (email: string): boolean => {
     return /\S+@\S+\.\S+/.test(email);
@@ -46,6 +48,42 @@ export const SignupEmailForm: React.FC = () => {
     }
   };
 
+  // Countdown timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (showVerification && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prevTime) => {
+          if (prevTime <= 1) {
+            setIsExpired(true);
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [showVerification, timeLeft]);
+
+  // Format time display
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  // Reset timer when verification is sent
+  const resetTimer = () => {
+    setTimeLeft(600); // Reset to 10 minutes
+    setIsExpired(false);
+  };
+
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -66,6 +104,7 @@ export const SignupEmailForm: React.FC = () => {
       const data = await sendVerificationCode(email);
       if (data.success) {
         setShowVerification(true);
+        resetTimer();
       } else {
         setError( data?.message || 'Failed to send verification code. Please try again.');
       }
@@ -83,7 +122,9 @@ export const SignupEmailForm: React.FC = () => {
     
     try {
       const data = await sendVerificationCode(email);
-      if (!data.success) {
+      if (data.success) {
+        resetTimer();
+      } else {
         setError(data?.message || 'Failed to resend verification code. Please try again.');
       }
     } catch (error) {
@@ -151,6 +192,53 @@ export const SignupEmailForm: React.FC = () => {
                   </p>
                   <p className="font-semibold text-primary-400">{email}</p>
                 </div>
+
+                {/* Countdown Timer */}
+                <div className={`p-4 rounded-lg border text-center transition-colors ${
+                  isExpired 
+                    ? 'bg-red-900/20 border-red-500/40' 
+                    : timeLeft <= 60 
+                      ? 'bg-orange-900/20 border-orange-500/40' 
+                      : 'bg-emerald-900/20 border-emerald-500/40'
+                }`}>
+                  <div className="flex items-center justify-center space-x-2 mb-2">
+                    <Clock className={`h-4 w-4 ${
+                      isExpired 
+                        ? 'text-red-400' 
+                        : timeLeft <= 60 
+                          ? 'text-orange-400' 
+                          : 'text-emerald-400'
+                    }`} />
+                    <span className={`text-sm font-medium ${
+                      isExpired 
+                        ? 'text-red-400' 
+                        : timeLeft <= 60 
+                          ? 'text-orange-400' 
+                          : 'text-emerald-400'
+                    }`}>
+                      {isExpired ? 'Code Expired' : 'Time Remaining'}
+                    </span>
+                  </div>
+                  <div className={`text-2xl font-mono font-bold ${
+                    isExpired 
+                      ? 'text-red-400' 
+                      : timeLeft <= 60 
+                        ? 'text-orange-400' 
+                        : 'text-emerald-400'
+                  }`}>
+                    {isExpired ? '00:00' : formatTime(timeLeft)}
+                  </div>
+                  {isExpired && (
+                    <p className="text-xs text-red-300 mt-2">
+                      Your verification code has expired. Please request a new one.
+                    </p>
+                  )}
+                  {!isExpired && timeLeft <= 60 && (
+                    <p className="text-xs text-orange-300 mt-2">
+                      Your code expires soon! Enter it quickly or request a new one.
+                    </p>
+                  )}
+                </div>
                 
                 <div className="space-y-3 text-sm text-gray-400">
                   <div className="flex items-center space-x-2 text-xs">
@@ -199,7 +287,7 @@ export const SignupEmailForm: React.FC = () => {
               <div className="space-y-3">
                 <button
                   type="submit"
-                  disabled={verifyLoading || verificationCode.length !== 6}
+                  disabled={verifyLoading || verificationCode.length !== 6 || isExpired}
                   className="btn-primary w-full flex items-center justify-center space-x-2"
                 >
                   {verifyLoading ? (
@@ -214,17 +302,29 @@ export const SignupEmailForm: React.FC = () => {
 
                 <div className="pt-4 border-t border-gray-700/50">
                   <p className="text-xs text-gray-500 mb-4 text-center">
-                    Didn't receive the code? Check your spam folder or request a new one.
+                    {isExpired 
+                      ? 'Your verification code has expired. Request a new one to continue.' 
+                      : "Didn't receive the code? Check your spam folder or request a new one."
+                    }
                   </p>
                   
                   <button
                     type="button"
                     onClick={handleResendVerification}
                     disabled={resendLoading}
-                    className="btn-secondary w-full flex items-center justify-center space-x-2"
+                    className={`w-full flex items-center justify-center space-x-2 ${
+                      isExpired ? 'btn-primary' : 'btn-secondary'
+                    }`}
                   >
                     <RefreshCw className={`h-4 w-4 ${resendLoading ? 'animate-spin' : ''}`} />
-                    <span>{resendLoading ? 'Sending...' : 'Resend Code'}</span>
+                    <span>
+                      {resendLoading 
+                        ? 'Sending...' 
+                        : isExpired 
+                          ? 'Get New Code' 
+                          : 'Resend Code'
+                      }
+                    </span>
                   </button>
                 </div>
               </div>

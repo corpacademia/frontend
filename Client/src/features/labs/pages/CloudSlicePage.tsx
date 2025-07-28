@@ -53,7 +53,12 @@ export const CloudSlicePage: React.FC = () => {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
         if(response.data.user.role === 'orgadmin'){
-           const orgLabStatus = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${response.data.user.org_id}`)
+           const orgLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
+            
+              orgId: response.data.user.org_id,
+              admin_id: response.data.user.id
+            
+           })
         if(orgLabStatus.data.success){
           setOrgStatus(orgLabStatus.data.data)
         }
@@ -100,7 +105,10 @@ export const CloudSlicePage: React.FC = () => {
       else if (user.role === 'orgadmin') {
 
         try {
-          const getOrgAssignedSlices = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs/${user.org_id}`);
+          const getOrgAssignedSlices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
+            orgId: user.org_id,
+            admin_id: user.id
+          });
 
           if (getOrgAssignedSlices.data.success) {
             const orgSlices = [];

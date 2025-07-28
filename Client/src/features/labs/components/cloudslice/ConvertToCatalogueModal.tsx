@@ -33,12 +33,12 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
         
         if (user?.role === 'orgsuperadmin') {
           // Fetch org admins for this organization
-          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrgAdmins/${user.org_id}`);
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user.org_id}`);
           if (response.data.success) {
             const orgAdmins = response.data.data.filter(admin => admin.role === 'orgadmin');
             setOrganizations(orgAdmins.map(admin => ({
               id: admin.id,
-              organization_name: `${admin.first_name} ${admin.last_name} (${admin.email})`
+              organization_name: `${admin.name}  (${admin.email})`
             })));
           }
         } else {
@@ -108,15 +108,23 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
         catalogueType:isPublic ? 'public' :'private',
         labId:sliceId
       })
-      
-      if(updateCatalogue?.data?.success){
-         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`, {
+    
+      let credAssignmentPayload ={
               sliceId:sliceId,
               organizationId: organization,
               userId: user_profile.data.user.id,
               startDate:updateCatalogue?.data?.data?.startdate,
               endDate:updateCatalogue?.data?.data?.enddate
-      });
+      }
+      if(currentUser?.role === 'orgsuperadmin'){
+        credAssignmentPayload = {
+          ...credAssignmentPayload,
+          organizationId:user_profile.data.user.org_id,
+          admin_id: organization
+        };
+      } 
+      if(updateCatalogue?.data?.success){
+         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`, credAssignmentPayload);
 
       if (response.data.success) {
         setSuccess('Cloud slice converted to catalogue successfully');
