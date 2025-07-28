@@ -92,7 +92,7 @@ const mockCourses = [
 
 export const PublicCataloguePage: React.FC = () => {
   const { user, isAuthenticated } = useAuthStore();
-  const [courses, setCourses] = useState(mockCourses);
+  const [courses, setCourses] = useState();
   const [filteredCourses, setFilteredCourses] = useState(mockCourses);
   const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -107,6 +107,24 @@ export const PublicCataloguePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const isSuperAdmin = user?.role === 'superadmin';
+
+  useEffect(() => {
+    const fetchCatalogues = async () => {
+      setIsLoading(true);
+      try {
+        // Replace with actual API call
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/lab_ms/getAllLabCatalogues` );
+        console.log('Fetched courses:', response.data.data);
+        setCourses(response.data.data);
+        setFilteredCourses(response.data.data);
+      } catch (error) {
+        console.error('Error fetching catalogues:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchCatalogues();
+  }, []);
 
   // Filter courses based on current filters
   useEffect(() => {
@@ -179,14 +197,15 @@ export const PublicCataloguePage: React.FC = () => {
       setIsSaving(false);
     }
   };
-
   const stats = {
     totalCourses: courses.length,
     totalStudents: courses.reduce((sum, course) => sum + course.enrolledCount, 0),
     averageRating: (courses.reduce((sum, course) => sum + course.rating, 0) / courses.length).toFixed(1),
     freeCourses: courses.filter(course => course.isFree).length
   };
-
+if(isLoading) {
+    return <div className="text-center text-gray-500">Loading courses...</div>;
+  } 
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300">
       {/* Hero Section */}
