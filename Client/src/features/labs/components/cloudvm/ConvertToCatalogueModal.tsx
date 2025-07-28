@@ -37,6 +37,7 @@ interface FormData {
   catalogueType: CatalogueType;
   level: string;
   category: string;
+  price: string;
 }
 
 interface CleanupModalProps {
@@ -125,7 +126,8 @@ const initialFormData: FormData = {
   software: [''],
   catalogueType: 'private',
   level: '',
-  category: ''
+  category: '',
+  price: '',
 };
 
 export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = ({
@@ -277,6 +279,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 catalogueName: formData.catalogueName,
                 level: formData.level,
                 category: formData.category,
+                price: formData.price,
             })
             if(labUpdate.data.success){
               const orgAssignmentPayload = {
@@ -328,6 +331,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 labId:vmId,
                 level: formData.level,
                 category: formData.category,
+                price: formData.price,
               })
           if(updateCatalogueDetails?.data?.success){
             const clusterAssignmentPayload = {
@@ -367,6 +371,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             labId:vmId,
             level: formData.level,
             category: formData.category,
+            price: formData.price,
           })
           let batch;
           if(formData.organizationId && updateCatalogueDetails.data.success){
@@ -420,6 +425,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 catalogueName: formData.catalogueName,
                 level: formData.level,
                 category: formData.category,
+                price: formData.price,
             });
             if(labUpdate.data.success){
               setSuccess("Successfully converted to catalogue");
@@ -442,6 +448,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 labId:vmId,
                 level: formData.level,
                 category: formData.category,
+                price: formData.price,
               })
               if(updateCatalogueDetails.data.success){
                 setSuccess("Successfully updated catalogue");
@@ -468,6 +475,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             labId:vmId,
             level: formData.level,
             category: formData.category,
+            price: formData.price,
           });
           if(updateCatalogueDetails.data.success){
             setSuccess("Successfully converted to catalogue");
@@ -519,6 +527,19 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 type="text"
                 name="catalogueName"
                 value={formData.catalogueName}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Price
+              </label>
+              <input
+                type="text"
+                name="price"
+                value={formData.price}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-gray-300 focus:border-primary-500/40 focus:outline-none"
