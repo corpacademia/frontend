@@ -42,6 +42,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
 }) => {
   const { user, isAuthenticated } = useAuthStore();
   const [isHovered, setIsHovered] = useState(false);
+  const [isInCart, setIsInCart] = useState(false);
   const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'orgsuperadmin';
 
   const getLevelColor = (level: string) => {
@@ -61,14 +62,33 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
     }
   };
 
-  const handleEnroll = () => {
+  const handleAddToCart = () => {
     if (!isAuthenticated) {
       // Redirect to login/signup
       window.location.href = '/auth/login';
     } else {
-      // Handle enrollment logic
-      console.log('Enrolling in course:', course.id);
+      // Add to cart logic
+      setIsInCart(true);
+      console.log('Added to cart:', course.id);
     }
+  };
+
+  const handleGoToCart = () => {
+    // Get existing cart items from localStorage or initialize empty array
+    const existingCart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    
+    // Add current course ID if not already in cart
+    if (!existingCart.includes(course.id)) {
+      existingCart.push(course.id);
+      localStorage.setItem('cartItems', JSON.stringify(existingCart));
+    }
+    
+    // Create comma-separated list of IDs
+    const selectedIds = existingCart.join(',');
+    
+    // Open checkout link with selected IDs - you can modify this URL as needed
+    const checkoutUrl = `${import.meta.env.VITE_BACKEND_URL}/checkout?ids=${selectedIds}`;
+    window.location.href = checkoutUrl;
   };
 
   return (
@@ -169,16 +189,29 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
               </button>
             )}
             
-            <button
-              onClick={handleEnroll}
-              className="px-4 py-2 bg-gradient-to-r from-primary-500 to-secondary-500
-                       hover:from-primary-400 hover:to-secondary-400
-                       text-white rounded-lg transition-all duration-300
-                       flex items-center space-x-2 shadow-lg shadow-primary-500/20"
-            >
-              <Play className="h-4 w-4" />
-              <span>{isAuthenticated ? 'Enroll' : 'Login to Enroll'}</span>
-            </button>
+            {!isInCart ? (
+              <button
+                onClick={handleAddToCart}
+                className="px-4 py-2 bg-gradient-to-r from-primary-500 to-secondary-500
+                         hover:from-primary-400 hover:to-secondary-400
+                         text-white rounded-lg transition-all duration-300
+                         flex items-center space-x-2 shadow-lg shadow-primary-500/20"
+              >
+                <Play className="h-4 w-4" />
+                <span>{isAuthenticated ? 'Add to Cart' : 'Login to Add'}</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleGoToCart}
+                className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500
+                         hover:from-emerald-400 hover:to-green-400
+                         text-white rounded-lg transition-all duration-300
+                         flex items-center space-x-2 shadow-lg shadow-emerald-500/20"
+              >
+                <Play className="h-4 w-4" />
+                <span>Go to Cart</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
