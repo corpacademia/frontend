@@ -17,6 +17,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   const [catalogueName, setCatalogueName] = useState('');
   const [organization, setOrganization] = useState('');
   const [isPublic, setIsPublic] = useState('no');
+  const [level, setLevel] = useState('');
+  const [category, setCategory] = useState('');
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +76,9 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           const updateCatalogue =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudsliceCatalogueDetails`,{
               catalogueName:catalogueName,
               catalogueType:isPublic ? 'public' :'private',
-              labId:sliceId
+              labId:sliceId,
+              level: level,
+              category: category,
            })
            if(updateCatalogue?.data?.success){
             setSuccess("Successfully updated catalogue");
@@ -106,7 +110,9 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
       const updateCatalogue =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudsliceCatalogueDetails`,{
         catalogueName:catalogueName,
         catalogueType:isPublic ? 'public' :'private',
-        labId:sliceId
+        labId:sliceId,
+        level: level,
+        category: category,
       })
     
       let credAssignmentPayload ={
@@ -231,6 +237,48 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                   />
                   <span className="text-gray-300">No</span>
                 </label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Level
+                </label>
+                <select
+                  value={level}
+                  onChange={(e) => setLevel(e.target.value)}
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                >
+                  <option value="">Select Level</option>
+                  <option value="Foundation">Foundation</option>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                  <option value="Expert">Expert</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                >
+                  <option value="">Select Category</option>
+                  <option value="Cloud Computing">Cloud Computing</option>
+                  <option value="DevOps">DevOps</option>
+                  <option value="Security">Security</option>
+                  <option value="AI/ML">AI/ML</option>
+                  <option value="Development">Development</option>
+                  <option value="Networking">Networking</option>
+                  <option value="Database">Database</option>
+                </select>
               </div>
             </div>
 

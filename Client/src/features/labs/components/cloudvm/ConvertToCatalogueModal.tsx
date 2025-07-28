@@ -35,6 +35,8 @@ interface FormData {
   expiresIn: string;
   software: string[];
   catalogueType: CatalogueType;
+  level: string;
+  category: string;
 }
 
 interface CleanupModalProps {
@@ -121,7 +123,9 @@ const initialFormData: FormData = {
   hoursPerDay: 1,
   expiresIn: '',
   software: [''],
-  catalogueType: 'private'
+  catalogueType: 'private',
+  level: '',
+  category: ''
 };
 
 export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = ({
@@ -259,7 +263,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
             org_id: formData.organizationId
           });
-          
+
           if (!org_details.data.success) {
             throw new Error('Failed to fetch organization details');
           }
@@ -271,6 +275,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 catalogueType: formData.catalogueType, 
                 labId: vmId,
                 catalogueName: formData.catalogueName,
+                level: formData.level,
+                category: formData.category,
             })
             if(labUpdate.data.success){
               const orgAssignmentPayload = {
@@ -319,7 +325,9 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 catalogueName:formData.catalogueName,
                 catalogueType:formData.catalogueType,
                 software:software.filter(s => s.trim() !== ''),
-                labId:vmId
+                labId:vmId,
+                level: formData.level,
+                category: formData.category,
               })
           if(updateCatalogueDetails?.data?.success){
             const clusterAssignmentPayload = {
@@ -356,7 +364,9 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             expiresIn:formData.expiresIn,
             software:software.filter(s => s.trim() !== ''),
             catalogueType:formData.catalogueType,
-            labId:vmId
+            labId:vmId,
+            level: formData.level,
+            category: formData.category,
           })
           let batch;
           if(formData.organizationId && updateCatalogueDetails.data.success){
@@ -408,6 +418,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 catalogueType: formData.catalogueType, 
                 labId: vmId,
                 catalogueName: formData.catalogueName,
+                level: formData.level,
+                category: formData.category,
             });
             if(labUpdate.data.success){
               setSuccess("Successfully converted to catalogue");
@@ -427,7 +439,9 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 catalogueName:formData.catalogueName,
                 catalogueType:formData.catalogueType,
                 software:software.filter(s => s.trim() !== ''),
-                labId:vmId
+                labId:vmId,
+                level: formData.level,
+                category: formData.category,
               })
               if(updateCatalogueDetails.data.success){
                 setSuccess("Successfully updated catalogue");
@@ -451,7 +465,9 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
             expiresIn:formData.expiresIn,
             software:software.filter(s => s.trim() !== ''),
             catalogueType:formData.catalogueType,
-            labId:vmId
+            labId:vmId,
+            level: formData.level,
+            category: formData.category,
           });
           if(updateCatalogueDetails.data.success){
             setSuccess("Successfully converted to catalogue");
@@ -602,6 +618,49 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 </div>
               </>
             )}
+             <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Level
+                </label>
+                <select
+                  name="level"
+                  value={formData.level}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                >
+                  <option value="">Select Level</option>
+                  <option value="Foundation">Foundation</option>
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                  <option value="Expert">Expert</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                >
+                  <option value="">Select Category</option>
+                  <option value="Cloud Computing">Cloud Computing</option>
+                  <option value="Devops">Devops</option>
+                  <option value="Security">Security</option>
+                  <option value="AI/ML">AI/ML</option>
+                  <option value="Development">Development</option>
+                  <option value="Networking">Networking</option>
+                  <option value="Database">Database</option>
+                </select>
+              </div>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
