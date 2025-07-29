@@ -92,8 +92,8 @@ const mockCourses = [
 
 export const PublicCataloguePage: React.FC = () => {
   const { user, isAuthenticated } = useAuthStore();
-  const [courses, setCourses] = useState();
-  const [filteredCourses, setFilteredCourses] = useState(mockCourses);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
@@ -106,19 +106,22 @@ export const PublicCataloguePage: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const isSuperAdmin = user?.role === 'superadmin';
-
+  const isSuperAdmin = user?.role === 'superadmin' || user?.id === selectedCourse?.user_id;
+ 
   useEffect(() => {
     const fetchCatalogues = async () => {
       setIsLoading(true);
       try {
         // Replace with actual API call
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/v1/lab_ms/getAllLabCatalogues` );
-        console.log('Fetched courses:', response.data.data);
-        setCourses(response.data.data);
-        setFilteredCourses(response.data.data);
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues`);
+        const coursesData = response.data.data || [];
+        setCourses(coursesData);
+        setFilteredCourses(coursesData);
       } catch (error) {
         console.error('Error fetching catalogues:', error);
+        // Set to empty array on error
+        setCourses([]);
+        setFilteredCourses([]);
       } finally {
         setIsLoading(false);
       }
@@ -128,12 +131,17 @@ export const PublicCataloguePage: React.FC = () => {
 
   // Filter courses based on current filters
   useEffect(() => {
-    let filtered = courses;
+    if (!courses || !Array.isArray(courses)) {
+      setFilteredCourses([]);
+      return;
+    }
+
+    let filtered = [...courses];
 
     if (filters.search) {
       filtered = filtered.filter(course =>
-        course.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        course.description.toLowerCase().includes(filters.search.toLowerCase())
+        course.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        course.description?.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
 
@@ -151,7 +159,7 @@ export const PublicCataloguePage: React.FC = () => {
 
     if (filters.duration) {
       // Simple duration matching - you might want to make this more sophisticated
-      filtered = filtered.filter(course => course.duration.includes(filters.duration.split('-')[0]));
+      filtered = filtered.filter(course => course.duration?.includes(filters.duration.split('-')[0]));
     }
 
     setFilteredCourses(filtered);
@@ -198,14 +206,21 @@ export const PublicCataloguePage: React.FC = () => {
     }
   };
   const stats = {
-    totalCourses: courses.length,
-    totalStudents: courses.reduce((sum, course) => sum + course.enrolledCount, 0),
-    averageRating: (courses.reduce((sum, course) => sum + course.rating, 0) / courses.length).toFixed(1),
-    freeCourses: courses.filter(course => course.isFree).length
+    totalCourses: courses?.length || 0,
+    totalStudents: courses?.reduce((sum, course) => sum + (course.enrolledCount || 0), 0) || 0,
+    averageRating: courses?.length > 0 
+      ? (courses.reduce((sum, course) => sum + (course.rating || 0), 0) / courses.length).toFixed(1)
+      : '0.0',
+    freeCourses: courses?.filter(course => course.isFree).length || 0
   };
-if(isLoading) {
-    return <div className="text-center text-gray-500">Loading courses...</div>;
+if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300 flex items-center justify-center">
+        <div className="text-center text-gray-500">Loading courses...</div>
+      </div>
+    );
   } 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300">
       {/* Hero Section */}
@@ -282,7 +297,7 @@ if(isLoading) {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-gray-400">
-            Showing {filteredCourses.length} of {courses.length} Labs
+            Showing {filteredCourses?.length || 0} of {courses?.length || 0} Labs
           </p>
         </div>
 

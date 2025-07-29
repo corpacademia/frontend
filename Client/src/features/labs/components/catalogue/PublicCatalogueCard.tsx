@@ -28,6 +28,7 @@ interface PublicCatalogueCardProps {
     image?: string;
     price?: number;
     isFree?: boolean;
+    user_id?: string; // Optional, for admin checks
   };
   onEdit?: (course: any) => void;
   onDelete?: (courseId: string) => void;
@@ -43,8 +44,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const { user, isAuthenticated } = useAuthStore();
   const [isHovered, setIsHovered] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
-  const isSuperAdmin = user?.role === 'superadmin' || user?.role === 'orgsuperadmin';
-
+  const isSuperAdmin = user?.role === 'superadmin' || user?.id === course?.user_id;
   const getLevelColor = (level: string) => {
     switch (level.toLowerCase()) {
       case 'foundation':
