@@ -252,58 +252,60 @@ if(isLoading) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300">
       {/* Header with Auth and Cart */}
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-3xl font-bold">
-            <GradientText>Lab Catalogue</GradientText>
-          </h1>
-        </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-3xl font-bold">
+              <GradientText>Lab Catalogue</GradientText>
+            </h1>
+          </div>
 
-        <div className="flex items-center space-x-4">
-          {/* Cart Button */}
-          <button
-            onClick={() => setIsCartModalOpen(true)}
-            className="relative p-3 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 
-                     hover:from-primary-500/30 hover:to-secondary-500/30
-                     border border-primary-500/20 hover:border-primary-500/40 
-                     rounded-xl transition-all duration-300 group"
-          >
-            <ShoppingCart className="h-6 w-6 text-primary-400 group-hover:text-primary-300" />
-            {cartItems.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-red-600 
-                             text-white text-xs rounded-full h-6 w-6 flex items-center justify-center 
-                             font-semibold shadow-lg">
-                {cartItems.length}
-              </span>
-            )}
-          </button>
-
-          {/* Auth Buttons */}
-          {isAuthenticated ? (
-            <div className="flex items-center space-x-3">
-              <span className="text-gray-300 hidden sm:block">Welcome, {user?.name}</span>
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 
-                         border border-red-500/20 hover:border-red-500/40 
-                         rounded-lg transition-all duration-300 text-red-300 hover:text-red-200"
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </button>
-            </div>
-          ) : (
+          <div className="flex items-center space-x-4">
+            {/* Cart Button */}
             <button
-              onClick={handleLogin}
-              className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
-                       hover:from-primary-400 hover:to-secondary-400
-                       rounded-lg transition-all duration-300 text-white font-semibold
-                       shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
+              onClick={() => setIsCartModalOpen(true)}
+              className="relative p-3 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 
+                       hover:from-primary-500/30 hover:to-secondary-500/30
+                       border border-primary-500/20 hover:border-primary-500/40 
+                       rounded-xl transition-all duration-300 group"
             >
-              <LogIn className="h-5 w-5" />
-              <span>Login</span>
+              <ShoppingCart className="h-6 w-6 text-primary-400 group-hover:text-primary-300" />
+              {cartItems.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-red-600 
+                               text-white text-xs rounded-full h-6 w-6 flex items-center justify-center 
+                               font-semibold shadow-lg">
+                  {cartItems.length}
+                </span>
+              )}
             </button>
-          )}
+
+            {/* Auth Buttons */}
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-3">
+                <span className="text-gray-300 hidden sm:block">Welcome, {user?.name}</span>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 
+                           border border-red-500/20 hover:border-red-500/40 
+                           rounded-lg transition-all duration-300 text-red-300 hover:text-red-200"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleLogin}
+                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
+                         hover:from-primary-400 hover:to-secondary-400
+                         rounded-lg transition-all duration-300 text-white font-semibold
+                         shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
+              >
+                <LogIn className="h-5 w-5" />
+                <span>Login</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -350,8 +352,9 @@ if(isLoading) {
         <PublicCatalogueGrid
           courses={filteredCourses}
           isLoading={isLoading}
-          onEdit={isSuperAdmin ? handleEditCourse : undefined}
-          onDelete={isSuperAdmin ? handleDeleteCourse : undefined}
+          onEdit={(isSuperAdmin || isOrgSuperAdmin) ? handleEditCourse : undefined}
+          onDelete={(isSuperAdmin || isOrgSuperAdmin) ? handleDeleteCourse : undefined}
+          currentUser={user}
         />
       </div>
 

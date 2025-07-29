@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PublicCatalogueCard } from './PublicCatalogueCard';
 import { Loader } from 'lucide-react';
@@ -9,6 +8,7 @@ interface PublicCatalogueGridProps {
   onEdit?: (course: any) => void;
   onDelete?: (courseId: string) => void;
   onView?: (course: any) => void;
+  currentUser?: any;
 }
 
 export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({ 
@@ -16,7 +16,8 @@ export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({
   isLoading, 
   onEdit, 
   onDelete, 
-  onView 
+  onView,
+  currentUser
 }) => {
   if (isLoading) {
     return (
@@ -52,6 +53,7 @@ export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({
           onEdit={onEdit}
           onDelete={onDelete}
           onView={onView}
+          currentUser={currentUser}
         />
       ))}
     </div>
