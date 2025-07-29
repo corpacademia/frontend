@@ -110,6 +110,7 @@ export const PublicCataloguePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const isSuperAdmin = user?.role === 'superadmin';
+  const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
 
   useEffect(() => {
     const fetchCatalogues = async () => {
@@ -319,7 +320,7 @@ if(isLoading) {
       {/* Main Content */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Admin Controls */}
-        {isSuperAdmin && (
+        {(isSuperAdmin || isOrgSuperAdmin) && (
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-white">Manage Labs</h2>
             <button

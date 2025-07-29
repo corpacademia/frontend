@@ -45,31 +45,8 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const { user, isAuthenticated } = useAuthStore();
   const [isHovered, setIsHovered] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
-  const [labCreator, setLabCreator] = useState(user?.id || null);
-  const [authMessage, setAuthMessage] = useState<string | null>(null);
   
   const isSuperAdmin = user?.role === 'superadmin';
-  const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
-
-  // Fetch lab creator information for orgsuperadmin authorization
-  // useEffect(() => {
-  //   const fetchLabCreator = async () => {
-  //     if (isOrgSuperAdmin && course.id) {
-  //       try {
-  //         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabCreator/${course.id}`);
-  //         if (response.data.success) {
-  //           setLabCreator(response.data.creatorId);
-  //         }
-  //       } catch (error) {
-  //         console.error('Error fetching lab creator:', error);
-  //       }
-  //     }
-  //   };
-  //   fetchLabCreator();
-  // }, [course.id, isOrgSuperAdmin]);
-  
-  // Check if current orgsuperadmin can edit/delete this lab
-  const canEditDelete = isSuperAdmin || (isOrgSuperAdmin && labCreator === user?.id);
 
   const getLevelColor = (level: string) => {
     switch (level.toLowerCase()) {
@@ -129,40 +106,25 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%2523ffffff%22%20fill-opacity%3D%220.02%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
 
-      {/* Admin Controls */}
-      {(isSuperAdmin || isOrgSuperAdmin) && (
+      {/* Admin Controls - Only for SuperAdmin */}
+      {isSuperAdmin && onEdit && onDelete && (
         <div className={`absolute top-4 right-4 flex space-x-2 transition-opacity duration-300 z-10 ${
           isHovered ? 'opacity-100' : 'opacity-0'
         }`}>
-          {canEditDelete ? (
-            <>
-              <button
-                onClick={() => onEdit?.(course)}
-                className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
-                title="Edit Lab"
-              >
-                <Edit className="h-4 w-4 text-blue-300" />
-              </button>
-              <button
-                onClick={() => onDelete?.(course.id)}
-                className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors"
-                title="Delete Lab"
-              >
-                <Trash2 className="h-4 w-4 text-red-300" />
-              </button>
-            </>
-          ) : isOrgSuperAdmin ? (
-            <div className="p-2 bg-gray-500/20 rounded-lg cursor-not-allowed" title="No authority to edit this lab">
-              <Edit className="h-4 w-4 text-gray-500" />
-            </div>
-          ) : null}
-        </div>
-      )}
-
-      {/* Authorization Message */}
-      {authMessage && (
-        <div className="absolute top-16 right-4 bg-red-500/20 text-red-300 px-3 py-2 rounded-lg text-xs z-10">
-          {authMessage}
+          <button
+            onClick={() => onEdit(course)}
+            className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
+            title="Edit Lab"
+          >
+            <Edit className="h-4 w-4 text-blue-300" />
+          </button>
+          <button
+            onClick={() => onDelete(course.id)}
+            className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors"
+            title="Delete Lab"
+          >
+            <Trash2 className="h-4 w-4 text-red-300" />
+          </button>
         </div>
       )}
 
