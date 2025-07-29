@@ -237,6 +237,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
                        text-white shadow-lg shadow-primary-500/20
                        disabled:opacity-50 disabled:cursor-not-allowed
                        flex items-center justify-center"
+              title="All Org Super Admins can create catalogues"
             >
               {isCreating ? (
                 <Loader className="animate-spin h-4 w-4" />

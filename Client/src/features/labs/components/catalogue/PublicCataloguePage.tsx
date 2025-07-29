@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { PublicCatalogueFilters } from './PublicCatalogueFilters';
 import { PublicCatalogueGrid } from './PublicCatalogueGrid';
 import { EditCourseModal } from './EditCourseModal';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { useAuthStore } from '../../../../store/authStore';
-import { Plus, BookOpen, Users, Award, TrendingUp } from 'lucide-react';
+import { Plus, BookOpen, Users, Award, TrendingUp, ShoppingCart, LogOut, LogIn, X } from 'lucide-react';
 import axios from 'axios';
 
 // Mock data for demonstration - replace with actual API calls
@@ -91,10 +90,14 @@ const mockCourses = [
 ];
 
 export const PublicCataloguePage: React.FC = () => {
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, logout } = useAuthStore();
+  const [editingCourse, setEditingCourse] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [cartItems, setCartItems] = useState<string[]>([]);
+  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [cartCourses, setCartCourses] = useState<any[]>([]);
   const [filters, setFilters] = useState({
     search: '',
     category: '',
@@ -106,42 +109,73 @@ export const PublicCataloguePage: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  const isSuperAdmin = user?.role === 'superadmin' || user?.id === selectedCourse?.user_id;
- 
+  const isSuperAdmin = user?.role === 'superadmin';
+
   useEffect(() => {
     const fetchCatalogues = async () => {
       setIsLoading(true);
       try {
         // Replace with actual API call
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues`);
-        const coursesData = response.data.data || [];
-        setCourses(coursesData);
-        setFilteredCourses(coursesData);
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues` );
+        setCourses(response.data.data);
+        setFilteredCourses(response.data.data);
       } catch (error) {
         console.error('Error fetching catalogues:', error);
-        // Set to empty array on error
-        setCourses([]);
-        setFilteredCourses([]);
       } finally {
         setIsLoading(false);
       }
     }
     fetchCatalogues();
+        // Initialize cart from localStorage
+    const savedCart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+    setCartItems(savedCart);
   }, []);
+
+  // Update cart courses when cart items or courses change
+  useEffect(() => {
+    if (cartItems.length > 0 && courses.length > 0) {
+      const cartCoursesData = courses.filter(course => cartItems.includes(course.id));
+      setCartCourses(cartCoursesData);
+    } else {
+      setCartCourses([]);
+    }
+  }, [cartItems, courses]);
+
+  const handleLogin = () => {
+    window.location.href = '/login';
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    window.location.href = '/';
+  };
+
+  const removeFromCart = (courseId: string) => {
+    const updatedCart = cartItems.filter(id => id !== courseId);
+    setCartItems(updatedCart);
+    localStorage.setItem('cartItems', JSON.stringify(updatedCart));
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+    localStorage.removeItem('cartItems');
+  };
+
+  const proceedToCheckout = () => {
+    if (cartItems.length === 0) return;
+    const selectedIds = cartItems.join(',');
+    const checkoutUrl = `${import.meta.env.VITE_BACKEND_URL}/checkout?ids=${selectedIds}`;
+    window.location.href = checkoutUrl;
+  };
 
   // Filter courses based on current filters
   useEffect(() => {
-    if (!courses || !Array.isArray(courses)) {
-      setFilteredCourses([]);
-      return;
-    }
-
-    let filtered = [...courses];
+    let filtered = courses;
 
     if (filters.search) {
       filtered = filtered.filter(course =>
-        course.title?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        course.description?.toLowerCase().includes(filters.search.toLowerCase())
+        course.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+        course.description.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
 
@@ -159,7 +193,7 @@ export const PublicCataloguePage: React.FC = () => {
 
     if (filters.duration) {
       // Simple duration matching - you might want to make this more sophisticated
-      filtered = filtered.filter(course => course.duration?.includes(filters.duration.split('-')[0]));
+      filtered = filtered.filter(course => course.duration.includes(filters.duration.split('-')[0]));
     }
 
     setFilteredCourses(filtered);
@@ -206,69 +240,79 @@ export const PublicCataloguePage: React.FC = () => {
     }
   };
   const stats = {
-    totalCourses: courses?.length || 0,
-    totalStudents: courses?.reduce((sum, course) => sum + (course.enrolledCount || 0), 0) || 0,
-    averageRating: courses?.length > 0 
-      ? (courses.reduce((sum, course) => sum + (course.rating || 0), 0) / courses.length).toFixed(1)
-      : '0.0',
-    freeCourses: courses?.filter(course => course.isFree).length || 0
+    totalCourses: courses.length,
+    totalStudents: courses.reduce((sum, course) => sum + course.enrolledCount, 0),
+    averageRating: (courses.reduce((sum, course) => sum + course.rating, 0) / courses.length).toFixed(1),
+    freeCourses: courses.filter(course => course.isFree).length
   };
-if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300 flex items-center justify-center">
-        <div className="text-center text-gray-500">Loading courses...</div>
-      </div>
-    );
+if(isLoading) {
+    return <div className="text-center text-gray-500">Loading courses...</div>;
   } 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-primary-600/20 to-secondary-600/20 border-b border-primary-500/20">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%2523ffffff%22%20fill-opacity%3D%220.02%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
-        
-        <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-display font-bold mb-6">
-              <GradientText>Lab Catalogue</GradientText>
-            </h1>
-            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-              Discover our comprehensive collection of professional training labs and certifications. 
-              Master new skills with expert-led training and hands-on labs.
-            </p>
+      {/* Header with Auth and Cart */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-3xl font-bold">
+            <GradientText>Lab Catalogue</GradientText>
+          </h1>
+        </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <BookOpen className="h-6 w-6 text-primary-400 mr-2" />
-                  <span className="text-2xl font-bold text-white">{stats.totalCourses}</span>
-                </div>
-                <p className="text-sm text-gray-400">Labs</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <Users className="h-6 w-6 text-primary-400 mr-2" />
-                  <span className="text-2xl font-bold text-white">{stats.totalStudents.toLocaleString()}</span>
-                </div>
-                <p className="text-sm text-gray-400">Candidates</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <Award className="h-6 w-6 text-primary-400 mr-2" />
-                  <span className="text-2xl font-bold text-white">{stats.averageRating}</span>
-                </div>
-                <p className="text-sm text-gray-400">Avg Rating</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <TrendingUp className="h-6 w-6 text-primary-400 mr-2" />
-                  <span className="text-2xl font-bold text-white">{stats.freeCourses}</span>
-                </div>
-                <p className="text-sm text-gray-400">Free Labs</p>
-              </div>
+        <div className="flex items-center space-x-4">
+          {/* Cart Button */}
+          <button
+            onClick={() => setIsCartModalOpen(true)}
+            className="relative p-3 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 
+                     hover:from-primary-500/30 hover:to-secondary-500/30
+                     border border-primary-500/20 hover:border-primary-500/40 
+                     rounded-xl transition-all duration-300 group"
+          >
+            <ShoppingCart className="h-6 w-6 text-primary-400 group-hover:text-primary-300" />
+            {cartItems.length > 0 && (
+              <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-red-600 
+                             text-white text-xs rounded-full h-6 w-6 flex items-center justify-center 
+                             font-semibold shadow-lg">
+                {cartItems.length}
+              </span>
+            )}
+          </button>
+
+          {/* Auth Buttons */}
+          {isAuthenticated ? (
+            <div className="flex items-center space-x-3">
+              <span className="text-gray-300 hidden sm:block">Welcome, {user?.name}</span>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 
+                         border border-red-500/20 hover:border-red-500/40 
+                         rounded-lg transition-all duration-300 text-red-300 hover:text-red-200"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </button>
             </div>
-          </div>
+          ) : (
+            <button
+              onClick={handleLogin}
+              className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
+                       hover:from-primary-400 hover:to-secondary-400
+                       rounded-lg transition-all duration-300 text-white font-semibold
+                       shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
+            >
+              <LogIn className="h-5 w-5" />
+              <span>Login</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Hero Section */}
+      <div className="relative py-16 text-center mb-12">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-2xl"></div>
+        <div className="relative z-10">
+          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            Discover and enroll in our comprehensive lab courses designed to enhance your skills
+          </p>
         </div>
       </div>
 
@@ -297,7 +341,7 @@ if (isLoading) {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-gray-400">
-            Showing {filteredCourses?.length || 0} of {courses?.length || 0} Labs
+            Showing {filteredCourses.length} of {courses.length} Labs
           </p>
         </div>
 
@@ -318,6 +362,107 @@ if (isLoading) {
         onSave={handleSaveCourse}
         isLoading={isSaving}
       />
+      {/* Modern Cart Modal */}
+      {isCartModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-dark-200 to-dark-300 rounded-2xl border border-primary-500/20 
+                          max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl shadow-primary-500/10">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-primary-500/20">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 rounded-lg">
+                  <ShoppingCart className="h-6 w-6 text-primary-400" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">My Lab Cart</h2>
+                  <p className="text-gray-400 text-sm">{cartItems.length} item{cartItems.length !== 1 ? 's' : ''} selected</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCartModalOpen(false)}
+                className="p-2 hover:bg-dark-400/50 rounded-lg transition-colors"
+              >
+                <X className="h-6 w-6 text-gray-400 hover:text-white" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              {cartCourses.length === 0 ? (
+                <div className="text-center py-12">
+                  <ShoppingCart className="h-16 w-16 text-gray-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-300 mb-2">Your cart is empty</h3>
+                  <p className="text-gray-500">Add some labs to get started!</p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                  {cartCourses.map(course => (
+                    <div key={course.id} className="flex items-center justify-between p-4 
+                                                   bg-dark-400/30 rounded-xl border border-primary-500/10 
+                                                   hover:border-primary-500/20 transition-colors">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-white mb-1">{course.title}</h4>
+                        <p className="text-sm text-gray-400 line-clamp-2">{course.description}</p>
+                        <div className="flex items-center space-x-4 mt-2">
+                          <span className="text-xs text-primary-400">{course.category}</span>
+                          <span className="text-xs text-gray-500">{course.duration}</span>
+                          <span className="font-semibold text-white">
+                            {course.isFree ? 'Free' : `$${course.price}`}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeFromCart(course.id)}
+                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 
+                                 rounded-lg transition-colors ml-4"
+                        title="Remove from cart"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            {cartCourses.length > 0 && (
+              <div className="p-6 border-t border-primary-500/20 bg-dark-400/20">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-lg font-semibold text-white">
+                    Total: ${cartCourses.reduce((total, course) => total + (course.price || 0), 0)}
+                  </span>
+                  <button
+                    onClick={clearCart}
+                    className="text-sm text-red-400 hover:text-red-300 underline"
+                  >
+                    Clear Cart
+                  </button>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setIsCartModalOpen(false)}
+                    className="flex-1 px-6 py-3 bg-dark-400/50 hover:bg-dark-400/70 
+                             border border-gray-500/20 hover:border-gray-500/40 
+                             rounded-lg transition-all duration-300 text-gray-300 hover:text-white"
+                  >
+                    Continue Shopping
+                  </button>
+                  <button
+                    onClick={proceedToCheckout}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
+                             hover:from-primary-400 hover:to-secondary-400
+                             rounded-lg transition-all duration-300 text-white font-semibold
+                             shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
+                  >
+                    Proceed to Checkout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
