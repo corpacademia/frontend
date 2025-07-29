@@ -28,9 +28,9 @@ interface PublicCatalogueCardProps {
     enrolledCount: number;
     image?: string;
     price?: number;
-    isFree?: boolean;
+    isfree?: boolean;
     admin_id?: string;
-    createdBy?: string;
+    user_id?: string;
   };
   onEdit?: (course: any) => void;
   onDelete?: (courseId: string) => void;
@@ -56,7 +56,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   // Check if current user can edit/delete this lab
   const canEditDelete = () => {
     if (isSuperAdmin) return true;
-    if (isOrgSuperAdmin && (course.admin_id === (currentUser || user)?.id || course.createdBy === (currentUser || user)?.id)) return true;
+    if (isOrgSuperAdmin && (course.admin_id === (currentUser || user)?.id || course?.user_id === (currentUser || user)?.id)) return true;
     return false;
   };
 
@@ -187,7 +187,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
         {/* Price & Action */}
         <div className="flex items-center justify-between mt-auto pt-4 border-t border-red-500/20">
           <div>
-            {course.isFree ? (
+            {course.isfree ? (
               <span className="text-green-400 font-semibold">Free</span>
             ) : (
               <span className="text-white font-semibold">${course.price}</span>

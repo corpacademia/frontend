@@ -112,6 +112,7 @@ export const PublicCataloguePage: React.FC = () => {
   const isSuperAdmin = user?.role === 'superadmin';
   const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
 
+
   useEffect(() => {
     const fetchCatalogues = async () => {
       setIsLoading(true);
@@ -192,10 +193,38 @@ export const PublicCataloguePage: React.FC = () => {
       filtered = filtered.filter(course => course.level === filters.level);
     }
 
-    if (filters.duration) {
-      // Simple duration matching - you might want to make this more sophisticated
-      filtered = filtered.filter(course => course.duration.includes(filters.duration.split('-')[0]));
+   if (filters.duration && filters.duration !== 'Any') {
+  const durationFilter = filters.duration.trim().toLowerCase().replace(/\s+/g, '');
+
+  filtered = filtered.filter(course => {
+    const days = Number(course.duration);
+    if (isNaN(days)) return false;
+
+    if (durationFilter === '1week') {
+      return days >= 1 && days <= 7;
     }
+
+    if (durationFilter === '2weeks') {
+      return days >= 8 && days <= 14;
+    }
+
+    if (durationFilter === '2+weeks' || durationFilter === '2weeks+') {
+      return days >= 15;
+    }
+
+    if (durationFilter.includes('-')) {
+      const [minStr, maxStr] = durationFilter.split('-');
+      const min = parseInt(minStr, 10);
+      const max = parseInt(maxStr, 10);
+      return days >= min && days <= max;
+    }
+
+    // Exact match like "1", "2", etc.
+    const exact = parseInt(durationFilter, 10);
+    return days === exact;
+  });
+}
+
 
     setFilteredCourses(filtered);
   }, [filters, courses]);
