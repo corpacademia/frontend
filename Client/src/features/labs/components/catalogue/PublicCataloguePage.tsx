@@ -4,7 +4,7 @@ import { PublicCatalogueGrid } from './PublicCatalogueGrid';
 import { EditCourseModal } from './EditCourseModal';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { useAuthStore } from '../../../../store/authStore';
-import { Plus, BookOpen, Users, Award, TrendingUp, ShoppingCart, LogOut, LogIn, X } from 'lucide-react';
+import { Plus, BookOpen, Users, Award, TrendingUp, ShoppingCart, LogOut, LogIn, X, Edit } from 'lucide-react';
 import axios from 'axios';
 import { DeleteModal } from '../cloudvm/DeleteModal';
 // Mock data for demonstration - replace with actual API calls
@@ -95,9 +95,10 @@ export const PublicCataloguePage: React.FC = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [cartItems, setCartItems] = useState<string[]>([]);
+  const [cartItems, setCartItems] = useState<any[]>([]);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
-  const [cartCourses, setCartCourses] = useState<any[]>([]);
+  const [isLoadingCart, setIsLoadingCart] = useState(false);
+  const [editingCartItem, setEditingCartItem] = useState<any>(null);
   const [filters, setFilters] = useState({
     search: '',
     category: '',
@@ -115,6 +116,22 @@ export const PublicCataloguePage: React.FC = () => {
   const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
 
 
+  const fetchCartItems = async () => {
+    if (!isAuthenticated) return;
+    
+    setIsLoadingCart(true);
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/getCartItems`);
+      if (response.data.success) {
+        setCartItems(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching cart items:', error);
+    } finally {
+      setIsLoadingCart(false);
+    }
+  };
+
   useEffect(() => {
     const fetchCatalogues = async () => {
       setIsLoading(true);
@@ -130,20 +147,32 @@ export const PublicCataloguePage: React.FC = () => {
       }
     }
     fetchCatalogues();
-        // Initialize cart from localStorage
-    const savedCart = JSON.parse(localStorage.getItem('cartItems') || '[]');
-    setCartItems(savedCart);
-  }, []);
-
-  // Update cart courses when cart items or courses change
-  useEffect(() => {
-    if (cartItems.length > 0 && courses.length > 0) {
-      const cartCoursesData = courses.filter(course => cartItems.includes(course.id));
-      setCartCourses(cartCoursesData);
-    } else {
-      setCartCourses([]);
+    
+    if (isAuthenticated) {
+      fetchCartItems();
     }
-  }, [cartItems, courses]);
+
+    // Listen for cart updates
+    const handleCartUpdate = () => {
+      if (isAuthenticated) {
+        fetchCartItems();
+      }
+    };
+
+    const handleOpenCartModal = () => {
+      setIsCartModalOpen(true);
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('openCartModal', handleOpenCartModal);
+
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('openCartModal', handleOpenCartModal);
+    };
+  }, [isAuthenticated]);
+
+  
 
   const handleLogin = () => {
     window.location.href = '/login';
@@ -154,22 +183,64 @@ export const PublicCataloguePage: React.FC = () => {
     window.location.href = '/';
   };
 
-  const removeFromCart = (courseId: string) => {
-    const updatedCart = cartItems.filter(id => id !== courseId);
-    setCartItems(updatedCart);
-    localStorage.setItem('cartItems', JSON.stringify(updatedCart));
+  const removeFromCart = async (cartItemId: string) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/removeFromCart/${cartItemId}`);
+      if (response.data.success) {
+        setCartItems(prev => prev.filter(item => item.id !== cartItemId));
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    }
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-    localStorage.removeItem('cartItems');
+  const clearCart = async () => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/clearCart`);
+      if (response.data.success) {
+        setCartItems([]);
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    }
   };
 
-  const proceedToCheckout = () => {
+  const updateCartItem = async (cartItemId: string, updates: { duration?: string; quantity?: number }) => {
+    try {
+      const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/updateCartItem/${cartItemId}`, updates);
+      if (response.data.success) {
+        setCartItems(prev => prev.map(item => 
+          item.id === cartItemId ? { ...item, ...updates } : item
+        ));
+        setEditingCartItem(null);
+      }
+    } catch (error) {
+      console.error('Error updating cart item:', error);
+    }
+  };
+
+  const proceedToCheckout = async () => {
     if (cartItems.length === 0) return;
-    const selectedIds = cartItems.join(',');
-    const checkoutUrl = `${import.meta.env.VITE_BACKEND_URL}/checkout?ids=${selectedIds}`;
-    window.location.href = checkoutUrl;
+    
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/checkout`, {
+        cartItems: cartItems.map(item => ({
+          lab_id: item.lab_id,
+          duration: item.duration,
+          quantity: item.quantity,
+          price: item.price
+        }))
+      });
+      
+      if (response.data.success) {
+        // Handle successful checkout
+        alert('Checkout successful! Redirecting to My Labs...');
+        window.location.href = '/dashboard/mylabs';
+      }
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      alert('Checkout failed. Please try again.');
+    }
   };
 
   // Filter courses based on current filters
@@ -324,7 +395,7 @@ if(isLoading) {
                 <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-red-600 
                                text-white text-xs rounded-full h-6 w-6 flex items-center justify-center 
                                font-semibold shadow-lg">
-                  {cartItems.length}
+                  {cartItems.reduce((total, item) => total + item.quantity, 0)}
                 </span>
               )}
             </button>
@@ -445,7 +516,12 @@ if(isLoading) {
 
             {/* Modal Content */}
             <div className="p-6">
-              {cartCourses.length === 0 ? (
+              {isLoadingCart ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin h-8 w-8 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading cart...</p>
+                </div>
+              ) : cartItems.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingCart className="h-16 w-16 text-gray-500 mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-gray-300 mb-2">Your cart is empty</h3>
@@ -453,29 +529,93 @@ if(isLoading) {
                 </div>
               ) : (
                 <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                  {cartCourses.map(course => (
-                    <div key={course.id} className="flex items-center justify-between p-4 
-                                                   bg-dark-400/30 rounded-xl border border-primary-500/10 
+                  {cartItems.map(item => (
+                    <div key={item.id} className="p-4 bg-dark-400/30 rounded-xl border border-primary-500/10 
                                                    hover:border-primary-500/20 transition-colors">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-white mb-1">{course.title}</h4>
-                        <p className="text-sm text-gray-400 line-clamp-2">{course.description}</p>
-                        <div className="flex items-center space-x-4 mt-2">
-                          <span className="text-xs text-primary-400">{course.category}</span>
-                          <span className="text-xs text-gray-500">{course.duration}</span>
-                          <span className="font-semibold text-white">
-                            {course.isFree ? 'Free' : `$${course.price}`}
-                          </span>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-white mb-1">{item.lab_title || item.title}</h4>
+                          <p className="text-sm text-gray-400 line-clamp-2">{item.lab_description || item.description}</p>
+                          
+                          {editingCartItem?.id === item.id ? (
+                            <div className="mt-3 space-y-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-xs text-gray-400 mb-1">Duration (days)</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    defaultValue={item.duration}
+                                    onChange={(e) => setEditingCartItem({...editingCartItem, duration: e.target.value})}
+                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
+                                             text-white text-sm focus:border-primary-500 focus:outline-none"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-400 mb-1">Quantity</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    defaultValue={item.quantity}
+                                    onChange={(e) => setEditingCartItem({...editingCartItem, quantity: parseInt(e.target.value)})}
+                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
+                                             text-white text-sm focus:border-primary-500 focus:outline-none"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => updateCartItem(item.id, {
+                                    duration: editingCartItem.duration || item.duration,
+                                    quantity: editingCartItem.quantity || item.quantity
+                                  })}
+                                  className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-300 
+                                           rounded text-sm transition-colors"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={() => setEditingCartItem(null)}
+                                  className="px-3 py-1 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 
+                                           rounded text-sm transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center space-x-4 mt-2">
+                              <span className="text-xs text-primary-400">{item.lab_category || item.category}</span>
+                              <span className="text-xs text-gray-500">{item.duration} days</span>
+                              <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
+                              <span className="font-semibold text-white">
+                                ${(item.price * item.quantity).toFixed(2)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center space-x-2 ml-4">
+                          {editingCartItem?.id !== item.id && (
+                            <button
+                              onClick={() => setEditingCartItem(item)}
+                              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 
+                                       rounded-lg transition-colors"
+                              title="Edit item"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 
+                                     rounded-lg transition-colors"
+                            title="Remove from cart"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
                         </div>
                       </div>
-                      <button
-                        onClick={() => removeFromCart(course.id)}
-                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 
-                                 rounded-lg transition-colors ml-4"
-                        title="Remove from cart"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -483,12 +623,17 @@ if(isLoading) {
             </div>
 
             {/* Modal Footer */}
-            {cartCourses.length > 0 && (
+            {cartItems.length > 0 && !isLoadingCart && (
               <div className="p-6 border-t border-primary-500/20 bg-dark-400/20">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-lg font-semibold text-white">
-                    Total: ${cartCourses.reduce((total, course) => total + (course.price || 0), 0)}
-                  </span>
+                  <div>
+                    <span className="text-lg font-semibold text-white">
+                      Total: ${cartItems.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2)}
+                    </span>
+                    <p className="text-sm text-gray-400">
+                      {cartItems.reduce((total, item) => total + item.quantity, 0)} item(s)
+                    </p>
+                  </div>
                   <button
                     onClick={clearCart}
                     className="text-sm text-red-400 hover:text-red-300 underline"

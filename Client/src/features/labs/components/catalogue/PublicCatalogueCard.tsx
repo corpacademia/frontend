@@ -83,33 +83,35 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!isAuthenticated) {
       // Redirect to login/signup
       window.location.href = '/auth/login';
     } else {
-      // Add to cart logic
-      setIsInCart(true);
-      console.log('Added to cart:', course.id);
+      try {
+        // Add to cart via backend API
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/addToCart`, {
+          lab_id: course.id,
+          duration: course.duration,
+          quantity: 1,
+          price: course.price || 0
+        });
+        
+        if (response.data.success) {
+          setIsInCart(true);
+          console.log('Added to cart:', course.id);
+          // Trigger cart update in parent component
+          window.dispatchEvent(new CustomEvent('cartUpdated'));
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+      }
     }
   };
 
   const handleGoToCart = () => {
-    // Get existing cart items from localStorage or initialize empty array
-    const existingCart = JSON.parse(localStorage.getItem('cartItems') || '[]');
-    
-    // Add current course ID if not already in cart
-    if (!existingCart.includes(course.id)) {
-      existingCart.push(course.id);
-      localStorage.setItem('cartItems', JSON.stringify(existingCart));
-    }
-    
-    // Create comma-separated list of IDs
-    const selectedIds = existingCart.join(',');
-    
-    // Open checkout link with selected IDs - you can modify this URL as needed
-    const checkoutUrl = `${import.meta.env.VITE_BACKEND_URL}/checkout?ids=${selectedIds}`;
-    window.location.href = checkoutUrl;
+    // Just trigger the cart modal to open
+    window.dispatchEvent(new CustomEvent('openCartModal'));
   };
 
   return (
