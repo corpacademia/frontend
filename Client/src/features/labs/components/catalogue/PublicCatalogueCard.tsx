@@ -14,6 +14,7 @@ import {
 import axios from 'axios';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { useAuthStore } from '../../../../store/authStore';
+import { DeleteModal } from '../cloudvm/DeleteModal';
 
 interface PublicCatalogueCardProps {
   course: {
@@ -36,6 +37,8 @@ interface PublicCatalogueCardProps {
   onDelete?: (courseId: string) => void;
   onView?: (course: any) => void;
   currentUser?: any;
+  isDeleting?: boolean;
+  isDeleteModalOpen?: boolean;
 }
 
 export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({ 
@@ -43,12 +46,15 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   onEdit, 
   onDelete, 
   onView,
-  currentUser 
+  currentUser,
+  isDeleting = false,
+  isDeleteModalOpen = false
 }) => {
   
   const { user, isAuthenticated } = useAuthStore();
   const [isHovered, setIsHovered] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
+  const [isDeleteModalOpenn, setIsDeleteModalOpen] = useState(false);
   
   const isSuperAdmin = (currentUser || user)?.role === 'superadmin';
   const isOrgSuperAdmin = (currentUser || user)?.role === 'orgsuperadmin';
@@ -107,6 +113,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   };
 
   return (
+    <>
     <div 
       className="relative group bg-gradient-to-br from-red-600/20 to-red-800/20 backdrop-blur-sm 
                  rounded-xl border border-red-500/20 hover:border-red-400/40 
@@ -131,7 +138,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
             <Edit className="h-4 w-4 text-blue-300" />
           </button>
           <button
-            onClick={() => onDelete(course.id)}
+            onClick={() => setIsDeleteModalOpen(true) }
             className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors"
             title="Delete Lab"
           >
@@ -139,7 +146,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
           </button>
         </div>
       )}
-
+     
       <div className="relative p-6 h-full flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
@@ -233,5 +240,13 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
         </div>
       </div>
     </div>
+             {/* Delete Confirmation Modal */}
+      <DeleteModal
+        isOpen={isDeleteModalOpenn}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={onDelete ? () => onDelete(course.id) : undefined}
+        isDeleting={isDeleting}
+      />
+    </>
   );
 };

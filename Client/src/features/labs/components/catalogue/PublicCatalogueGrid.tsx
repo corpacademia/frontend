@@ -9,6 +9,8 @@ interface PublicCatalogueGridProps {
   onDelete?: (courseId: string) => void;
   onView?: (course: any) => void;
   currentUser?: any;
+  isDeleteModalOpen?: boolean;
+  isDeleting?: boolean;
 }
 
 export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({ 
@@ -17,7 +19,9 @@ export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({
   onEdit, 
   onDelete, 
   onView,
-  currentUser
+  currentUser,
+  isDeleting = false,
+  isDeleteModalOpen = false
 }) => {
   if (isLoading) {
     return (
@@ -54,6 +58,8 @@ export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({
           onDelete={onDelete}
           onView={onView}
           currentUser={currentUser}
+          isDeleting={isDeleting}
+          isDeleteModalOpen={isDeleteModalOpen}
         />
       ))}
     </div>

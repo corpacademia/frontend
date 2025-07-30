@@ -6,88 +6,88 @@ import { GradientText } from '../../../../components/ui/GradientText';
 import { useAuthStore } from '../../../../store/authStore';
 import { Plus, BookOpen, Users, Award, TrendingUp, ShoppingCart, LogOut, LogIn, X } from 'lucide-react';
 import axios from 'axios';
-
+import { DeleteModal } from '../cloudvm/DeleteModal';
 // Mock data for demonstration - replace with actual API calls
-const mockCourses = [
-  {
-    id: '1',
-    title: 'Administering Windows Server Hybrid Core Infrastructure',
-    description: 'Learn to administer and manage Windows Server hybrid environments with hands-on labs and real-world scenarios.',
-    provider: 'Microsoft',
-    duration: '4 days',
-    level: 'Intermediate',
-    category: 'Cloud Computing',
-    rating: 4.5,
-    enrolledCount: 1234,
-    price: 299,
-    isFree: false
-  },
-  {
-    id: '2',
-    title: 'AIOps Foundation Certification',
-    description: 'Master the fundamentals of AIOps and learn how to implement intelligent operations in your organization.',
-    provider: 'DevOps Institute',
-    duration: '2 days',
-    level: 'Intermediate',
-    category: 'DevOps',
-    rating: 4.3,
-    enrolledCount: 856,
-    price: 199,
-    isFree: false
-  },
-  {
-    id: '3',
-    title: 'Ansible Training',
-    description: 'Comprehensive Ansible training covering automation, configuration management, and orchestration.',
-    provider: 'Learning Tree',
-    duration: '2 days',
-    level: 'Foundation',
-    category: 'DevOps',
-    rating: 4.7,
-    enrolledCount: 2341,
-    price: 0,
-    isFree: true
-  },
-  {
-    id: '4',
-    title: 'Automating Administration with PowerShell',
-    description: 'Learn to automate Windows administration tasks using PowerShell scripting and best practices.',
-    provider: 'Microsoft',
-    duration: '5 days',
-    level: 'Intermediate',
-    category: 'Development',
-    rating: 4.6,
-    enrolledCount: 987,
-    price: 399,
-    isFree: false
-  },
-  {
-    id: '5',
-    title: 'Azure DevOps Engineer',
-    description: 'Become proficient in Azure DevOps services for CI/CD, infrastructure as code, and project management.',
-    provider: 'Microsoft',
-    duration: '3 days',
-    level: 'Intermediate',
-    category: 'Cloud Computing',
-    rating: 4.8,
-    enrolledCount: 1567,
-    price: 349,
-    isFree: false
-  },
-  {
-    id: '6',
-    title: 'Certified Agile Service Manager',
-    description: 'Learn agile service management principles and practices for modern IT organizations.',
-    provider: 'DevOps Institute',
-    duration: '2 days',
-    level: 'Intermediate',
-    category: 'Management',
-    rating: 4.4,
-    enrolledCount: 743,
-    price: 249,
-    isFree: false
-  }
-];
+// const mockCourses = [
+//   {
+//     id: '1',
+//     title: 'Administering Windows Server Hybrid Core Infrastructure',
+//     description: 'Learn to administer and manage Windows Server hybrid environments with hands-on labs and real-world scenarios.',
+//     provider: 'Microsoft',
+//     duration: '4 days',
+//     level: 'Intermediate',
+//     category: 'Cloud Computing',
+//     rating: 4.5,
+//     enrolledCount: 1234,
+//     price: 299,
+//     isFree: false
+//   },
+//   {
+//     id: '2',
+//     title: 'AIOps Foundation Certification',
+//     description: 'Master the fundamentals of AIOps and learn how to implement intelligent operations in your organization.',
+//     provider: 'DevOps Institute',
+//     duration: '2 days',
+//     level: 'Intermediate',
+//     category: 'DevOps',
+//     rating: 4.3,
+//     enrolledCount: 856,
+//     price: 199,
+//     isFree: false
+//   },
+//   {
+//     id: '3',
+//     title: 'Ansible Training',
+//     description: 'Comprehensive Ansible training covering automation, configuration management, and orchestration.',
+//     provider: 'Learning Tree',
+//     duration: '2 days',
+//     level: 'Foundation',
+//     category: 'DevOps',
+//     rating: 4.7,
+//     enrolledCount: 2341,
+//     price: 0,
+//     isFree: true
+//   },
+//   {
+//     id: '4',
+//     title: 'Automating Administration with PowerShell',
+//     description: 'Learn to automate Windows administration tasks using PowerShell scripting and best practices.',
+//     provider: 'Microsoft',
+//     duration: '5 days',
+//     level: 'Intermediate',
+//     category: 'Development',
+//     rating: 4.6,
+//     enrolledCount: 987,
+//     price: 399,
+//     isFree: false
+//   },
+//   {
+//     id: '5',
+//     title: 'Azure DevOps Engineer',
+//     description: 'Become proficient in Azure DevOps services for CI/CD, infrastructure as code, and project management.',
+//     provider: 'Microsoft',
+//     duration: '3 days',
+//     level: 'Intermediate',
+//     category: 'Cloud Computing',
+//     rating: 4.8,
+//     enrolledCount: 1567,
+//     price: 349,
+//     isFree: false
+//   },
+//   {
+//     id: '6',
+//     title: 'Certified Agile Service Manager',
+//     description: 'Learn agile service management principles and practices for modern IT organizations.',
+//     provider: 'DevOps Institute',
+//     duration: '2 days',
+//     level: 'Intermediate',
+//     category: 'Management',
+//     rating: 4.4,
+//     enrolledCount: 743,
+//     price: 249,
+//     isFree: false
+//   }
+// ];
 
 export const PublicCataloguePage: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -108,6 +108,8 @@ export const PublicCataloguePage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const isSuperAdmin = user?.role === 'superadmin';
   const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
@@ -239,9 +241,25 @@ export const PublicCataloguePage: React.FC = () => {
   };
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (window.confirm('Are you sure you want to delete this course?')) {
-      setCourses(prev => prev.filter(course => course.id !== courseId));
+    try {
+      setIsDeleting(true);
+      const update = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteLabCatalogue/${courseId}`);
+      if (update.data.success) {
+        setCourses(prev => prev.filter(course => course.id !== courseId));
+        setFilteredCourses(prev => prev.filter(course => course.id !== courseId));
+      }
+      else{
+
+        console.error('Failed to delete course:', update.data.message);
+      }
+    } catch (error) {
+      console.error('Error deleting course:', error);
     }
+    finally{
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+    }
+    
   };
 
   const handleAddNewCourse = () => {
@@ -254,9 +272,12 @@ export const PublicCataloguePage: React.FC = () => {
     try {
       if (selectedCourse) {
         // Update existing course
-        setCourses(prev => prev.map(course =>
-          course.id === selectedCourse.id ? { ...courseData, id: selectedCourse.id } : course
-        ));
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateLabCatalogue`, courseData);
+        if (response.data.success) {
+          setCourses(prev => prev.map(course => course.id === selectedCourse.id ? response.data.data : course));
+          setFilteredCourses(prev => prev.map(course => course.id === selectedCourse.id ? response.data.data : course));
+        }
+        
       } else {
         // Add new course
         const newCourse = { ...courseData, id: Date.now().toString() };
@@ -384,6 +405,8 @@ if(isLoading) {
           onEdit={(isSuperAdmin || isOrgSuperAdmin) ? handleEditCourse : undefined}
           onDelete={(isSuperAdmin || isOrgSuperAdmin) ? handleDeleteCourse : undefined}
           currentUser={user}
+          isDeleting={isDeleting}
+          isDeleteModalOpen={isDeleteModalOpen}
         />
       </div>
 
@@ -395,6 +418,7 @@ if(isLoading) {
         onSave={handleSaveCourse}
         isLoading={isSaving}
       />
+     
       {/* Modern Cart Modal */}
       {isCartModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -493,6 +517,7 @@ if(isLoading) {
                 </div>
               </div>
             )}
+           
           </div>
         </div>
       )}
