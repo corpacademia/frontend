@@ -90,16 +90,18 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
     } else {
       try {
         // Add to cart via backend API
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/addToCart`, {
-          lab_id: course.id,
-          duration: course.duration,
-          quantity: 1,
-          price: course.price || 0
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/addToCart`, {
+          labId: course.id, 
+          name: course.title, 
+          description: course.description, 
+          duration: course.duration, 
+          price: course.price || 0, 
+          quantity: 1, 
+          userId: user?.id || currentUser?.id
         });
         
         if (response.data.success) {
           setIsInCart(true);
-          console.log('Added to cart:', course.id);
           // Trigger cart update in parent component
           window.dispatchEvent(new CustomEvent('cartUpdated'));
         }

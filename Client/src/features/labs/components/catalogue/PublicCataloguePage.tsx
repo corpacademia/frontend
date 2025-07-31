@@ -121,7 +121,7 @@ export const PublicCataloguePage: React.FC = () => {
     
     setIsLoadingCart(true);
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/getCartItems`);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCartItems/${user?.id || currentUser?.id}`);
       if (response.data.success) {
         setCartItems(response.data.data);
       }
@@ -185,7 +185,7 @@ export const PublicCataloguePage: React.FC = () => {
 
   const removeFromCart = async (cartItemId: string) => {
     try {
-      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/removeFromCart/${cartItemId}`);
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/removeFromCart/${cartItemId}`);
       if (response.data.success) {
         setCartItems(prev => prev.filter(item => item.id !== cartItemId));
       }
@@ -196,7 +196,7 @@ export const PublicCataloguePage: React.FC = () => {
 
   const clearCart = async () => {
     try {
-      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/clearCart`);
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/clearCart/${user?.id || currentUser?.id}`);
       if (response.data.success) {
         setCartItems([]);
       }
@@ -207,7 +207,7 @@ export const PublicCataloguePage: React.FC = () => {
 
   const updateCartItem = async (cartItemId: string, updates: { duration?: string; quantity?: number }) => {
     try {
-      const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/updateCartItem/${cartItemId}`, updates);
+      const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateCartItem/${cartItemId}`, updates);
       if (response.data.success) {
         setCartItems(prev => prev.map(item => 
           item.id === cartItemId ? { ...item, ...updates } : item
