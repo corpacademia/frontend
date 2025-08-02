@@ -14,7 +14,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   onClose,
   userId
 }) => {
-  const [selectedLab, setSelectedLab] = useState<string>('');
+  const [selectedLab, setSelectedLab] = useState<string>(''); 
   const [duration, setDuration] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);

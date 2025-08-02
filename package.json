@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@stripe/stripe-js": "^7.7.0",
     "react-split": "^2.0.14"
   }
 }

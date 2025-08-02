@@ -11,6 +11,7 @@ interface PublicCatalogueGridProps {
   currentUser?: any;
   isDeleteModalOpen?: boolean;
   isDeleting?: boolean;
+  cartItems?:any;
 }
 
 export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({ 
@@ -21,7 +22,8 @@ export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({
   onView,
   currentUser,
   isDeleting = false,
-  isDeleteModalOpen = false
+  isDeleteModalOpen = false,
+  cartItems
 }) => {
   if (isLoading) {
     return (
@@ -60,6 +62,7 @@ export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({
           currentUser={currentUser}
           isDeleting={isDeleting}
           isDeleteModalOpen={isDeleteModalOpen}
+          cartItems={cartItems}
         />
       ))}
     </div>

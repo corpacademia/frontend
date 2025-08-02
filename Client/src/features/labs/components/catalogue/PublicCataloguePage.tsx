@@ -7,87 +7,11 @@ import { useAuthStore } from '../../../../store/authStore';
 import { Plus, BookOpen, Users, Award, TrendingUp, ShoppingCart, LogOut, LogIn, X, Edit } from 'lucide-react';
 import axios from 'axios';
 import { DeleteModal } from '../cloudvm/DeleteModal';
-// Mock data for demonstration - replace with actual API calls
-// const mockCourses = [
-//   {
-//     id: '1',
-//     title: 'Administering Windows Server Hybrid Core Infrastructure',
-//     description: 'Learn to administer and manage Windows Server hybrid environments with hands-on labs and real-world scenarios.',
-//     provider: 'Microsoft',
-//     duration: '4 days',
-//     level: 'Intermediate',
-//     category: 'Cloud Computing',
-//     rating: 4.5,
-//     enrolledCount: 1234,
-//     price: 299,
-//     isFree: false
-//   },
-//   {
-//     id: '2',
-//     title: 'AIOps Foundation Certification',
-//     description: 'Master the fundamentals of AIOps and learn how to implement intelligent operations in your organization.',
-//     provider: 'DevOps Institute',
-//     duration: '2 days',
-//     level: 'Intermediate',
-//     category: 'DevOps',
-//     rating: 4.3,
-//     enrolledCount: 856,
-//     price: 199,
-//     isFree: false
-//   },
-//   {
-//     id: '3',
-//     title: 'Ansible Training',
-//     description: 'Comprehensive Ansible training covering automation, configuration management, and orchestration.',
-//     provider: 'Learning Tree',
-//     duration: '2 days',
-//     level: 'Foundation',
-//     category: 'DevOps',
-//     rating: 4.7,
-//     enrolledCount: 2341,
-//     price: 0,
-//     isFree: true
-//   },
-//   {
-//     id: '4',
-//     title: 'Automating Administration with PowerShell',
-//     description: 'Learn to automate Windows administration tasks using PowerShell scripting and best practices.',
-//     provider: 'Microsoft',
-//     duration: '5 days',
-//     level: 'Intermediate',
-//     category: 'Development',
-//     rating: 4.6,
-//     enrolledCount: 987,
-//     price: 399,
-//     isFree: false
-//   },
-//   {
-//     id: '5',
-//     title: 'Azure DevOps Engineer',
-//     description: 'Become proficient in Azure DevOps services for CI/CD, infrastructure as code, and project management.',
-//     provider: 'Microsoft',
-//     duration: '3 days',
-//     level: 'Intermediate',
-//     category: 'Cloud Computing',
-//     rating: 4.8,
-//     enrolledCount: 1567,
-//     price: 349,
-//     isFree: false
-//   },
-//   {
-//     id: '6',
-//     title: 'Certified Agile Service Manager',
-//     description: 'Learn agile service management principles and practices for modern IT organizations.',
-//     provider: 'DevOps Institute',
-//     duration: '2 days',
-//     level: 'Intermediate',
-//     category: 'Management',
-//     rating: 4.4,
-//     enrolledCount: 743,
-//     price: 249,
-//     isFree: false
-//   }
-// ];
+
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
+
 
 export const PublicCataloguePage: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -123,7 +47,10 @@ export const PublicCataloguePage: React.FC = () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCartItems/${user?.id || currentUser?.id}`);
       if (response.data.success) {
-        setCartItems(response.data.data);
+        setCartItems(response.data.data.map((cart:any)=>({
+          ...cart,
+           defaultDuration: cart.duration}
+        )));
       }
     } catch (error) {
       console.error('Error fetching cart items:', error);
@@ -205,7 +132,7 @@ export const PublicCataloguePage: React.FC = () => {
     }
   };
 
-  const updateCartItem = async (cartItemId: string, updates: { duration?: string; quantity?: number }) => {
+  const updateCartItem = async (cartItemId: string, updates: { duration?: string; quantity?: number,defaultDuration?:number,price?:number }) => {
     try {
       const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateCartItem/${cartItemId}`, updates);
       if (response.data.success) {
@@ -219,29 +146,34 @@ export const PublicCataloguePage: React.FC = () => {
     }
   };
 
-  const proceedToCheckout = async () => {
-    if (cartItems.length === 0) return;
-    
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cart/checkout`, {
-        cartItems: cartItems.map(item => ({
-          lab_id: item.lab_id,
-          duration: item.duration,
-          quantity: item.quantity,
-          price: item.price
-        }))
-      });
-      
-      if (response.data.success) {
-        // Handle successful checkout
-        alert('Checkout successful! Redirecting to My Labs...');
-        window.location.href = '/dashboard/mylabs';
-      }
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      alert('Checkout failed. Please try again.');
+
+const proceedToCheckout = async () => {
+  if (cartItems.length === 0) return;
+
+  try {
+    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/create-checkout-session`, {
+      userId: user?.id || currentUser?.id,
+      cartItems: cartItems.map(item => ({
+        lab_id: item.labid,
+        name: item.name,         // required for Stripe line item
+        quantity: item.quantity,
+        price: item.price,
+        duration:item.duration
+      }))
+    });
+
+    const sessionId = response.data.sessionId;
+
+    const stripe = await stripePromise;
+    if (stripe) {
+
+      await stripe.redirectToCheckout({ sessionId });
     }
-  };
+  } catch (error) {
+    console.error('Error during Stripe checkout:', error);
+    alert('Checkout failed. Please try again.');
+  }
+};
 
   // Filter courses based on current filters
   useEffect(() => {
@@ -395,7 +327,7 @@ if(isLoading) {
                 <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-red-600 
                                text-white text-xs rounded-full h-6 w-6 flex items-center justify-center 
                                font-semibold shadow-lg">
-                  {cartItems.reduce((total, item) => total + item.quantity, 0)}
+                  {cartItems.reduce((total, item) => total + Number(item.quantity), 0)}
                 </span>
               )}
             </button>
@@ -478,6 +410,7 @@ if(isLoading) {
           currentUser={user}
           isDeleting={isDeleting}
           isDeleteModalOpen={isDeleteModalOpen}
+          cartItems={cartItems}
         />
       </div>
 
@@ -503,7 +436,7 @@ if(isLoading) {
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white">My Lab Cart</h2>
-                  <p className="text-gray-400 text-sm">{cartItems.length} item{cartItems.length !== 1 ? 's' : ''} selected</p>
+                  <p className="text-gray-400 text-sm">{Number(cartItems.length)} item{cartItems.length !== 1 ? 's' : ''} selected</p>
                 </div>
               </div>
               <button
@@ -534,7 +467,7 @@ if(isLoading) {
                                                    hover:border-primary-500/20 transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h4 className="font-semibold text-white mb-1">{item.lab_title || item.title}</h4>
+                          <h4 className="font-semibold text-white mb-1">{item.name || item.title}</h4>
                           <p className="text-sm text-gray-400 line-clamp-2">{item.lab_description || item.description}</p>
                           
                           {editingCartItem?.id === item.id ? (
@@ -567,7 +500,9 @@ if(isLoading) {
                                 <button
                                   onClick={() => updateCartItem(item.id, {
                                     duration: editingCartItem.duration || item.duration,
-                                    quantity: editingCartItem.quantity || item.quantity
+                                    quantity: editingCartItem.quantity || item.quantity,
+                                    defaultDuration : item.defaultDuration || 1,
+                                    price:item.price
                                   })}
                                   className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-300 
                                            rounded text-sm transition-colors"
@@ -588,9 +523,20 @@ if(isLoading) {
                               <span className="text-xs text-primary-400">{item.lab_category || item.category}</span>
                               <span className="text-xs text-gray-500">{item.duration} days</span>
                               <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
-                              <span className="font-semibold text-white">
-                                ${(item.price * item.quantity).toFixed(2)}
-                              </span>
+                              {(() => {
+                                  const defaultDuration = item.defaultDuration || 1;
+                                  const currentDuration = item.duration || defaultDuration;
+
+                                  const adjustedPricePerUnit = item.price * (currentDuration / defaultDuration);
+                                  const totalPrice = adjustedPricePerUnit * item.quantity;
+
+                                  return (
+                                    <span className="font-semibold text-white">
+                                      ₹{totalPrice.toFixed(2)}
+                                    </span>
+                                  );
+                                })()}
+
                             </div>
                           )}
                         </div>
@@ -627,11 +573,17 @@ if(isLoading) {
               <div className="p-6 border-t border-primary-500/20 bg-dark-400/20">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <span className="text-lg font-semibold text-white">
-                      Total: ${cartItems.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2)}
-                    </span>
+                   <span className="text-lg font-semibold text-white">
+                    Total: ₹{cartItems.reduce((total, item) => {
+                      const defaultDuration = item.defaultDuration || 1;
+                      const currentDuration = item.duration || defaultDuration;
+                      const adjustedPrice = item.price * (currentDuration / defaultDuration);
+                      return total + adjustedPrice * item.quantity;
+                    }, 0).toFixed(2)}
+                  </span>
+
                     <p className="text-sm text-gray-400">
-                      {cartItems.reduce((total, item) => total + item.quantity, 0)} item(s)
+                      {cartItems.reduce((total, item) => total + Number(item.quantity), 0)} item(s)
                     </p>
                   </div>
                   <button

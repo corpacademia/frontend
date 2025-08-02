@@ -39,6 +39,7 @@ interface PublicCatalogueCardProps {
   currentUser?: any;
   isDeleting?: boolean;
   isDeleteModalOpen?: boolean;
+  cartItems?:any;
 }
 
 export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({ 
@@ -48,7 +49,8 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   onView,
   currentUser,
   isDeleting = false,
-  isDeleteModalOpen = false
+  isDeleteModalOpen = false,
+  cartItems
 }) => {
   
   const { user, isAuthenticated } = useAuthStore();
@@ -65,6 +67,10 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
     if (isOrgSuperAdmin && (course.admin_id === (currentUser || user)?.id || course?.user_id === (currentUser || user)?.id)) return true;
     return false;
   };
+
+ const checkCartExist = (labid: string): boolean => {
+  return !!cartItems.find((course: any) => course.labid === labid);
+};
 
   const getLevelColor = (level: string) => {
     switch (level.toLowerCase()) {
@@ -217,7 +223,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
               </button>
             )}
             
-            {!isInCart ? (
+            {!isInCart && !checkCartExist(course.id) ? (
               <button
                 onClick={handleAddToCart}
                 className="px-4 py-2 bg-gradient-to-r from-primary-500 to-secondary-500
@@ -226,7 +232,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
                          flex items-center space-x-2 shadow-lg shadow-primary-500/20"
               >
                 <Play className="h-4 w-4" />
-                <span>{isAuthenticated ? 'Add to Cart' : 'Login to Add'}</span>
+                <span>{isAuthenticated  ? 'Add to Cart' : 'Login to Add'}</span>
               </button>
             ) : (
               <button
