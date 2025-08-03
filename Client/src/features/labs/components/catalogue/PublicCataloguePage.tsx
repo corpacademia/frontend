@@ -151,6 +151,7 @@ const proceedToCheckout = async () => {
   if (cartItems.length === 0) return;
 
   try {
+ console.log(courses)
     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/create-checkout-session`, {
       userId: user?.id || currentUser?.id,
       cartItems: cartItems.map(item => ({
@@ -158,7 +159,10 @@ const proceedToCheckout = async () => {
         name: item.name,         // required for Stripe line item
         quantity: item.quantity,
         price: item.price,
-        duration:item.duration
+        duration:item.duration,
+        level:courses.find((course)=>course.id === item.labid).level,
+        category:courses.find((course)=>course.id === item.labid).category,
+        by:courses.find((course)=>course.id === item.labid).provider
       }))
     });
 
