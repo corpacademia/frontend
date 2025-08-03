@@ -386,7 +386,7 @@ if(isLoading) {
       )}
 
       {/* Main Content */}
-      <div className={`${isFromDashboard ? 'container mx-auto px-4 sm:px-6 lg:px-8' : 'container mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
+      <div className={`${isFromDashboard ? '' : 'container mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}></div>
         
         {(isSuperAdmin || isOrgSuperAdmin) && (
           <div className="flex justify-between items-center mb-8">
