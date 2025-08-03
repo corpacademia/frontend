@@ -373,28 +373,6 @@ if(isLoading) {
       </div>
       )}
 
-      {/* Dashboard Cart Button - Show only when from dashboard */}
-      {isFromDashboard && (
-        <div className="flex justify-end p-4">
-          <button
-            onClick={() => setIsCartModalOpen(true)}
-            className="relative p-3 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 
-                     hover:from-primary-500/30 hover:to-secondary-500/30
-                     border border-primary-500/20 hover:border-primary-500/40 
-                     rounded-xl transition-all duration-300 group"
-          >
-            <ShoppingCart className="h-6 w-6 text-primary-400 group-hover:text-primary-300" />
-            {cartItems.length > 0 && (
-              <span className="absolute -top-2 -right-2 bg-gradient-to-r from-primary-500 to-secondary-500 
-                             text-white text-xs rounded-full h-6 w-6 flex items-center justify-center 
-                             font-semibold shadow-lg shadow-primary-500/20">
-                {cartItems.reduce((total, item) => total + Number(item.quantity), 0)}
-              </span>
-            )}
-          </button>
-        </div>
-      )}
-
       {/* Hero Section - Only show when not from dashboard */}
       {!isFromDashboard && (
       <div className="relative py-16 text-center mb-12">
@@ -408,7 +386,7 @@ if(isLoading) {
       )}
 
       {/* Main Content */}
-      <div className={`${isFromDashboard ? 'container mx-auto px-4 sm:px-6 lg:px-8 py-8' : 'container mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
+      <div className={`${isFromDashboard ? 'container mx-auto px-4 sm:px-6 lg:px-8' : 'container mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
         
         {(isSuperAdmin || isOrgSuperAdmin) && (
           <div className="flex justify-between items-center mb-8">
