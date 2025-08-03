@@ -386,10 +386,10 @@ if(isLoading) {
       )}
 
       {/* Main Content */}
-      <div className={`${isFromDashboard ? 'container mx-auto px-4 sm:px-6 lg:px-8' : 'container mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
+      <div className={`${isFromDashboard ? 'px-0' : 'container mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
         
         {(isSuperAdmin || isOrgSuperAdmin) && (
-          <div className="flex justify-between items-center mb-8">
+          <div className={`flex justify-between items-center mb-8 ${isFromDashboard ? 'px-6' : ''}`}>
             <h2 className="text-2xl font-bold text-white">Manage Labs</h2>
             <button
               onClick={handleAddNewCourse}
@@ -402,29 +402,33 @@ if(isLoading) {
         )}
 
         {/* Filters */}
-        <PublicCatalogueFilters
-          onFilterChange={handleFilterChange}
-          filters={filters}
-        />
+        <div className={isFromDashboard ? 'px-6' : ''}>
+          <PublicCatalogueFilters
+            onFilterChange={handleFilterChange}
+            filters={filters}
+          />
 
-        {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-gray-400">
-            Showing {filteredCourses.length} of {courses.length} Labs
-          </p>
+          {/* Results Count */}
+          <div className="mb-6">
+            <p className="text-gray-400">
+              Showing {filteredCourses.length} of {courses.length} Labs
+            </p>
+          </div>
         </div>
 
         {/* Course Grid */}
-        <PublicCatalogueGrid
-          courses={filteredCourses}
-          isLoading={isLoading}
-          onEdit={(isSuperAdmin || isOrgSuperAdmin) ? handleEditCourse : undefined}
-          onDelete={(isSuperAdmin || isOrgSuperAdmin) ? handleDeleteCourse : undefined}
-          currentUser={user}
-          isDeleting={isDeleting}
-          isDeleteModalOpen={isDeleteModalOpen}
-          cartItems={cartItems}
-        />
+        <div className={isFromDashboard ? 'px-6' : ''}>
+          <PublicCatalogueGrid
+            courses={filteredCourses}
+            isLoading={isLoading}
+            onEdit={(isSuperAdmin || isOrgSuperAdmin) ? handleEditCourse : undefined}
+            onDelete={(isSuperAdmin || isOrgSuperAdmin) ? handleDeleteCourse : undefined}
+            currentUser={user}
+            isDeleting={isDeleting}
+            isDeleteModalOpen={isDeleteModalOpen}
+            cartItems={cartItems}
+          />
+        </div>
       </div>
 
       {/* Edit Course Modal */}
