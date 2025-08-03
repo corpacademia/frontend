@@ -40,6 +40,8 @@ export const DashboardHeader: React.FC = () => {
       const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/removeFromCart/${cartItemId}`);
       if (response.data.success) {
         setCartItems(prev => prev.filter(item => item.id !== cartItemId));
+        // Trigger cart refresh for other components
+        window.dispatchEvent(new CustomEvent('cartRefresh'));
       }
     } catch (error) {
       console.error('Error removing from cart:', error);
@@ -51,6 +53,8 @@ export const DashboardHeader: React.FC = () => {
       const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/clearCart/${user?.id}`);
       if (response.data.success) {
         setCartItems([]);
+        // Trigger cart refresh for other components
+        window.dispatchEvent(new CustomEvent('cartRefresh'));
       }
     } catch (error) {
       console.error('Error clearing cart:', error);
@@ -94,10 +98,19 @@ export const DashboardHeader: React.FC = () => {
       }
     };
 
+    // Listen for cart refresh events
+    const handleCartRefresh = () => {
+      if (isAuthenticated) {
+        fetchCartItems();
+      }
+    };
+
     window.addEventListener('cartUpdated', handleCartUpdate);
+    window.addEventListener('cartRefresh', handleCartRefresh);
 
     return () => {
       window.removeEventListener('cartUpdated', handleCartUpdate);
+      window.removeEventListener('cartRefresh', handleCartRefresh);
     };
   }, [isAuthenticated]);
 
