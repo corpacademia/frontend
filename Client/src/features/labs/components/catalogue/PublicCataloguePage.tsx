@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { PublicCatalogueFilters } from './PublicCatalogueFilters';
+import { useLocation } from 'react-router-dom';
 import { PublicCatalogueGrid } from './PublicCatalogueGrid';
+import { PublicCatalogueFilters } from './PublicCatalogueFilters';
 import { EditCourseModal } from './EditCourseModal';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { useAuthStore } from '../../../../store/authStore';
@@ -15,6 +16,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
 export const PublicCataloguePage: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
+  const location = useLocation();
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
@@ -39,10 +41,13 @@ export const PublicCataloguePage: React.FC = () => {
   const isSuperAdmin = user?.role === 'superadmin';
   const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
 
+  // Check if accessed from dashboard
+  const isFromDashboard = location.pathname.includes('/dashboard/labs/catalogue');
+
 
   const fetchCartItems = async () => {
     if (!isAuthenticated) return;
-    
+
     setIsLoadingCart(true);
     try {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCartItems/${user?.id || currentUser?.id}`);
@@ -74,7 +79,7 @@ export const PublicCataloguePage: React.FC = () => {
       }
     }
     fetchCatalogues();
-    
+
     if (isAuthenticated) {
       fetchCartItems();
     }
@@ -99,7 +104,7 @@ export const PublicCataloguePage: React.FC = () => {
     };
   }, [isAuthenticated]);
 
-  
+
 
   const handleLogin = () => {
     window.location.href = '/login';
@@ -266,7 +271,7 @@ const proceedToCheckout = async () => {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
     }
-    
+
   };
 
   const handleAddNewCourse = () => {
@@ -284,7 +289,7 @@ const proceedToCheckout = async () => {
           setCourses(prev => prev.map(course => course.id === selectedCourse.id ? response.data.data : course));
           setFilteredCourses(prev => prev.map(course => course.id === selectedCourse.id ? response.data.data : course));
         }
-        
+
       } else {
         // Add new course
         const newCourse = { ...courseData, id: Date.now().toString() };
@@ -307,8 +312,9 @@ if(isLoading) {
     return <div className="text-center text-gray-500">Loading courses...</div>;
   } 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300">
+    <div className={isFromDashboard ? "" : "min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300"}>
       {/* Header with Auth and Cart */}
+      {!isFromDashboard && (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center space-x-4">
@@ -365,8 +371,10 @@ if(isLoading) {
           </div>
         </div>
       </div>
+      )}
 
       {/* Hero Section */}
+      {!isFromDashboard &&(
       <div className="relative py-16 text-center mb-12">
         <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-2xl"></div>
         <div className="relative z-10">
@@ -375,10 +383,11 @@ if(isLoading) {
           </p>
         </div>
       </div>
+      )}
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Admin Controls */}
+      <div className={`${isFromDashboard ? '' : 'container mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
+        
         {(isSuperAdmin || isOrgSuperAdmin) && (
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-white">Manage Labs</h2>
@@ -426,7 +435,7 @@ if(isLoading) {
         onSave={handleSaveCourse}
         isLoading={isSaving}
       />
-     
+
       {/* Modern Cart Modal */}
       {isCartModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -473,7 +482,7 @@ if(isLoading) {
                         <div className="flex-1">
                           <h4 className="font-semibold text-white mb-1">{item.name || item.title}</h4>
                           <p className="text-sm text-gray-400 line-clamp-2">{item.lab_description || item.description}</p>
-                          
+
                           {editingCartItem?.id === item.id ? (
                             <div className="mt-3 space-y-3">
                               <div className="grid grid-cols-2 gap-3">
@@ -544,7 +553,7 @@ if(isLoading) {
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="flex items-center space-x-2 ml-4">
                           {editingCartItem?.id !== item.id && (
                             <button
@@ -618,7 +627,7 @@ if(isLoading) {
                 </div>
               </div>
             )}
-           
+
           </div>
         </div>
       )}
