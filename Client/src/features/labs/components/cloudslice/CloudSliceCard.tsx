@@ -348,7 +348,8 @@ const canEditContent = () => {
 
   return (
     <>
-      <div className="flex flex-col h-[240px] overflow-hidden rounded-xl border border-primary-500/10 
+      <div className="flex flex-col min-h-[240px] sm:min-h-[280px] lg:min-h-[260px] xl:min-h-[280px] 
+                    max-h-fit overflow-hidden rounded-xl border border-primary-500/10 
                     hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
                     transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
                     hover:translate-y-[-2px] group relative">
@@ -365,9 +366,9 @@ const canEditContent = () => {
           </div>
         )}
 
-        <div className="p-3 flex flex-col h-full">
-          <div className="flex justify-between items-start gap-2 mb-2">
-            <div className="flex items-start">
+        <div className="p-2 sm:p-3 flex flex-col h-full">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
+            <div className="flex items-start flex-1 min-w-0">
               {onSelect && (
                 <div className="flex-shrink-0 mt-1 mr-2">
                   <input
@@ -375,15 +376,15 @@ const canEditContent = () => {
                     checked={isSelected}
                     onChange={() => {}}
                     onClick={handleCheckboxClick}
-                    className="form-checkbox h-4 w-4 text-primary-500 rounded border-gray-500/20"
+                    className="form-checkbox h-3 w-3 sm:h-4 sm:w-4 text-primary-500 rounded border-gray-500/20"
                   />
                 </div>
               )}
-              <div className="min-w-0">
-                <h3 className="text-base font-semibold mb-1 truncate">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm sm:text-base font-semibold mb-1 line-clamp-2">
                   <GradientText>{slice.title}</GradientText>
                 </h3>
-                <p className="text-xs text-gray-400 line-clamp-1">{slice.description}</p>
+                <p className="text-xs text-gray-400 line-clamp-2 sm:line-clamp-1">{slice.description}</p>
               </div>
             </div>
             <div className="flex items-center space-x-1 flex-shrink-0">

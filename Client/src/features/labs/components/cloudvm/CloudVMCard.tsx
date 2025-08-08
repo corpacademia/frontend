@@ -417,7 +417,8 @@ useEffect(() => {
 
   return (
     <>
-      <div className="flex flex-col min-h-[320px] max-h-fit overflow-hidden rounded-xl border border-primary-500/10 
+      <div className="flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px] 
+                    max-h-fit overflow-hidden rounded-xl border border-primary-500/10 
                     hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
                     transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
                     hover:translate-y-[-2px] group relative">
@@ -435,13 +436,13 @@ useEffect(() => {
         )}
 
 
-        <div className="p-4 flex flex-col h-full">
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex-1 min-w-0 pr-4">
-              <h3 className="text-lg font-semibold mb-1">
+        <div className="p-3 sm:p-4 flex flex-col h-full">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold mb-1">
                 <GradientText>
                   <span 
-                    className="cursor-pointer hover:text-primary-300 transition-colors"
+                    className="cursor-pointer hover:text-primary-300 transition-colors line-clamp-2"
                     onClick={() => setShowFullTitle(!showFullTitle)}
                     title={showFullTitle ? "Click to collapse" : "Click to expand"}
                   >
@@ -450,15 +451,15 @@ useEffect(() => {
                 </GradientText>
               </h3>
               <p 
-                className="text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition-colors"
+                className="text-xs sm:text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition-colors line-clamp-2"
                 onClick={() => setShowFullDescription(!showFullDescription)}
                 title={showFullDescription ? "Click to collapse" : "Click to expand"}
               >
                 {showFullDescription ? vm.description : (vm.description.length > 80 ? vm.description.substring(0, 80) + '...' : vm.description)}
               </p>
             </div>
-            <div className="flex items-center space-x-2 flex-shrink-0">
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+            <div className="flex items-center justify-between sm:justify-start space-x-2 flex-shrink-0">
+              <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
                 vm.status === 'running' ? 'bg-emerald-500/20 text-emerald-300' :
                 vm.status === 'stopped' ? 'bg-red-500/20 text-red-300' :
                 'bg-amber-500/20 text-amber-300'
@@ -467,43 +468,43 @@ useEffect(() => {
               </span>
               <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+                className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
               >
-                <Pencil className="h-4 w-4 text-primary-400" />
+                <Pencil className="h-3 w-3 sm:h-4 sm:w-4 text-primary-400" />
               </button>
               <button
                 onClick={() => setIsDeleteModalOpen(true)}
-                className="p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+                className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
               >
-                <Trash2 className="h-4 w-4 text-red-400" />
+                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div className="flex items-center text-sm text-gray-400">
-              <Cpu className="h-4 w-4 mr-2 text-primary-400" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-4">
+            <div className="flex items-center text-xs sm:text-sm text-gray-400">
+              <Cpu className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary-400" />
               <span>{vm.cpu} vCPU</span>
             </div>
-            <div className="flex items-center text-sm text-gray-400">
-              <Tag className="h-4 w-4 mr-2 text-primary-400" />
+            <div className="flex items-center text-xs sm:text-sm text-gray-400">
+              <Tag className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary-400" />
               <span>{vm.ram}GB RAM</span>
             </div>
-            <div className="flex items-center text-sm text-gray-400">
-              <Server className="h-4 w-4 mr-2 text-primary-400" />
+            <div className="flex items-center text-xs sm:text-sm text-gray-400">
+              <Server className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary-400" />
               <span className="truncate">Instance: {vm.instance}</span>
             </div>
-            <div className="flex items-center text-sm text-gray-400">
-              <HardDrive className="h-4 w-4 mr-2 text-primary-400" />
+            <div className="flex items-center text-xs sm:text-sm text-gray-400">
+              <HardDrive className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary-400" />
               <span>Storage: {vm.storage}GB</span>
             </div>
-            <div className="flex items-center text-sm text-gray-400 col-span-2">
-              <Hash className="h-4 w-4 mr-2 text-primary-400" />
+            <div className="flex items-center text-xs sm:text-sm text-gray-400 col-span-1 sm:col-span-2">
+              <Hash className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary-400" />
               <span className="truncate">ID: {instanceDetails?.instance_id || 'N/A'}</span>
             </div>
             {amiId && (
-              <div className="flex items-center text-sm text-gray-400 col-span-2">
-                <FileCode className="h-4 w-4 mr-2 text-primary-400" />
+              <div className="flex items-center text-xs sm:text-sm text-gray-400 col-span-1 sm:col-span-2">
+                <FileCode className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary-400" />
                 <span 
                   className="truncate cursor-pointer hover:text-primary-300"
                   onClick={() => setShowFullAmiId(!showFullAmiId)}
@@ -515,13 +516,13 @@ useEffect(() => {
             )}
           </div>
 
-          <div className="mt-auto pt-3 border-t border-primary-500/10">
+          <div className="mt-auto pt-2 sm:pt-3 border-t border-primary-500/10">
             <div className="flex flex-col space-y-2">
-              <div className="flex gap-2">
+              <div className="flex gap-1 sm:gap-2">
                 <button 
                   onClick={handleLaunchSoftware}
                   disabled={isProcessing}
-                  className={`flex-1 h-9 px-4 rounded-lg text-sm font-medium
+                  className={`flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                            ${buttonLabel === 'Stop' 
                              ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
                              : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
@@ -530,35 +531,35 @@ useEffect(() => {
                            disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isLaunchProcessing ? (
-                    <Loader className="h-4 w-4 animate-spin" />
+                    <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                   ) : buttonLabel === 'Stop' ? (
                     <>
-                      <Square className="h-4 w-4 mr-2" />
-                      Stop
+                      <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Stop</span>
                     </>
                   ) : (
                     <>
-                      <Play className="h-4 w-4 mr-2" />
-                      Launch VM
+                      <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Launch VM</span>
                     </>
                   )}
                 </button>
                 <button 
                   onClick={handleVMGoldenImage}
                   disabled={isProcessing}
-                  className="flex-1 h-9 px-4 rounded-lg text-sm font-medium
+                  className="flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                            bg-primary-500/20 text-primary-300 hover:bg-primary-500/30
                            transition-colors flex items-center justify-center
                            disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isProcessing ? 'Processing...' : 'VM-GoldenImage'}
+                  {isProcessing ? 'Processing...' : 'VM-Golden'}
                 </button>
               </div>
 
               <button
                 onClick={() => setIsModalOpen(true)}
                 disabled={!isConvertEnabled}
-                className="h-9 px-4 rounded-lg text-sm font-medium w-full
+                className="h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium w-full
                          bg-gradient-to-r from-primary-500 to-secondary-500
                          hover:from-primary-400 hover:to-secondary-400
                          transform hover:scale-105 transition-all duration-300
@@ -566,7 +567,7 @@ useEffect(() => {
                          disabled:opacity-50 disabled:cursor-not-allowed
                          flex items-center justify-center"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Convert to Catalogue
               </button>
             </div>

@@ -334,7 +334,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
                       {filteredVMs.length} VMs
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
                     {filteredVMs.map((vm) => (
                       <CloudVMAssessmentCard key={vm.lab_id || vm.assessment_id} assessment={vm} />
                     ))}
@@ -352,7 +352,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
                       {filteredDatacenterVMs.length} VMs
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
                     {filteredDatacenterVMs.map((vm) => (
                       <DatacenterVMCard key={vm.id} vm={vm} />
                     ))}

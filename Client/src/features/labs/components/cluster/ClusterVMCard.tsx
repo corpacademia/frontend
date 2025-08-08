@@ -662,10 +662,11 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   return (
     <>
       <div
-        className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-secondary-500/10 
-                    hover:border-secondary-500/30 bg-dark-200/80 backdrop-blur-sm
-                    transition-all duration-300 hover:shadow-lg hover:shadow-secondary-500/10 
-                    hover:translate-y-[-2px] group relative"
+        className="flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px] 
+                  max-h-fit overflow-hidden rounded-xl border border-secondary-500/10 
+                  hover:border-secondary-500/30 bg-dark-200/80 backdrop-blur-sm
+                  transition-all duration-300 hover:shadow-lg hover:shadow-secondary-500/10 
+                  hover:translate-y-[-2px] group relative"
       >
         {notification && (
           <div
@@ -684,35 +685,35 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
           </div>
         )}
 
-        <div className="p-4 flex flex-col h-full">
-          <div className="flex justify-between items-start gap-4 mb-3">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-1">
+        <div className="p-3 sm:p-4 flex flex-col h-full">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base sm:text-lg font-semibold mb-1 line-clamp-2">
                 <GradientText>{vm.lab.title}</GradientText>
               </h3>
-              <p className="text-sm text-gray-400 line-clamp-2">
+              <p className="text-xs sm:text-sm text-gray-400 line-clamp-2">
                 {vm.lab.description}
               </p>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-between sm:justify-start space-x-2 flex-shrink-0">
               {canEditContent() && (
                 <button
                   onClick={() => setIsEditLabModalOpen(true)}
-                  className="p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+                  className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
                 >
-                  <Pencil className="h-4 w-4 text-primary-400" />
+                  <Pencil className="h-3 w-3 sm:h-4 sm:w-4 text-primary-400" />
                 </button>
               )}
 
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
-                  className="p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+                  className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
                 >
-                  <Trash2 className="h-4 w-4 text-red-400" />
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
                 </button>
 
               <span
-                className={`px-2 py-1 text-xs font-medium rounded-full ${
+                className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
                   vm.lab.status === "active"
                     ? "bg-emerald-500/20 text-emerald-300"
                     : vm.lab.status === "inactive"
@@ -725,17 +726,17 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-3">
-            <div className="flex items-center text-sm text-gray-400">
-              <Server className="h-4 w-4 mr-2 text-secondary-400 flex-shrink-0" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-3">
+            <div className="flex items-center text-xs sm:text-sm text-gray-400">
+              <Server className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-secondary-400 flex-shrink-0" />
               <span className="truncate">{vm.lab.platform}</span>
             </div>
-            <div className="flex items-center text-sm text-gray-400">
-              <LinkIcon className="h-4 w-4 mr-2 text-secondary-400 flex-shrink-0" />
+            <div className="flex items-center text-xs sm:text-sm text-gray-400">
+              <LinkIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-secondary-400 flex-shrink-0" />
               <span className="truncate">rdp/ssh/vnc</span>
             </div>
-            <div className="flex items-center text-sm text-gray-400">
-              <Calendar className="h-4 w-4 mr-2 text-secondary-400 flex-shrink-0" />
+            <div className="flex items-center text-xs sm:text-sm text-gray-400 col-span-1 sm:col-span-2">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-secondary-400 flex-shrink-0" />
               <span
                 className={`${showFullStartDate ? "" : "truncate"} cursor-pointer`}
                 onClick={() => setShowFullStartDate(!showFullStartDate)}
@@ -746,8 +747,8 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                 Start: {formatDate(vm?.lab?.startdate)}
               </span>
             </div>
-            <div className="flex items-center text-sm text-gray-400">
-              <Clock className="h-4 w-4 mr-2 text-secondary-400 flex-shrink-0" />
+            <div className="flex items-center text-xs sm:text-sm text-gray-400 col-span-1 sm:col-span-2">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-secondary-400 flex-shrink-0" />
               <span
                 className={`${showFullEndDate ? "" : "truncate"} cursor-pointer`}
                 onClick={() => setShowFullEndDate(!showFullEndDate)}
@@ -779,30 +780,30 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
             </div>
           )}
 
-          <div className="mt-auto pt-3 border-t border-secondary-500/10 flex flex-col space-y-2">
+          <div className="mt-auto pt-2 sm:pt-3 border-t border-secondary-500/10 flex flex-col space-y-2">
             <button
               onClick={() => setIsUserListModalOpen(true)}
-              className="w-full h-9 px-4 rounded-lg text-sm font-medium
+              className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                        bg-dark-400/80 hover:bg-dark-300/80
                        border border-secondary-500/20 hover:border-secondary-500/30
                        text-secondary-300
                        flex items-center justify-center"
             >
-              <Users className="h-4 w-4 mr-2" />
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               User List
             </button>
 
             {!canEditContent() && currentUser?.role === "orgadmin" ? (
               <button
                 onClick={() => setIsAssignModalOpen(true)}
-                className="w-full h-9 px-4 rounded-lg text-sm font-medium
+                className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                          bg-gradient-to-r from-secondary-500 to-accent-500
                          hover:from-secondary-400 hover:to-accent-400
                          transform hover:scale-105 transition-all duration-300
                          text-white shadow-lg shadow-secondary-500/20
                          flex items-center justify-center"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Assign Lab
               </button>
             ) : (
@@ -810,7 +811,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                 <button
                   onClick={handleConvertToCatalogue}
                   disabled={isConverting}
-                  className="w-full h-9 px-4 rounded-lg text-sm font-medium
+                  className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                          bg-gradient-to-r from-secondary-500 to-accent-500
                          hover:from-secondary-400 hover:to-accent-400
                          transform hover:scale-105 transition-all duration-300
@@ -818,10 +819,10 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                          flex items-center justify-center"
                 >
                   {isConverting ? (
-                    <Loader className="animate-spin h-4 w-4" />
+                    <Loader className="animate-spin h-3 w-3 sm:h-4 sm:w-4" />
                   ) : (
                     <>
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                       Convert to Catalogue
                     </>
                   )}
