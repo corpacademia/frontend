@@ -52,7 +52,6 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   isDeleteModalOpen = false,
   cartItems
 }) => {
-  
   const { user, isAuthenticated } = useAuthStore();
   const [isHovered, setIsHovered] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
@@ -92,7 +91,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
       // Redirect to login/signup
-      window.location.href = '/auth/login';
+      window.location.href = '/login';
     } else {
       try {
         // Add to cart via backend API

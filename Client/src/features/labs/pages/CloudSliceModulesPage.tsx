@@ -218,7 +218,7 @@ export const CloudSliceModulesPage: React.FC = () => {
     // Super admin can edit anything
     if (currentUser.role === 'superadmin') return true;
     // Org admin can only edit content they created
-    if (currentUser.role === 'orgadmin') {
+    if (currentUser.role === 'orgsuperadmin' || currentUser.role === 'orgadmin') {
       return sliceDetails.createdby === currentUser.id;
     }
     return false;

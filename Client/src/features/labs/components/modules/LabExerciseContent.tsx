@@ -52,7 +52,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
     const checkAccountStatus = async()=>{
       try {
         setChecking(true);
-        if(user.role === 'superadmin'){
+        if(user.role === 'superadmin' || user.role === 'orgsuperadmin'){
           const createdByAccountStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${labId}`);
           const status = createdByAccountStatus.data.data
           if(createdByAccountStatus.data.success){
@@ -69,7 +69,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
           }
         }
         else{
-          const orgAccountStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
+          const orgAccountStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/`,{
             orgId:user.org_id,
             admin_id:user.id,
           
@@ -106,12 +106,13 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
     
     try {
       let response;
-      if(user.role === 'superadmin'){
+      if(user.role === 'superadmin' || user.role === 'orgsuperadmin'){
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
           userName: user.name, 
           services: labExercise?.services || [],
           role: user.role,
-          labid:labId
+          labid:labId,
+          purchased:labExercise?.purchased || false
         });
       }
       else if(user.role === 'orgadmin'){
@@ -120,7 +121,8 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
           services: labExercise?.services || [],
           role: user.role,
           labid:labId,
-          orgid:user.org_id
+          orgid:user.org_id,
+          purchased:labExercise?.purchased || false
         });
       }
        

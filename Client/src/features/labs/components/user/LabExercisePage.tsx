@@ -54,8 +54,19 @@ export const LabExercisePage: React.FC = () => {
         setUser(userResponse.data.user);
         
         // Check if IAM account is already created
-        const accountStatusResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${userResponse.data.user.id}`);
-        const accountData = accountStatusResponse.data.data.find((lab)=>lab.labid === labDetails.labid);
+        let accountStatusResponse;
+        let accountData;
+        if(labDetails.purchased){
+          accountStatusResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlicePurchasedLabs`,{
+              userId:userResponse.data.user.id
+            });
+         accountData = accountStatusResponse.data.data.find((lab)=>lab.labid === labDetails.labid);
+        }
+        else{
+          accountStatusResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${userResponse.data.user.id}`);
+         accountData = accountStatusResponse.data.data.find((lab)=>lab.labid === labDetails.labid);
+        }
+         
         
         if (accountData && accountData.username && accountData.password && accountData.console_url) {
           setCredentials(accountData);
@@ -104,11 +115,11 @@ export const LabExercisePage: React.FC = () => {
           services: exercise?.services || [],
           role: user.role,
           labid: labDetails?.labid,
-          user_id:user.id
+          user_id:user.id,
+          purchased:labDetails?.purchased || false
         });
         
         if (createIamResponse.data.success) {
-          console.log(moduleId,exerciseId)
           const submit = await axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/addLabStatusOfUser`,
             {
@@ -122,9 +133,20 @@ export const LabExercisePage: React.FC = () => {
           );
 
           // Get the updated account details
-          const accountDetailsResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${user.id}`);
-          setCredentials(accountDetailsResponse.data.data.find((lab)=>lab.labid === labDetails.labid));
-          setAccountCreated(true);
+          if(labDetails.purchased){
+            
+            const accountDetailsResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlicePurchasedLabs`,{
+              userId:user.id
+            });
+            setCredentials(accountDetailsResponse.data.data.find((lab)=>lab.labid === labDetails.labid));
+            setAccountCreated(true);
+          }
+          else{
+            const accountDetailsResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${user.id}`);
+            setCredentials(accountDetailsResponse.data.data.find((lab)=>lab.labid === labDetails.labid));
+            setAccountCreated(true);
+          }
+          
           
           // Update lab status
           await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`, {
@@ -132,7 +154,8 @@ export const LabExercisePage: React.FC = () => {
             launched: true,
             isRunning: true,
             labId: labDetails?.labid,
-            userId: user.id
+            userId: user.id,
+            purchased:labDetails?.purchased || false
           });
           
           setLabStarted(true);
@@ -158,7 +181,8 @@ export const LabExercisePage: React.FC = () => {
         await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser`, {
           isRunning: true,
           labId: labDetails?.labid,
-          userId: user?.id
+          userId: user?.id,
+          purchased:labDetails?.purchased || false
         });
         const editAwsServices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/addAwsServices`,{
           userName:credentials.username,
@@ -190,7 +214,8 @@ export const LabExercisePage: React.FC = () => {
       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser`, {
         isRunning: false,
         labId: labDetails?.labid,
-        userId: user?.id
+        userId: user?.id,
+        purchased:labDetails?.purchased || false
       });
       
       setLabStarted(false);

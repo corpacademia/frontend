@@ -132,7 +132,8 @@ const canEditContent = () => {
             userName: user.name,
             services: slice.services,
             role:user.role,
-            labid:slice.labid
+            labid:slice.labid,
+            purchased:slice?.purchased
           });
 
           if (!createIamAccount.data.success) {
@@ -203,7 +204,8 @@ const canEditContent = () => {
             services: slice.services,
             role:user.role,
             labid:slice.labid,
-            orgid:user.org_id
+            orgid:user.org_id,
+            purchased:slice?.purchased || false
           });
 
           if (!createIamAccount.data.success) {

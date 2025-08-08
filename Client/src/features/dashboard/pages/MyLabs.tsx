@@ -281,7 +281,38 @@ export const MyLabs: React.FC = () => {
       } catch (err) {
         console.error('Error fetching cloud slice labs:', err);
       }
+      //fetch user purchased cloudslice labs
+      try {
+        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlicePurchasedLabs`,{
+        userId:user?.id
+      })
+      if(res.data.success){
+          const cloudslices = res.data.data.map((lab: any) => ({
+        ...lab,
+        purchased: true
+       }));
+       setCloudSliceLabs((data = []) => [
+            ...data,
+            ...cloudslices
+          ]);
 
+          setFilteredCloudSliceLabs((data = []) => [
+            ...data,
+            ...cloudslices
+          ]);
+          if (Array.isArray(cloudslices)) {
+            setUserLabStatus((data = []) => [
+              ...data,
+              ...cloudslices
+            ]);
+          }
+
+
+      }
+       
+      } catch (err) {
+         console.error('Error fetching cloud slice purchased labs:', err);
+      }
       // Fetch datacenter VMs
       try {
         const res = await axios.post(
@@ -793,7 +824,8 @@ export const MyLabs: React.FC = () => {
       if (deleteIam.data.success) {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
           userId: user.id,
-          labId: labId
+          labId: labId,
+          purchased:acountDetails?.purchased || false
         })
         if (response.data.success) {
           setCloudSliceLabs(prev => prev.filter(lab => lab.labid !== labId));

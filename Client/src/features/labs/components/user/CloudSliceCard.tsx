@@ -19,7 +19,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface CloudSliceCardProps {
   lab: {
-    id: string;
+    labid: string;
     title: string;
     description: string;
     provider: 'aws' | 'azure' | 'gcp' | 'oracle' | 'ibm' | 'alibaba';
@@ -29,6 +29,8 @@ interface CloudSliceCardProps {
     startdate: string;
     enddate: string;
     modules: 'without-modules' | 'with-modules';
+    purchased:boolean;
+    duration:string;
    
   };
   labStatus:{
@@ -68,14 +70,25 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
   const [isDeleting, setIsDeleting] = useState(false);
   //find the exact status based on the labid
   const selectedLab = labStatus.find(Userlab=>Userlab.labid === lab.labid );
-
-  // console.log(lab)
   const handleLaunch = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsLaunching(true);
     setNotification(null);
-  
+
     try {
+      if(lab.purchased && !selectedLab.launched){
+        const update = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateDates`,{
+          labId:lab?.labid,
+          userId:user?.id,
+          duration:lab.duration,
+          status:'active',
+          launched:true,
+        })
+        if(update.data.success){
+          lab.startdate = update.data.data.start_date;
+          lab.enddate = update.data.data.end_date;
+        }
+      }
       if (lab.modules === 'without-modules') {
         // Call createIamUser only if the lab is not already launched
         if (!selectedLab.launched) {
@@ -84,7 +97,8 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
             services: lab.services,
             role:user.role,
             labid:lab.labid,
-            user_id:user.id
+            user_id:user.id,
+            purchased:lab?.purchased || false
           });
 
           if(createIamUser.data.success){
@@ -92,7 +106,8 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
               status:'active',
               launched:true,
               labId:lab.labid,
-              userId:user.id
+              userId:user.id,
+              purchased:lab?.purchased || false
             })
 
             if(updateUserLabStatus.data.success){
@@ -136,7 +151,8 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
             status:'active',
             launched:true,
             labId:lab.labid,
-            userId:user.id
+            userId:user.id,
+            purchased:lab?.purchased || false
           })
           if(updateUserLabStatus.data.success){
              // Navigate to module-based lab
@@ -199,6 +215,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
   };
 
   function formatDateTime(dateString: string) {
+    if (dateString === null) return 'N/A';
     const date = new Date(dateString);
     
     const options: Intl.DateTimeFormatOptions = { 

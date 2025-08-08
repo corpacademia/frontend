@@ -22,7 +22,7 @@ import axios from 'axios';
 interface DatacenterVMCardProps {
   lab: {
     id: string;
-    labid: string;
+    lab_id: string;
     title: string;
     description: string;
     platform: string;
@@ -33,6 +33,7 @@ interface DatacenterVMCardProps {
     creds_id: string;
     isrunning: boolean;
     software?: string[];
+    userscredentials?:any[];
   };
   onDelete: (labId: string) => void;
 }
@@ -51,7 +52,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
 
 
   const handleStartLab = async () => {
-    if(lab.userscredentials[0].disabled){
+    if(lab?.userscredentials[0]?.disabled){
          setNotification({
           type: 'error',
           message: 'The VM is disabled.'

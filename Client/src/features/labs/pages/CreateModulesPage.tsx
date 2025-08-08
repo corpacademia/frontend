@@ -709,6 +709,7 @@ export const CreateModulesPage: React.FC = () => {
           type: 'success',
           message: 'Lab modules created successfully!'
         });
+       navigate('dashboard/labs/cloud-slices') 
         
       } else {
         throw new Error(response.data.message || 'Failed to create lab modules');

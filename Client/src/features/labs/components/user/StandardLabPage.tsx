@@ -65,12 +65,22 @@ export const StandardLabPage: React.FC = () => {
         setIsLoading(true);
         const user_details = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(user_details.data.user)
+        if(labDetails.purchased){
+             const userLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlicePurchasedLabs`,{
+                   userId:user_details.data.user.id
+             });
+          let labstatus = userLabStatus.data.data.find((lab)=>lab.labid === labDetails.labid);
+          setUserLabStatus(labstatus);
+          setLabStarted(labstatus.isrunning);
+        }
+        else{
         const userLabStatus = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${user_details.data.user.id}`);
         if(userLabStatus.data.success){
           let labstatus = userLabStatus.data.data.find((lab)=>lab.labid === labDetails.labid);
           setUserLabStatus(labstatus);
           setLabStarted(labstatus.isrunning);
         }
+      }
       } catch (error) {
         console.log(error)
       }
@@ -100,7 +110,8 @@ export const StandardLabPage: React.FC = () => {
     const updateRunningState = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser`,{
       isRunning:true,
       labId:labDetails?.labid,
-      userId:user?.id
+      userId:user?.id,
+      purchased:labDetails?.purchased || false
     })
     if(updateRunningState.data.success){
       setTimeout(() => {
@@ -125,7 +136,8 @@ export const StandardLabPage: React.FC = () => {
     const updateRunningState = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser`,{
       isRunning:false,
       labId:labDetails?.labid,
-      userId:user?.id
+      userId:user?.id,
+      purchased:labDetails?.purchased || false
     })
     if(updateRunningState.data.success){
       setTimeout(() => {

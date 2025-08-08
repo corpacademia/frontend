@@ -5,71 +5,118 @@ import { Bell, Settings, LogOut, User, ChevronDown, ShoppingCart, X, Edit } from
 import { GradientText } from '../../../components/ui/GradientText';
 import { OrganizationSwitcher } from './OrganizationSwitcher';
 import axios from 'axios';
+import { loadStripe } from '@stripe/stripe-js';
+import { useCatalogueStore } from '../../../store/catalogueStore';
+import { useCartStore } from '../../../store/useCartStore';
 
 export const DashboardHeader: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<any[]>([]);
+  // const [cartItems, setCartItems] = useState<any[]>([]);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
-  const [isLoadingCart, setIsLoadingCart] = useState(false);
+  // const [isLoadingCart, setIsLoadingCart] = useState(false);
   const [editingCartItem, setEditingCartItem] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { catalogues, isLoading, error, fetchAllCatalogues } = useCatalogueStore();
+  const {
+    cartItems,
+    isLoadingCart,
+    fetchCartItems,
+    removeFromCart,
+    clearCart,
+    updateCartItem,
+    proceedToCheckout,
+  } = useCartStore();
+  
 
-  const fetchCartItems = async () => {
-    if (!isAuthenticated) return;
+  useEffect(() => {
+    fetchAllCatalogues();
+  }, []);
+  // useEffect(()=>{
+  //    const fetchCatalogues = async () => {
+  //         try {
+  //           // Replace with actual API call
+  //           const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues` );
+  //           setCourses(response.data.data);
+  //         } catch (error) {
+  //           console.error('Error fetching catalogues:', error);
+  //         } 
+  //       }
+  //       fetchCatalogues();
+    
+  // })
+  // const fetchCartItems = async () => {
+  //   if (!isAuthenticated) return;
 
-    setIsLoadingCart(true);
+  //   setIsLoadingCart(true);
+  //   try {
+  //     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCartItems/${user?.id}`);
+  //     if (response.data.success) {
+  //       setCartItems(response.data.data.map((cart: any) => ({
+  //         ...cart,
+  //         defaultDuration: cart.duration
+  //       })));
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching cart items:', error);
+  //   } finally {
+  //     setIsLoadingCart(false);
+  //   }
+  // };
+
+  // const removeFromCart = async (cartItemId: string) => {
+  //   try {
+  //     const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/removeFromCart/${cartItemId}`);
+  //     if (response.data.success) {
+  //       setCartItems(prev => prev.filter(item => item.id !== cartItemId));
+  //       // Trigger cart refresh for other components
+  //       window.dispatchEvent(new CustomEvent('cartRefresh'));
+  //     }
+  //   } catch (error) {
+  //     console.error('Error removing from cart:', error);
+  //   }
+  // };
+
+  // const clearCart = async () => {
+  //   try {
+  //     const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/clearCart/${user?.id}`);
+  //     if (response.data.success) {
+  //       setCartItems([]);
+  //       // Trigger cart refresh for other components
+  //       window.dispatchEvent(new CustomEvent('cartRefresh'));
+  //     }
+  //   } catch (error) {
+  //     console.error('Error clearing cart:', error);
+  //   }
+  // };
+
+  const handleUpdate = async (cartItemId: string, updates: { duration?: string; quantity?: number, defaultDuration?: number, price?: number }) => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCartItems/${user?.id}`);
-      if (response.data.success) {
-        setCartItems(response.data.data.map((cart: any) => ({
-          ...cart,
-          defaultDuration: cart.duration
-        })));
-      }
-    } catch (error) {
-      console.error('Error fetching cart items:', error);
-    } finally {
-      setIsLoadingCart(false);
-    }
-  };
-
-  const removeFromCart = async (cartItemId: string) => {
-    try {
-      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/removeFromCart/${cartItemId}`);
-      if (response.data.success) {
-        setCartItems(prev => prev.filter(item => item.id !== cartItemId));
-      }
-    } catch (error) {
-      console.error('Error removing from cart:', error);
-    }
-  };
-
-  const clearCart = async () => {
-    try {
-      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/clearCart/${user?.id}`);
-      if (response.data.success) {
-        setCartItems([]);
-      }
-    } catch (error) {
-      console.error('Error clearing cart:', error);
-    }
-  };
-
-  const updateCartItem = async (cartItemId: string, updates: { duration?: string; quantity?: number, defaultDuration?: number, price?: number }) => {
-    try {
-      const response = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateCartItem/${cartItemId}`, updates);
-      if (response.data.success) {
-        setCartItems(prev => prev.map(item => 
-          item.id === cartItemId ? { ...item, ...updates } : item
-        ));
+      const response = await updateCartItem(cartItemId,updates);
+      if (response) {
         setEditingCartItem(null);
       }
     } catch (error) {
       console.error('Error updating cart item:', error);
     }
   };
+
+  const handleCheckout = async () => {
+  if (cartItems.length === 0) return;
+
+  try {
+    await proceedToCheckout(
+      {userId: user?.id,
+      catalogues
+      }
+    );
+  } catch (error) {
+    console.error('Error during Stripe checkout:', error);
+    alert('Checkout failed. Please try again.');
+  }
+};
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,24 +129,40 @@ export const DashboardHeader: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     fetchCartItems();
+  //   }
+
+  //   // Listen for cart updates
+  //   const handleCartUpdate = () => {
+  //     if (isAuthenticated) {
+  //       fetchCartItems();
+  //     }
+  //   };
+
+  //   // Listen for cart refresh events
+  //   const handleCartRefresh = () => {
+  //     if (isAuthenticated) {
+  //       fetchCartItems();
+  //     }
+  //   };
+
+  //   window.addEventListener('cartUpdated', handleCartUpdate);
+  //   window.addEventListener('cartRefresh', handleCartRefresh);
+
+  //   return () => {
+  //     window.removeEventListener('cartUpdated', handleCartUpdate);
+  //     window.removeEventListener('cartRefresh', handleCartRefresh);
+  //   };
+  // }, [isAuthenticated]);
+
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchCartItems();
-    }
+  if (user?.id && catalogues.length > 0) {
+    fetchCartItems(user.id);
+  }
+}, [user?.id, catalogues.length]);
 
-    // Listen for cart updates
-    const handleCartUpdate = () => {
-      if (isAuthenticated) {
-        fetchCartItems();
-      }
-    };
-
-    window.addEventListener('cartUpdated', handleCartUpdate);
-
-    return () => {
-      window.removeEventListener('cartUpdated', handleCartUpdate);
-    };
-  }, [isAuthenticated]);
 
   const handleLogout = () => {
     setIsSettingsDropdownOpen(false);
@@ -300,11 +363,11 @@ export const DashboardHeader: React.FC = () => {
                               </div>
                               <div className="flex space-x-2">
                                 <button
-                                  onClick={() => updateCartItem(item.id, {
+                                  onClick={() => handleUpdate(item.id, {
                                     duration: editingCartItem.duration || item.duration,
                                     quantity: editingCartItem.quantity || item.quantity,
-                                    defaultDuration: item.defaultDuration || 1,
-                                    price: item.price
+                                    defaultDuration: item.defaultduration || 1,
+                                    price: item.defaultprice
                                   })}
                                   className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-300 
                                            rounded text-sm transition-colors"
@@ -325,17 +388,10 @@ export const DashboardHeader: React.FC = () => {
                               <span className="text-xs text-primary-400">{item.lab_category || item.category}</span>
                               <span className="text-xs text-gray-500">{item.duration} days</span>
                               <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
-                              {(() => {
-                                const defaultDuration = item.defaultDuration || 1;
-                                const currentDuration = item.duration || defaultDuration;
-                                const adjustedPricePerUnit = item.price * (currentDuration / defaultDuration);
-                                const totalPrice = adjustedPricePerUnit * item.quantity;
-                                return (
+                              
                                   <span className="font-semibold text-white">
-                                    ₹{totalPrice.toFixed(2)}
+                                    ₹{item.price}
                                   </span>
-                                );
-                              })()}
                             </div>
                           )}
                         </div>
@@ -374,18 +430,15 @@ export const DashboardHeader: React.FC = () => {
                   <div>
                     <span className="text-lg font-semibold text-white">
                       Total: ₹{cartItems.reduce((total, item) => {
-                        const defaultDuration = item.defaultDuration || 1;
-                        const currentDuration = item.duration || defaultDuration;
-                        const adjustedPrice = item.price * (currentDuration / defaultDuration);
-                        return total + adjustedPrice * item.quantity;
-                      }, 0).toFixed(2)}
+                        return Number(total + Number(item.price));
+                      }, 0)}
                     </span>
                     <p className="text-sm text-gray-400">
                       {cartItems.reduce((total, item) => total + Number(item.quantity), 0)} item(s)
                     </p>
                   </div>
                   <button
-                    onClick={clearCart}
+                    onClick={()=>clearCart(user?.id)}
                     className="text-sm text-red-400 hover:text-red-300 underline"
                   >
                     Clear Cart
@@ -401,13 +454,13 @@ export const DashboardHeader: React.FC = () => {
                     Continue Shopping
                   </button>
                   <button
-                    onClick={() => navigate('/labs/catalogue')}
+                    onClick={handleCheckout}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
                              hover:from-primary-400 hover:to-secondary-400
                              rounded-lg transition-all duration-300 text-white font-semibold
                              shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
                   >
-                    Go to Catalogue
+                    Proceed To Checkout
                   </button>
                 </div>
               </div>
