@@ -112,7 +112,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="org-admins" element={<OrgAdminsPage />} />
         <Route path="all-users" element={<AllUsersPage />} />
         <Route path="my-organization" element={<Organizations />} />
-        <Route path="/notifications" element={<NotificationPage />} />
+        <Route path="notifications" element={<NotificationPage />} />
 
         {/* User Lab Routes */}
         <Route path="my-labs/:labId/standard" element={<StandardLabPage />} />
