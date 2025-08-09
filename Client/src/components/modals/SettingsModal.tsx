@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { X, Camera, User, Mail, Lock, Eye, EyeOff, Loader, Check, AlertCircle, Bell } from 'lucide-react';
 import { GradientText } from '../ui/GradientText';
@@ -15,8 +14,8 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { user, fetchUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications'>('profile');
+
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'general' | 'account'>('profile');
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -24,7 +23,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     newPassword: '',
     confirmPassword: ''
   });
-  
+
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
@@ -73,12 +72,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       const formDataToSend = new FormData();
       formDataToSend.append('name', formData.name);
       formDataToSend.append('email', formData.email);
-      
+
       if (formData.newPassword) {
         formDataToSend.append('currentPassword', formData.currentPassword);
         formDataToSend.append('newPassword', formData.newPassword);
       }
-      
+
       if (profilePhoto) {
         formDataToSend.append('profilePhoto', profilePhoto);
       }
@@ -118,7 +117,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-      
+
       <GlowingBorder>
         <div className="relative glass-panel p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
@@ -231,7 +230,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               {/* Password Section */}
               <div className="border-t border-gray-700 pt-4">
                 <h3 className="text-lg font-medium text-gray-300 mb-4">Change Password</h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -348,8 +347,71 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </button>
             </div>
           </form>
+          ) : activeTab === 'notifications' ? (
+            <div className="max-h-[60vh] overflow-y-auto">
+              <NotificationPreferences />
+            </div>
           ) : (
-            <NotificationPreferences />
+            <div className="space-y-6">
+              {activeTab === 'general' && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-white mb-4">General Settings</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Theme
+                      </label>
+                      <select className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
+                                       text-gray-300 focus:border-primary-500/40 focus:outline-none">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                        <option value="auto">Auto</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Language
+                      </label>
+                      <select className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
+                                       text-gray-300 focus:border-primary-500/40 focus:outline-none">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'account' && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-white mb-4">Account Settings</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Email
+                      </label>
+                      <input 
+                        type="email" 
+                        defaultValue="user@example.com"
+                        className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
+                                 text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Password
+                      </label>
+                      <button className="w-full px-3 py-2 bg-primary-500/20 hover:bg-primary-500/30 
+                                       border border-primary-500/30 rounded-lg text-primary-300 
+                                       transition-colors text-left">
+                        Change Password
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </GlowingBorder>

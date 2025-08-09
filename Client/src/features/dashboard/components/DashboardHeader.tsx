@@ -9,6 +9,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useCatalogueStore } from '../../../store/catalogueStore';
 import { useCartStore } from '../../../store/useCartStore';
 import { NotificationDropdown } from '../../../components/notifications/NotificationDropdown';
+import { SettingsModal } from '../../../components/modals/SettingsModal';
 
 export const DashboardHeader: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -18,6 +19,7 @@ export const DashboardHeader: React.FC = () => {
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   // const [isLoadingCart, setIsLoadingCart] = useState(false);
   const [editingCartItem, setEditingCartItem] = useState<any>(null);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { catalogues, isLoading, error, fetchAllCatalogues } = useCatalogueStore();
   const {
@@ -214,10 +216,6 @@ export const DashboardHeader: React.FC = () => {
             )}
           </button>
 
-          <button className="p-2 text-gray-400 hover:text-primary-300 rounded-lg hover:bg-dark-100/50 transition-colors">
-            <Bell className="h-5 w-5" />
-          </button>
-
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
@@ -270,7 +268,7 @@ export const DashboardHeader: React.FC = () => {
                 </button>
                 <button
                   onClick={() => {
-                    // Add settings functionality here
+                    setIsSettingsModalOpen(true);
                     setIsSettingsDropdownOpen(false);
                   }}
                   className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-dark-100/50 flex items-center space-x-2 transition-colors"
@@ -472,6 +470,12 @@ export const DashboardHeader: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={isSettingsModalOpen} 
+        onClose={() => setIsSettingsModalOpen(false)} 
+      />
     </header>
   );
 };

@@ -19,10 +19,67 @@ interface NotificationStore {
   addNotification: (notification: Notification) => void;
 }
 
+// Demo notifications for testing
+const demoNotifications: Notification[] = [
+  {
+    id: 'demo-1',
+    type: 'lab_assigned',
+    title: 'New Lab Assigned',
+    message: 'You have been assigned a new lab: "Introduction to React"',
+    priority: 'medium',
+    isRead: false,
+    createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+    userId: 'demo-user',
+    metadata: { labId: 'lab-123' }
+  },
+  {
+    id: 'demo-2',
+    type: 'system_update',
+    title: 'System Maintenance',
+    message: 'Scheduled maintenance will begin at 2:00 AM UTC',
+    priority: 'high',
+    isRead: false,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+    userId: 'demo-user'
+  },
+  {
+    id: 'demo-3',
+    type: 'assessment_completed',
+    title: 'Assessment Completed',
+    message: 'Student John Doe has completed the JavaScript assessment',
+    priority: 'low',
+    isRead: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+    userId: 'demo-user',
+    metadata: { assessmentId: 'assess-456', userId: 'student-123' }
+  },
+  {
+    id: 'demo-4',
+    type: 'payment_received',
+    title: 'Payment Received',
+    message: 'Payment of $99.99 received for Premium Lab Package',
+    priority: 'medium',
+    isRead: true,
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
+    userId: 'demo-user',
+    metadata: { amount: 99.99 }
+  },
+  {
+    id: 'demo-5',
+    type: 'security_alert',
+    title: 'Security Alert',
+    message: 'New login detected from an unknown device',
+    priority: 'urgent',
+    isRead: false,
+    createdAt: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
+    userId: 'demo-user'
+  }
+];
+
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
-  notifications: [],
+  notifications: demoNotifications,
   preferences: null,
-  unreadCount: 0,
+  unreadCount: demoNotifications.filter(n => !n.isRead).length,
   isLoading: false,
 
   fetchNotifications: async () => {
