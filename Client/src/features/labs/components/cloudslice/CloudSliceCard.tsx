@@ -52,7 +52,7 @@ interface orgStatus{
   orgid:string,
   assigned_at:string;
   assigned_by:string;
-  status:'pending' | 'active' | 'inactive'
+  status:'active' | 'inactive' | 'pending' | 'expired';
 }
 
 interface CloudSliceCardProps {
@@ -82,6 +82,8 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   const [user, setUser] = useState<any>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -252,7 +254,6 @@ const canEditContent = () => {
     }
 
   };
-
   function formatDateTime(dateString) {
     const date = new Date(dateString);
 
@@ -405,14 +406,30 @@ const canEditContent = () => {
               >
                 <Trash2 className="h-3.5 w-3.5 text-red-400" />
               </button>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                userRole === 'superadmin' || userRole === 'orgsuperadmin' ? slice.status : getOrgLabStatus(slice.labid).status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
-                userRole === 'superadmin' || userRole === 'orgsuperadmin' ? slice.status : getOrgLabStatus(slice.labid).status === 'pending' ? 'bg-red-500/20 text-red-300' :
-                userRole === 'superadmin' || userRole === 'orgsuperadmin' ? slice.status : getOrgLabStatus(slice.labid).status === 'inactive' ? 'bg-gray-500/20 text-gray-300' :
-                'bg-amber-500/20 text-amber-300'
-              }`}>
-                {userRole === 'superadmin' || userRole === 'orgsuperadmin' ? slice.status : getOrgLabStatus(slice.labid).status}
-              </span>
+             <span
+              className={`px-2 py-1 text-xs font-medium rounded-full ${
+                userRole === 'superadmin' || userRole === 'orgsuperadmin'
+                  ? slice.status === 'active'
+                    ? 'bg-emerald-500/20 text-emerald-300'
+                    : slice.status === 'expired'
+                    ? 'bg-red-500/20 text-red-300'
+                    : slice.status === 'inactive'
+                    ? 'bg-gray-500/20 text-gray-300'
+                    : 'bg-amber-500/20 text-amber-300'
+                  : getOrgLabStatus(slice.labid).status === 'active'
+                  ? 'bg-emerald-500/20 text-emerald-300'
+                  : getOrgLabStatus(slice.labid).status === 'expired'
+                  ? 'bg-red-500/20 text-red-300'
+                  : getOrgLabStatus(slice.labid).status === 'inactive'
+                  ? 'bg-gray-500/20 text-gray-300'
+                  : 'bg-amber-500/20 text-amber-300'
+              }`}
+            >
+              {userRole === 'superadmin' || userRole === 'orgsuperadmin'
+                ? slice.status
+                : getOrgLabStatus(slice.labid).status}
+            </span>
+
             </div>
           </div>
 
@@ -481,35 +498,35 @@ const canEditContent = () => {
                        disabled:opacity-50 disabled:cursor-not-allowed
                        flex items-center justify-center"
               >
-             {isLaunching ? (
-  <Loader className="animate-spin h-3.5 w-3.5" />
-) : (
-  <>
-    {userRole === 'superadmin' || userRole === 'orgsuperadmin' ? (
-      slice.launched ? (
-        <>
-          <Square className="h-3.5 w-3.5 mr-1.5" />
-          Go to Lab
-        </>
-      ) : (
-        <>
-          <Play className="h-3.5 w-3.5 mr-1.5" />
-          Launch Lab
-        </>
-      )
-    ) : getOrgLabStatus(slice.labid).launched ? (
-      <>
-        <Square className="h-3.5 w-3.5 mr-1.5" />
-        Go to Lab
-      </>
-    ) : (
-      <>
-        <Play className="h-3.5 w-3.5 mr-1.5" />
-        Launch Lab
-      </>
-    )}
-  </>
-)}
+                          {isLaunching ? (
+                <Loader className="animate-spin h-3.5 w-3.5" />
+              ) : (
+                <>
+                  {userRole === 'superadmin' || userRole === 'orgsuperadmin' ? (
+                    slice.launched ? (
+                      <>
+                        <Square className="h-3.5 w-3.5 mr-1.5" />
+                        Go to Lab
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-3.5 w-3.5 mr-1.5" />
+                        Launch Lab
+                      </>
+                    )
+                  ) : getOrgLabStatus(slice.labid).launched ? (
+                    <>
+                      <Square className="h-3.5 w-3.5 mr-1.5" />
+                      Go to Lab
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-3.5 w-3.5 mr-1.5" />
+                      Launch Lab
+                    </>
+                  )}
+                </>
+              )}
 
               </button>
 

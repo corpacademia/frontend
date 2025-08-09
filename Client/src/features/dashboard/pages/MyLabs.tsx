@@ -530,6 +530,25 @@ export const MyLabs: React.FC = () => {
   };
 
   const handleLaunchLab = async (lab) => {
+    if(lab?.status === 'expired'){
+       setLabControls(prev => ({
+      ...prev,
+      [lab.lab_id]: {
+        ...prev[lab.lab_id],
+        notification: {type:'error',message:"Lab has expired"}
+      }
+    }));
+     setTimeout(() => {
+          setLabControls(prev => ({
+            ...prev,
+            [lab.lab_id]: {
+              ...prev[lab.lab_id],
+              notification: null // Clear notification
+            }
+          }));
+        }, 2000);
+    return;
+    }
     setLabControls(prev => ({
       ...prev,
       [lab.lab_id]: {
@@ -818,10 +837,15 @@ export const MyLabs: React.FC = () => {
     const acountDetails = labStatus.find((lab) => lab.labid === labId)
     try {
       let response;
+      let IamSuccess;
+      if (acountDetails?.username !== null && acountDetails?.username !== undefined) {
       const deleteIam = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deleteIamAccount`, {
         userName: acountDetails.username
       })
-      if (deleteIam.data.success) {
+     IamSuccess = deleteIam.data.success;
+    }
+      IamSuccess = true ;
+      if (IamSuccess) {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
           userId: user.id,
           labId: labId,
@@ -834,6 +858,7 @@ export const MyLabs: React.FC = () => {
       }
     } catch (error) {
       console.error('Error deleting cloud slice:', error);
+      throw error;
     }
   };
   

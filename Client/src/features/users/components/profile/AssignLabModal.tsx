@@ -397,7 +397,6 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
     }
     
   };
-
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -480,7 +479,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
                 showTimeSelect
                 timeIntervals={15}
                 minDate={startTime}
-                maxDate={endTime}
+                 {...(selectedLabDetails?.type !== 'cloudslice' ? { maxDate: endTime } : {})}
                 dateFormat="Pp"
                 className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
                           text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"
@@ -494,7 +493,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
                 showTimeSelect
                 timeIntervals={15}
                 minDate={startTime || new Date()}
-                maxDate={endTime}
+                 {...(selectedLabDetails?.type !== 'cloudslice' ? { maxDate: endTime } : {})}
                 dateFormat="Pp"
                 className="w-full px-4 py-2 bg-dark-400/70 border border-primary-500/30 rounded-lg
                           text-white focus:outline-none focus:ring-2 focus:ring-primary-500/30"

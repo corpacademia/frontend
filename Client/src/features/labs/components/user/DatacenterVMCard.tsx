@@ -62,6 +62,17 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
         },2000)
         return;
     }
+    else if(lab?.status === 'expired'){
+         setNotification({
+          type: 'error',
+          message: 'Lab has expired'
+        });
+        setTimeout(()=>{
+          setNotification(null);
+        },2000)
+        return;
+    }
+
     if (lab.isrunning) {
       // Stop the lab
       setIsStopping(true);

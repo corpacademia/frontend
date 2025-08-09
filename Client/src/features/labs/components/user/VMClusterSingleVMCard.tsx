@@ -83,6 +83,14 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
   }
 
   const handleStartLab = () => {
+   if(vm?.lab?.status === 'expired'){
+    setNotification({type:'error',message:"Lab has expired"})
+    setTimeout(()=>{
+      setNotification(null);
+    },2000)
+    return;
+   }
+   
     setIsUserListModalOpen(true);
   };
 
