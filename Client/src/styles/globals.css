@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
@@ -179,6 +178,87 @@
     @apply opacity-20;
   }
 
+  /* Notification specific styles */
+  .notification-dropdown {
+    @apply absolute right-0 mt-2 w-80 bg-dark-200 border border-dark-300 rounded-lg shadow-lg overflow-hidden z-50;
+  }
+
+  .notification-header {
+    @apply px-4 py-3 border-b border-dark-300 flex items-center justify-between;
+  }
+
+  .notification-title {
+    @apply text-lg font-semibold text-gray-100;
+  }
+
+  .notification-count {
+    @apply bg-primary-500 text-white text-xs font-bold rounded-full px-2 py-1;
+  }
+
+  .notification-item {
+    @apply px-4 py-3 flex items-start gap-3 border-b border-dark-300 last:border-b-0 hover:bg-dark-300/50 transition-colors duration-200;
+  }
+
+  .notification-icon {
+    @apply text-primary-400 mt-1;
+  }
+
+  .notification-content {
+    @apply flex-grow;
+  }
+
+  .notification-message {
+    @apply text-sm text-gray-200 line-clamp-2;
+  }
+
+  .notification-timestamp {
+    @apply text-xs text-gray-400 mt-1;
+  }
+
+  .notification-link {
+    @apply absolute inset-0 z-10;
+  }
+
+  .notification-settings-section {
+    @apply mb-6;
+  }
+
+  .notification-settings-title {
+    @apply text-xl font-semibold text-gray-100 mb-3;
+  }
+
+  .notification-preference {
+    @apply flex items-center justify-between py-3 border-b border-dark-300 last:border-b-0;
+  }
+
+  .notification-preference-label {
+    @apply text-sm font-medium text-gray-200;
+  }
+
+  .notification-preference-toggle {
+    @apply relative inline-block w-10 h-6 rounded-full cursor-pointer;
+  }
+
+  .notification-preference-toggle input {
+    @apply sr-only peer;
+  }
+
+  .notification-preference-toggle .slider {
+    @apply absolute inset-0 bg-dark-300 rounded-full transition-colors duration-200;
+  }
+
+  .notification-preference-toggle input:checked ~ .slider {
+    @apply bg-primary-500;
+  }
+
+  .notification-preference-toggle .slider::before {
+    @apply content-[''] absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200;
+  }
+
+  .notification-preference-toggle input:checked ~ .slider::before {
+    @apply translate-x-4;
+  }
+
   /* Responsive utilities */
   .responsive-grid {
     @apply grid gap-4 sm:gap-6;
@@ -227,6 +307,61 @@
   .responsive-text-2xl {
     @apply text-xl sm:text-2xl;
   }
+
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Notification animations */
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .notification-enter {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  /* Custom scrollbar for notifications */
+  .notification-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .notification-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .notification-scroll::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.5);
+    border-radius: 2px;
+  }
+
+  .notification-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.7);
+  }
 }
 
 /* Fixed layout styles */
@@ -250,11 +385,11 @@ body {
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .glass-panel {
     padding: 1rem;
   }
-  
+
   .data-card {
     padding: 1rem;
   }

@@ -44,6 +44,7 @@ import { OrgAdminsPage } from '../features/dashboard/pages/OrgAdminsPage';
 import { AllUsersPage } from '../features/dashboard/pages/AllUsersPage';
 import { OrgSuperAdminCataloguePage } from '../features/labs/pages/OrgSuperAdminCataloguePage';
 import { PrivateRoute } from '../components/auth/PrivateRoute';
+import NotificationPage from '../pages/NotificationPage';
 
 
 export const AppRoutes: React.FC = () => {
@@ -111,6 +112,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="org-admins" element={<OrgAdminsPage />} />
         <Route path="all-users" element={<AllUsersPage />} />
         <Route path="my-organization" element={<Organizations />} />
+        <Route path="/notifications" element={<NotificationPage />} />
 
         {/* User Lab Routes */}
         <Route path="my-labs/:labId/standard" element={<StandardLabPage />} />

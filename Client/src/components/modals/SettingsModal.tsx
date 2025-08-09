@@ -1,9 +1,10 @@
 
 import React, { useState, useRef } from 'react';
-import { X, Camera, User, Mail, Lock, Eye, EyeOff, Loader, Check, AlertCircle } from 'lucide-react';
+import { X, Camera, User, Mail, Lock, Eye, EyeOff, Loader, Check, AlertCircle, Bell } from 'lucide-react';
 import { GradientText } from '../ui/GradientText';
 import { GlowingBorder } from '../ui/GlowingBorder';
 import { useAuthStore } from '../../store/authStore';
+import { NotificationPreferences } from '../settings/NotificationPreferences';
 import axios from 'axios';
 
 interface SettingsModalProps {
@@ -15,6 +16,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { user, fetchUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications'>('profile');
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -118,7 +120,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       
       <GlowingBorder>
-        <div className="relative glass-panel p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="relative glass-panel p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-display font-bold">
               <GradientText>Settings</GradientText>
@@ -131,7 +133,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Tabs */}
+          <div className="flex space-x-1 mb-8">
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                activeTab === 'profile'
+                  ? 'bg-primary-500/20 text-primary-300'
+                  : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
+              }`}
+            >
+              <User className="h-4 w-4" />
+              <span>Profile</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('notifications')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                activeTab === 'notifications'
+                  ? 'bg-primary-500/20 text-primary-300'
+                  : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
+              }`}
+            >
+              <Bell className="h-4 w-4" />
+              <span>Notifications</span>
+            </button>
+          </div>
+
+          {/* Content */}
+          {activeTab === 'profile' ? (
+            <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Photo Section */}
             <div className="flex flex-col items-center space-y-4">
               <div className="relative">
@@ -318,6 +348,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </button>
             </div>
           </form>
+          ) : (
+            <NotificationPreferences />
+          )}
         </div>
       </GlowingBorder>
     </div>

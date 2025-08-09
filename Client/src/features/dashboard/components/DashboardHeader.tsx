@@ -8,6 +8,7 @@ import axios from 'axios';
 import { loadStripe } from '@stripe/stripe-js';
 import { useCatalogueStore } from '../../../store/catalogueStore';
 import { useCartStore } from '../../../store/useCartStore';
+import { NotificationDropdown } from '../../../components/notifications/NotificationDropdown';
 
 export const DashboardHeader: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -28,7 +29,7 @@ export const DashboardHeader: React.FC = () => {
     updateCartItem,
     proceedToCheckout,
   } = useCartStore();
-  
+
 
   useEffect(() => {
     fetchAllCatalogues();
@@ -44,7 +45,7 @@ export const DashboardHeader: React.FC = () => {
   //         } 
   //       }
   //       fetchCatalogues();
-    
+
   // })
   // const fetchCartItems = async () => {
   //   if (!isAuthenticated) return;
@@ -194,7 +195,10 @@ export const DashboardHeader: React.FC = () => {
           <div className="hidden sm:block">
             <OrganizationSwitcher />
           </div>
-          
+
+          {/* Notifications */}
+          <NotificationDropdown />
+
           {/* Cart Button */}
           <button
             onClick={() => setIsCartModalOpen(true)}
@@ -209,7 +213,7 @@ export const DashboardHeader: React.FC = () => {
               </span>
             )}
           </button>
-          
+
           <button className="p-2 text-gray-400 hover:text-primary-300 rounded-lg hover:bg-dark-100/50 transition-colors">
             <Bell className="h-5 w-5" />
           </button>
@@ -388,7 +392,7 @@ export const DashboardHeader: React.FC = () => {
                               <span className="text-xs text-primary-400">{item.lab_category || item.category}</span>
                               <span className="text-xs text-gray-500">{item.duration} days</span>
                               <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
-                              
+
                                   <span className="font-semibold text-white">
                                     ₹{item.price}
                                   </span>
