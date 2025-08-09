@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { X, Camera, User, Mail, Lock, Eye, EyeOff, Loader, Check, AlertCircle, Bell } from 'lucide-react';
 import { GradientText } from '../ui/GradientText';
@@ -15,7 +16,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { user, fetchUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'general' | 'account'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications'>('profile');
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -115,56 +116,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="relative bg-dark-200/95 backdrop-blur-lg border border-primary-500/20 rounded-xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-display font-bold">
+            <GradientText>Settings</GradientText>
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5 text-gray-400" />
+          </button>
+        </div>
 
-      <GlowingBorder>
-        <div className="relative glass-panel p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-display font-bold">
-              <GradientText>Settings</GradientText>
-            </h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <X className="h-5 w-5 text-gray-400" />
-            </button>
-          </div>
+        {/* Tabs */}
+        <div className="flex space-x-1 mb-8 bg-dark-300/50 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 flex-1 ${
+              activeTab === 'profile'
+                ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
+                : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
+            }`}
+          >
+            <User className="h-4 w-4" />
+            <span>Profile</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('notifications')}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 flex-1 ${
+              activeTab === 'notifications'
+                ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
+                : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
+            }`}
+          >
+            <Bell className="h-4 w-4" />
+            <span>Notifications</span>
+          </button>
+        </div>
 
-          {/* Tabs */}
-          <div className="flex space-x-1 mb-8">
-            <button
-              onClick={() => setActiveTab('profile')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'profile'
-                  ? 'bg-primary-500/20 text-primary-300'
-                  : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
-              }`}
-            >
-              <User className="h-4 w-4" />
-              <span>Profile</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('notifications')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                activeTab === 'notifications'
-                  ? 'bg-primary-500/20 text-primary-300'
-                  : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
-              }`}
-            >
-              <Bell className="h-4 w-4" />
-              <span>Notifications</span>
-            </button>
-          </div>
-
-          {/* Content */}
-          {activeTab === 'profile' ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Content */}
+        {activeTab === 'profile' ? (
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Profile Photo Section */}
-            <div className="flex flex-col items-center space-y-4">
+            <div className="flex flex-col items-center space-y-4 pb-6 border-b border-gray-700">
               <div className="relative">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center overflow-hidden">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 flex items-center justify-center overflow-hidden shadow-xl">
                   {photoPreview ? (
                     <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
                   ) : user.profilePhoto ? (
@@ -176,7 +174,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-2 -right-2 p-2 bg-primary-500 hover:bg-primary-600 rounded-full transition-colors"
+                  className="absolute -bottom-2 -right-2 p-2 bg-primary-500 hover:bg-primary-600 rounded-full transition-all duration-200 shadow-lg hover:shadow-primary-500/30"
                 >
                   <Camera className="h-4 w-4 text-white" />
                 </button>
@@ -188,13 +186,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   className="hidden"
                 />
               </div>
-              <p className="text-sm text-gray-400">Click the camera icon to update your profile photo</p>
+              <p className="text-sm text-gray-400 text-center">Click the camera icon to update your profile photo</p>
             </div>
 
             {/* Form Fields */}
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-100 mb-2">
+                <label className="block text-sm font-medium text-gray-200 mb-2">
                   Full Name
                 </label>
                 <div className="relative">
@@ -204,14 +202,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-dark-400/70 border border-primary-500/30 rounded-lg text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-dark-400/50 border border-primary-500/30 rounded-lg text-white placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-100 mb-2">
+                <label className="block text-sm font-medium text-gray-200 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
@@ -221,15 +219,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 bg-dark-400/70 border border-primary-500/30 rounded-lg text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none transition-colors"
+                    className="w-full pl-10 pr-4 py-3 bg-dark-400/50 border border-primary-500/30 rounded-lg text-white placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
                     required
                   />
                 </div>
               </div>
 
               {/* Password Section */}
-              <div className="border-t border-gray-700 pt-4">
-                <h3 className="text-lg font-medium text-gray-300 mb-4">Change Password</h3>
+              <div className="border-t border-gray-700 pt-6">
+                <h3 className="text-lg font-semibold text-gray-200 mb-4">Change Password</h3>
 
                 <div className="space-y-4">
                   <div>
@@ -243,12 +241,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         name="currentPassword"
                         value={formData.currentPassword}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-12 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300 focus:border-primary-500/40 focus:outline-none transition-colors"
+                        className="w-full pl-10 pr-12 py-3 bg-dark-400/50 border border-gray-600 rounded-lg text-gray-300 placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
                       />
                       <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
                       >
                         {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -266,12 +264,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         name="newPassword"
                         value={formData.newPassword}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-12 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300 focus:border-primary-500/40 focus:outline-none transition-colors"
+                        className="w-full pl-10 pr-12 py-3 bg-dark-400/50 border border-gray-600 rounded-lg text-gray-300 placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
                       >
                         {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -289,12 +287,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className="w-full pl-10 pr-12 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300 focus:border-primary-500/40 focus:outline-none transition-colors"
+                        className="w-full pl-10 pr-12 py-3 bg-dark-400/50 border border-gray-600 rounded-lg text-gray-300 placeholder-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all duration-200"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
                       >
                         {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -304,29 +302,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
             </div>
 
+            {/* Messages */}
             {error && (
-              <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-lg">
+              <div className="p-4 bg-red-900/30 border border-red-500/30 rounded-lg backdrop-blur-sm">
                 <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-5 w-5 text-red-400" />
+                  <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
                   <span className="text-red-200">{error}</span>
                 </div>
               </div>
             )}
 
             {success && (
-              <div className="p-4 bg-emerald-900/20 border border-emerald-500/20 rounded-lg">
+              <div className="p-4 bg-emerald-900/30 border border-emerald-500/30 rounded-lg backdrop-blur-sm">
                 <div className="flex items-center space-x-2">
-                  <Check className="h-5 w-5 text-emerald-400" />
+                  <Check className="h-5 w-5 text-emerald-400 flex-shrink-0" />
                   <span className="text-emerald-200">{success}</span>
                 </div>
               </div>
             )}
 
-            <div className="flex justify-end space-x-4">
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-700">
               <button
                 type="button"
                 onClick={onClose}
-                className="btn-secondary"
+                className="px-6 py-2 border border-gray-600 rounded-lg text-gray-300 hover:bg-gray-700 hover:border-gray-500 transition-all duration-200"
                 disabled={isSubmitting}
               >
                 Cancel
@@ -334,7 +334,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="btn-primary flex items-center space-x-2"
+                className="px-6 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-400 hover:to-secondary-400 rounded-lg text-white font-medium transition-all duration-200 shadow-lg hover:shadow-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
                 {isSubmitting ? (
                   <>
@@ -347,74 +347,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </button>
             </div>
           </form>
-          ) : activeTab === 'notifications' ? (
-            <div className="max-h-[60vh] overflow-y-auto">
-              <NotificationPreferences />
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {activeTab === 'general' && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-white mb-4">General Settings</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Theme
-                      </label>
-                      <select className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
-                                       text-gray-300 focus:border-primary-500/40 focus:outline-none">
-                        <option value="dark">Dark</option>
-                        <option value="light">Light</option>
-                        <option value="auto">Auto</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Language
-                      </label>
-                      <select className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
-                                       text-gray-300 focus:border-primary-500/40 focus:outline-none">
-                        <option value="en">English</option>
-                        <option value="es">Español</option>
-                        <option value="fr">Français</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'account' && (
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-white mb-4">Account Settings</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Email
-                      </label>
-                      <input 
-                        type="email" 
-                        defaultValue="user@example.com"
-                        className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
-                                 text-gray-300 focus:border-primary-500/40 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Password
-                      </label>
-                      <button className="w-full px-3 py-2 bg-primary-500/20 hover:bg-primary-500/30 
-                                       border border-primary-500/30 rounded-lg text-primary-300 
-                                       transition-colors text-left">
-                        Change Password
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </GlowingBorder>
+        ) : (
+          <div className="max-h-[60vh] overflow-y-auto">
+            <NotificationPreferences />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
