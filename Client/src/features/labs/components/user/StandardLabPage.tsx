@@ -12,7 +12,12 @@ import {
   Check,
   Clock,
   Play,
-  Square
+  Square,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  X
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -59,6 +64,18 @@ export const StandardLabPage: React.FC = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [user, setUser] = useState<any>();
   const [userLabStatus,setUserLabStatus]= useState<any>();
+  
+  // Documents state
+  const [documents, setDocuments] = useState<string[]>([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+  const [showDocuments, setShowDocuments] = useState(false);
+  const [currentDocIndex, setCurrentDocIndex] = useState(0);
+  
+  // Extract filename helper function
+  const extractFileName = (filePath: string) => {
+    const match = filePath.match(/[^\\\/]+$/);
+    return match ? match[0] : null;
+  };
   useEffect(()=>{
     const fetchUserDetails = async()=>{
       try {
@@ -90,6 +107,37 @@ export const StandardLabPage: React.FC = () => {
     }
     fetchUserDetails();
   },[])
+
+  // Fetch documents
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!labDetails || !user) return;
+      
+      setIsLoadingDocs(true);
+      try {
+        // For StandardLabPage, users get userguides
+        const documentsToShow = labDetails.userguides || [];
+        setDocuments(documentsToShow);
+      } catch (error) {
+        console.error('Failed to load documents:', error);
+      } finally {
+        setIsLoadingDocs(false);
+      }
+    };
+
+    if (user && labDetails) {
+      fetchDocuments();
+    }
+  }, [user, labDetails]);
+
+  // Document navigation handlers
+  const handlePrevDocument = () => {
+    setCurrentDocIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const handleNextDocument = () => {
+    setCurrentDocIndex(prev => Math.min(documents.length - 1, prev + 1));
+  };
  
   
 
@@ -246,9 +294,9 @@ export const StandardLabPage: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
         {/* Left Column - Services */}
-        <div className="lg:col-span-2">
+        <div className={`${showDocuments ? 'xl:col-span-2' : 'xl:col-span-3'} transition-all duration-300`}>
           <div className="glass-panel">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold">
@@ -279,12 +327,23 @@ export const StandardLabPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column - Credentials & Actions */}
+        {/* Middle Column - Credentials & Actions */}
         <div className="space-y-6">
           <div className="glass-panel">
-            <h2 className="text-xl font-semibold mb-6">
-              <GradientText>Access Credentials</GradientText>
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold">
+                <GradientText>Access Credentials</GradientText>
+              </h2>
+              {documents.length > 0 && (
+                <button
+                  onClick={() => setShowDocuments(!showDocuments)}
+                  className="btn-secondary text-sm py-1.5 px-3"
+                >
+                  <Eye className="h-4 w-4 mr-1.5" />
+                  {showDocuments ? 'Hide' : 'View'} Documents
+                </button>
+              )}
+            </div>
             
             <div className="space-y-4">
               <div className="p-3 bg-dark-300/50 rounded-lg">
@@ -348,6 +407,68 @@ export const StandardLabPage: React.FC = () => {
             </button>
           )}
         </div>
+
+        {/* Documents Panel */}
+        {showDocuments && (
+          <div className="glass-panel h-[600px] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-primary-500/10">
+              <h2 className="text-lg font-semibold">
+                <GradientText>User Guides</GradientText>
+              </h2>
+              <div className="flex items-center space-x-2">
+                {documents.length > 1 && (
+                  <>
+                    <button
+                      onClick={handlePrevDocument}
+                      disabled={currentDocIndex === 0}
+                      className={`p-1 rounded-lg ${currentDocIndex === 0 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <span className="text-sm text-gray-400">
+                      {currentDocIndex + 1} / {documents.length}
+                    </span>
+                    <button
+                      onClick={handleNextDocument}
+                      disabled={currentDocIndex === documents.length - 1}
+                      className={`p-1 rounded-lg ${currentDocIndex === documents.length - 1 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => setShowDocuments(false)}
+                  className="p-1 text-gray-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex-grow overflow-hidden">
+              {isLoadingDocs ? (
+                <div className="flex justify-center items-center h-full">
+                  <Loader className="h-6 w-6 text-primary-400 animate-spin mr-3" />
+                  <span className="text-gray-300">Loading documents...</span>
+                </div>
+              ) : documents.length > 0 ? (
+                <iframe
+                  src={`http://localhost:3000/api/v1/cloud_slice_ms/uploads/${extractFileName(documents[currentDocIndex])}`}
+                  className="w-full h-full border-0"
+                  title="Lab Document"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <FileText className="h-12 w-12 text-gray-500 mb-4" />
+                  <p className="text-gray-400 text-center">
+                    No user guides available for this lab
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
