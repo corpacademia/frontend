@@ -4,6 +4,8 @@ import { PlatformSelector } from './steps/PlatformSelector';
 import { CloudProviderSelector } from './steps/CloudProviderSelector';
 import { CloudSliceConfig } from './steps/CloudSliceConfig';
 import { LabDetailsInput } from './steps/LabDetailsInput';
+import { DocumentUploader } from './steps/DocumentUploader';
+import { ReviewAndSubmit } from './steps/ReviewAndSubmit';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CloudSliceWorkflowProps {
@@ -38,6 +40,9 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
     cloudProvider?: string;
   } | null>(null);
   const [awsServices, setAwsServices] = useState<AwsService[]>([]);
+  const [documents, setDocuments] = useState<File[]>([]);
+  const [userGuides, setUserGuides] = useState<File[]>([]);
+
 
   const [config, setConfig] = useState({
     platform: '',
@@ -64,7 +69,7 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
         };
       });
     }
-    
+
     setStep(prev => prev + 1);
   };
 
@@ -92,6 +97,49 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
       setStep(targetStep);
     }
   };
+
+  const getSteps = () => {
+    const baseSteps = [
+      { id: 1, title: 'Lab Type', component: 'type' },
+      { id: 2, title: 'Basic Details', component: 'details' },
+      { id: 3, title: 'Configuration', component: 'config' }
+    ];
+
+    if (!labDetails?.isModular) { // Use optional chaining here
+      baseSteps.push({ id: 4, title: 'Documents', component: 'documents' });
+    }
+
+    baseSteps.push({ 
+      id: labDetails?.isModular ? 4 : 5, // Use optional chaining here
+      title: 'Review & Submit', 
+      component: 'review' 
+    });
+
+    return baseSteps;
+  };
+
+  const steps = getSteps();
+
+  const handleNext = () => {
+    if (currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleDocumentsChange = (docs: File[]) => {
+    setDocuments(docs);
+  };
+
+  const handleUserGuidesChange = (guides: File[]) => {
+    setUserGuides(guides);
+  };
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -106,10 +154,79 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
             onBack={() => setStep(3)}
             labDetails={labDetails}
             awsServiceCategories = {awsServices}
+            onNext={handleNext} // Pass handleNext here
           />
         ) : null;
+      case 5: // This case handles the Documents step
+        if (!labDetails?.isModular) {
+          return (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">Lab Documents</h2>
+                  <p className="text-gray-400">Upload documents and user guides for your lab</p>
+                </div>
+              </div>
+
+              <DocumentUploader
+                onDocumentsChange={handleDocumentsChange}
+                onUserGuidesChange={handleUserGuidesChange}
+                onNext={handleNext}
+              />
+
+              <div className="flex justify-between pt-6">
+                <button
+                  type="button"
+                  onClick={handlePrevious}
+                  className="btn-secondary"
+                >
+                  Previous
+                </button>
+              </div>
+            </div>
+          );
+        } else {
+          // If modular, skip the document step and go to review
+          handleNext(); // Automatically advance if modular
+          return null; // Or render a loading indicator/placeholder
+        }
+      case 6: // This case handles the Review & Submit step
+        return (
+          <ReviewAndSubmit
+            data={labData} // This should be the combined data from all steps
+            documents={documents}
+            userGuides={userGuides}
+            onPrevious={handlePrevious}
+            onSubmit={handleSubmit}
+          />
+        );
+
       default:
         return null;
+    }
+  };
+
+  const handleSubmit = async () => {
+    // Combine all data
+    const completeLabData = {
+      ...labDetails,
+      ...config,
+      ...labData, // labData might contain other fields like isModular
+      documents: documents,
+      userGuides: userGuides
+    };
+
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/create`, completeLabData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Lab created successfully:', response.data);
+      // Redirect or show success message
+    } catch (error) {
+      console.error('Error creating lab:', error);
+      // Show error message
     }
   };
 
@@ -132,7 +249,7 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
       try {
         const fetch = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAwsServices`);
         const awsServiceCategories = await extractAwsServices(fetch.data.data);
-    
+
         setAwsServices(awsServiceCategories);
       } catch (error) {
         console.log(error);

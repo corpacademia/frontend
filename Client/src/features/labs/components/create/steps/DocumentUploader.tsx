@@ -290,6 +290,14 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
     const textValue = type === 'document' ? documentText : userGuideText;
     const setTextValue = type === 'document' ? setDocumentText : setUserGuideText;
 
+    const createPDFFromText = (type: 'document' | 'guide') => {
+      handleTextSubmit(type);
+    };
+
+    const removeFile = (index: number, type: 'document' | 'guide') => {
+      handleRemoveDocument(index, type);
+    };
+
     return (
       <div className="mb-6">
         <h3 className="text-sm font-medium text-gray-400 mb-3">{title}</h3>
@@ -354,22 +362,28 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
         {files.length > 0 && (
           <div className="space-y-2">
             <h4 className="text-sm font-medium text-gray-400">Uploaded files:</h4>
-            {files.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-dark-300/50 rounded-lg">
-                <div className="flex items-center">
-                  <FileText className="h-5 w-5 text-primary-400 mr-2" />
-                  <span className="text-sm text-white truncate max-w-md">{file.name}</span>
-                  <span className="ml-2 text-xs text-gray-300">({(file.size / (1024 * 1024) ).toFixed(1)} MB)</span>
+            <div className="max-h-40 md:max-h-48 overflow-y-auto space-y-2">
+              {files.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-2 md:p-3 bg-gray-800 rounded-lg">
+                  <div className="flex items-center space-x-2 md:space-x-3 min-w-0 flex-1">
+                    <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary-400 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs md:text-sm font-medium text-white truncate">{file.name}</p>
+                      <p className="text-xs text-gray-400">
+                        {(file.size / 1024 / 1024).toFixed(1)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveDocument(index, type)}
+                    className="text-red-400 hover:text-red-300 p-1 flex-shrink-0"
+                  >
+                    <X className="h-3 w-3 md:h-4 md:w-4" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveDocument(index, type)}
-                  className="p-1 hover:bg-red-500/10 rounded-lg transition-colors"
-                >
-                  <X className="h-4 w-4 text-red-400" />
-                </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>
