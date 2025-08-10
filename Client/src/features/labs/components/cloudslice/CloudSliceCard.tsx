@@ -135,7 +135,7 @@ const canEditContent = () => {
             services: slice.services,
             role:user.role,
             labid:slice.labid,
-            purchased:slice?.purchased
+            purchased:slice?.purchased || false
           });
 
           if (!createIamAccount.data.success) {

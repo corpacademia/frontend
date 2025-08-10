@@ -92,7 +92,6 @@ export const StandardLabPage: React.FC = () => {
   },[])
  
   
-
   // Format time remaining
   const formatTimeRemaining = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);

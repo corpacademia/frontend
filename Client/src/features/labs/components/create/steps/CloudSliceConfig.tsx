@@ -16,7 +16,128 @@ import {
   Users,
   Shield
 } from 'lucide-react';
+import { useAuthStore } from '../../../../../store/authStore';
 
+// Assuming DocumentUploader component is in the same directory or imported correctly
+// import { DocumentUploader } from './DocumentUploader'; 
+// Mocking DocumentUploader for now as it's not provided.
+// const DocumentUploader = ({ onDocumentUpload, onBack, onNext, isLoading, labDocuments, labVideos }: any) => {
+//   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, type: 'documents' | 'videos') => {
+//     const files = Array.from(event.target.files || []);
+//     onDocumentUpload(files, type);
+//   };
+
+//   const handleDelete = (fileName: string, type: 'documents' | 'videos') => {
+//     if (type === 'documents') {
+//       const updatedDocs = labDocuments.filter((doc: File) => doc.name !== fileName);
+//       onDocumentUpload(updatedDocs, 'documents');
+//     } else {
+//       const updatedVideos = labVideos.filter((vid: File) => vid.name !== fileName);
+//       onDocumentUpload(updatedVideos, 'videos');
+//     }
+//   };
+
+//   return (
+//     <div className="glass-panel space-y-6">
+//       <h3 className="text-lg font-semibold text-gray-200">Lab Documents and Videos</h3>
+      
+//       <div className="space-y-4">
+//         <label className="block text-sm font-medium text-gray-300 mb-2">
+//           Upload Lab Documents
+//         </label>
+//         <div className="flex items-center justify-center w-full">
+//           <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-dark-400/50 border-primary-500/20 hover:border-primary-500/40">
+//             <div className="flex flex-col items-center justify-center pt-5 pb-6">
+//               <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+//                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A53.86 53.86 0 0 0 16 6V5a53.86 53.86 0 0 0-3.975-8.75C11.5 0.516 10.77 0 10 0 9.23 0 8.484.516 7.532 1.25C6.085 2.008 5 3.847 5 6v2.575A53.86 53.86 0 0 0 4 11H3a3 3 0 0 0 0 6h3"/>
+//               </svg>
+//               <p className="mb-2 text-sm text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+//               <p className="text-xs text-gray-500 dark:text-gray-400">PDF, DOCX, TXT, PNG, JPG, GIF (Max 5MB each)</p>
+//             </div>
+//             <input type="file" multiple className="hidden" onChange={(e) => handleFileChange(e, 'documents')} />
+//           </label>
+//         </div>
+//         {labDocuments.length > 0 && (
+//           <div className="mt-2">
+//             <h4 className="text-sm font-medium text-gray-400 mb-2">Uploaded Documents:</h4>
+//             <div className="flex flex-wrap gap-2">
+//               {labDocuments.map((doc, index) => (
+//                 <div key={index} className="flex items-center px-3 py-1 bg-primary-500/10 text-primary-300 rounded-full text-sm">
+//                   {doc.name}
+//                   <button onClick={() => handleDelete(doc.name, 'documents')} className="ml-2 hover:text-primary-400">
+//                     <X className="h-4 w-4" />
+//                   </button>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+//       </div>
+
+//       <div className="space-y-4">
+//         <label className="block text-sm font-medium text-gray-300 mb-2">
+//           Upload Lab Videos
+//         </label>
+//         <div className="flex items-center justify-center w-full">
+//           <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-dark-400/50 border-primary-500/20 hover:border-primary-500/40">
+//             <div className="flex flex-col items-center justify-center pt-5 pb-6">
+//               <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+//                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A53.86 53.86 0 0 0 16 6V5a53.86 53.86 0 0 0-3.975-8.75C11.5 0.516 10.77 0 10 0 9.23 0 8.484.516 7.532 1.25C6.085 2.008 5 3.847 5 6v2.575A53.86 53.86 0 0 0 4 11H3a3 3 0 0 0 0 6h3"/>
+//               </svg>
+//               <p className="mb-2 text-sm text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+//               <p className="text-xs text-gray-500 dark:text-gray-400">MP4, MOV, AVI (Max 50MB each)</p>
+//             </div>
+//             <input type="file" multiple className="hidden" onChange={(e) => handleFileChange(e, 'videos')} />
+//           </label>
+//         </div>
+//         {labVideos.length > 0 && (
+//           <div className="mt-2">
+//             <h4 className="text-sm font-medium text-gray-400 mb-2">Uploaded Videos:</h4>
+//             <div className="flex flex-wrap gap-2">
+//               {labVideos.map((video, index) => (
+//                 <div key={index} className="flex items-center px-3 py-1 bg-primary-500/10 text-primary-300 rounded-full text-sm">
+//                   {video.name}
+//                   <button onClick={() => handleDelete(video.name, 'videos')} className="ml-2 hover:text-primary-400">
+//                     <X className="h-4 w-4" />
+//                   </button>
+//                 </div>
+//               ))}
+//             </div>
+//           </div>
+//         )}
+//       </div>
+
+//       <div className="flex justify-between pt-6">
+//         <button
+//           type="button"
+//           onClick={onBack}
+//           className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
+//         >
+//           Back
+//         </button>
+//         <button
+//           type="button"
+//           onClick={onNext}
+//           disabled={isLoading}
+//           className="btn-primary flex items-center"
+//         >
+//           {isLoading ? (
+//             <>
+//               <Loader className="animate-spin h-4 w-4 mr-2" />
+//               Creating Lab...
+//             </>
+//           ) : (
+//             <>
+//               <Check className="h-4 w-4 mr-2" />
+//               Create Cloud Slice Lab
+//             </>
+//           )}
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
+import { DocumentUploader } from './DocumentUploader';
 interface CloudSliceConfigProps {
   onBack: () => void;
   labDetails: {
@@ -43,6 +164,7 @@ const regions = import.meta.env.VITE_AWS_REGIONS ? JSON.parse(import.meta.env.VI
 
 export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labDetails, awsServiceCategories }) => {
   const navigate = useNavigate();
+  const {user} = useAuthStore();
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [selectedRegion, setSelectedRegion] = useState('');
   const [categorySearch, setCategorySearch] = useState('');
@@ -61,6 +183,12 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
   const [credits, setCredits] = useState(100); // Example credit amount
   const [labType, setLabType] = useState<'without-modules' | 'with-modules'>('without-modules');
   const [accountType, setAccountType] = useState<'iam' | 'organization'>('iam');
+
+
+  // Document upload state
+  const [labDocuments, setLabDocuments] = useState<File[]>([]);
+  const [userDocuments, setUserDocuments] = useState<File[]>([]);
+  const [currentStep, setCurrentStep] = useState<'config' | 'documents'>('config');
 
   const filteredRegions = regions.filter(region => 
     region.name.toLowerCase().includes(regionSearch.toLowerCase()) ||
@@ -87,17 +215,37 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
     });
   };
 
+  const handleDocumentUpload = (files: File[]) => {
+    setLabDocuments(files);
+  }
+  const handleUserGuidesChange = (files: File[])=>{
+    setUserDocuments(files);
+  }
+
+  const handleNextToDocuments = () => {
+    if (selectedServices.length === 0) {
+      setError('Please select at least one service');
+      setTimeout(() => setError(null), 3000);
+      return;
+    }
+    setCurrentStep('documents');
+  };
+
+  const handleBackToConfig = () => {
+    setCurrentStep('config');
+  };
+
   const handleSubmit = async () => {
     if (!selectedRegion) {
       setError('Please select a region');
       return;
     }
-    
+
     if (selectedServices.length === 0 && labType === 'without-modules') {
       setError('Please select at least one service');
       return;
     }
-    
+
     if (!startDate || !endDate) {
       setError('Please specify start and end dates');
       return;
@@ -113,78 +261,109 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
     setSuccess(null);
 
     try {
-      const config = {
-        title: labDetails.title,
-        description: labDetails.description,
-        platform: labDetails.platform,
-        cloudProvider: labDetails.cloudProvider,
-        services: selectedServices.map(s => s.services_prefix),
-        region: selectedRegion,
-        startDate,
-        endDate,
-        labType,
-        credits: credits ? credits : 0,
-        accountType,
-      };
+      const mappedServices = selectedServices.map((service)=>service.services_prefix)
+      // Create FormData for file uploads
+      const formData = new FormData();
+      formData.append('title', labDetails.title);
+      formData.append('description', labDetails.description);
+      formData.append('cloudProvider', labDetails.cloudProvider);
+      formData.append('region', selectedRegion);
+      formData.append('services', JSON.stringify(mappedServices));
+      formData.append('cleanupPolicy', cleanupPolicy.toString());
+      formData.append('startDate', startDate);
+      formData.append('endDate', endDate);
+      formData.append('credits', credits.toString()); 
+      formData.append('labType', 'without-modules');
+      formData.append('createdBy', user.id); 
+      formData.append('accountType',accountType)
+      formData.append('platform',labDetails.platform);
 
-      // Only add cleanupPolicy for labs without modules
-      if (labType === 'without-modules') {
-        config['cleanupPolicy'] = cleanupPolicy;
-      }
+      // Add documents
+      labDocuments.forEach((file, index) => {
+        formData.append(`labDocuments`, file);
+      });
 
-      if (labType === 'with-modules') {
-        // For labs with modules, navigate to module creation page
-        navigate('/dashboard/create-modules', { state: { labConfig: config } });
-        return;
-      }
+      // Add user docs
+      userDocuments.forEach((file, index) => {
+        formData.append(`userDocuments`, file);
+      });
 
-      try {
-        const user_profile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createCloudSliceLab`, {
-          createdBy: user_profile.data.user.id,
-          labData: config
-        });
-        
-        if (result.data.success) {
-          // For labs without modules, show success message
-          setSuccess('Cloud slice created successfully!');
-          setTimeout(() => {
-            navigate('/dashboard/labs/cloud-slices');
-          }, 3000);
-        } else {
-          setError('Failed to create cloud slice');
-        }
-      } catch (error) {
-        console.error('API error:', error);
-        setError('Failed to create cloud slice');
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createCloudSliceLab`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        setSuccess('Cloud slice created successfully!');
+        setTimeout(() => {
+          navigate('/dashboard/labs/cloud-slices');
+        }, 3000);
+      } else {
+        setError(response.data.message || 'Failed to create cloud slice');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Submission error:', err);
-      setError('Failed to create cloud slice');
+      setError(err.response?.data?.message || 'Failed to create cloud slice');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Conditionally render based on currentStep
+  if (currentStep === 'documents') {
+    return (
+      <div className="space-y-6">
+        {error && (
+          <div className={`p-4 rounded-lg ${
+            'bg-red-500/10 text-red-400'
+          }`}>
+            {error}
+          </div>
+        )}
+
+        <DocumentUploader
+          onDocumentsChange={handleDocumentUpload}
+          onUserGuidesChange={handleUserGuidesChange}
+          onNext={handleSubmit}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-display font-bold">
-            <GradientText>AWS Cloud Slice Configuration</GradientText>
-          </h2>
-          <p className="mt-2 text-gray-400">{labDetails.title}</p>
-          <p className="mt-2 text-gray-400">{labDetails.description}</p>
+      {error && (
+        <div className={`p-4 rounded-lg ${
+          'bg-red-500/10 text-red-400'
+        }`}>
+          {error}
         </div>
-        <div className="text-lg font-semibold text-primary-400">
-          Credits Available: ${credits.toLocaleString()}
+      )}
+      {success && (
+        <div className={`p-4 rounded-lg ${
+          'bg-emerald-900/20 border border-emerald-500/20'
+        }`}>
+          <div className="flex items-center space-x-2">
+            <Check className="h-5 w-5 text-emerald-400" />
+            <span className="text-emerald-200">{success}</span>
+          </div>
         </div>
+      )}
+
+      <div>
+        <h2 className="text-2xl font-semibold mb-2">
+          <GradientText>Configure Cloud Slice</GradientText>
+        </h2>
+        <p className="text-gray-400">
+          Set up your {labDetails.cloudProvider} cloud slice with the required services and configuration.
+        </p>
       </div>
 
       {/* Lab Type Selection */}
       <div className="glass-panel space-y-4">
         <h3 className="text-lg font-semibold text-gray-200">Lab Type</h3>
-        
+
         <div className="flex flex-col space-y-3">
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
@@ -200,7 +379,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
               <p className="text-sm text-gray-400">Standard lab with all services and functionalities</p>
             </div>
           </label>
-          
+
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
               type="radio"
@@ -221,7 +400,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       {/* Account Type Selection */}
       <div className="glass-panel space-y-4">
         <h3 className="text-lg font-semibold text-gray-200">Account Type</h3>
-        
+
         <div className="flex flex-col space-y-3">
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
@@ -237,7 +416,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
               <p className="text-sm text-gray-400">Standard AWS account with IAM users and roles</p>
             </div>
           </label>
-          
+
           <label className="flex items-center space-x-3 cursor-pointer">
             <input
               type="radio"
@@ -263,7 +442,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       {labType === 'without-modules' && (
         <div className="glass-panel space-y-4">
           <h3 className="text-lg font-semibold text-gray-200">Credits Configuration</h3>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -292,7 +471,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       {labType === 'without-modules' && (
         <div className="glass-panel space-y-4">
           <h3 className="text-lg font-semibold text-gray-200">AWS Services</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left Column - Categories Dropdown */}
             <div className="space-y-4">
@@ -440,7 +619,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       {/* Region Selection - Show for both lab types */}
       <div className="glass-panel space-y-4">
         <h3 className="text-lg font-semibold text-gray-200">Region Selection</h3>
-        
+
         <div className="relative">
           <button
             onClick={() => setShowRegionDropdown(!showRegionDropdown)}
@@ -498,7 +677,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         ) : (
           <h3 className="text-lg font-semibold text-gray-200">Duration</h3>
         )}
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -558,67 +737,23 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         )}
       </div>
 
-      {error && (
-        <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <AlertCircle className="h-5 w-5 text-red-400" />
-            <span className="text-red-200">{error}</span>
-          </div>
-        </div>
-      )}
-
-      {success && (
-        <div className="p-4 bg-emerald-900/20 border border-emerald-500/20 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <Check className="h-5 w-5 text-emerald-400" />
-            <span className="text-emerald-200">{success}</span>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-between">
+      {/* Action Buttons */}
+      <div className="flex justify-between pt-6">
         <button
+          type="button"
           onClick={onBack}
-          className="btn-secondary"
+          className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
         >
           Back
         </button>
-        <div className="flex space-x-4">
-          {labType === 'with-modules' ? (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="btn-primary"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center">
-                  <Loader className="animate-spin h-4 w-4 mr-2" />
-                  Creating Lab...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  <Layers className="h-4 w-4 mr-2" />
-                  Continue to Module Creation
-                </span>
-              )}
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="btn-primary"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center">
-                  <Loader className="animate-spin h-4 w-4 mr-2" />
-                  Creating Cloud Slice...
-                </span>
-              ) : (
-                'Create Cloud Slice'
-              )}
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={handleNextToDocuments}
+          disabled={selectedServices.length === 0}
+          className="btn-primary flex items-center"
+        >
+          Next: Add Documents
+        </button>
       </div>
     </div>
   );

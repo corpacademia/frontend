@@ -31,7 +31,6 @@ export const CloudSliceLabPage: React.FC = () => {
   const location = useLocation();
   const { sliceId } = useParams();
   const navigate = useNavigate();
-  
   const [sliceDetails, setSliceDetails] = useState<any>(location.state?.sliceDetails || null);
   const [isLoading, setIsLoading] = useState(!location.state?.sliceDetails);
   const [error, setError] = useState<string | null>(null);
@@ -142,6 +141,8 @@ export const CloudSliceLabPage: React.FC = () => {
     
     // Super admin can edit anything
     if (currentUser.role === 'superadmin') return true;
+
+     if (currentUser.role === 'orgsuperadmin') return true;
     
     // Org admin can only edit content they created
     if (currentUser.role === 'orgadmin') {
@@ -571,7 +572,7 @@ export const CloudSliceLabPage: React.FC = () => {
                   <User className="h-4 w-4 text-primary-400" />
                 </div>
                 <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                  {currentUser.role === 'superadmin' ? sliceDetails?.username : orgLabStatus.username || 'Not available'}
+                  {currentUser.role === 'superadmin' || currentUser.role === 'orgsuperadmin'? sliceDetails?.username : orgLabStatus.username || 'Not available'}
                 </p>
               </div>
               
@@ -581,19 +582,9 @@ export const CloudSliceLabPage: React.FC = () => {
                   <Key className="h-4 w-4 text-primary-400" />
                 </div>
                 <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                {currentUser.role === 'superadmin' ? sliceDetails?.password : orgLabStatus.password || 'Not available'}
+                {currentUser.role === 'superadmin'  || currentUser.role === 'orgsuperadmin' ? sliceDetails?.password : orgLabStatus.password || 'Not available'}
                 </p>
               </div>
-              
-              {/* <div className="p-3 bg-dark-300/50 rounded-lg">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-400">Secret Access Key</span>
-                  <Key className="h-4 w-4 text-primary-400" />
-                </div>
-                <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                  {sliceDetails?.credentials?.secretAccessKey || 'Not available'}
-                </p>
-              </div> */}
             </div>
           </div>
           

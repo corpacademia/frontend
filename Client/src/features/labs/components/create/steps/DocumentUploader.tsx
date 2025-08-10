@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Upload, X, FileText, AlertCircle } from 'lucide-react';
+import { Upload, X, FileText, AlertCircle, Loader } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
 interface DocumentUploaderProps {
@@ -20,7 +20,7 @@ export const DocumentUploader: React.FC<DocumentUploaderProps> = ({
   const guideInputRef = useRef<HTMLInputElement>(null);
   const [documentText, setDocumentText] = useState<string>('');
   const [userGuideText, setUserGuideText] = useState<string>('');
-
+  const [isLoading,setIsLoading] = useState(false);
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -177,11 +177,20 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
 };
 
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+  try {
+    setIsLoading(true);
+
     if (onNext) {
-      onNext();
+      await onNext(); // make sure onNext returns a promise if async
     }
-  };
+
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setIsLoading(false); // only stop loading after async work finishes
+  }
+};
 
   const convertTextToPdf = (text: string, type: 'document' | 'guide'): File => {
     const doc = new jsPDF();
@@ -417,14 +426,23 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
 
       {/* Continue button */}
       <div className="mt-8 flex justify-end">
-        <button
-          type="button"
-          onClick={handleContinue}
-          className="btn-primary"
-        >
-          Continue
-        </button>
-      </div>
+  <button
+    type="button"
+    onClick={handleContinue}
+    className="btn-primary"
+    disabled={isLoading}
+  >
+    {isLoading ? (
+      <>
+        <Loader className="animate-spin h-4 w-4 mr-2" />
+        Loading...
+      </>
+    ) : (
+      'Continue'
+    )}
+  </button>
+</div>
+
     </div>
   );
 };
