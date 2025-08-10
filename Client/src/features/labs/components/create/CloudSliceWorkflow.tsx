@@ -38,10 +38,12 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
     duration: number;
     platform?: string;
     cloudProvider?: string;
+    isModular?: boolean;
   } | null>(null);
   const [awsServices, setAwsServices] = useState<AwsService[]>([]);
   const [documents, setDocuments] = useState<File[]>([]);
   const [userGuides, setUserGuides] = useState<File[]>([]);
+  const [labData, setLabData] = useState<any>({});
 
 
   const [config, setConfig] = useState({
@@ -73,8 +75,9 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
     setStep(prev => prev + 1);
   };
 
-  const handleLabDetails = (details: { title: string; description: string; duration: number }) => {
+  const handleLabDetails = (details: { title: string; description: string; duration: number; isModular?: boolean }) => {
     setLabDetails(details);
+    setLabData(prev => ({ ...prev, ...details }));
     setStep(prev => prev + 1);
   };
 
@@ -87,6 +90,15 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
       { label: 'Service Configuration', step: 4 }
     ];
 
+    if (!labDetails?.isModular) {
+      breadcrumbs.push({ label: 'Documents', step: 5 });
+    }
+
+    breadcrumbs.push({ 
+      label: 'Review & Submit', 
+      step: labDetails?.isModular ? 5 : 6 
+    });
+
     return breadcrumbs.slice(0, step + 1);
   };
 
@@ -98,38 +110,12 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
     }
   };
 
-  const getSteps = () => {
-    const baseSteps = [
-      { id: 1, title: 'Lab Type', component: 'type' },
-      { id: 2, title: 'Basic Details', component: 'details' },
-      { id: 3, title: 'Configuration', component: 'config' }
-    ];
-
-    if (!labDetails?.isModular) { // Use optional chaining here
-      baseSteps.push({ id: 4, title: 'Documents', component: 'documents' });
-    }
-
-    baseSteps.push({ 
-      id: labDetails?.isModular ? 4 : 5, // Use optional chaining here
-      title: 'Review & Submit', 
-      component: 'review' 
-    });
-
-    return baseSteps;
-  };
-
-  const steps = getSteps();
-
   const handleNext = () => {
-    if (currentStep < steps.length) {
-      setCurrentStep(currentStep + 1);
-    }
+    setStep(prev => prev + 1);
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    setStep(prev => prev - 1);
   };
 
   const handleDocumentsChange = (docs: File[]) => {
@@ -154,10 +140,15 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
             onBack={() => setStep(3)}
             labDetails={labDetails}
             awsServiceCategories = {awsServices}
-            onNext={handleNext} // Pass handleNext here
+            onNext={() => {
+              // Store config data and move to next step
+              setLabData(prev => ({ ...prev, ...config }));
+              handleNext();
+            }}
           />
         ) : null;
-      case 5: // This case handles the Documents step
+      case 5:
+        // Documents step - only show for non-modular labs
         if (!labDetails?.isModular) {
           return (
             <div className="space-y-6">
@@ -186,14 +177,22 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
             </div>
           );
         } else {
-          // If modular, skip the document step and go to review
-          handleNext(); // Automatically advance if modular
-          return null; // Or render a loading indicator/placeholder
+          // If modular, go directly to review step
+          return (
+            <ReviewAndSubmit
+              data={{ ...labDetails, ...config, ...labData }}
+              documents={documents}
+              userGuides={userGuides}
+              onPrevious={handlePrevious}
+              onSubmit={handleSubmit}
+            />
+          );
         }
-      case 6: // This case handles the Review & Submit step
+      case 6:
+        // Review step for non-modular labs
         return (
           <ReviewAndSubmit
-            data={labData} // This should be the combined data from all steps
+            data={{ ...labDetails, ...config, ...labData }}
             documents={documents}
             userGuides={userGuides}
             onPrevious={handlePrevious}
@@ -207,23 +206,29 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
   };
 
   const handleSubmit = async () => {
-    // Combine all data
-    const completeLabData = {
-      ...labDetails,
-      ...config,
-      ...labData, // labData might contain other fields like isModular
-      documents: documents,
-      userGuides: userGuides
-    };
-
     try {
+      // Combine all data
+      const completeLabData = {
+        ...labDetails,
+        ...config,
+        ...labData,
+        documents: documents,
+        userGuides: userGuides
+      };
+
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/create`, completeLabData, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      console.log('Lab created successfully:', response.data);
-      // Redirect or show success message
+      
+      if (response.data.success) {
+        console.log('Lab created successfully:', response.data);
+        // Redirect or show success message
+        onBack(); // Go back to lab list
+      } else {
+        throw new Error(response.data.message || 'Failed to create lab');
+      }
     } catch (error) {
       console.error('Error creating lab:', error);
       // Show error message
