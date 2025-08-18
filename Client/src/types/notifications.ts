@@ -15,7 +15,8 @@ export type NotificationType =
   | 'resource_usage'
   | 'vm_status'
   | 'course_update'
-  | 'deadline_reminder';
+  | 'deadline_reminder'
+    'software_expiry';
 
 export type NotificationPriority = 'low' | 'medium' | 'high' | 'urgent';
 
@@ -25,8 +26,8 @@ export interface Notification {
   title: string;
   message: string;
   priority: NotificationPriority;
-  isRead: boolean;
-  createdAt: Date;
+  is_read: boolean;
+  created_at: Date;
   userId: string;
   metadata?: {
     labId?: string;
@@ -73,7 +74,8 @@ export const NotificationTypeLabels: Record<NotificationType, string> = {
   resource_usage: 'Resource Usage',
   vm_status: 'VM Status Updates',
   course_update: 'Course Updates',
-  deadline_reminder: 'Deadline Reminders'
+  deadline_reminder: 'Deadline Reminders',
+  software_expiry:'Software Expires',
 };
 
 export const RoleNotificationTypes: Record<string, NotificationType[]> = {
@@ -98,7 +100,8 @@ export const RoleNotificationTypes: Record<string, NotificationType[]> = {
     'payment_received',
     'resource_usage',
     'vm_status',
-    'course_update'
+    'course_update',
+    'software_expiry',
   ],
   orgadmin: [
     'user_registered',

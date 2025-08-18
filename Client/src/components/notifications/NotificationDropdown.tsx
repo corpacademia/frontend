@@ -4,6 +4,7 @@ import { Bell, X, Check, MoreVertical } from 'lucide-react';
 import { useNotificationStore } from '../../store/notificationStore';
 import { formatDistanceToNow } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { useAuthStore } from '../../store/authStore';
 
 export const NotificationDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,15 +14,16 @@ export const NotificationDropdown: React.FC = () => {
     unreadCount,
     fetchNotifications,
     markAsRead,
-    markAllAsRead
+    markAllAsRead,
+    clearNotifications
   } = useNotificationStore();
-
+ const {user} = useAuthStore();
   // Get only recent notifications (last 10)
-  const recentNotifications = notifications.slice(0, 10);
-
+  const recentNotifications = notifications?.slice(0, 10);
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    clearNotifications();
+    fetchNotifications(user?.id);
+  }, [user?.id]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -35,12 +37,13 @@ export const NotificationDropdown: React.FC = () => {
   }, []);
 
   const handleNotificationClick = async (notification: any) => {
-    if (!notification.isRead) {
+    if (!notification.is_read) {
       await markAsRead(notification.id);
     }
     setIsOpen(false);
   };
 
+  
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Notification Bell */}
@@ -65,7 +68,7 @@ export const NotificationDropdown: React.FC = () => {
             <div className="flex items-center space-x-2">
               {unreadCount > 0 && (
                 <button
-                  onClick={markAllAsRead}
+                  onClick={markAllAsRead(user?.id)}
                   className="text-xs text-primary-400 hover:text-primary-300"
                 >
                   Mark all read
@@ -94,7 +97,7 @@ export const NotificationDropdown: React.FC = () => {
                   <div
                     key={notification.id}
                     className={`p-4 hover:bg-dark-100/50 cursor-pointer transition-colors ${
-                      !notification.isRead ? 'bg-primary-500/5 border-l-2 border-l-primary-500' : ''
+                      !notification.is_read ? 'bg-primary-500/5 border-l-2 border-l-primary-500' : ''
                     }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
@@ -102,11 +105,11 @@ export const NotificationDropdown: React.FC = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
                           <h4 className={`text-sm font-medium truncate ${
-                            !notification.isRead ? 'text-white' : 'text-gray-300'
+                            !notification.is_read ? 'text-white' : 'text-gray-300'
                           }`}>
                             {notification.title}
                           </h4>
-                          {!notification.isRead && (
+                          {!notification.is_read && (
                             <div className="w-2 h-2 bg-primary-500 rounded-full flex-shrink-0 ml-2"></div>
                           )}
                         </div>
@@ -115,7 +118,7 @@ export const NotificationDropdown: React.FC = () => {
                         </p>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-gray-500">
-                            {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                           </span>
                           <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${
                             notification.priority === 'urgent' ? 'bg-red-500/20 text-red-300' :
@@ -128,7 +131,7 @@ export const NotificationDropdown: React.FC = () => {
                         </div>
                       </div>
                       
-                      {!notification.isRead && (
+                      {!notification.is_read && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

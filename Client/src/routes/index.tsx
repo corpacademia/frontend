@@ -57,6 +57,7 @@ export const AppRoutes: React.FC = () => {
       <Route path="/signupprofile" element={<SignupForm />} />
       <Route path="/verify-email" element={<EmailVerificationPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path='/notifications' element={<NotificationPage/>} />
 
       {/* Super Admin Routes */}
 

@@ -12,7 +12,12 @@ import {
   Check,
   Clock,
   Play,
-  Square
+  Square,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  X
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -59,6 +64,18 @@ export const StandardLabPage: React.FC = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [user, setUser] = useState<any>();
   const [userLabStatus,setUserLabStatus]= useState<any>();
+  
+  // Documents state
+  const [documents, setDocuments] = useState<string[]>([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+  const [showDocuments, setShowDocuments] = useState(false);
+  const [currentDocIndex, setCurrentDocIndex] = useState(0);
+  
+  // Extract filename helper function
+  const extractFileName = (filePath: string) => {
+    const match = filePath.match(/[^\\\/]+$/);
+    return match ? match[0] : null;
+  };
   useEffect(()=>{
     const fetchUserDetails = async()=>{
       try {
@@ -90,8 +107,40 @@ export const StandardLabPage: React.FC = () => {
     }
     fetchUserDetails();
   },[])
+
+  // Fetch documents
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!labDetails || !user) return;
+      
+      setIsLoadingDocs(true);
+      try {
+        // For StandardLabPage, users get userguides
+        const documentsToShow = labDetails.userguides || [];
+        setDocuments(documentsToShow);
+      } catch (error) {
+        console.error('Failed to load documents:', error);
+      } finally {
+        setIsLoadingDocs(false);
+      }
+    };
+
+    if (user && labDetails) {
+      fetchDocuments();
+    }
+  }, [user, labDetails]);
+
+  // Document navigation handlers
+  const handlePrevDocument = () => {
+    setCurrentDocIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const handleNextDocument = () => {
+    setCurrentDocIndex(prev => Math.min(documents.length - 1, prev + 1));
+  };
  
   
+
   // Format time remaining
   const formatTimeRemaining = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -245,108 +294,176 @@ export const StandardLabPage: React.FC = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Services */}
-        <div className="lg:col-span-2">
-          <div className="glass-panel">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">
-                <GradientText>Cloud Services</GradientText>
-              </h2>
-              <Cloud className="h-5 w-5 text-primary-400" />
-            </div>
+      <div className="space-y-6">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Services Section - Takes 2/3 width on large screens */}
+          <div className="lg:col-span-2">
+            <div className="glass-panel">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">
+                  <GradientText>Cloud Services</GradientText>
+                </h2>
+                <Cloud className="h-5 w-5 text-primary-400" />
+              </div>
 
-            <div className="space-y-4">
-              {labDetails?.services && labDetails.services.length > 0 ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {labDetails.services.map((service: string, index: number) => (
-                    <div 
-                      key={index}
-                      className="p-3 bg-dark-300/50 rounded-lg flex items-center space-x-2"
-                    >
-                      <Cloud className="h-4 w-4 text-primary-400 flex-shrink-0" />
-                      <span className="text-sm text-gray-300 truncate">{service}</span>
-                    </div>
-                  ))}
+              <div className="space-y-4">
+                {labDetails?.services && labDetails.services.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {labDetails.services.map((service: string, index: number) => (
+                      <div 
+                        key={index}
+                        className="p-3 bg-dark-300/50 rounded-lg flex items-center space-x-2"
+                      >
+                        <Cloud className="h-4 w-4 text-primary-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-300 truncate">{service}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-400 text-center py-4">
+                    No services have been specified for this lab.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Credentials & Actions Section - Takes 1/3 width on large screens */}
+          <div className="space-y-6">
+            <div className="glass-panel">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold">
+                  <GradientText>Access Credentials</GradientText>
+                </h2>
+                {documents.length > 0 && (
+                  <button
+                    onClick={() => setShowDocuments(!showDocuments)}
+                    className="btn-secondary text-xs py-1 px-2"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    {showDocuments ? 'Hide' : 'View'}
+                  </button>
+                )}
+              </div>
+              
+              <div className="space-y-3">
+                <div className="p-3 bg-dark-300/50 rounded-lg">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-400">Username</span>
+                    <User className="h-3 w-3 text-primary-400" />
+                  </div>
+                  <p className="text-xs font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300 break-all">
+                    {userLabStatus?.username || 'Not available'}
+                  </p>
                 </div>
-              ) : (
-                <p className="text-gray-400 text-center py-4">
-                  No services have been specified for this lab.
-                </p>
+                
+                <div className="p-3 bg-dark-300/50 rounded-lg">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-400">Password</span>
+                    <Key className="h-3 w-3 text-primary-400" />
+                  </div>
+                  <p className="text-xs font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300 break-all">
+                    {userLabStatus?.password || 'Not available'}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <button
+                onClick={labStarted ? handleStopLab : handleStartLab}
+                disabled={isStarting || isStopping}
+                className={`btn-primary w-full text-sm py-2 ${
+                  labStarted ? 'bg-red-500 hover:bg-red-600' : ''
+                }`}
+              >
+                {isStarting || isStopping ? (
+                  <Loader className="h-4 w-4 mr-2 animate-spin" />
+                ) : labStarted ? (
+                  <Square className="h-4 w-4 mr-2" />
+                ) : (
+                  <Play className="h-4 w-4 mr-2" />
+                )}
+                {isStarting ? 'Starting...' : 
+                 isStopping ? 'Stopping...' : 
+                 labStarted ? 'Stop Lab' : 'Start Lab'}
+              </button>
+              
+              {labStarted && userLabStatus?.console_url && (
+                <button
+                  onClick={() => window.open(userLabStatus?.console_url, '_blank')}
+                  className="btn-secondary w-full text-sm py-2"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open Console
+                </button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right Column - Credentials & Actions */}
-        <div className="space-y-6">
+        {/* Documents Panel - Full width below main content */}
+        {showDocuments && (
           <div className="glass-panel">
-            <h2 className="text-xl font-semibold mb-6">
-              <GradientText>Access Credentials</GradientText>
-            </h2>
+            <div className="flex justify-between items-center p-4 border-b border-primary-500/10">
+              <h2 className="text-lg font-semibold">
+                <GradientText>User Guides</GradientText>
+              </h2>
+              <div className="flex items-center space-x-2">
+                {documents.length > 1 && (
+                  <>
+                    <button
+                      onClick={handlePrevDocument}
+                      disabled={currentDocIndex === 0}
+                      className={`p-1 rounded-lg ${currentDocIndex === 0 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <span className="text-sm text-gray-400">
+                      {currentDocIndex + 1} / {documents.length}
+                    </span>
+                    <button
+                      onClick={handleNextDocument}
+                      disabled={currentDocIndex === documents.length - 1}
+                      className={`p-1 rounded-lg ${currentDocIndex === documents.length - 1 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => setShowDocuments(false)}
+                  className="p-1 text-gray-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
             
-            <div className="space-y-4">
-              <div className="p-3 bg-dark-300/50 rounded-lg">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-400">Username</span>
-                  <User className="h-4 w-4 text-primary-400" />
+            <div className="h-[600px] overflow-hidden">
+              {isLoadingDocs ? (
+                <div className="flex justify-center items-center h-full">
+                  <Loader className="h-6 w-6 text-primary-400 animate-spin mr-3" />
+                  <span className="text-gray-300">Loading documents...</span>
                 </div>
-                <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                  {userLabStatus?.username || 'Not available'}
-                </p>
-              </div>
-              
-              <div className="p-3 bg-dark-300/50 rounded-lg">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-400">Password</span>
-                  <Key className="h-4 w-4 text-primary-400" />
+              ) : documents.length > 0 ? (
+                <iframe
+                  src={`http://localhost:3000/api/v1/cloud_slice_ms/uploads/${extractFileName(documents[currentDocIndex])}`}
+                  className="w-full h-full border-0"
+                  title="Lab Document"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <FileText className="h-12 w-12 text-gray-500 mb-4" />
+                  <p className="text-gray-400 text-center">
+                    No user guides available for this lab
+                  </p>
                 </div>
-                <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                  {userLabStatus?.password || 'Not available'}
-                </p>
-              </div>
-              
-              {/* <div className="p-3 bg-dark-300/50 rounded-lg">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-400">Secret Access Key</span>
-                  <Key className="h-4 w-4 text-primary-400" />
-                </div>
-                <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                  {labDetails?.credentials?.secretAccessKey || 'Not available'}
-                </p>
-              </div> */}
+              )}
             </div>
           </div>
-          
-          <button
-            onClick={labStarted ? handleStopLab : handleStartLab}
-            disabled={isStarting || isStopping}
-            className={`btn-primary w-full ${
-              labStarted ? 'bg-red-500 hover:bg-red-600' : ''
-            }`}
-          >
-            {isStarting || isStopping ? (
-              <Loader className="h-4 w-4 mr-2 animate-spin" />
-            ) : labStarted ? (
-              <Square className="h-4 w-4 mr-2" />
-            ) : (
-              <Play className="h-4 w-4 mr-2" />
-            )}
-            {isStarting ? 'Starting Lab...' : 
-             isStopping ? 'Stopping Lab...' : 
-             labStarted ? 'Stop Lab' : 'Start Lab'}
-          </button>
-          
-          {labStarted && userLabStatus?.console_url && (
-            <button
-              onClick={() => window.open(userLabStatus?.console_url, '_blank')}
-              className="btn-secondary w-full"
-            >
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Open AWS Console
-            </button>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

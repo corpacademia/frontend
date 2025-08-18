@@ -120,7 +120,6 @@ export const DashboardHeader: React.FC = () => {
   }
 };
 
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

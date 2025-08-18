@@ -16,6 +16,7 @@ import { useNotificationStore } from '../store/notificationStore';
 import { GradientText } from '../components/ui/GradientText';
 import { Notification, NotificationType, NotificationPriority } from '../types/notifications';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuthStore } from '../store/authStore';
 
 const NotificationPage: React.FC = () => {
   const {
@@ -24,20 +25,24 @@ const NotificationPage: React.FC = () => {
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-    deleteNotification
+    deleteNotification,
+    clearNotifications
   } = useNotificationStore();
 
   const [filter, setFilter] = useState<'all' | 'unread' | NotificationType>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedNotifications, setSelectedNotifications] = useState<Set<string>>(new Set());
-
+  const {user} = useAuthStore();
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    if(user?.id){
+    clearNotifications();
+    fetchNotifications(user?.id);
+  }
+  }, [user?.id]);
 
   const filteredNotifications = notifications.filter(notification => {
     const matchesFilter = filter === 'all' || 
-      (filter === 'unread' && !notification.isRead) ||
+      (filter === 'unread' && !notification.is_read) ||
       notification.type === filter;
     
     const matchesSearch = notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,7 +51,7 @@ const NotificationPage: React.FC = () => {
     return matchesFilter && matchesSearch;
   });
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const getPriorityIcon = (priority: NotificationPriority) => {
     switch (priority) {
@@ -75,7 +80,7 @@ const NotificationPage: React.FC = () => {
   };
 
   const handleNotificationClick = async (notification: Notification) => {
-    if (!notification.isRead) {
+    if (!notification.is_read) {
       await markAsRead(notification.id);
     }
     
@@ -128,7 +133,7 @@ const NotificationPage: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               {unreadCount > 0 && (
                 <button
-                  onClick={markAllAsRead}
+                  onClick={markAllAsRead(user?.id)}
                   className="btn-secondary flex items-center space-x-2"
                 >
                   <CheckCircle className="h-4 w-4" />
@@ -207,7 +212,7 @@ const NotificationPage: React.FC = () => {
                 key={notification.id}
                 className={`glass-panel border-l-4 transition-all duration-200 hover:shadow-lg
                   ${getPriorityColor(notification.priority)}
-                  ${!notification.isRead ? 'border-l-primary-500' : 'border-l-gray-600'}
+                  ${!notification.is_read ? 'border-l-primary-500' : 'border-l-gray-600'}
                   ${selectedNotifications.has(notification.id) ? 'ring-2 ring-primary-500/50' : ''}
                 `}
               >
@@ -233,10 +238,10 @@ const NotificationPage: React.FC = () => {
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-2">
                             {getPriorityIcon(notification.priority)}
-                            <h3 className={`font-semibold ${!notification.isRead ? 'text-white' : 'text-gray-300'}`}>
+                            <h3 className={`font-semibold ${!notification.is_read ? 'text-white' : 'text-gray-300'}`}>
                               {notification.title}
                             </h3>
-                            {!notification.isRead && (
+                            {!notification.is_read && (
                               <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
                             )}
                           </div>
@@ -247,7 +252,7 @@ const NotificationPage: React.FC = () => {
                           
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-500">
-                              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                              {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                             </span>
                             
                             <div className="flex items-center space-x-2">
@@ -265,7 +270,7 @@ const NotificationPage: React.FC = () => {
 
                         {/* Actions */}
                         <div className="flex items-center space-x-2 ml-4">
-                          {!notification.isRead && (
+                          {!notification.is_read && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

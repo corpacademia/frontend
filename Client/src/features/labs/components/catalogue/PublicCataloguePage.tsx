@@ -54,55 +54,6 @@ export const PublicCataloguePage: React.FC = () => {
       proceedToCheckout,
     } = useCartStore();
 
-//   const fetchCartItems = async () => {
-//     if (!isAuthenticated) return;
-
-//     setIsLoadingCart(true);
-//     try {
-//       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCartItems/${user?.id || currentUser?.id}`);
-//       if (response.data.success) {
-//         setCartItems(response.data.data.map((cart:any)=>({
-//           ...cart,
-//            defaultDuration: cart.duration}
-//         )));
-//       }
-//     } catch (error) {
-//       console.error('Error fetching cart items:', error);
-//     } finally {
-//       setIsLoadingCart(false);
-//     }
-//   };
-
-//   const proceedToCheckout = useCallback(async () => {
-//   if (cartItems.length === 0) return;
-
-//   try {
-//     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/create-checkout-session`, {
-//       userId: user?.id || currentUser?.id,
-//       cartItems: cartItems.map(item => ({
-//         lab_id: item.labid,
-//         name: item.name,
-//         quantity: item.quantity,
-//         price: item.price,
-//         duration: item.duration,
-//         level: courses.find(course => course.id === item.labid)?.level,
-//         category: courses.find(course => course.id === item.labid)?.category,
-//         by: courses.find(course => course.id === item.labid)?.provider,
-//       })),
-//     });
-
-//     const sessionId = response.data.sessionId;
-//     const stripe = await stripePromise;
-//     if (stripe) {
-//       await stripe.redirectToCheckout({ sessionId });
-//     }
-//   } catch (error) {
-//     console.error('Error during Stripe checkout:', error);
-//     alert('Checkout failed. Please try again.');
-//   }
-// }, [cartItems, user, courses]);
-
-
   useEffect(() => {
     const fetchCatalogues = async () => {
       setIsLoading(true);
@@ -156,8 +107,7 @@ export const PublicCataloguePage: React.FC = () => {
       // window.removeEventListener('checkout',proceedToCheckout)
     };
   }, [isAuthenticated]);
-
-const handleUpdate = async (cartItemId: string, updates: { duration?: string; quantity?: number, defaultDuration?: number, price?: number }) => {
+   const handleUpdate = async (cartItemId: string, updates: { duration?: string; quantity?: number, defaultDuration?: number, price?: number }) => {
     try {
       const response = await updateCartItem(cartItemId,updates);
       if (response) {
@@ -172,6 +122,7 @@ const handleUpdate = async (cartItemId: string, updates: { duration?: string; qu
   if (cartItems.length === 0) return;
 
   try {
+    
     await proceedToCheckout(
       {userId: user?.id,
        catalogues:courses
@@ -182,7 +133,6 @@ const handleUpdate = async (cartItemId: string, updates: { duration?: string; qu
     alert('Checkout failed. Please try again.');
   }
 };
-
   const handleLogin = () => {
     window.location.href = '/login';
   };
@@ -192,7 +142,6 @@ const handleUpdate = async (cartItemId: string, updates: { duration?: string; qu
     window.location.href = '/';
   };
 
-  // const removeFromCart = async (cartItemId: string) => {
   //   try {
   //     const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/removeFromCart/${cartItemId}`);
   //     if (response.data.success) {
@@ -337,8 +286,8 @@ const handleUpdate = async (cartItemId: string, updates: { duration?: string; qu
         // Update existing course
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateLabCatalogue`, courseData);
         if (response.data.success) {
-          setCourses(prev => prev.map(course => course.id === selectedCourse.id ? response.data.data : course));
-          setFilteredCourses(prev => prev.map(course => course.id === selectedCourse.id ? response.data.data : course));
+          setCourses(prev => prev.map(course => course.id === selectedCourse.id ? courseData : course));
+          setFilteredCourses(prev => prev.map(course => course.id === selectedCourse.id ? courseData : course));
         }
 
       } else {

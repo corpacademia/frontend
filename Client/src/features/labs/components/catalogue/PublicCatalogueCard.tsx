@@ -72,6 +72,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
 };
 
   const getLevelColor = (level: string) => {
+     if (!level) return 'bg-gray-500/20 text-gray-300';
     switch (level.toLowerCase()) {
       case 'foundation':
         return 'bg-green-500/20 text-green-300';
@@ -160,7 +161,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
         {/* Header */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center space-x-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getLevelColor(course.level)}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getLevelColor(course?.level)}`}>
               {course.level}
             </span>
           </div>

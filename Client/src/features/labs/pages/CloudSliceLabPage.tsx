@@ -14,7 +14,12 @@ import {
   AlertCircle, 
   Check,
   ChevronDown,
-  Search,X
+  Search,
+  X,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Eye
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -31,6 +36,7 @@ export const CloudSliceLabPage: React.FC = () => {
   const location = useLocation();
   const { sliceId } = useParams();
   const navigate = useNavigate();
+  
   const [sliceDetails, setSliceDetails] = useState<any>(location.state?.sliceDetails || null);
   const [isLoading, setIsLoading] = useState(!location.state?.sliceDetails);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +55,18 @@ export const CloudSliceLabPage: React.FC = () => {
   const [categorySearch, setCategorySearch] = useState('');
   const [serviceSearch, setServiceSearch] = useState('');
   const [fetching , setFetching] = useState(false);
+  
+  // Documents state
+  const [documents, setDocuments] = useState<string[]>([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+  const [showDocuments, setShowDocuments] = useState(false);
+  const [currentDocIndex, setCurrentDocIndex] = useState(0);
+  
+  // Extract filename helper function
+  const extractFileName = (filePath: string) => {
+    const match = filePath.match(/[^\\\/]+$/);
+    return match ? match[0] : null;
+  };
   // Fetch current user
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -102,6 +120,46 @@ export const CloudSliceLabPage: React.FC = () => {
     }
   }, [sliceId, sliceDetails]);
 
+  // Fetch documents
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!sliceDetails) return;
+      
+      setIsLoadingDocs(true);
+      try {
+        // Determine which documents to show based on user role
+        let documentsToShow: string[] = [];
+        
+        if (currentUser?.role === 'user') {
+          // For regular users, show user guides
+          documentsToShow = sliceDetails.userguides || [];
+        } else {
+          // For other users (admins), show lab guides
+          documentsToShow = sliceDetails.labguides || [];
+        }
+        
+        setDocuments(documentsToShow);
+      } catch (error) {
+        console.error('Failed to load documents:', error);
+      } finally {
+        setIsLoadingDocs(false);
+      }
+    };
+
+    if (currentUser && sliceDetails) {
+      fetchDocuments();
+    }
+  }, [currentUser, sliceDetails]);
+
+  // Document navigation handlers
+  const handlePrevDocument = () => {
+    setCurrentDocIndex(prev => Math.max(0, prev - 1));
+  };
+
+  const handleNextDocument = () => {
+    setCurrentDocIndex(prev => Math.min(documents.length - 1, prev + 1));
+  };
+
    //extract the aws services
  const extractAwsServices = async (awsServices: { services: string; description: string; category: string ,services_prefix:string}[]): Promise<CategorizedServices> => {
   const servicess: CategorizedServices = {};
@@ -141,8 +199,6 @@ export const CloudSliceLabPage: React.FC = () => {
     
     // Super admin can edit anything
     if (currentUser.role === 'superadmin') return true;
-
-     if (currentUser.role === 'orgsuperadmin') return true;
     
     // Org admin can only edit content they created
     if (currentUser.role === 'orgadmin') {
@@ -341,49 +397,60 @@ export const CloudSliceLabPage: React.FC = () => {
         {/* Left Column - Services */}
         <div className="lg:col-span-2">
           <div className="glass-panel">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
               <h2 className="text-xl font-semibold">
                 <GradientText>Cloud Services</GradientText>
               </h2>
-              {canEditContent() ? (
-                isEditingServices ? (
-                  <div className="flex space-x-3">
-                    <button 
-                      onClick={() => {
-                        setIsEditingServices(false);
-                        // Reset to original services
-                        setSelectedServices(sliceDetails?.services || []);
-                      }}
-                      className="btn-secondary text-sm py-1.5 px-3"
-                    >
-                      <X className="h-4 w-4 mr-1.5" />
-                      Cancel
-                    </button>
-                    <button 
-                      onClick={handleSaveServices}
-                      disabled={isSaving}
-                      className="btn-primary text-sm py-1.5 px-3"
-                    >
-                      {isSaving ? (
-                        <Loader className="animate-spin h-4 w-4" />
-                      ) : (
-                        <>
-                          <Save className="h-4 w-4 mr-1.5" />
-                          Save Changes
-                        </>
-                      )}
-                    </button>
-                  </div>
-                ) : (
-                  <button 
-                    onClick={() => setIsEditingServices(true)}
+              <div className="flex items-center space-x-2">
+                {documents.length > 0 && (
+                  <button
+                    onClick={() => setShowDocuments(!showDocuments)}
                     className="btn-secondary text-sm py-1.5 px-3"
                   >
-                    <Edit className="h-4 w-4 mr-1.5" />
-                    Edit Services
+                    <Eye className="h-4 w-4 mr-1.5" />
+                    {showDocuments ? 'Hide' : 'View'} Documents
                   </button>
-                )
-              ) : null}
+                )}
+                {canEditContent() ? (
+                  isEditingServices ? (
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => {
+                          setIsEditingServices(false);
+                          // Reset to original services
+                          setSelectedServices(sliceDetails?.services || []);
+                        }}
+                        className="btn-secondary text-sm py-1.5 px-3"
+                      >
+                        <X className="h-4 w-4 mr-1.5" />
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={handleSaveServices}
+                        disabled={isSaving}
+                        className="btn-primary text-sm py-1.5 px-3"
+                      >
+                        {isSaving ? (
+                          <Loader className="animate-spin h-4 w-4" />
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-1.5" />
+                            Save Changes
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setIsEditingServices(true)}
+                      className="btn-secondary text-sm py-1.5 px-3"
+                    >
+                      <Edit className="h-4 w-4 mr-1.5" />
+                      Edit Services
+                    </button>
+                  )
+                ) : null}
+              </div>
             </div>
 
             {isEditingServices ? (
@@ -400,10 +467,10 @@ export const CloudSliceLabPage: React.FC = () => {
                                rounded-lg cursor-pointer transition-colors"
                       onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                     >
-                      <span className="text-gray-300">
+                      <span className="text-gray-300 truncate">
                         {selectedCategory || 'Select a category'}
                       </span>
-                      <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${
+                      <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform flex-shrink-0 ml-2 ${
                         showCategoryDropdown ? 'transform rotate-180' : ''
                       }`} />
                     </div>
@@ -519,12 +586,12 @@ export const CloudSliceLabPage: React.FC = () => {
                         <div
                           key={service}
                           className="flex items-center px-3 py-1 bg-primary-500/10 text-primary-300
-                                   rounded-full text-sm"
+                                   rounded-full text-sm max-w-full"
                         >
-                          {service}
+                          <span className="truncate">{service}</span>
                           <button
                             onClick={() => handleServiceToggle(service)}
-                            className="ml-2 hover:text-primary-400"
+                            className="ml-2 hover:text-primary-400 flex-shrink-0"
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -537,11 +604,11 @@ export const CloudSliceLabPage: React.FC = () => {
             ) : (
               <div className="space-y-4">
                 {selectedServices.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
                     {selectedServices.map(service => (
                       <div 
                         key={service}
-                        className="p-3 bg-dark-300/50 rounded-lg flex items-center space-x-2"
+                        className="p-3 bg-dark-300/50 rounded-lg flex items-center space-x-2 min-w-0"
                       >
                         <Cloud className="h-4 w-4 text-primary-400 flex-shrink-0" />
                         <span className="text-sm text-gray-300 truncate">{service}</span>
@@ -561,9 +628,11 @@ export const CloudSliceLabPage: React.FC = () => {
         {/* Right Column - Credentials & Actions */}
         <div className="space-y-6">
           <div className="glass-panel">
-            <h2 className="text-xl font-semibold mb-6">
-              <GradientText>Access Credentials</GradientText>
-            </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold">
+                <GradientText>Access Credentials</GradientText>
+              </h2>
+            </div>
             
             <div className="space-y-4">
               <div className="p-3 bg-dark-300/50 rounded-lg">
@@ -582,9 +651,19 @@ export const CloudSliceLabPage: React.FC = () => {
                   <Key className="h-4 w-4 text-primary-400" />
                 </div>
                 <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                {currentUser.role === 'superadmin'  || currentUser.role === 'orgsuperadmin' ? sliceDetails?.password : orgLabStatus.password || 'Not available'}
+                {currentUser.role === 'superadmin' || currentUser.role === 'orgsuperadmin' ? sliceDetails?.password : orgLabStatus.password || 'Not available'}
                 </p>
               </div>
+              
+              {/* <div className="p-3 bg-dark-300/50 rounded-lg">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-gray-400">Secret Access Key</span>
+                  <Key className="h-4 w-4 text-primary-400" />
+                </div>
+                <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
+                  {sliceDetails?.credentials?.secretAccessKey || 'Not available'}
+                </p>
+              </div> */}
             </div>
           </div>
           
@@ -597,7 +676,73 @@ export const CloudSliceLabPage: React.FC = () => {
             Go to {sliceDetails?.provider?.toUpperCase()} Console
           </button>
         </div>
-      </div>
+
+        </div>
+
+      {/* Documents Section - Below main grid */}
+      {showDocuments && (
+        <div className="glass-panel h-[500px] md:h-[600px] flex flex-col">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 border-b border-primary-500/10 gap-3">
+            <h2 className="text-lg font-semibold">
+              <GradientText>
+                {currentUser?.role === 'user' ? 'User Guides' : 'Lab Documents'}
+              </GradientText>
+            </h2>
+            <div className="flex items-center space-x-2">
+              {documents.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevDocument}
+                    disabled={currentDocIndex === 0}
+                    className={`p-1 rounded-lg ${currentDocIndex === 0 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <span className="text-sm text-gray-400">
+                    {currentDocIndex + 1} / {documents.length}
+                  </span>
+                  <button
+                    onClick={handleNextDocument}
+                    disabled={currentDocIndex === documents.length - 1}
+                    className={`p-1 rounded-lg ${currentDocIndex === documents.length - 1 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => setShowDocuments(false)}
+                className="p-1 text-gray-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="flex-grow overflow-hidden">
+            {isLoadingDocs ? (
+              <div className="flex justify-center items-center h-full">
+                <Loader className="h-6 w-6 text-primary-400 animate-spin mr-3" />
+                <span className="text-gray-300">Loading documents...</span>
+              </div>
+            ) : documents.length > 0 ? (
+              <iframe
+                src={`http://localhost:3000/api/v1/cloud_slice_ms/uploads/${extractFileName(documents[currentDocIndex])}`}
+                className="w-full h-full border-0"
+                title="Lab Document"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full">
+                <FileText className="h-12 w-12 text-gray-500 mb-4" />
+                <p className="text-gray-400 text-center">
+                  No {currentUser?.role === 'user' ? 'user guides' : 'lab documents'} available for this lab
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
+    // </div>
   );
 };

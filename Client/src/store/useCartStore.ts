@@ -105,11 +105,10 @@ export const useCartStore = create<CartStore>((set, get) => ({
   proceedToCheckout: async ({ userId, catalogues }) => {
     const cartItems = get().cartItems;
     if (cartItems.length === 0) return;
-
     try {
       const payload = cartItems.map((item) => {
         const lab = catalogues.find(
-          (c) => c.labid === item.labid || c.lab_id === item.labid
+          (c) => c.id === item.labid || c.id === item.labid
         );
         return {
           lab_id: item.labid,
@@ -120,9 +119,10 @@ export const useCartStore = create<CartStore>((set, get) => ({
           level: lab?.level,
           category: lab?.category,
           by: lab?.provider,
+          type:lab?.type,
+          user_id:lab?.user_id
         };
       });
-
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/create-checkout-session`,
         {

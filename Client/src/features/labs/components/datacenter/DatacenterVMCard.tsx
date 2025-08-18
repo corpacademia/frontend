@@ -48,7 +48,7 @@ interface DatacenterVM {
   protocol: string;
   startDate: string;
   endDate: string;
-  status: 'active' | 'inactive' | 'pending';
+  status: 'active' | 'inactive' | 'pending' | 'expired';
   users: Array<{
     id: string;
     username: string;
@@ -571,7 +571,7 @@ function extractFileName(filePath: string) {
               )}
               <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                 vm.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
-                vm.status === 'inactive' ? 'bg-red-500/20 text-red-300' :
+                vm.status === 'expired' ? 'bg-red-500/20 text-red-300' :
                 'bg-amber-500/20 text-amber-300'
               }`}>
                 {vm.status}

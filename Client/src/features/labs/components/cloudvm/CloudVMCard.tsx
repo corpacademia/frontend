@@ -34,7 +34,7 @@ interface CloudVM {
   instance: string;
   instance_id?: string;
   ami_id?: string;
-  status: 'running' | 'stopped' | 'pending';
+  status: 'running' | 'stopped' | 'pending'|'active'|'expired';
   cpu: number;
   ram: number;
   storage: number;
@@ -87,7 +87,6 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
   const [admin,setAdmin] = useState({});
 
  
-
   useEffect(() => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
@@ -443,15 +442,18 @@ useEffect(() => {
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-3">
             <div className="flex-1 min-w-0">
               <h3 className="text-base sm:text-lg font-semibold mb-1">
-                <GradientText>
+                
                   <span 
                     className="cursor-pointer hover:text-primary-300 transition-colors line-clamp-2"
                     onClick={() => setShowFullTitle(!showFullTitle)}
                     title={showFullTitle ? "Click to collapse" : "Click to expand"}
                   >
-                    {showFullTitle ? vm.title : (vm.title.length > 30 ? vm.title.substring(0, 30) + '...' : vm.title)}
+                    <GradientText>
+                       {showFullTitle ? vm.title : (vm.title.length > 30 ? vm.title.substring(0, 30) + '...' : vm.title)}
+                    </GradientText>
+                   
                   </span>
-                </GradientText>
+                
               </h3>
               <p 
                 className="text-xs sm:text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition-colors line-clamp-2"
@@ -463,8 +465,8 @@ useEffect(() => {
             </div>
             <div className="flex items-center justify-between sm:justify-start space-x-2 flex-shrink-0">
               <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
-                vm.status === 'running' ? 'bg-emerald-500/20 text-emerald-300' :
-                vm.status === 'stopped' ? 'bg-red-500/20 text-red-300' :
+                vm.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
+                vm.status === 'expired' ? 'bg-red-500/20 text-red-300' :
                 'bg-amber-500/20 text-amber-300'
               }`}>
                 {vm.status}

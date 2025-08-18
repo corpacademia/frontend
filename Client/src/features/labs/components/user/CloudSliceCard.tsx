@@ -307,14 +307,21 @@ const confirmDelete = async (e: React.MouseEvent) => {
                 <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
               )}
             </button>
-            <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
-              selectedLab.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
-              selectedLab.status === 'expired' ? 'bg-red-500/20 text-red-300' :
-              selectedLab.status === 'not-started' ? 'bg-gray-500/20 text-gray-300' :
-              'bg-amber-500/20 text-amber-300'
-            }`}>
-              {selectedLab.status}
-            </span>
+            <span
+            className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap
+              ${
+                selectedLab?.status === 'active'
+                  ? 'bg-emerald-500/20 text-emerald-300'
+                  : selectedLab?.status === 'expired'
+                  ? 'bg-red-500/20 text-red-300'
+                  : selectedLab?.status === 'not-started'
+                  ? 'bg-amber-500/20 text-amber-300'
+                  : 'bg-gray-500/20 text-gray-300'
+              }`}
+          >
+            {selectedLab?.status || 'unknown'}
+          </span>
+
           </div>
         </div>
 

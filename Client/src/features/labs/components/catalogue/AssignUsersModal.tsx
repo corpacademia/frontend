@@ -120,8 +120,8 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
         lab: lab?.labid,
         userId: selectedUsers,
         assign_admin_id: admin.id,
-        start_date:lab.startdate,
-        end_date:lab.enddate,
+        start_date:lab?.startdate,
+        end_date:lab?.enddate,
       });
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Lab assigned successfully' });
@@ -271,8 +271,8 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
                   className="form-checkbox h-4 w-4 text-primary-500 rounded border-gray-500/20"
                 />
                 <div>
-                  <p className="text-gray-200">{user.name}</p>
-                  <p className="text-sm text-gray-400">{user.email}</p>
+                  <p className="text-gray-200">{user?.name}</p>
+                  <p className="text-sm text-gray-400">{user?.email}</p>
                 </div>
               </label>
             ))}

@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import axios from 'axios';
 import { Notification, NotificationPreferences } from '../types/notifications';
@@ -8,96 +7,41 @@ interface NotificationStore {
   preferences: NotificationPreferences | null;
   unreadCount: number;
   isLoading: boolean;
-  
+
   // Actions
-  fetchNotifications: () => Promise<void>;
+  fetchNotifications: (userId: string) => Promise<void>;
   fetchPreferences: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
+  markAllAsRead: (userId:string) => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
   updatePreferences: (preferences: Partial<NotificationPreferences>) => Promise<void>;
   addNotification: (notification: Notification) => void;
+  clearNotifications: () => void; 
 }
 
-// Demo notifications for testing
-const demoNotifications: Notification[] = [
-  {
-    id: 'demo-1',
-    type: 'lab_assigned',
-    title: 'New Lab Assigned',
-    message: 'You have been assigned a new lab: "Introduction to React"',
-    priority: 'medium',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-    userId: 'demo-user',
-    metadata: { labId: 'lab-123' }
-  },
-  {
-    id: 'demo-2',
-    type: 'system_update',
-    title: 'System Maintenance',
-    message: 'Scheduled maintenance will begin at 2:00 AM UTC',
-    priority: 'high',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    userId: 'demo-user'
-  },
-  {
-    id: 'demo-3',
-    type: 'assessment_completed',
-    title: 'Assessment Completed',
-    message: 'Student John Doe has completed the JavaScript assessment',
-    priority: 'low',
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-    userId: 'demo-user',
-    metadata: { assessmentId: 'assess-456', userId: 'student-123' }
-  },
-  {
-    id: 'demo-4',
-    type: 'payment_received',
-    title: 'Payment Received',
-    message: 'Payment of $99.99 received for Premium Lab Package',
-    priority: 'medium',
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-    userId: 'demo-user',
-    metadata: { amount: 99.99 }
-  },
-  {
-    id: 'demo-5',
-    type: 'security_alert',
-    title: 'Security Alert',
-    message: 'New login detected from an unknown device',
-    priority: 'urgent',
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-    userId: 'demo-user'
-  }
-];
-
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
-  notifications: demoNotifications,
+  notifications: [],
   preferences: null,
-  unreadCount: demoNotifications.filter(n => !n.isRead).length,
+  unreadCount: 0,
   isLoading: false,
 
-  fetchNotifications: async () => {
+
+  fetchNotifications: async (userId) => {
     set({ isLoading: true });
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/notifications`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/notifications/${userId}`,
         { withCredentials: true }
       );
-      
+
       if (response.data.success) {
         const notifications = response.data.data;
-        const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
-        
-        set({ 
+        const unreadCount = notifications.filter((n: Notification) => !n.is_read).length;
+
+        set({
           notifications,
           unreadCount,
-          isLoading: false 
+          isLoading: false
         });
       }
     } catch (error) {
@@ -112,7 +56,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/notifications/preferences`,
         { withCredentials: true }
       );
-      
+
       if (response.data.success) {
         set({ preferences: response.data.data });
       }
@@ -124,19 +68,19 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   markAsRead: async (notificationId: string) => {
     try {
       await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/notifications/${notificationId}/read`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/notifications/${notificationId}/read`,
         {},
         { withCredentials: true }
       );
-      
+
       const { notifications } = get();
       const updatedNotifications = notifications.map(n =>
-        n.id === notificationId ? { ...n, isRead: true } : n
+        n.id === notificationId ? { ...n, is_read: true } : n
       );
-      
-      const unreadCount = updatedNotifications.filter(n => !n.isRead).length;
-      
-      set({ 
+
+      const unreadCount = updatedNotifications.filter(n => !n.is_read).length;
+
+      set({
         notifications: updatedNotifications,
         unreadCount
       });
@@ -145,18 +89,18 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     }
   },
 
-  markAllAsRead: async () => {
+  markAllAsRead: async (userId:string) => {
     try {
       await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/notifications/read-all`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/notifications/${userId}/read-all`,
         {},
         { withCredentials: true }
       );
-      
+
       const { notifications } = get();
-      const updatedNotifications = notifications.map(n => ({ ...n, isRead: true }));
-      
-      set({ 
+      const updatedNotifications = notifications.map(n => ({ ...n, is_read: true }));
+
+      set({
         notifications: updatedNotifications,
         unreadCount: 0
       });
@@ -168,15 +112,15 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   deleteNotification: async (notificationId: string) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/notifications/${notificationId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/notifications/${notificationId}`,
         { withCredentials: true }
       );
-      
+
       const { notifications } = get();
       const updatedNotifications = notifications.filter(n => n.id !== notificationId);
-      const unreadCount = updatedNotifications.filter(n => !n.isRead).length;
-      
-      set({ 
+      const unreadCount = updatedNotifications.filter(n => !n.is_read).length;
+
+      set({
         notifications: updatedNotifications,
         unreadCount
       });
@@ -192,7 +136,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
         newPreferences,
         { withCredentials: true }
       );
-      
+
       if (response.data.success) {
         set({ preferences: response.data.data });
       }
@@ -203,9 +147,17 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 
   addNotification: (notification: Notification) => {
     const { notifications, unreadCount } = get();
-    set({ 
+    set({
       notifications: [notification, ...notifications],
       unreadCount: unreadCount + 1
     });
+  },
+
+  clearNotifications: () => {
+    set({
+      notifications: [],
+      unreadCount: 0
+    });
   }
+
 }));

@@ -247,6 +247,17 @@ export const MyLabs: React.FC = () => {
       } catch (err) {
         console.error('Failed to fetch assigned labs:', err);
       }
+      //user purchased single vm
+      try {
+        
+        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVMUserPurchsedLabs`,
+           { userId: user?.id }
+          );
+        labss = res.data.data;
+        setLabStatus(labss); // safe to set even if others fail
+      } catch (error) {
+        console.error("Failed to fetch the singlevm labs")
+      }
 
       try {
         const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSoftwareDetails`);
@@ -254,11 +265,15 @@ export const MyLabs: React.FC = () => {
       } catch (err) {
         console.error('Failed to fetch software details:', err);
       }
-
       // Safely process lab data if available
-      const filteredCatalogues = cats.filter((cat) =>
-        labss.some((lab) => lab.lab_id === cat.lab_id)
-      );
+      const filteredCatalogues = cats
+        .map(cat => {
+          const matchingLab = labss.find(
+            lab => (lab?.lab_id ?? lab?.labid) === cat.lab_id
+          );
+          return matchingLab ? { ...cat, ...matchingLab } : null;
+        })
+        .filter(Boolean); // remove nulls (non-matching)
 
       const updatedLabs = filteredCatalogues.map((lab) => {
         const software = softwareData.find((s) => s.lab_id === lab.lab_id);
@@ -560,8 +575,8 @@ export const MyLabs: React.FC = () => {
   
     try {
       const [ami, labConfig] = await Promise.all([
-        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: lab.lab_id }),
-        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssignLabOnId`, { labId: lab.lab_id ,userId:user.id}),
+        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: lab?.lab_id || lab?.labid }),
+        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssignLabOnId`, { labId: lab?.lab_id || lab?.labid ,userId:user.id}),
         
       ]);
       if (!ami.data.success) {
@@ -573,17 +588,20 @@ export const MyLabs: React.FC = () => {
         name: user.name,
         ami_id: ami.data.result.ami_id,
         user_id: user.id,
-        lab_id: lab.lab_id,
+        lab_id: lab?.lab_id || lab?.labid,
         instance_type: lab.instance,
         start_date: formatDate(new Date()),
-        end_date: formatDate(labConfig.data.data.completion_date),
+        end_date: formatDate(
+        labConfig?.data?.data?.completion_date ||
+          new Date(Date.now() + (labConfig?.data?.data?.duration) * 24 * 60 * 60 * 1000) 
+      )
       });
       // Only proceed if launchInstance is successful
       if (response.data.success) {
         setLabControls(prev => ({
           ...prev,
-          [lab.lab_id]: {
-            ...prev[lab.lab_id],
+          [lab?.lab_id || lab?.labid]: {
+            ...prev[lab?.lab_id || lab?.labid],
             isLaunched: true,
             isLaunching: false, // Loading stops after decryption
             notification: {
@@ -596,8 +614,8 @@ export const MyLabs: React.FC = () => {
         setTimeout(() => {
           setLabControls(prev => ({
             ...prev,
-            [lab.lab_id]: {
-              ...prev[lab.lab_id],
+            [lab?.lab_id || lab?.labid]: {
+              ...prev[lab?.lab_id || lab?.labid],
               notification: null // Clear notification
             }
           }));
@@ -609,8 +627,8 @@ export const MyLabs: React.FC = () => {
     } catch (error: any) {
       setLabControls(prev => ({
         ...prev,
-        [lab.lab_id]: {
-          ...prev[lab.lab_id],
+        [lab?.lab_id || lab?.labid]: {
+          ...prev[lab?.lab_id || lab?.labid],
           isLaunching: false, // Loading stops on error
           notification: {
             type: 'error',
@@ -622,8 +640,8 @@ export const MyLabs: React.FC = () => {
       setTimeout(() => {
         setLabControls(prev => ({
           ...prev,
-          [lab.lab_id]: {
-            ...prev[lab.lab_id],
+          [lab?.lab_id || lab?.labid]: {
+            ...prev[lab?.lab_id || lab?.labid],
             notification: null // Clear notification
           }
         }));
@@ -633,12 +651,12 @@ export const MyLabs: React.FC = () => {
   
 
   const handleStartStopLab = async (lab) => {
-    const isStop = labControls[lab.lab_id]?.buttonLabel === 'Stop Lab';
+    const isStop = labControls[lab?.lab_id || lab?.labid]?.buttonLabel === 'Stop Lab';
 
     setLabControls(prev => ({
       ...prev,
-      [lab.lab_id]: {
-        ...prev[lab.lab_id],
+      [lab?.lab_id || lab?.labid]: {
+        ...prev[lab?.lab_id || lab?.labid],
         isProcessing: true,
         notification: null
       }
@@ -646,7 +664,7 @@ export const MyLabs: React.FC = () => {
 
     const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
       user_id: user.id,
-      lab_id: lab.lab_id,
+      lab_id: lab?.lab_id || lab?.labid,
     })
     if (!cloudinstanceDetails.data.success) {
       throw new Error('Failed to retrieve instance details');
@@ -661,7 +679,7 @@ export const MyLabs: React.FC = () => {
         });
         if(stop.data.success){
           await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
-            lab_id:lab.lab_id,
+            lab_id:lab?.lab_id || lab?.labid,
             user_id:user.id,
             state:false,
             isStarted:true
@@ -670,8 +688,8 @@ export const MyLabs: React.FC = () => {
 
         setLabControls(prev => ({
           ...prev,
-          [lab.lab_id]: {
-            ...prev[lab.lab_id],
+          [lab?.lab_id || lab?.labid]: {
+            ...prev[lab?.lab_id || lab?.labid],
             isProcessing: false,
             buttonLabel: 'Start Lab',
             notification: {
@@ -684,8 +702,8 @@ export const MyLabs: React.FC = () => {
         setTimeout(() => {
           setLabControls(prev => ({
             ...prev,
-            [lab.lab_id]: {
-              ...prev[lab.lab_id],
+            [lab?.lab_id || lab?.labid]: {
+              ...prev[lab?.lab_id || lab?.labid],
               notification: null
             }
           }));
@@ -712,7 +730,7 @@ export const MyLabs: React.FC = () => {
           
         if (response.data.response.success && response.data.response.jwtToken) {
           await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
-            lab_id:lab.lab_id,
+            lab_id:lab?.lab_id || lab?.labid,
             user_id:user.id,
             state:true,
             isStarted:false
@@ -724,7 +742,7 @@ export const MyLabs: React.FC = () => {
             state: { 
               guacUrl,
               vmTitle: lab.title,
-              vmId: lab.lab_id,
+              vmId: lab?.lab_id || lab?.labid,
               doc:lab.userguide
             }
           });
@@ -743,7 +761,7 @@ export const MyLabs: React.FC = () => {
         if (restart.data.success ) {
           const cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
             user_id: user.id,
-            lab_id: lab.lab_id,
+            lab_id: lab?.lab_id || lab?.labid,
           })
           if(cloudInstanceDetails.data.success){
             const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
@@ -756,18 +774,18 @@ export const MyLabs: React.FC = () => {
             if(response.data.success){
               //update database that the instance is started
               await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
-                lab_id:lab.lab_id,
+                lab_id:lab?.lab_id || lab?.labid,
                 user_id:user.id,
                 state:true,
                 isStarted:true
               })
               const guacUrl = `${lab.guacamole_url}?token=${response.data.response.jwtToken}`;
               
-          navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
+          navigate(`/dashboard/labs/vm-session/${lab?.lab_id || lab?.labid}`, {
             state: { 
               guacUrl,
               vmTitle: lab.title,
-              vmId: lab.lab_id,
+              vmId: lab?.lab_id || lab?.labid,
               doc:lab.userguide
             }
           });
@@ -780,8 +798,8 @@ export const MyLabs: React.FC = () => {
 
       setLabControls(prev => ({
         ...prev,
-        [lab.lab_id]: {
-          ...prev[lab.lab_id],
+        [lab?.lab_id || lab?.labid]: {
+          ...prev[lab?.lab_id || lab?.labid],
           isProcessing: false,
           buttonLabel: 'Stop Lab',
           notification: {
@@ -794,8 +812,8 @@ export const MyLabs: React.FC = () => {
       setTimeout(() => {
         setLabControls(prev => ({
           ...prev,
-          [lab.lab_id]: {
-            ...prev[lab.lab_id],
+          [lab?.lab_id || lab?.labid]: {
+            ...prev[lab?.lab_id || lab?.labid],
             notification: null
           }
         }));
@@ -804,8 +822,8 @@ export const MyLabs: React.FC = () => {
     } catch (error) {
       setLabControls(prev => ({
         ...prev,
-        [lab.lab_id]: {
-          ...prev[lab.lab_id],
+        [lab?.lab_id || lab?.labid]: {
+          ...prev[lab?.lab_id || lab?.labid],
           isProcessing: false,
           notification: {
             type: 'error',
@@ -817,8 +835,8 @@ export const MyLabs: React.FC = () => {
       setTimeout(()=>{
         setLabControls(prev => ({
           ...prev,
-          [lab.lab_id]: {
-            ...prev[lab.lab_id],
+          [lab?.lab_id || lab?.labid]: {
+            ...prev[lab?.lab_id || lab?.labid],
             notification: null
           }
         }));
@@ -1025,8 +1043,9 @@ export const MyLabs: React.FC = () => {
                           </button>
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             labStatus[index]?.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' :
-                            labStatus[index]?.status === 'in_progress' ? 'bg-amber-500/20 text-amber-300' :
-                            'bg-emerald-500/20 text-emerald-300'
+                            labStatus[index]?.status === 'started' ? 'bg-emerald-500/20 text-emerald-300' :
+                            labStatus[index]?.status === 'expired' ? 'bg-red-500/20 text-red-300' :
+                            'bg-amber-500/20 text-amber-300'
                           }`}>
                             {labStatus[index]?.status || 'not-started'}
                           </span>
