@@ -1,11 +1,22 @@
-
 import React, { useState, useRef } from 'react';
-import { X, Camera, User, Mail, Lock, Eye, EyeOff, Loader, Check, AlertCircle, Bell, Phone, MapPin, Building2 } from 'lucide-react';
+import { X, Camera, User, Mail, Lock, Eye, EyeOff, Loader, Check, AlertCircle, Bell, Phone, MapPin, Building2, CreditCard } from 'lucide-react';
 import { GradientText } from '../ui/GradientText';
 import { GlowingBorder } from '../ui/GlowingBorder';
 import { useAuthStore } from '../../store/authStore';
 import { NotificationPreferences } from '../settings/NotificationPreferences';
 import axios from 'axios';
+
+// Placeholder for TransactionList component - replace with your actual implementation
+const TransactionList = ({ orgId, title }: { orgId?: string; title: string }) => {
+  return (
+    <div className="text-gray-300">
+      <h3 className="text-2xl font-semibold text-white mb-4">{title}</h3>
+      <p>Transaction list will be displayed here.</p>
+      {orgId && <p>Organization ID: {orgId}</p>}
+      {/* Add your transaction fetching logic, table, pagination, and PDF download here */}
+    </div>
+  );
+};
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -16,7 +27,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { user, fetchUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications'>('profile');
+  const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'transactions'>('profile');
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -28,6 +39,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Mock data for profile and password, assuming these are managed elsewhere or will be fetched
+  const [profileData, setProfileData] = useState({
+    first_name: user?.name?.split(' ')[0] || '',
+    last_name: user?.name?.split(' ')[1] || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    location: user?.location || '',
+    organization: user?.organization || ''
+  });
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showChangePassword, setShowChangePassword] = useState(false);
+
 
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -127,6 +156,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }
   };
 
+  // Placeholder functions for profile and password handling, as these were from a different context
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Implement profile save logic here
+    console.log("Saving profile:", profileData);
+    await fetchUser(); // Simulate refresh
+    setSuccess('Profile saved (mock)');
+    setTimeout(() => onClose(), 1000);
+  };
+
+  const handleChangePassword = async () => {
+    // Implement password change logic here
+    console.log("Changing password:", passwordData);
+    await fetchUser(); // Simulate refresh
+    setSuccess('Password changed (mock)');
+    setShowChangePassword(false);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="relative bg-dark-200/95 backdrop-blur-lg border border-primary-500/20 rounded-xl max-w-4xl w-full h-[90vh] overflow-hidden shadow-2xl">
@@ -148,9 +195,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             {/* Vertical Tabs */}
             <div className="space-y-2">
               <button
-                onClick={() => setActiveTab('profile')}
+                onClick={() => setActiveSection('profile')}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                  activeTab === 'profile'
+                  activeSection === 'profile'
                     ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
                     : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
                 }`}
@@ -159,9 +206,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <span className="font-medium">Profile Settings</span>
               </button>
               <button
-                onClick={() => setActiveTab('notifications')}
+                onClick={() => setActiveSection('notifications')}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                  activeTab === 'notifications'
+                  activeSection === 'notifications'
                     ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
                     : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
                 }`}
@@ -169,18 +216,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <Bell className="h-5 w-5" />
                 <span className="font-medium">Notifications</span>
               </button>
+              {(user?.role === 'superadmin' || user?.role === 'orgadmin' || user?.role === 'orgsuperadmin') && (
+                <button
+                  onClick={() => setActiveSection('transactions')}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    activeSection === 'transactions'
+                      ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
+                      : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  <span className="font-medium">Transactions</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Right Content Area */}
           <div className="flex-1 p-8 overflow-y-auto max-h-[calc(90vh-2rem)]">
-            {activeTab === 'profile' ? (
-              <div className="space-y-8 min-h-full">
-                <div>
-                  <h3 className="text-2xl font-semibold text-white mb-2">Profile Settings</h3>
-                  <p className="text-gray-400">Manage your account information and preferences</p>
-                </div>
-
+            {activeSection === 'profile' && (
+              <div className="space-y-6">
+                {/* Profile Form */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Profile Photo Section */}
                   <div className="flex flex-col items-center space-y-4 pb-6 border-b border-gray-700">
@@ -441,7 +497,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   </div>
                 </form>
               </div>
-            ) : (
+            )}
+
+            {activeSection === 'notifications' && (
               <div>
                 <div className="mb-6">
                   <h3 className="text-2xl font-semibold text-white mb-2">Notification Settings</h3>
@@ -450,6 +508,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <div className="max-h-[60vh] overflow-y-auto">
                   <NotificationPreferences />
                 </div>
+              </div>
+            )}
+
+            {activeSection === 'transactions' && (
+              <div>
+                <TransactionList
+                  orgId={user?.role === 'orgadmin' || user?.role === 'orgsuperadmin' ? user?.organization_id : undefined}
+                  title="Transaction History"
+                />
               </div>
             )}
           </div>

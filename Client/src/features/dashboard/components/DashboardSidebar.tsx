@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../../store/authStore';
 import {
   LayoutDashboard,
@@ -14,7 +14,8 @@ import {
   FileText,
   FolderOpen,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  CreditCard
 } from 'lucide-react';
 
 interface DashboardSidebarProps {
@@ -22,8 +23,32 @@ interface DashboardSidebarProps {
   setIsCollapsed: (collapsed: boolean) => void;
 }
 
+// A placeholder for SidebarItem component, assuming it exists elsewhere
+// and handles the actual rendering of menu items with icons and labels.
+const SidebarItem = ({ icon: Icon, label, path, isActive, isCollapsed }) => (
+  <NavLink
+    key={path}
+    to={path}
+    end
+    className={({ isActive }) =>
+      `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+        isActive
+          ? 'bg-primary-500/10 text-primary-400'
+          : 'text-gray-400 hover:bg-dark-100/50 hover:text-primary-300'
+      } ${isCollapsed ? 'justify-center' : ''}`
+    }
+    title={isCollapsed ? label : undefined}
+  >
+    <Icon className={`h-5 w-5 flex-shrink-0 ${isCollapsed ? '' : 'mr-3'}`} />
+    {!isCollapsed && label}
+  </NavLink>
+);
+
+
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const { user } = useAuthStore();
+  const location = useLocation();
+
 
   const menuItems = {
     superadmin: [
@@ -35,7 +60,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },
       { icon: Cloud, label: 'Cloud Resources', path: '/dashboard/cloud' },
       { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
-      { icon: Settings, label: 'Settings', path: '/dashboard/settings' }
+      { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
+      { icon: CreditCard, label: 'Transactions', path: '/dashboard/transactions' } // Added for superadmin
     ],
     orgsuperadmin: [
       { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
@@ -59,7 +85,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: Award, label: 'Assessments', path: '/dashboard/assessments' },
       { icon: Brain, label: 'AI Lab Builder', path: '/dashboard/lab-builder' },
       { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
-      { icon: Settings, label: 'Organization', path: '/dashboard/organization' }
+      { icon: Settings, label: 'Organization', path: '/dashboard/organization' },
+      { icon: CreditCard, label: 'Transactions', path: '/dashboard/transactions' } // Added for orgadmin
     ],
     trainer: [
       { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
@@ -79,7 +106,21 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: Cloud, label: 'Cloud Usage', path: '/dashboard/cloud-usage' }
     ]
   };
-  const currentMenuItems = menuItems[user?.role || 'user'];
+
+  // Filter menu items based on user role and add transactions for specific roles
+  const getFilteredMenuItems = (role) => {
+    let items = menuItems[role] || menuItems.user; // Default to user role if role is unknown
+
+    // Add Transactions to specific roles
+    if (role === 'superadmin' || role === 'orgadmin') {
+      items = [...items, { icon: CreditCard, label: 'Transactions', path: '/dashboard/transactions' }];
+    }
+
+    return items;
+  };
+
+  const currentMenuItems = getFilteredMenuItems(user?.role || 'user');
+
   return (
     <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-dark-200 border-r border-dark-300 transition-all duration-300 z-30 ${
       isCollapsed ? 'w-16' : 'w-64'
@@ -91,7 +132,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
             GoLabing.ai
           </span>
         )}
-        <button 
+        <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-2 bg-primary-500/20 border border-primary-400/50 rounded-lg shadow-md hover:bg-primary-500/30 hover:scale-105 transition-all duration-200"
           title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -107,22 +148,14 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       <nav className="mt-5 px-2 overflow-y-auto h-full">
         <div className="space-y-1">
           {currentMenuItems.map((item) => (
-            <NavLink
+            <SidebarItem
               key={item.path}
-              to={item.path}
-              end
-              className={({ isActive }) =>
-                `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-primary-500/10 text-primary-400'
-                    : 'text-gray-400 hover:bg-dark-100/50 hover:text-primary-300'
-                } ${isCollapsed ? 'justify-center' : ''}`
-              }
-              title={isCollapsed ? item.label : undefined}
-            >
-              <item.icon className={`h-5 w-5 flex-shrink-0 ${isCollapsed ? '' : 'mr-3'}`} />
-              {!isCollapsed && item.label}
-            </NavLink>
+              icon={item.icon}
+              label={item.label}
+              path={item.path}
+              isActive={location.pathname === item.path}
+              isCollapsed={isCollapsed}
+            />
           ))}
         </div>
       </nav>

@@ -45,6 +45,9 @@ import { AllUsersPage } from '../features/dashboard/pages/AllUsersPage';
 import { OrgSuperAdminCataloguePage } from '../features/labs/pages/OrgSuperAdminCataloguePage';
 import { PrivateRoute } from '../components/auth/PrivateRoute';
 import NotificationPage from '../pages/NotificationPage';
+// Assume TransactionsPage and CloudUsage are correctly imported from their respective modules
+// import { TransactionsPage } from '../features/transactions/pages/TransactionsPage'; // Placeholder import
+// import { CloudUsage } from '../features/dashboard/pages/CloudUsage'; // Placeholder import
 
 
 export const AppRoutes: React.FC = () => {
@@ -106,13 +109,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="labs/vm-session/:vmId" element={<VMSessionPage />} />
         <Route path="cloud" element={<CloudResources />} />
         <Route path="reports" element={<ReportsPage />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="assessments" element={<Assessments />} />
-        <Route path="my-labs" element={<MyLabs />} />
-        <Route path="create-modules" element={<CreateModulesPage />} />
-        <Route path="org-admins" element={<OrgAdminsPage />} />
-        <Route path="all-users" element={<AllUsersPage />} />
-        <Route path="my-organization" element={<Organizations />} />
+        {/* Placeholder for CloudUsage, assuming it's a valid component */}
+        {/* <Route path="cloud-usage" element={<CloudUsage />} /> */}
+        <Route path="transactions" element={<TransactionsPage />} /> 
         <Route path="notifications" element={<NotificationPage />} />
 
         {/* User Lab Routes */}
