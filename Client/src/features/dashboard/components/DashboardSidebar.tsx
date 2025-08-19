@@ -110,6 +110,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
             <NavLink
               key={item.path}
               to={item.path}
+              end
               className={({ isActive }) =>
                 `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   isActive
