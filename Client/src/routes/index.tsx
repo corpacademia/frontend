@@ -45,9 +45,13 @@ import { AllUsersPage } from '../features/dashboard/pages/AllUsersPage';
 import { OrgSuperAdminCataloguePage } from '../features/labs/pages/OrgSuperAdminCataloguePage';
 import { PrivateRoute } from '../components/auth/PrivateRoute';
 import NotificationPage from '../pages/NotificationPage';
+import { LabBuilder } from '../features/dashboard/pages/LabBuilder';
+import { LearningPath } from '../features/dashboard/pages/LearningPath';
+import { Students } from '../features/dashboard/pages/Students';
+import { Progress } from '../features/dashboard/pages/Progress';
+import { CloudUsage } from '../features/dashboard/pages/CloudUsage';
 // Assume TransactionsPage and CloudUsage are correctly imported from their respective modules
-// import { TransactionsPage } from '../features/transactions/pages/TransactionsPage'; // Placeholder import
-// import { CloudUsage } from '../features/dashboard/pages/CloudUsage'; // Placeholder import
+// import { TransactionsPage } from '../features/dashboard/pages/TransactionsPage';
 
 
 export const AppRoutes: React.FC = () => {
@@ -109,9 +113,19 @@ export const AppRoutes: React.FC = () => {
         <Route path="labs/vm-session/:vmId" element={<VMSessionPage />} />
         <Route path="cloud" element={<CloudResources />} />
         <Route path="reports" element={<ReportsPage />} />
-        {/* Placeholder for CloudUsage, assuming it's a valid component */}
-        {/* <Route path="cloud-usage" element={<CloudUsage />} /> */}
-        <Route path="transactions" element={<TransactionsPage />} /> 
+        <Route path="settings" element={<Settings />} />
+        <Route path="organization" element={<Organizations />} />
+        <Route path="org-settings" element={<Organizations />} />
+        <Route path="my-organization" element={<Organizations />} />
+        <Route path="org-admins" element={<OrgAdminsPage />} />
+        <Route path="all-users" element={<AllUsersPage />} />
+        <Route path="assessments" element={<Assessments />} />
+        <Route path="lab-builder" element={<LabBuilder />} />
+        <Route path="learning-path" element={<LearningPath />} />
+        <Route path="students" element={<Students />} />
+        <Route path="progress" element={<Progress />} />
+        <Route path="my-labs" element={<MyLabs />} />
+        <Route path="cloud-usage" element={<CloudUsage />} />
         <Route path="notifications" element={<NotificationPage />} />
 
         {/* User Lab Routes */}

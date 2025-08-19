@@ -60,8 +60,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },
       { icon: Cloud, label: 'Cloud Resources', path: '/dashboard/cloud' },
       { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
-      { icon: Settings, label: 'Settings', path: '/dashboard/settings' },
-      { icon: CreditCard, label: 'Transactions', path: '/dashboard/transactions' } // Added for superadmin
+      { icon: Settings, label: 'Settings', path: '/dashboard/settings' }
     ],
     orgsuperadmin: [
       { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
@@ -85,8 +84,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: Award, label: 'Assessments', path: '/dashboard/assessments' },
       { icon: Brain, label: 'AI Lab Builder', path: '/dashboard/lab-builder' },
       { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
-      { icon: Settings, label: 'Organization', path: '/dashboard/organization' },
-      { icon: CreditCard, label: 'Transactions', path: '/dashboard/transactions' } // Added for orgadmin
+      { icon: Settings, label: 'Organization', path: '/dashboard/organization' }
     ],
     trainer: [
       { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
@@ -107,19 +105,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
     ]
   };
 
-  // Filter menu items based on user role and add transactions for specific roles
-  const getFilteredMenuItems = (role) => {
-    let items = menuItems[role] || menuItems.user; // Default to user role if role is unknown
-
-    // Add Transactions to specific roles
-    if (role === 'superadmin' || role === 'orgadmin') {
-      items = [...items, { icon: CreditCard, label: 'Transactions', path: '/dashboard/transactions' }];
-    }
-
-    return items;
-  };
-
-  const currentMenuItems = getFilteredMenuItems(user?.role || 'user');
+  const currentMenuItems = menuItems[user?.role || 'user'] || menuItems.user;
 
   return (
     <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-dark-200 border-r border-dark-300 transition-all duration-300 z-30 ${

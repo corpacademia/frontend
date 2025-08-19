@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, User, Mail, Lock, Eye, EyeOff, Loader, Check, AlertCircle, Bell, Phone, MapPin, Building2, CreditCard } from 'lucide-react';
+import { X, Camera, User, Mail, Lock, Eye, EyeOff, Loader, Check, AlertCircle, Bell, Phone, MapPin, Building2, CreditCard, FileText } from 'lucide-react';
 import { GradientText } from '../ui/GradientText';
 import { GlowingBorder } from '../ui/GlowingBorder';
 import { useAuthStore } from '../../store/authStore';
@@ -27,7 +27,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { user, fetchUser } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'transactions'>('profile');
+  const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'billing'>('profile');
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -218,15 +218,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </button>
               {(user?.role === 'superadmin' || user?.role === 'orgadmin' || user?.role === 'orgsuperadmin') && (
                 <button
-                  onClick={() => setActiveSection('transactions')}
+                  onClick={() => setActiveSection('billing')}
                   className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                    activeSection === 'transactions'
+                    activeSection === 'billing'
                       ? 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
                       : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
                   }`}
                 >
                   <CreditCard className="h-5 w-5" />
-                  <span className="font-medium">Transactions</span>
+                  <span className="font-medium">Billing & Transactions</span>
                 </button>
               )}
             </div>
@@ -511,12 +511,96 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </div>
             )}
 
-            {activeSection === 'transactions' && (
-              <div>
-                <TransactionList
-                  orgId={user?.role === 'orgadmin' || user?.role === 'orgsuperadmin' ? user?.organization_id : undefined}
-                  title="Transaction History"
-                />
+            {activeSection === 'billing' && (
+              <div className="space-y-6">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-semibold text-white mb-2">Billing & Transaction Settings</h3>
+                  <p className="text-gray-400">Manage your billing preferences and transaction settings</p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Transaction Notifications */}
+                  <div className="bg-dark-300/50 rounded-lg p-6 border border-primary-500/20">
+                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <Bell className="h-5 w-5 mr-2 text-primary-400" />
+                      Transaction Notifications
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-sm font-medium text-gray-200">Payment Confirmations</label>
+                          <p className="text-xs text-gray-400">Get notified when payments are processed</p>
+                        </div>
+                        <input type="checkbox" defaultChecked className="toggle-switch" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-sm font-medium text-gray-200">Payment Failures</label>
+                          <p className="text-xs text-gray-400">Get notified when payments fail</p>
+                        </div>
+                        <input type="checkbox" defaultChecked className="toggle-switch" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-sm font-medium text-gray-200">Invoice Reminders</label>
+                          <p className="text-xs text-gray-400">Get reminders for upcoming payments</p>
+                        </div>
+                        <input type="checkbox" defaultChecked className="toggle-switch" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Receipt Settings */}
+                  <div className="bg-dark-300/50 rounded-lg p-6 border border-primary-500/20">
+                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <FileText className="h-5 w-5 mr-2 text-primary-400" />
+                      Receipt Preferences
+                    </h4>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-sm font-medium text-gray-200">Auto-download Receipts</label>
+                          <p className="text-xs text-gray-400">Automatically download receipt PDFs</p>
+                        </div>
+                        <input type="checkbox" className="toggle-switch" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-sm font-medium text-gray-200">Email Receipts</label>
+                          <p className="text-xs text-gray-400">Send receipt copies to your email</p>
+                        </div>
+                        <input type="checkbox" defaultChecked className="toggle-switch" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="bg-dark-300/50 rounded-lg p-6 border border-primary-500/20">
+                    <h4 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <CreditCard className="h-5 w-5 mr-2 text-primary-400" />
+                      Quick Actions
+                    </h4>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={() => window.open(user?.role === 'superadmin' ? '/dashboard/settings' : '/dashboard/organization', '_blank')}
+                        className="btn-secondary flex items-center"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View All Transactions
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Trigger export functionality
+                          console.log('Exporting transactions...');
+                        }}
+                        className="btn-secondary flex items-center"
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Export Transactions
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
