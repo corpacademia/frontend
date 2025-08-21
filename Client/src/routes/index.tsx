@@ -40,6 +40,7 @@ import { LabExercisePage } from '../features/labs/components/user/LabExercisePag
 import { QuizExercisePage } from '../features/labs/components/user/QuizExercisePage';
 import { VMSessionPage } from '../features/labs/components/VMSessionPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { PurchaseHistoryPage } from '../pages/PurchaseHistoryPage';
 import { OrgAdminsPage } from '../features/dashboard/pages/OrgAdminsPage';
 import { AllUsersPage } from '../features/dashboard/pages/AllUsersPage';
 import { OrgSuperAdminCataloguePage } from '../features/labs/pages/OrgSuperAdminCataloguePage';
@@ -64,6 +65,11 @@ export const AppRoutes: React.FC = () => {
       <Route path="/signupprofile" element={<SignupForm />} />
       <Route path="/verify-email" element={<EmailVerificationPage />} />
       <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/purchase-history" element={
+        <PrivateRoute allowedRoles={['user']}>
+          <PurchaseHistoryPage />
+        </PrivateRoute>
+      } />
       <Route path='/notifications' element={<NotificationPage/>} />
 
       {/* Super Admin Routes */}
