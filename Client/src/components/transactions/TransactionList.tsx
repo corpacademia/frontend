@@ -39,9 +39,9 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     exportTransactionsPDF,
     clearError
   } = useTransactionStore();
-
   const [showFilters, setShowFilters] = useState(false);
   const [localFilters, setLocalFilters] = useState<TransactionFilter>({});
+
 
   useEffect(() => {
     fetchTransactions(orgId, 1);
@@ -87,7 +87,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   };
 
   const formatDate = (timestamp: string) => {
-    return new Date(parseInt(timestamp) * 1000).toLocaleDateString('en-US', {
+    return new Date(timestamp).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -95,7 +95,6 @@ export const TransactionList: React.FC<TransactionListProps> = ({
       minute: '2-digit'
     });
   };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -104,16 +103,17 @@ export const TransactionList: React.FC<TransactionListProps> = ({
           <GradientText>{title}</GradientText>
         </h2>
         <div className="flex flex-wrap gap-3">
+          
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="btn-secondary flex items-center"
+            className="btn-secondary text-gray-300 flex items-center"
           >
             <Filter className="h-4 w-4 mr-2" />
             Filters
           </button>
           <button
             onClick={() => exportTransactionsPDF(orgId)}
-            className="btn-secondary flex items-center"
+            className="btn-secondary text-gray-300 flex items-center"
           >
             <FileText className="h-4 w-4 mr-2" />
             Export PDF
@@ -161,50 +161,65 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                 className="w-full px-3 py-2 bg-dark-300 border border-primary-500/20 rounded-lg text-gray-200 focus:border-primary-500 focus:outline-none"
               >
                 <option value="">All Statuses</option>
-                <option value="paid">Paid</option>
+                <option value="succeeded">Paid</option>
                 <option value="pending">Pending</option>
                 <option value="failed">Failed</option>
                 <option value="canceled">Canceled</option>
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Date Range
-              </label>
-              <div className="flex space-x-2">
-                <input
-                  type="date"
-                  value={localFilters.dateRange?.start || ''}
-                  onChange={(e) => setLocalFilters({
-                    ...localFilters,
-                    dateRange: { ...localFilters.dateRange, start: e.target.value, end: localFilters.dateRange?.end || '' }
-                  })}
-                  className="flex-1 px-3 py-2 bg-dark-300 border border-primary-500/20 rounded-lg text-gray-200 focus:border-primary-500 focus:outline-none"
-                />
-                <input
-                  type="date"
-                  value={localFilters.dateRange?.end || ''}
-                  onChange={(e) => setLocalFilters({
-                    ...localFilters,
-                    dateRange: { ...localFilters.dateRange, start: localFilters.dateRange?.start || '', end: e.target.value }
-                  })}
-                  className="flex-1 px-3 py-2 bg-dark-300 border border-primary-500/20 rounded-lg text-gray-200 focus:border-primary-500 focus:outline-none"
-                />
-              </div>
-            </div>
+            <div className="md:col-span-2">
+  <label className="block text-sm font-medium text-gray-300 mb-2">
+    Date Range
+  </label>
+  <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+    <input
+      type="date"
+      value={localFilters.dateRange?.start || ''}
+      onChange={(e) =>
+        setLocalFilters({
+          ...localFilters,
+          dateRange: {
+            ...localFilters.dateRange,
+            start: e.target.value,
+            end: localFilters.dateRange?.end || '',
+          },
+        })
+      }
+      className="flex-1 px-3 py-2 bg-dark-300 border border-primary-500/20 rounded-lg 
+                 text-gray-200 focus:border-primary-500 focus:outline-none"
+    />
+    <input
+      type="date"
+      value={localFilters.dateRange?.end || ''}
+      onChange={(e) =>
+        setLocalFilters({
+          ...localFilters,
+          dateRange: {
+            ...localFilters.dateRange,
+            start: localFilters.dateRange?.start || '',
+            end: e.target.value,
+          },
+        })
+      }
+      className="flex-1 px-3 py-2 bg-dark-300 border border-primary-500/20 rounded-lg 
+                 text-gray-200 focus:border-primary-500 focus:outline-none"
+    />
+  </div>
+</div>
+
           </div>
 
           <div className="flex justify-end space-x-3 mt-4 pt-4 border-t border-primary-500/10">
             <button
               onClick={handleClearFilters}
-              className="btn-secondary"
+              className="btn-secondary text-gray-300"
             >
               Clear
             </button>
             <button
               onClick={handleApplyFilters}
-              className="btn-primary"
+              className="btn-primary text-gray-300"
             >
               Apply Filters
             </button>
@@ -261,7 +276,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                         </span>
                       </td>
                       <td className="py-4 text-gray-300">
-                        {transaction.customer}
+                        {transaction?.customer_name}
                       </td>
                       <td className="py-4 text-gray-400">
                         <div className="flex items-center">
