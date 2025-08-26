@@ -17,7 +17,6 @@ const AppContent: React.FC = () => {
       const socket = initSocket(user.id, user.org_id);
       
       socket.on("notification", (data) => {
-        console.log(data)
         addNotification(data);
       });
    

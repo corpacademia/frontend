@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../store/authStore';
-import { Bell, Settings, LogOut, User, ChevronDown, ShoppingCart, X, Edit } from 'lucide-react';
+import { Bell, Settings, LogOut, User, ChevronDown, ShoppingCart, X, Edit, CreditCard } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import { OrganizationSwitcher } from './OrganizationSwitcher';
 import axios from 'axios';
@@ -44,7 +44,7 @@ export const DashboardHeader: React.FC = () => {
   //           setCourses(response.data.data);
   //         } catch (error) {
   //           console.error('Error fetching catalogues:', error);
-  //         } 
+  //         }
   //       }
   //       fetchCatalogues();
 
@@ -207,8 +207,8 @@ export const DashboardHeader: React.FC = () => {
           >
             <ShoppingCart className="h-5 w-5" />
             {cartItems.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-primary-500 to-secondary-500 
-                             text-white text-xs rounded-full h-5 w-5 flex items-center justify-center 
+              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-primary-500 to-secondary-500
+                             text-white text-xs rounded-full h-5 w-5 flex items-center justify-center
                              font-semibold shadow-lg shadow-primary-500/20">
                 {cartItems.reduce((total, item) => total + Number(item.quantity), 0)}
               </span>
@@ -260,11 +260,20 @@ export const DashboardHeader: React.FC = () => {
                 </div>
                 <button
                   onClick={handleProfileClick}
-                  className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-dark-100/50 flex items-center space-x-2 transition-colors"
+                  className="flex items-center space-x-2 w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-dark-300 transition-colors"
                 >
                   <User className="h-4 w-4" />
                   <span>Profile</span>
                 </button>
+                {user?.role === 'user' && (
+                  <button
+                    onClick={() => navigate('/purchase-history')}
+                    className="flex items-center space-x-2 w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-dark-300 transition-colors"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    <span>Purchase History</span>
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setIsSettingsModalOpen(true);
@@ -292,7 +301,7 @@ export const DashboardHeader: React.FC = () => {
       {/* Cart Modal */}
       {isCartModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-dark-200 to-dark-300 rounded-2xl border border-primary-500/20 
+          <div className="bg-gradient-to-br from-dark-200 to-dark-300 rounded-2xl border border-primary-500/20
                           max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl shadow-primary-500/10">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-primary-500/20">
@@ -329,7 +338,7 @@ export const DashboardHeader: React.FC = () => {
               ) : (
                 <div className="space-y-4 max-h-[400px] overflow-y-auto">
                   {cartItems.map(item => (
-                    <div key={item.id} className="p-4 bg-dark-400/30 rounded-xl border border-primary-500/10 
+                    <div key={item.id} className="p-4 bg-dark-400/30 rounded-xl border border-primary-500/10
                                                    hover:border-primary-500/20 transition-colors">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -346,7 +355,7 @@ export const DashboardHeader: React.FC = () => {
                                     min="1"
                                     defaultValue={item.duration}
                                     onChange={(e) => setEditingCartItem({...editingCartItem, duration: e.target.value})}
-                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
+                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
                                   />
                                 </div>
@@ -357,7 +366,7 @@ export const DashboardHeader: React.FC = () => {
                                     min="1"
                                     defaultValue={item.quantity}
                                     onChange={(e) => setEditingCartItem({...editingCartItem, quantity: parseInt(e.target.value)})}
-                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
+                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
                                   />
                                 </div>
@@ -370,14 +379,14 @@ export const DashboardHeader: React.FC = () => {
                                     defaultDuration: item.defaultduration || 1,
                                     price: item.defaultprice
                                   })}
-                                  className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-300 
+                                  className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-300
                                            rounded text-sm transition-colors"
                                 >
                                   Save
                                 </button>
                                 <button
                                   onClick={() => setEditingCartItem(null)}
-                                  className="px-3 py-1 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 
+                                  className="px-3 py-1 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300
                                            rounded text-sm transition-colors"
                                 >
                                   Cancel
@@ -401,7 +410,7 @@ export const DashboardHeader: React.FC = () => {
                           {editingCartItem?.id !== item.id && (
                             <button
                               onClick={() => setEditingCartItem(item)}
-                              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 
+                              className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10
                                        rounded-lg transition-colors"
                               title="Edit item"
                             >
@@ -410,7 +419,7 @@ export const DashboardHeader: React.FC = () => {
                           )}
                           <button
                             onClick={() => removeFromCart(item.id)}
-                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 
+                            className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10
                                      rounded-lg transition-colors"
                             title="Remove from cart"
                           >
@@ -448,8 +457,8 @@ export const DashboardHeader: React.FC = () => {
                 <div className="flex space-x-3">
                   <button
                     onClick={() => setIsCartModalOpen(false)}
-                    className="flex-1 px-6 py-3 bg-dark-400/50 hover:bg-dark-400/70 
-                             border border-gray-500/20 hover:border-gray-500/40 
+                    className="flex-1 px-6 py-3 bg-dark-400/50 hover:bg-dark-400/70
+                             border border-gray-500/20 hover:border-gray-500/40
                              rounded-lg transition-all duration-300 text-gray-300 hover:text-white"
                   >
                     Continue Shopping
@@ -471,9 +480,9 @@ export const DashboardHeader: React.FC = () => {
       )}
 
       {/* Settings Modal */}
-      <SettingsModal 
-        isOpen={isSettingsModalOpen} 
-        onClose={() => setIsSettingsModalOpen(false)} 
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
       />
     </header>
   );

@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PublicCatalogueGrid } from './PublicCatalogueGrid';
 import { PublicCatalogueFilters } from './PublicCatalogueFilters';
 import { EditCourseModal } from './EditCourseModal';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { useAuthStore } from '../../../../store/authStore';
-import { Plus, BookOpen, Users, Award, TrendingUp, ShoppingCart, LogOut, LogIn, X, Edit } from 'lucide-react';
+import { Plus, BookOpen, Users, Award, TrendingUp, ShoppingCart, LogOut, LogIn, X, Edit, LayoutDashboard } from 'lucide-react';
 import axios from 'axios';
 import { DeleteModal } from '../cloudvm/DeleteModal';
 
@@ -38,6 +38,7 @@ export const PublicCataloguePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const isSuperAdmin = user?.role === 'superadmin';
   const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
@@ -368,6 +369,15 @@ if(isLoading) {
                 <span>Login</span>
               </button>
             )}
+             <button
+    onClick={() => navigate('/dashboard')}
+    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 
+               hover:from-primary-400 hover:to-secondary-400 
+               rounded-lg transition-all duration-300 text-white font-semibold shadow-lg"
+  >
+    <LayoutDashboard className="h-5 w-5" />
+    <span>Go to Dashboard</span>
+  </button>
           </div>
         </div>
       </div>
