@@ -1,5 +1,4 @@
 
-import axios from 'axios';
 import { Notification } from '../types/notifications';
 import { NotificationEmailGenerator } from '../utils/notificationEmailGenerator';
 
@@ -11,19 +10,17 @@ export interface EmailConfig {
 }
 
 export class NotificationEmailService {
-  private static readonly EMAIL_ENDPOINT = `${import.meta.env.VITE_BACKEND_URL}/api/v1/notifications/send-email`;
-
-  static async sendNotificationEmail(
+  static async generateNotificationEmail(
     notification: Notification, 
     recipientEmail: string,
     userPreferences?: any
-  ): Promise<boolean> {
+  ): Promise<EmailConfig | null> {
     try {
       // Check if user has email notifications enabled for this type
       if (userPreferences?.emailNotifications && 
           !userPreferences.emailNotifications[notification.type]) {
         console.log(`Email notifications disabled for ${notification.type}`);
-        return false;
+        return null;
       }
 
       // Generate email HTML content
@@ -40,47 +37,36 @@ export class NotificationEmailService {
         priority: notification.priority
       };
 
-      // Send email via backend
-      const response = await axios.post(this.EMAIL_ENDPOINT, emailConfig, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      return response.data.success;
+      return emailConfig;
     } catch (error) {
-      console.error('Failed to send notification email:', error);
-      return false;
+      console.error('Failed to generate notification email:', error);
+      return null;
     }
   }
 
-  static async sendBulkNotificationEmails(
+  static async generateBulkNotificationEmails(
     notification: Notification,
     recipients: Array<{ email: string; preferences?: any }>
-  ): Promise<{ success: number; failed: number }> {
-    const results = { success: 0, failed: 0 };
+  ): Promise<EmailConfig[]> {
+    const emailConfigs: EmailConfig[] = [];
 
     for (const recipient of recipients) {
       try {
-        const sent = await this.sendNotificationEmail(
+        const emailConfig = await this.generateNotificationEmail(
           notification,
           recipient.email,
           recipient.preferences
         );
         
-        if (sent) {
-          results.success++;
-        } else {
-          results.failed++;
+        if (emailConfig) {
+          emailConfigs.push(emailConfig);
         }
       } catch (error) {
-        console.error(`Failed to send email to ${recipient.email}:`, error);
-        results.failed++;
+        console.error(`Failed to generate email for ${recipient.email}:`, error);
       }
     }
 
-    return results;
+    return emailConfigs;
   }
 
   private static generateSubject(notification: Notification): string {
@@ -90,10 +76,10 @@ export class NotificationEmailService {
     return `${priorityPrefix}${notification.title} - GoLabing.ai`;
   }
 
-  static async testEmailTemplate(
+  static async generateTestEmailTemplate(
     notificationType: string,
     recipientEmail: string
-  ): Promise<boolean> {
+  ): Promise<EmailConfig | null> {
     try {
       // Create a test notification
       const testNotification: Notification = {
@@ -114,10 +100,26 @@ export class NotificationEmailService {
         }
       };
 
-      return await this.sendNotificationEmail(testNotification, recipientEmail);
+      return await this.generateNotificationEmail(testNotification, recipientEmail);
     } catch (error) {
-      console.error('Failed to send test email:', error);
-      return false;
+      console.error('Failed to generate test email:', error);
+      return null;
     }
+  }
+
+  static downloadEmailAsHTML(emailConfig: EmailConfig): void {
+    const blob = new Blob([emailConfig.html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `email-${emailConfig.to.replace('@', '_at_')}-${Date.now()}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  static copyEmailToClipboard(emailConfig: EmailConfig): Promise<boolean> {
+    return navigator.clipboard.writeText(emailConfig.html)
+      .then(() => true)
+      .catch(() => false);
   }
 }

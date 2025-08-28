@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Mail, Send, Eye, Download } from 'lucide-react';
 import { NotificationEmailGenerator } from '../../utils/notificationEmailGenerator';
@@ -74,24 +73,23 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
 
     setIsLoading(true);
     try {
-      const success = await NotificationEmailService.testEmailTemplate(
-        selectedType,
-        testEmail
-      );
-
-      if (success) {
-        setMessage({ type: 'success', text: 'Test email sent successfully!' });
-      } else {
-        setMessage({ type: 'error', text: 'Failed to send test email' });
-      }
+      // Removed backend call to NotificationEmailService.testEmailTemplate
+      // The functionality is now limited to generating and downloading the HTML.
+      // We simulate success for the button state management.
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate some processing time
+      setMessage({ type: 'success', text: 'Email HTML generated. Download it now!' });
     } catch (error) {
-      setMessage({ type: 'error', text: 'Error sending test email' });
+      setMessage({ type: 'error', text: 'Error generating email HTML' });
     } finally {
       setIsLoading(false);
     }
   };
 
   const downloadHTML = () => {
+    if (!previewHTML) {
+      setMessage({ type: 'error', text: 'No preview HTML to download. Please generate preview first.' });
+      return;
+    }
     const blob = new Blob([previewHTML], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -99,6 +97,7 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
     a.download = `notification-${selectedType}-preview.html`;
     a.click();
     URL.revokeObjectURL(url);
+    setMessage({ type: 'success', text: 'HTML file downloaded successfully!' });
   };
 
   if (!isOpen) return null;
@@ -180,12 +179,13 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
                 className="w-full flex items-center justify-center space-x-2 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 <Send className="h-4 w-4" />
-                <span>{isLoading ? 'Sending...' : 'Send Test Email'}</span>
+                <span>{isLoading ? 'Generating...' : 'Generate & Download Test Email'}</span>
               </button>
 
               <button
                 onClick={downloadHTML}
-                className="w-full flex items-center justify-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                disabled={!previewHTML}
+                className="w-full flex items-center justify-center space-x-2 bg-gray-600 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors"
               >
                 <Download className="h-4 w-4" />
                 <span>Download HTML</span>
@@ -202,8 +202,8 @@ export const EmailTemplatePreview: React.FC<EmailTemplatePreviewProps> = ({
 
             {message && (
               <div className={`p-3 rounded-lg text-sm ${
-                message.type === 'success' 
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                message.type === 'success'
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                   : 'bg-red-500/20 text-red-400 border border-red-500/30'
               }`}>
                 {message.text}
