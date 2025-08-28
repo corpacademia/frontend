@@ -149,7 +149,7 @@ function extractFileName(filePath: string) {
 
     try {
       const formDataToSend = new FormData();
-      formDataToSend.append('id', formData.id);
+      formDataToSend.append('userId', formData.id);
       formDataToSend.append('name', formData.name);
       formDataToSend.append('email', formData.email);
       formDataToSend.append('phone', formData.phone);

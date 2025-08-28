@@ -10,11 +10,11 @@ interface NotificationStore {
 
   // Actions
   fetchNotifications: (userId: string) => Promise<void>;
-  fetchPreferences: () => Promise<void>;
+  fetchPreferences: (userId:string) => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: (userId:string) => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
-  updatePreferences: (preferences: Partial<NotificationPreferences>) => Promise<void>;
+  updatePreferences: (preferences: Partial<NotificationPreferences>,userId:string) => Promise<void>;
   addNotification: (notification: Notification) => void;
   clearNotifications: () => void; 
 }
@@ -50,13 +50,12 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     }
   },
 
-  fetchPreferences: async () => {
+  fetchPreferences: async (userId:string) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/notifications/preferences`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/notifications/preferences/${userId}`,
         { withCredentials: true }
       );
-
       if (response.data.success) {
         set({ preferences: response.data.data });
       }
@@ -129,11 +128,11 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     }
   },
 
-  updatePreferences: async (newPreferences: Partial<NotificationPreferences>) => {
+  updatePreferences: async (newPreferences: Partial<NotificationPreferences>, userId: string) => {
     try {
-      const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/notifications/preferences`,
-        newPreferences,
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/setNotificationSettings/${userId}`,
+        { preferences: newPreferences },
         { withCredentials: true }
       );
 

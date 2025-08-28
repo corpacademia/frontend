@@ -59,7 +59,6 @@ export const PublicCataloguePage: React.FC = () => {
     const fetchCatalogues = async () => {
       setIsLoading(true);
       try {
-        // Replace with actual API call
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues` );
         setCourses(response.data.data);
         setFilteredCourses(response.data.data);

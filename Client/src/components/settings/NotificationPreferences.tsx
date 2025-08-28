@@ -23,6 +23,7 @@ export const NotificationPreferences: React.FC = () => {
     emailNotifications: {} as Record<NotificationType, boolean>,
     pushNotifications: {} as Record<NotificationType, boolean>,
     inAppNotifications: {} as Record<NotificationType, boolean>,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
     digestFrequency: 'daily' as 'immediate' | 'hourly' | 'daily' | 'weekly' | 'never',
     quietHours: {
       enabled: false,
@@ -35,27 +36,24 @@ export const NotificationPreferences: React.FC = () => {
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   useEffect(() => {
-    fetchPreferences();
+    fetchPreferences(user?.id || '');
   }, [fetchPreferences]);
-
   useEffect(() => {
     if (preferences) {
       setLocalPreferences({
-        emailNotifications: preferences.emailNotifications || {},
-        pushNotifications: preferences.pushNotifications || {},
-        inAppNotifications: preferences.inAppNotifications || {},
-        digestFrequency: preferences.digestFrequency || 'daily',
-        quietHours: preferences.quietHours || {
-          enabled: false,
-          startTime: '22:00',
-          endTime: '08:00'
+        emailNotifications: Array.isArray(preferences.emailnotifications) && preferences.emailnotifications.length > 0 ? Object.fromEntries(preferences.emailnotifications.map(k => [k, true])) : {},
+        inAppNotifications: Array.isArray(preferences.inappnotifications) && preferences.inappnotifications.length > 0 ? Object.fromEntries(preferences.inappnotifications.map(k => [k, true])) : {},
+        digestFrequency: preferences.email_digest || 'daily',
+        quietHours:  {
+          enabled: preferences?.quiet_hours_enabled,
+          startTime: preferences?.quiet_start || '22:00',
+          endTime: preferences?.quiet_end || '08:00'
         }
       });
     }
   }, [preferences]);
 
   const availableNotificationTypes = user?.role ? RoleNotificationTypes[user.role] || [] : [];
-
   const handleNotificationToggle = (
     category: 'emailNotifications' | 'pushNotifications' | 'inAppNotifications',
     type: NotificationType,
@@ -75,8 +73,9 @@ export const NotificationPreferences: React.FC = () => {
     setNotification(null);
     
     try {
-      await updatePreferences(localPreferences);
+      await updatePreferences(localPreferences,user?.id || '');
       setNotification({ type: 'success', message: 'Notification preferences saved successfully!' });
+      setTimeout(() => setNotification(null), 2000);
     } catch (error) {
       setNotification({ type: 'error', message: 'Failed to save preferences. Please try again.' });
     } finally {
@@ -98,7 +97,7 @@ export const NotificationPreferences: React.FC = () => {
       [category]: updatedCategory
     }));
   };
-
+  console.log(localPreferences)
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -186,7 +185,7 @@ export const NotificationPreferences: React.FC = () => {
                 <span className="text-sm text-gray-300">{NotificationTypeLabels[type]}</span>
                 <input
                   type="checkbox"
-                  checked={localPreferences.emailNotifications[type] || false}
+                  checked={localPreferences?.emailNotifications[type] || false}
                   onChange={(e) => handleNotificationToggle('emailNotifications', type, e.target.checked)}
                   className="w-4 h-4 text-primary-500 bg-dark-400 border-gray-600 rounded focus:ring-primary-500 focus:ring-2"
                 />
@@ -195,46 +194,7 @@ export const NotificationPreferences: React.FC = () => {
           </div>
         </div>
 
-        {/* Push Notifications */}
-        <div className="glass-panel p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <Smartphone className="h-6 w-6 text-green-400" />
-              <div>
-                <h3 className="text-lg font-semibold text-white">Push Notifications</h3>
-                <p className="text-sm text-gray-400">Browser push notifications</p>
-              </div>
-            </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleBulkToggle('pushNotifications', true)}
-                className="text-xs px-3 py-1 bg-primary-500/20 text-primary-300 rounded hover:bg-primary-500/30"
-              >
-                Enable All
-              </button>
-              <button
-                onClick={() => handleBulkToggle('pushNotifications', false)}
-                className="text-xs px-3 py-1 bg-gray-500/20 text-gray-300 rounded hover:bg-gray-500/30"
-              >
-                Disable All
-              </button>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {availableNotificationTypes.map(type => (
-              <label key={type} className="flex items-center justify-between p-3 bg-dark-400/30 rounded-lg hover:bg-dark-400/50 transition-colors cursor-pointer">
-                <span className="text-sm text-gray-300">{NotificationTypeLabels[type]}</span>
-                <input
-                  type="checkbox"
-                  checked={localPreferences.pushNotifications[type] || false}
-                  onChange={(e) => handleNotificationToggle('pushNotifications', type, e.target.checked)}
-                  className="w-4 h-4 text-primary-500 bg-dark-400 border-gray-600 rounded focus:ring-primary-500 focus:ring-2"
-                />
-              </label>
-            ))}
-          </div>
-        </div>
+        
       </div>
 
       {/* Additional Settings */}
