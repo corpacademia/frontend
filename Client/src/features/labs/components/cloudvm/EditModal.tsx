@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, Check, Loader, HardDrive, Plus, Minus, Calendar, FileText, Tag, Server, Cpu, Memory } from 'lucide-react';
+import { X, AlertCircle, Check, Loader, HardDrive, Plus, Minus, Calendar, FileText, Tag, Server, Cpu, Memory, Upload, Download } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 
@@ -20,6 +20,8 @@ interface EditModalProps {
     provider?: string;
     instance?: string;
     software?: string[];
+    labGuide?: string;
+    userGuide?: string;
   };
 }
 
@@ -32,7 +34,7 @@ export const EditModal: React.FC<EditModalProps> = ({
   onSuccess,
   vm
 }) => {
-  const [activeTab, setActiveTab] = useState<'basic' | 'resources' | 'software'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'resources' | 'software' | 'documents'>('basic');
   const [formData, setFormData] = useState({
     title: vm?.title || '',
     description: vm?.description || '',
@@ -43,9 +45,13 @@ export const EditModal: React.FC<EditModalProps> = ({
     os: vm?.os || '',
     provider: vm?.provider || '',
     instance: vm?.instance || '',
-    software: vm?.software || []
+    software: vm?.software || [],
+    labGuide: vm?.labGuide || '',
+    userGuide: vm?.userGuide || ''
   });
   const [newSoftware, setNewSoftware] = useState('');
+  const [labGuideFile, setLabGuideFile] = useState<File | null>(null);
+  const [userGuideFile, setUserGuideFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
 
@@ -60,7 +66,9 @@ export const EditModal: React.FC<EditModalProps> = ({
         os: vm.os || '',
         provider: vm.provider || '',
         instance: vm.instance || '',
-        software: vm.software || []
+        software: vm.software || [],
+        labGuide: vm.labGuide || '',
+        userGuide: vm.userGuide || ''
       }));
     }
   }, [vm]);
@@ -89,6 +97,23 @@ export const EditModal: React.FC<EditModalProps> = ({
     }));
   };
 
+  const handleLabGuideChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setLabGuideFile(e.target.files[0]);
+    }
+  };
+
+  const handleUserGuideChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setUserGuideFile(e.target.files[0]);
+    }
+  };
+
+  const extractFileName = (filePath: string) => {
+    const match = filePath.match(/[^\\\/]+$/);
+    return match ? match[0] : null;
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setNotification(null);
@@ -109,15 +134,38 @@ export const EditModal: React.FC<EditModalProps> = ({
 
       // Handle other field updates (you can implement this API endpoint)
       if (vm) {
-        const updateResponse = await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/updateLab/${lab_id}`, {
-          title: formData.title,
-          description: formData.description,
-          cpu: formData.cpu,
-          ram: formData.ram,
-          os: formData.os,
-          provider: formData.provider,
-          instance: formData.instance,
-          software: formData.software
+        // Create FormData for file uploads
+        const updateFormData = new FormData();
+        updateFormData.append('labId', lab_id);
+        updateFormData.append('title', formData.title);
+        updateFormData.append('description', formData.description);
+        updateFormData.append('cpu', formData.cpu.toString());
+        updateFormData.append('ram', formData.ram.toString());
+        updateFormData.append('os', formData.os);
+        updateFormData.append('provider', formData.provider);
+        updateFormData.append('instance', formData.instance);
+        updateFormData.append('software', JSON.stringify(formData.software));
+        
+        // Always include existing file references if available
+        if (formData.labGuide) {
+          updateFormData.append('existingLabGuide', formData.labGuide);
+        }
+        if (formData.userGuide) {
+          updateFormData.append('existingUserGuide', formData.userGuide);
+        }
+
+        // Append new files if selected
+        if (labGuideFile) {
+          updateFormData.append('labGuide', labGuideFile);
+        }
+        if (userGuideFile) {
+          updateFormData.append('userGuide', userGuideFile);
+        }
+
+        const updateResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/updateCloudVMLab`, updateFormData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
         });
 
         if (!updateResponse.data.success) {
@@ -145,7 +193,8 @@ export const EditModal: React.FC<EditModalProps> = ({
   const tabs = [
     { id: 'basic', label: 'Basic Info', icon: FileText },
     { id: 'resources', label: 'Resources', icon: Server },
-    { id: 'software', label: 'Software', icon: Tag }
+    { id: 'software', label: 'Software', icon: Tag },
+    { id: 'documents', label: 'Documents', icon: Upload }
   ];
 
   return (
@@ -407,6 +456,125 @@ export const EditModal: React.FC<EditModalProps> = ({
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Documents Tab */}
+            {activeTab === 'documents' && (
+              <div className="space-y-6">
+                {/* Lab Guide and User Guide Upload */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Lab Guide
+                    </label>
+                    <div className="flex flex-col space-y-2">
+                      {formData.labGuide && (
+                        <div className="flex items-center justify-between p-3 bg-dark-300/50 rounded-lg">
+                          <span className="text-sm text-gray-300 truncate">
+                            {extractFileName(formData.labGuide)}
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            <a 
+                              href={`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/uploads/${extractFileName(formData.labGuide)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 hover:bg-primary-500/10 rounded-lg transition-colors"
+                            >
+                              <Download className="h-4 w-4 text-primary-400" />
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => setFormData({...formData, labGuide: ''})}
+                              className="p-1 hover:bg-red-500/10 rounded-lg transition-colors"
+                            >
+                              <X className="h-4 w-4 text-red-400" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="file"
+                          id="labGuide"
+                          onChange={handleLabGuideChange}
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.txt"
+                        />
+                        <label
+                          htmlFor="labGuide"
+                          className="flex-1 px-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                   text-gray-300 cursor-pointer hover:bg-dark-400 transition-colors
+                                   flex items-center justify-center"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {labGuideFile ? labGuideFile.name : "Upload New Lab Guide"}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      User Guide
+                    </label>
+                    <div className="flex flex-col space-y-2">
+                      {formData.userGuide && (
+                        <div className="flex items-center justify-between p-3 bg-dark-300/50 rounded-lg">
+                          <span className="text-sm text-gray-300 truncate">
+                            {extractFileName(formData.userGuide)}
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            <a 
+                              href={`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/uploads/${extractFileName(formData.userGuide)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 hover:bg-primary-500/10 rounded-lg transition-colors"
+                            >
+                              <Download className="h-4 w-4 text-primary-400" />
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => setFormData({...formData, userGuide: ''})}
+                              className="p-1 hover:bg-red-500/10 rounded-lg transition-colors"
+                            >
+                              <X className="h-4 w-4 text-red-400" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="file"
+                          id="userGuide"
+                          onChange={handleUserGuideChange}
+                          className="hidden"
+                          accept=".pdf,.doc,.docx,.txt"
+                        />
+                        <label
+                          htmlFor="userGuide"
+                          className="flex-1 px-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                                   text-gray-300 cursor-pointer hover:bg-dark-400 transition-colors
+                                   flex items-center justify-center"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {userGuideFile ? userGuideFile.name : "Upload New User Guide"}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Upload Guidelines */}
+                <div className="p-4 bg-dark-300/30 rounded-lg border border-primary-500/10">
+                  <h3 className="text-sm font-medium text-gray-300 mb-2">Upload Guidelines</h3>
+                  <ul className="text-xs text-gray-400 space-y-1">
+                    <li>• Supported formats: PDF, DOC, DOCX, TXT</li>
+                    <li>• Maximum file size: 10MB per file</li>
+                    <li>• Lab Guide: Instructions for lab setup and configuration</li>
+                    <li>• User Guide: Step-by-step instructions for users</li>
+                  </ul>
                 </div>
               </div>
             )}
