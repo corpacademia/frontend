@@ -594,6 +594,7 @@ useEffect(() => {
         assessmentId={instanceDetails?.instance_id}
         lab_id={vm.lab_id}
         onSuccess={handleEditSuccess}
+        vm={vm}
       />
 
       <DeleteModal
