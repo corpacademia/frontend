@@ -22,6 +22,8 @@ interface EditModalProps {
     software?: string[];
     labguide?: string;
     userguide?: string;
+    startdate?: string;
+    enddate?: string;
   };
 }
 
@@ -47,7 +49,9 @@ export const EditModal: React.FC<EditModalProps> = ({
     instance: vm?.instance || '',
     software: vm?.software || [],
     labGuide: vm?.labguide || '',
-    userGuide: vm?.userguide || ''
+    userGuide: vm?.userguide || '',
+    startDate: vm?.startdate || '',
+    endDate: vm?.enddate || ''
   });
   const [newSoftware, setNewSoftware] = useState('');
   const [labGuideFile, setLabGuideFile] = useState<File | null>(null);
@@ -68,7 +72,9 @@ export const EditModal: React.FC<EditModalProps> = ({
         instance: vm.instance || '',
         software: vm.software || [],
         labGuide: vm.labguide || '',
-        userGuide: vm.userguide || ''
+        userGuide: vm.userguide || '',
+        startDate: vm.startdate || '',
+        endDate: vm.enddate || ''
       }));
     }
   }, [vm]);
@@ -145,6 +151,8 @@ export const EditModal: React.FC<EditModalProps> = ({
         updateFormData.append('provider', formData.provider);
         updateFormData.append('instance', formData.instance);
         updateFormData.append('software', JSON.stringify(formData.software));
+        updateFormData.append('startDate', formData.startDate);
+        updateFormData.append('endDate', formData.endDate);
         
         // Always include existing file references if available
         if (formData.labGuide) {
@@ -162,7 +170,7 @@ export const EditModal: React.FC<EditModalProps> = ({
           updateFormData.append('userGuide', userGuideFile);
         }
 
-        const updateResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/updateCloudVMLab`, updateFormData, {
+        const updateResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMAwsLab`, updateFormData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -313,6 +321,34 @@ export const EditModal: React.FC<EditModalProps> = ({
                       className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                                text-gray-300 focus:border-primary-500/40 focus:outline-none"
                       placeholder="e.g., t3.medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Start Date & Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={ formData.startDate && new Date(formData.startDate).toISOString().slice(0, 16)}
+                      onChange={(e) => handleInputChange('startDate', e.target.value)}
+                      className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                               text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      End Date & Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={ formData.endDate && new Date(formData.endDate).toISOString().slice(0, 16)}
+                      onChange={(e) => handleInputChange('endDate', e.target.value)}
+                      className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                               text-gray-300 focus:border-primary-500/40 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -470,14 +506,14 @@ export const EditModal: React.FC<EditModalProps> = ({
                       Lab Guide
                     </label>
                     <div className="flex flex-col space-y-2">
-                      {formData.labGuide && formData.labGuide.map((filePath) => (
+                      {formData.labGuide && formData.labGuide.map((filepath)=>(
                         <div className="flex items-center justify-between p-3 bg-dark-300/50 rounded-lg">
                           <span className="text-sm text-gray-300 truncate">
-                            {extractFileName(filePath)}
+                            {extractFileName(filepath)}
                           </span>
                           <div className="flex items-center space-x-2">
-                            <a 
-                              href={`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/uploads/${extractFileName(filePath)}`}
+                            <a
+                              href={`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/uploads/${extractFileName(filepath)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1 hover:bg-primary-500/10 rounded-lg transition-colors"
@@ -520,14 +556,14 @@ export const EditModal: React.FC<EditModalProps> = ({
                       User Guide
                     </label>
                     <div className="flex flex-col space-y-2">
-                      {formData.userGuide && formData.userGuide.map((filePath) => (
+                      {formData.userGuide && formData.userGuide.map((filepath) => (
                         <div className="flex items-center justify-between p-3 bg-dark-300/50 rounded-lg">
                           <span className="text-sm text-gray-300 truncate">
-                            {extractFileName(filePath)}
+                            {extractFileName(filepath)}
                           </span>
                           <div className="flex items-center space-x-2">
-                            <a 
-                              href={`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/uploads/${extractFileName(filePath)}`}
+                            <a
+                              href={`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/uploads/${extractFileName(filepath)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="p-1 hover:bg-primary-500/10 rounded-lg transition-colors"
