@@ -12,3 +12,6 @@ run = ["sh", "-c", "node index.js"]
 localPort = 5173
 externalPort = 80
 exposeLocalhost = true
+
+[agent]
+expertMode = true

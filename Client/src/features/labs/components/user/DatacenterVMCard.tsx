@@ -34,6 +34,8 @@ interface DatacenterVMCardProps {
     isrunning: boolean;
     software?: string[];
     userscredentials?:any[];
+    guacamole_url?: string;
+    userguide?: string;
   };
   onDelete: (labId: string) => void;
 }
@@ -52,7 +54,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
 
 
   const handleStartLab = async () => {
-    if(lab?.userscredentials[0]?.disabled){
+    if(lab?.userscredentials?.[0]?.disabled){
          setNotification({
           type: 'error',
           message: 'The VM is disabled.'
@@ -77,20 +79,20 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
       // Stop the lab
       setIsStopping(true);
       setNotification(null);
-      
+
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
            isrunning: false,
           userId:lab.userscredentials[0].assigned_to,
           labId: lab.lab_id
         });
-        
+
         if (response.data.success) {
           setNotification({
             type: 'success',
             message: 'Lab stopped successfully'
           });
-          
+
           // Update local state
           lab.isrunning = false;
         } else {
@@ -109,21 +111,21 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
       // Start the lab
       setIsLaunching(true);
       setNotification(null);
-      
+
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
-          
+
           isrunning: true,
           userId:lab.userscredentials[0].assigned_to,
           labId: lab.lab_id
         });
-        
+
         if (response.data.success) {
           setNotification({
             type: 'success',
             message: 'Lab started successfully'
           });
-          
+
           // Update local state
           lab.isrunning = true;
           // Navigate to VM session page
@@ -134,9 +136,9 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
         userName: lab.userscredentials[0].username,
         password: lab.userscredentials[0].password,
         port: lab.userscredentials[0].port,
-        
+
       });
-      
+
       if (tokenResponse.data.success && tokenResponse.data.token) {
         // Then connect to VM using the token
         const guacUrl = `${lab?.guacamole_url}?token=${tokenResponse.data.token.result}`;
@@ -166,7 +168,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
 
   const handleDeleteClick = async () => {
     setIsDeleting(true);
-    
+
     try {
       await onDelete(lab.lab_id);
     } catch (error) {
@@ -181,27 +183,44 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
   };
  function formatDateTime(dateString:string) {
     const date = new Date(dateString);
-  
+
     const year = date.getFullYear();
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
     const day = `${date.getDate()}`.padStart(2, '0');
-  
+
     let hours = date.getHours();
     const minutes = `${date.getMinutes()}`.padStart(2, '0');
     const ampm = hours >= 12 ? 'PM' : 'AM';
-  
+
     hours = hours % 12 || 12; // Convert 0 to 12 for 12AM
     hours = `${hours}`.padStart(1, '0');
-  
+
     return `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
   }
-  
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+
+    navigate(`/labs/details/${lab.lab_id}`, { 
+      state: { 
+        labType: 'datacenter',
+        labDetails: lab 
+      } 
+    });
+  };
+
 
   return (
-    <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-secondary-500/10 
-                  hover:border-secondary-500/30 bg-dark-200/80 backdrop-blur-sm
-                  transition-all duration-300 hover:shadow-lg hover:shadow-secondary-500/10 
-                  hover:translate-y-[-2px] group relative">
+    <>
+      <div 
+        className="flex flex-col h-auto min-h-[280px] overflow-hidden rounded-xl border border-primary-500/10 
+                    hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
+                    transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
+                    hover:translate-y-[-2px] group relative cursor-pointer"
+        onClick={handleCardClick}
+      >
       {notification && (
         <div className={`absolute top-2 right-2 px-4 py-2 rounded-lg flex items-center space-x-2 z-50 ${
           notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
@@ -214,7 +233,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
           <span className="text-sm">{notification.message}</span>
         </div>
       )}
-      
+
       <div className="p-4 flex flex-col h-full">
         <div className="flex justify-between items-start gap-4 mb-3">
           <div className="flex-1">
@@ -289,7 +308,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
             </div>
           </div>
         )}
-      
+
         <div className="mt-auto pt-3 border-t border-secondary-500/10">
           <button
             onClick={handleStartLab}
@@ -318,5 +337,6 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
         </div>
       </div>
     </div>
+    </>
   );
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
@@ -13,10 +12,13 @@ import {
   FileText,
   Trash2,
   Square,
-  X
+  X,
+  Star
 } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { useNavigate } from 'react-router-dom';
+// Removed the previous formatDateTime import and will use the one from utils/date
+// import { formatDateTime } from '../../../../utils/date'; // This import is not directly used in the provided snippet but was part of the original structure
 
 interface CloudSliceCardProps {
   lab: {
@@ -32,22 +34,22 @@ interface CloudSliceCardProps {
     modules: 'without-modules' | 'with-modules';
     purchased:boolean;
     duration:string;
-   
+
   };
-  labStatus:{
+  labStatus: { // Corrected type definition for labStatus to be an array of objects
     id:string,
     labid:string,
     user_id:string,
     assigned_by:string,
     assigned_at:string,
     status:string,
-    start_date:string,
-    end_date:string,
+    start_date: string, // Ensure these are strings as they are likely dates
+    end_date: string,   // Ensure these are strings as they are likely dates
     launched:boolean,
     isrunning:boolean,
-  };
-  onDelete: (labId: string,labStatus:any) => void;
- 
+  }[]; // Assuming labStatus is an array of status objects
+  onDelete: (labId: string, labStatusObj: any) => void; // Changed labStatus to labStatusObj for clarity
+
   user:{
     admin_id:string,
     created_at:string,
@@ -70,11 +72,13 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteModalOpen , setIsDeleteModalOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); // Added for future use or if needed for expansion
+
   //find the exact status based on the labid
   const selectedLab = labStatus.find(Userlab=>Userlab.labid === lab.labid );
 
   const handleLaunch = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent triggering card click if clicking launch
     setIsLaunching(true);
     setNotification(null);
     if(lab?.status === 'expired') {
@@ -86,7 +90,10 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
       return;
     }
     try {
-      if(lab.purchased && !selectedLab.launched){
+      // Assuming 'selectedLab' is the relevant lab status for the current user
+      const userLabStatus = selectedLab || { launched: false, status: 'not-started' }; // Fallback if selectedLab is undefined
+
+      if(lab.purchased && !userLabStatus.launched){
         const update = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateDates`,{
           labId:lab?.labid,
           userId:user?.id,
@@ -95,13 +102,14 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
           launched:true,
         })
         if(update.data.success){
-          lab.startdate = update.data.data.start_date;
-          lab.enddate = update.data.data.end_date;
+          // Update local lab state if needed, or rely on fetched data later
+          // lab.startdate = update.data.data.start_date;
+          // lab.enddate = update.data.data.end_date;
         }
       }
       if (lab.modules === 'without-modules') {
         // Call createIamUser only if the lab is not already launched
-        if (!selectedLab.launched) {
+        if (!userLabStatus.launched) {
           const createIamUser = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
             userName: user.name,
             services: lab.services,
@@ -122,7 +130,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
 
             if(updateUserLabStatus.data.success){
                  // Navigate to standard lab
-        navigate(`/dashboard/my-labs/${lab.id}/standard`, {
+        navigate(`/dashboard/my-labs/${lab.labid}/standard`, { // Use lab.labid for routing
           state: {
             labDetails: {
               ...lab,
@@ -139,8 +147,8 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
           }
         }
         else{
-           // Navigate to standard lab
-        navigate(`/dashboard/my-labs/${lab.id}/standard`, {
+           // Navigate to standard lab if already launched
+        navigate(`/dashboard/my-labs/${lab.labid}/standard`, { // Use lab.labid for routing
           state: {
             labDetails: {
               ...lab,
@@ -154,9 +162,9 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
           }
         });
         }
-       
-      } else {
-        if(!selectedLab.launched){
+
+      } else { // It's a module-based lab
+        if(!userLabStatus.launched){
           const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
             status:'active',
             launched:true,
@@ -166,7 +174,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
           })
           if(updateUserLabStatus.data.success){
              // Navigate to module-based lab
-             navigate(`/dashboard/my-labs/${lab.id}/modules`, {
+             navigate(`/dashboard/my-labs/${lab.labid}/modules`, { // Use lab.labid for routing
               state: {
                 labDetails: {
                   ...lab,
@@ -182,8 +190,8 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
           }
         }
         else{
-           // Navigate to module-based lab
-           navigate(`/dashboard/my-labs/${lab.id}/modules`, {
+           // Navigate to module-based lab if already launched
+           navigate(`/dashboard/my-labs/${lab.labid}/modules`, { // Use lab.labid for routing
             state: {
               labDetails: {
                 ...lab,
@@ -197,32 +205,34 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
             }
           });
         }
-         
+
       }
     } catch (error: any) {
+      console.error("Launch error:", error); // Log the full error
       setNotification({
         type: 'error',
-        message: error.response?.data?.message || 'Failed to launch lab'
+        message: error.response?.data?.message || error.message || 'Failed to launch lab'
       });
       setTimeout(() => setNotification(null), 3000);
     } finally {
       setIsLaunching(false);
     }
   };
-  
+
 
   const handleDeleteClick = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent triggering card click if clicking delete
     e.preventDefault();
     setIsDeleteModalOpen(true);
-    
+
   };
 const confirmDelete = async (e: React.MouseEvent) => {
   e.preventDefault();
   setIsDeleting(true);
 
   try {
-    await onDelete(lab.labid, labStatus);
+    // Ensure onDelete is called with the correct lab ID and lab status object
+    await onDelete(lab.labid, selectedLab); // Pass the found selectedLab object
 
     setNotification({
       type: 'success',
@@ -230,7 +240,7 @@ const confirmDelete = async (e: React.MouseEvent) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Delete error:", error); // Log the full error
 
     setNotification({
       type: 'error',
@@ -250,29 +260,52 @@ const confirmDelete = async (e: React.MouseEvent) => {
 
 
 
-  function formatDateTime(dateString: string) {
-    if (dateString === null) return 'N/A';
+  function formatDateTime(dateString: string | null | undefined) { // Added null/undefined check
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
-    
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
+
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+    }
+
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
       hour12: true
     };
-    
+
     return new Intl.DateTimeFormat('en-US', options).format(date);
   }
 
+  // Handler to navigate to lab details page
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons (like launch or delete)
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) return; // Added check for anchor tags if any
+
+    // Navigate to a generic details route, passing lab type and details
+    navigate(`/labs/details/${lab.labid}`, {
+      state: {
+        labType: 'cloud-slice', // Specify the type of lab
+        labDetails: lab // Pass the entire lab object
+      }
+    });
+  };
+
   return (
     <>
-    <div className="flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px] 
-                  max-h-fit overflow-hidden rounded-xl border border-primary-500/10 
+    <div
+      className="flex flex-col h-auto min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px]
+                  max-h-fit overflow-hidden rounded-xl border border-primary-500/10
                   hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
-                  transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
-                  hover:translate-y-[-2px] group relative">
+                  transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10
+                  hover:translate-y-[-2px] group relative cursor-pointer"
+      onClick={handleCardClick}
+    >
       {notification && (
         <div className={`absolute top-2 right-2 px-4 py-2 rounded-lg flex items-center space-x-2 z-50 ${
           notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
@@ -285,7 +318,7 @@ const confirmDelete = async (e: React.MouseEvent) => {
           <span className="text-sm">{notification.message}</span>
         </div>
       )}
-      
+
       <div className="p-3 sm:p-4 flex flex-col h-full">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-3">
           <div className="flex-1 min-w-0">
@@ -335,7 +368,7 @@ const confirmDelete = async (e: React.MouseEvent) => {
             <span className="truncate">{lab.region}</span>
           </div>
         </div>
-        
+
         <div className="space-y-1 sm:space-y-2 mb-3">
           <div className="flex items-center text-xs text-gray-400">
             <Calendar className="h-3 w-3 mr-1 text-primary-400 flex-shrink-0" />
@@ -385,7 +418,7 @@ const confirmDelete = async (e: React.MouseEvent) => {
               <Loader className="animate-spin h-4 w-4" />
             ) : (
               <>
-              {selectedLab.launched ? (
+              {selectedLab?.launched ? ( // Use optional chaining for safety
                  <>
                           <Square className="h-4 w-4 mr-2" />
                           Go to Lab
@@ -395,16 +428,16 @@ const confirmDelete = async (e: React.MouseEvent) => {
                 <Play className="h-4 w-4 mr-2" />
                 Launch Lab
                 </>
-                
+
               )}
-               
+
               </>
             )}
           </button>
         </div>
       </div>
     </div>
-      
+
        {/* Delete Confirmation Modal */}
             {isDeleteModalOpen && (
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -413,18 +446,18 @@ const confirmDelete = async (e: React.MouseEvent) => {
                     <h2 className="text-xl font-semibold">
                       <GradientText>Confirm Deletion</GradientText>
                     </h2>
-                    <button 
+                    <button
                       onClick={() => setIsDeleteModalOpen(false)}
                       className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
                     >
                       <X className="h-5 w-5 text-gray-400" />
                     </button>
                   </div>
-      
+
                   <p className="text-gray-300 mb-6">
                     Are you sure you want to delete <span className="font-semibold">{lab.title}</span>? This action cannot be undone.
                   </p>
-      
+
                   <div className="flex justify-end space-x-4">
                     <button
                       onClick={() => setIsDeleteModalOpen(false)}

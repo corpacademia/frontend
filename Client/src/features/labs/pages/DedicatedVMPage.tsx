@@ -1,7 +1,7 @@
 import React from 'react';
-import { VMFilters } from '../components/vm/VMFilters';
-import { VMInstanceList } from '../components/vm/VMInstanceList';
-import { VMProvisionForm } from '../components/vm/VMProvisionForm';
+// import { VMFilters } from '../components/vm/VMFilters';
+// import { VMInstanceList } from '../components/vm/VMInstanceList';
+// import { VMProvisionForm } from '../components/vm/VMProvisionForm';
 import { GradientText } from '../../../components/ui/GradientText';
 import { Plus } from 'lucide-react';
 

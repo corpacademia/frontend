@@ -22,13 +22,14 @@ import { EditStorageModal } from './EditStorageModal';
 import { DeleteModal } from './DeleteModal';
 import { CreateCatalogueModal } from './CreateCatalogueModal';
 import axios from 'axios';
-import { resolveSoa } from 'dns';
+import { useNavigate } from 'react-router-dom';
 
 interface CatalogueCardProps {
   lab: any;
 }
 
 export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
+  const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -39,19 +40,18 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
   const [labDetails, setLabDetails] = useState<any>(null);
   const [ami,setAmi]=useState<string>()
 
-
   //fetch the ami information
- useEffect(()=>{
-  const fetchAmi=async()=>{
-    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiInformation`,
-      {lab_id:lab.lab_id})
+  useEffect(()=>{
+    const fetchAmi=async()=>{
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiInformation`,
+        {lab_id:lab.lab_id})
 
-    if(response.data.success){
-      setAmi(response.data.result)
+      if(response.data.success){
+        setAmi(response.data.result)
+      }
     }
-  }
-  fetchAmi();
- },[lab.lab_id])
+    fetchAmi();
+  },[lab.lab_id])
 
   // Fetch software details
   useEffect(() => {
@@ -64,14 +64,13 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
             setSoftware(labSoftware.software);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         if(error.status === 404){
           console.warn('No software details:',error)
         }
         else{
           console.error('Error fetching software details:', error);
         }
-
       }
     };
 
@@ -144,15 +143,32 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
     setIsCreateModalOpen(true);
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+    
+    navigate(`/labs/details/${lab.lab_id}`, { 
+      state: { 
+        labType: 'catalogue',
+        labDetails: labDetails 
+      } 
+    });
+  };
+
   if (!labDetails) {
     return <div className="animate-pulse h-[320px] bg-dark-300/50 rounded-lg"></div>;
   }
+
   return (
     <>
-      <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
+      <div 
+        className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
                     hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
                     transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
-                    hover:translate-y-[-2px] group relative">
+                    hover:translate-y-[-2px] group relative cursor-pointer"
+        onClick={handleCardClick}
+      >
         {notification && (
           <div className={`absolute top-2 right-16 px-4 py-2 rounded-lg flex items-center space-x-2 z-50 ${
             notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
@@ -251,7 +267,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
           </div>
         </div>
       </div>
-
+      
       <EditStorageModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -283,7 +299,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
           type:labDetails.type,
           duration:labDetails.duration,
           description:labDetails.description,
-          ami:ami.ami_id,
+          ami:ami?.ami_id,
           lab_id:labDetails.lab_id
         }}
         onSuccess={() => {

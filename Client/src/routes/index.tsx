@@ -51,6 +51,12 @@ import { LearningPath } from '../features/dashboard/pages/LearningPath';
 import { Students } from '../features/dashboard/pages/Students';
 import { Progress } from '../features/dashboard/pages/Progress';
 import { CloudUsage } from '../features/dashboard/pages/CloudUsage';
+import { LabDetailsPage } from '../features/labs/pages/LabDetailsPage';
+import { LabDetailDemo } from '../features/labs/components/LabDetailDemo';
+import { CloudVMPage } from '../features/labs/pages/CloudVMPage';
+import { CloudVMsPage } from '../features/labs/pages/CloudVMsPage';
+import { DedicatedVMPage } from '../features/labs/pages/DedicatedVMPage';
+import { EmulatorPage } from '../features/labs/pages/EmulatorPage';
 // Assume TransactionsPage and CloudUsage are correctly imported from their respective modules
 // import { TransactionsPage } from '../features/dashboard/pages/TransactionsPage';
 
@@ -73,73 +79,67 @@ export const AppRoutes: React.FC = () => {
       <Route path='/notifications' element={<NotificationPage/>} />
 
       {/* Super Admin Routes */}
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route index element={<Overview />} />
+  <Route path="organizations" element={<Organizations />} />
+  <Route path="organizations/:orgId" element={<OrganizationOverview />} />
+  <Route path="users" element={<UsersPage />} />
+  <Route path="users/:userId" element={<UserProfilePage />} />
+  <Route path="user/:userId" element={<UserProfilePage />} />
+  <Route path="team" element={<Team />} />
+  <Route path="team/:userId" element={<UserProfilePage />} />
 
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Overview />} />
-        <Route path="organizations" element={<Organizations />} />
-        <Route path="organizations/:orgId" element={<OrganizationOverview />} />
-        <Route path="users" element={<UsersPage />} />
-        <Route path="users/:userId" element={<UserProfilePage />} />
-        <Route path="user/:userId" element={<UserProfilePage />} />
-        <Route path="team" element={<Team />} />
-        <Route path="team/:userId" element={<UserProfilePage />} />
-        <Route path="trainer/:userId" element={<UserProfilePage />} />
-        <Route path="trainers/:userId" element={<UserProfilePage />} />
-        <Route path="organization-user/:userId" element={<UserProfilePage />} />
-        <Route path="organization-users/:userId" element={<UserProfilePage />} />
-        <Route path="labs" element={<LabsPage />} />
-        <Route path="labs/workspace" element={<WorkspacePage />} />
-        <Route path="labs/workspace/:workspaceId" element={<WorkspaceViewPage />} />
-        <Route path="labs/workspace/:workspaceId/edit" element={<WorkspaceEditPage />} />
-        <Route 
-          path="labs/catalogue" 
-          element={<PublicCataloguePage />} 
-        />
-        <Route path="labs/org-catalogue" element={
-          <PrivateRoute allowedRoles={['orgsuperadmin']}>
-            <OrgSuperAdminCataloguePage />
-          </PrivateRoute>
-        } />
-        <Route 
-          path="labs/cloud-vms" 
-          element={user?.role === 'superadmin' || user?.role === 'orgsuperadmin' ? <AdminCloudVMsPage /> : <OrgAdminCloudVMsPage />} 
-        />
-        <Route path="labs/cloud-slices" element={<CloudSlicePage />} />
-        <Route path="labs/cloud-slices/:sliceId/lab" element={<CloudSliceLabPage />} />
-        <Route path="labs/cloud-slices/:sliceId/modules" element={<CloudSliceModulesPage />} />
-        <Route path="labs/cluster" element={<ClusterPage />} />
-        <Route path="labs/create" element={<CreateLabEnvironment />} />
-        <Route path="labs/vm-session/:vmId" element={<VMSessionPage />} />
-        <Route path="cloud" element={<CloudResources />} />
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="organization" element={<Organizations />} />
-        <Route path="org-settings" element={<Organizations />} />
-        <Route path="my-organization" element={<Organizations />} />
-        <Route path="org-admins" element={<OrgAdminsPage />} />
-        <Route path="all-users" element={<AllUsersPage />} />
-        <Route path="assessments" element={<Assessments />} />
-        <Route path="lab-builder" element={<LabBuilder />} />
-        <Route path="learning-path" element={<LearningPath />} />
-        <Route path="students" element={<Students />} />
-        <Route path="progress" element={<Progress />} />
-        <Route path="my-labs" element={<MyLabs />} />
-        <Route path="cloud-usage" element={<CloudUsage />} />
-        <Route path="notifications" element={<NotificationPage />} />
+  {/* ✅ Labs routes should be relative */}
+  <Route path="labs" element={<LabsPage />} />
+  <Route path="labs/create" element={<CreateLabEnvironment />} />
+  <Route path="labs/workspace" element={<WorkspacePage />} />
+  <Route path="labs/catalogue" element={<CataloguePage />} />
+  <Route path="labs/catalogue/public" element={<PublicCataloguePage />} />
+  <Route path="labs/catalogue/orgadmin" element={<OrgAdminCataloguePage />} />
+  <Route path="labs/catalogue/orgsuperadmin" element={<OrgSuperAdminCataloguePage />} />
+  <Route path="labs/details/:labId" element={<LabDetailsPage />} />
+  <Route path="labs/cloud-vm" element={<CloudVMPage />} />
+  <Route path="labs/cloud-vm/:role" element={<CloudVMsPage />} />
+  <Route path="labs/dedicated-vm" element={<DedicatedVMPage />} />
+  <Route path="labs/cluster" element={<ClusterPage />} />
+  <Route path="labs/cloud-slice" element={<CloudSlicePage />} />
+  <Route path="labs/emulator" element={<EmulatorPage />} />
+  <Route path="labs/workspace/:workspaceId" element={<WorkspaceViewPage />} />
+  <Route path="labs/workspace/:workspaceId/edit" element={<WorkspaceEditPage />} />
+  <Route path="labs/cloud-vms" element={user?.role === 'superadmin' || user?.role === 'orgsuperadmin' ? <AdminCloudVMsPage /> : <OrgAdminCloudVMsPage />} />
+  <Route path="labs/cloud-slices" element={<CloudSlicePage />} />
+  <Route path="labs/cloud-slices/:sliceId/lab" element={<CloudSliceLabPage />} />
+  <Route path="labs/cloud-slices/:sliceId/modules" element={<CloudSliceModulesPage />} />
+  <Route path="labs/vm-session/:vmId" element={<VMSessionPage />} />
 
-        {/* User Lab Routes */}
-        <Route path="my-labs/:labId/standard" element={<StandardLabPage />} />
-        <Route path="my-labs/:labId/modules" element={<ModularLabPage />} />
-        <Route path="my-labs/:labId/exercise/:exerciseId" element={<LabExercisePage />} />
-        <Route path="my-labs/:labId/quiz/:exerciseId" element={<QuizExercisePage />} />
-      </Route>
+  {/* Other dashboard routes */}
+  <Route path="cloud" element={<CloudResources />} />
+  <Route path="reports" element={<ReportsPage />} />
+  <Route path="settings" element={<Settings />} />
+  <Route path="org-admins" element={<OrgAdminsPage />} />
+  <Route path="all-users" element={<AllUsersPage />} />
+  <Route path="assessments" element={<Assessments />} />
+  <Route path="lab-builder" element={<LabBuilder />} />
+  <Route path="learning-path" element={<LearningPath />} />
+  <Route path="students" element={<Students />} />
+  <Route path="progress" element={<Progress />} />
+  <Route path="my-labs" element={<MyLabs />} />
+  <Route path="cloud-usage" element={<CloudUsage />} />
+  <Route path="notifications" element={<NotificationPage />} />
+
+  {/* User lab routes */}
+  <Route path="my-labs/:labId/standard" element={<StandardLabPage />} />
+  <Route path="my-labs/:labId/modules" element={<ModularLabPage />} />
+  <Route path="my-labs/:labId/exercise/:exerciseId" element={<LabExercisePage />} />
+  <Route path="my-labs/:labId/quiz/:exerciseId" element={<QuizExercisePage />} />
+</Route>
 
       <Route path="/" element={<PublicCataloguePage />} />
     </Routes>
