@@ -50,6 +50,15 @@ export interface NotificationPreferences {
   inAppNotifications: {
     [K in NotificationType]?: boolean;
   };
+   emailnotifications: {
+    [K in NotificationType]?: boolean;
+  };
+  pushnotifications: {
+    [K in NotificationType]?: boolean;
+  };
+  inappnotifications: {
+    [K in NotificationType]?: boolean;
+  };
   digestFrequency: 'immediate' | 'hourly' | 'daily' | 'weekly' | 'never';
   quietHours: {
     enabled: boolean;
