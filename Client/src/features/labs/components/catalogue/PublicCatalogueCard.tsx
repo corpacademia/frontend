@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Clock, 
   User, 
@@ -52,6 +53,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   cartItems
 }) => {
   const { user, isAuthenticated } = useAuthStore();
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
   const [isDeleteModalOpenn, setIsDeleteModalOpen] = useState(false);
@@ -123,15 +125,29 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
     window.dispatchEvent(new CustomEvent('openCartModal'));
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+    
+    navigate(`/dashboard/labs/details/${course.id}`, { 
+      state: { 
+        labType: 'catalogue',
+        labDetails: course 
+      } 
+    });
+  };
+
   return (
     <>
       <div 
         className="relative group bg-gradient-to-br from-red-600/20 to-red-800/20 backdrop-blur-sm 
                    rounded-xl border border-red-500/20 hover:border-red-400/40 
                    transition-all duration-300 hover:shadow-xl hover:shadow-red-500/10 
-                   hover:translate-y-[-4px] overflow-hidden"
+                   hover:translate-y-[-4px] overflow-hidden cursor-pointer"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={handleCardClick}
       >
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%2523ffffff%22%20fill-opacity%3D%220.02%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50"></div>
