@@ -98,6 +98,7 @@ export const AppRoutes: React.FC = () => {
 
   {/* ✅ Labs routes should be relative */}
   <Route path="labs" element={<LabsPage />} />
+  <Route path="labs/details/:labId" element={<LabDetailDemo />} />
   <Route path="labs/create" element={<CreateLabEnvironment />} />
   <Route path="labs/workspace" element={<WorkspacePage />} />
   <Route path="labs/catalogue" element={<CataloguePage />} />

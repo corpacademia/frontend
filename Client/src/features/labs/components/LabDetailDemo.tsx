@@ -20,7 +20,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
-import { formatDateTime } from '../../../utils/date';
+import { formatDate } from '../../../utils/date';
 
 // Demo data for Cloud Slice with modules
 const demoLab = {
