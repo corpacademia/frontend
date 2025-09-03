@@ -104,7 +104,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/labs/catalogue/public" element={<PublicCataloguePage />} />
         <Route path="/labs/catalogue/orgadmin" element={<OrgAdminCataloguePage />} />
         <Route path="/labs/catalogue/orgsuperadmin" element={<OrgSuperAdminCataloguePage />} />
-        <Route path="/labs/details/:labId" element={<LabDetailsPage />} />
+        <Route path="labs/details/:labId" element={<LabDetailsPage />} />
         <Route path="/labs/cloud-vm" element={<CloudVMPage />} />
         <Route path="/labs/cloud-vm/:role" element={<CloudVMsPage />} />
         <Route path="/labs/dedicated-vm" element={<DedicatedVMPage />} />

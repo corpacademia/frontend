@@ -18,6 +18,11 @@ interface LabDetails {
   storage?: number;
   duration?: number;
   difficulty?: string;
+  category?: string;
+  learningObjectives?: string;
+  prerequisites?: string;
+  targetAudience?: string;
+  estimatedDuration?: number;
   services?: string[];
   software?: string[];
   modules?: any[];
@@ -31,6 +36,10 @@ interface LabDetails {
   technologies?: string[];
   labGuide?: string;
   userGuide?: string;
+  instructor?: string;
+  language?: string;
+  certificate?: boolean;
+  lastUpdated?: string;
 }
 
 interface Review {

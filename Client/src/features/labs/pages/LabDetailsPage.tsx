@@ -412,7 +412,77 @@ export const LabDetailsPage: React.FC = () => {
             {/* Description */}
             <div className="bg-dark-200/80 backdrop-blur-sm rounded-xl border border-primary-500/10 p-6">
               <h2 className="text-xl font-semibold mb-4 text-gray-300">About This Lab</h2>
-              <p className="text-gray-400 leading-relaxed">{selectedLab.description}</p>
+              <p className="text-gray-400 leading-relaxed mb-6">{selectedLab.description}</p>
+              
+              {/* Learning Objectives */}
+              {selectedLab.learningObjectives && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium mb-3 text-gray-300">What You'll Learn</h3>
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <p className="text-gray-400 leading-relaxed">{selectedLab.learningObjectives}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Prerequisites */}
+              {selectedLab.prerequisites && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium mb-3 text-gray-300">Prerequisites</h3>
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <p className="text-gray-400 leading-relaxed">{selectedLab.prerequisites}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Target Audience */}
+              {selectedLab.targetAudience && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium mb-3 text-gray-300">Who This Lab Is For</h3>
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <p className="text-gray-400">{selectedLab.targetAudience}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Course Metadata */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {selectedLab.category && (
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-400 mb-1">Category</h4>
+                    <p className="text-primary-300">{selectedLab.category}</p>
+                  </div>
+                )}
+                {selectedLab.estimatedDuration && (
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-400 mb-1">Duration</h4>
+                    <p className="text-secondary-300">{selectedLab.estimatedDuration} minutes</p>
+                  </div>
+                )}
+                {selectedLab.instructor && (
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-400 mb-1">Instructor</h4>
+                    <p className="text-emerald-300">{selectedLab.instructor}</p>
+                  </div>
+                )}
+                {selectedLab.language && (
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-400 mb-1">Language</h4>
+                    <p className="text-gray-300">{selectedLab.language}</p>
+                  </div>
+                )}
+                {selectedLab.certificate !== undefined && (
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-400 mb-1">Certificate</h4>
+                    <p className="text-amber-300">{selectedLab.certificate ? 'Available' : 'Not Available'}</p>
+                  </div>
+                )}
+                {selectedLab.lastUpdated && (
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-400 mb-1">Last Updated</h4>
+                    <p className="text-gray-300">{formatDateTime(selectedLab.lastUpdated)}</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Lab-specific details */}
