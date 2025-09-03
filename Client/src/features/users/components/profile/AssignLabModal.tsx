@@ -245,8 +245,6 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
     return `${year}/${month}/${day}, ${formattedHours}:${minutes} ${ampm}`;
   };
   
-  
-
   const handleAssign = async () => {
     if (!selectedLabDetails) return;
 
