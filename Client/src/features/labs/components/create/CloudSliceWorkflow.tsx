@@ -3,7 +3,7 @@ import axios from 'axios';
 import { PlatformSelector } from './steps/PlatformSelector';
 import { CloudProviderSelector } from './steps/CloudProviderSelector';
 import { CloudSliceConfig } from './steps/CloudSliceConfig';
-import { LabDetailsInput } from './steps/LabDetailsInput';
+import { BasicInfoStep } from './steps/BasicInfoStep';
 import { DocumentUploader } from './steps/DocumentUploader';
 import { ReviewAndSubmit } from './steps/ReviewAndSubmit';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -129,7 +129,7 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
   const renderStep = () => {
     switch (step) {
       case 1:
-        return <LabDetailsInput onNext={handleLabDetails} type="cloudslice"/>;
+        return <BasicInfoStep onNext={handleLabDetails} type="cloudslice"/>;
       case 2:
         return <PlatformSelector onSelect={(platform) => updateConfig({ platform })} />;
       case 3:

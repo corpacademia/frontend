@@ -4,7 +4,7 @@ import { CloudProviderSelector } from './steps/CloudProviderSelector';
 import { VMSizeSelector } from './steps/VMSizeSelector';
 import { AIRecommendations } from './steps/AIRecommendations';
 import { DeploymentStatus } from './steps/DeploymentStatus';
-import { LabDetailsInput } from './steps/LabDetailsInput';
+import { BasicInfoStep } from './steps/BasicInfoStep';
 import { DocumentUploader } from './steps/DocumentUploader';
 import { DatacenterConfig } from './steps/DatacenterConfig';
 import { ClusterConfig } from './steps/ClusterConfig';
@@ -174,8 +174,9 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
     switch (step) {
       case 1:
         return (
-          <LabDetailsInput 
+          <BasicInfoStep 
             onNext={(details) => updateConfig(details)} 
+            type="vm-cluster"
           />
         );
       case 2:
