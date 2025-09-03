@@ -5,10 +5,17 @@ import {
   Users,
   Tag,
   HardDrive,
-  Server
+  Server,
+  BookOpen,
+  Square,
+  Play,
+  Settings,
+  Calendar
 } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { Lab } from '../../types';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import axios from 'axios'; // Ensure axios is imported
 
 interface OrgAdminCatalogueCardProps {
   lab: Lab;
@@ -19,7 +26,11 @@ export const OrgAdminCatalogueCard: React.FC<OrgAdminCatalogueCardProps> = ({
   lab,
   onAssignUsers
 }) => {
+  const navigate = useNavigate(); // Initialize useNavigate
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [software, setSoftware] = useState<string[]>([]);
+  const [labDetails, setLabDetails] = useState<any>(null); // State to hold fetched lab details
 
   // Fetch software details
   useEffect(() => {
@@ -41,16 +52,40 @@ export const OrgAdminCatalogueCard: React.FC<OrgAdminCatalogueCardProps> = ({
     fetchSoftware();
   }, [lab.lab_id]);
 
+  // Fetch detailed lab information (including modules, exercises, etc.)
+  useEffect(() => {
+    const fetchLabDetails = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabDetails/${lab.lab_id}`);
+        if (response.data.success) {
+          setLabDetails(response.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching lab details:', error);
+      }
+    };
+
+    fetchLabDetails();
+  }, [lab.lab_id]);
+
+  // Handler to navigate to the lab details page
+  const handleCardClick = () => {
+    navigate(`/labs/details/${lab.lab_id}`); 
+  };
+
   return (
-    <div className="flex flex-col h-full rounded-xl border border-primary-500/10 
-                    hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
-                    transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
-                    hover:translate-y-[-2px] group relative">
+    <div 
+      className="flex flex-col h-full rounded-xl border border-primary-500/10 
+                 hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
+                 transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
+                 hover:translate-y-[-2px] group relative cursor-pointer" // Added cursor-pointer
+      onClick={handleCardClick} // Add click handler
+    >
       <div className="flex flex-col h-full p-4">
         {/* Header Section - Fixed Height */}
         <div className="flex justify-between items-start gap-4 mb-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold mb-1 truncate">
+            <h3 className="text-lg font-semibold mb-1">
               <GradientText>{lab.title}</GradientText>
             </h3>
             <p className="text-sm text-gray-400 line-clamp-2">{lab.description}</p>
@@ -100,7 +135,10 @@ export const OrgAdminCatalogueCard: React.FC<OrgAdminCatalogueCardProps> = ({
         {/* Button Section - Fixed at Bottom */}
         <div className="pt-3 mt-auto border-t border-primary-500/10">
           <button 
-            onClick={() => onAssignUsers(lab)}
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent card click handler from firing
+              onAssignUsers(lab);
+            }}
             className="w-full h-9 px-4 rounded-lg text-sm font-medium
                      bg-gradient-to-r from-primary-500 to-secondary-500
                      hover:from-primary-400 hover:to-secondary-400

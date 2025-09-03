@@ -22,13 +22,14 @@ import { EditStorageModal } from './EditStorageModal';
 import { DeleteModal } from './DeleteModal';
 import { CreateCatalogueModal } from './CreateCatalogueModal';
 import axios from 'axios';
-import { resolveSoa } from 'dns';
+import { useNavigate } from 'react-router-dom';
 
 interface CatalogueCardProps {
   lab: any;
 }
 
 export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
+  const navigate = useNavigate();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -144,15 +145,30 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
     setIsCreateModalOpen(true);
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+    
+    navigate(`/labs/details/${lab.lab_id}`, { 
+      state: { 
+        labType: 'catalogue',
+        labDetails: labDetails 
+      } 
+    });
+  };
+
   if (!labDetails) {
     return <div className="animate-pulse h-[320px] bg-dark-300/50 rounded-lg"></div>;
   }
   return (
     <>
-      <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
+      <div 
+        className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
                     hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
                     transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
-                    hover:translate-y-[-2px] group relative">
+                    hover:translate-y-[-2px] group relative cursor-pointer"
+        onClick={handleCardClick}
         {notification && (
           <div className={`absolute top-2 right-16 px-4 py-2 rounded-lg flex items-center space-x-2 z-50 ${
             notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'

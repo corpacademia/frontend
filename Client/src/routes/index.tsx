@@ -51,6 +51,8 @@ import { LearningPath } from '../features/dashboard/pages/LearningPath';
 import { Students } from '../features/dashboard/pages/Students';
 import { Progress } from '../features/dashboard/pages/Progress';
 import { CloudUsage } from '../features/dashboard/pages/CloudUsage';
+import { LabDetailsPage } from '../features/labs/pages/LabDetailsPage';
+import { LabDetailDemo } from '../features/labs/components/LabDetailDemo';
 // Assume TransactionsPage and CloudUsage are correctly imported from their respective modules
 // import { TransactionsPage } from '../features/dashboard/pages/TransactionsPage';
 
@@ -94,22 +96,35 @@ export const AppRoutes: React.FC = () => {
         <Route path="trainers/:userId" element={<UserProfilePage />} />
         <Route path="organization-user/:userId" element={<UserProfilePage />} />
         <Route path="organization-users/:userId" element={<UserProfilePage />} />
-        <Route path="labs" element={<LabsPage />} />
-        <Route path="labs/workspace" element={<WorkspacePage />} />
-        <Route path="labs/workspace/:workspaceId" element={<WorkspaceViewPage />} />
+        {/* Labs Routes */}
+        <Route path="/labs" element={<LabsPage />} />
+        <Route path="/labs/create" element={<CreateLabEnvironment />} />
+        <Route path="/labs/workspace" element={<WorkspacePage />} />
+        <Route path="/labs/catalogue" element={<CataloguePage />} />
+        <Route path="/labs/catalogue/public" element={<PublicCataloguePage />} />
+        <Route path="/labs/catalogue/orgadmin" element={<OrgAdminCataloguePage />} />
+        <Route path="/labs/catalogue/orgsuperadmin" element={<OrgSuperAdminCataloguePage />} />
+        <Route path="/labs/details/:labId" element={<LabDetailsPage />} />
+        <Route path="/labs/cloud-vm" element={<CloudVMPage />} />
+        <Route path="/labs/cloud-vm/:role" element={<CloudVMsPage />} />
+        <Route path="/labs/dedicated-vm" element={<DedicatedVMPage />} />
+        <Route path="/labs/cluster" element={<ClusterPage />} />
+        <Route path="/labs/cloud-slice" element={<CloudSlicePage />} />
+        <Route path="/labs/emulator" element={<EmulatorPage />} />
+        <Route path="/labs/workspace/:workspaceId" element={<WorkspaceViewPage />} />
         <Route path="labs/workspace/:workspaceId/edit" element={<WorkspaceEditPage />} />
-        <Route 
-          path="labs/catalogue" 
-          element={<PublicCataloguePage />} 
+        <Route
+          path="labs/catalogue"
+          element={<PublicCataloguePage />}
         />
         <Route path="labs/org-catalogue" element={
           <PrivateRoute allowedRoles={['orgsuperadmin']}>
             <OrgSuperAdminCataloguePage />
           </PrivateRoute>
         } />
-        <Route 
-          path="labs/cloud-vms" 
-          element={user?.role === 'superadmin' || user?.role === 'orgsuperadmin' ? <AdminCloudVMsPage /> : <OrgAdminCloudVMsPage />} 
+        <Route
+          path="labs/cloud-vms"
+          element={user?.role === 'superadmin' || user?.role === 'orgsuperadmin' ? <AdminCloudVMsPage /> : <OrgAdminCloudVMsPage />}
         />
         <Route path="labs/cloud-slices" element={<CloudSlicePage />} />
         <Route path="labs/cloud-slices/:sliceId/lab" element={<CloudSliceLabPage />} />

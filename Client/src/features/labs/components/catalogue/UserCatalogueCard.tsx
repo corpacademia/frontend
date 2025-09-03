@@ -12,9 +12,12 @@ import {
   Square,
   Loader,
   HardDrive,
-  Server
+  Server,
+  ShoppingCart
 } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
+import { useCartStore } from '../../../../store/useCartStore';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 interface UserCatalogueCardProps {
@@ -22,6 +25,8 @@ interface UserCatalogueCardProps {
 }
 
 export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => {
+  const navigate = useNavigate();
+  const { addToCart } = useCartStore();
   const [isLabPurchased, setIsLabPurchased] = useState(false);
   const [isVMLaunched, setIsVMLaunched] = useState(false); 
   const [isLabStarted, setIsLabStarted] = useState(false);
@@ -30,6 +35,8 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
   const [software, setSoftware] = useState<string[]>([]);
 
   const [user,setUser] = useState({});
+  const [labDetails, setLabDetails] = useState<any>(null);
+
 
   useEffect(() => {
     const getUserDetails = async () => {
@@ -153,11 +160,32 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
     }
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't navigate if clicking on action buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+
+    navigate(`/labs/details/${lab.lab_id}`, { 
+      state: { 
+        labType: 'catalogue',
+        labDetails: labDetails 
+      } 
+    });
+  };
+
+  if (!labDetails) {
+    return <div className="animate-pulse h-[320px] bg-dark-300/50 rounded-lg"></div>;
+  }
+
   return (
-    <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
+    <>
+      <div 
+        className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
                     hover:border-primary-500/30 bg-dark-200/80 backdrop-blur-sm
                     transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/10 
-                    hover:translate-y-[-2px] group relative">
+                    hover:translate-y-[-2px] group relative cursor-pointer"
+        onClick={handleCardClick}
+      >
       {notification && (
         <div className={`absolute top-2 right-2 px-4 py-2 rounded-lg flex items-center space-x-2 z-50 ${
           notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
@@ -287,5 +315,6 @@ export const UserCatalogueCard: React.FC<UserCatalogueCardProps> = ({ lab }) => 
         </div>
       </div>
     </div>
+    </>
   );
 };
