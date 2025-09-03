@@ -22,7 +22,8 @@ import { EditStorageModal } from './EditStorageModal';
 import { DeleteModal } from './DeleteModal';
 import { CreateCatalogueModal } from './CreateCatalogueModal';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface CatalogueCardProps {
   lab: any;
@@ -30,6 +31,16 @@ interface CatalogueCardProps {
 
 export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuthStore();
+  
+  // Only show catalogue card when specifically on catalogue routes
+  const isOnCataloguePage = location.pathname.includes('/labs/catalogue');
+  const hasAccess = user?.role === 'superadmin' || user?.role === 'orgsuperadmin';
+  
+  if (!isOnCataloguePage || !hasAccess) {
+    return null;
+  }
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -149,7 +160,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
     
-    navigate(`/labs/details/${lab.lab_id}`, { 
+    navigate(`/dashboard/labs/details/${lab.lab_id}`, { 
       state: { 
         labType: 'catalogue',
         labDetails: labDetails 

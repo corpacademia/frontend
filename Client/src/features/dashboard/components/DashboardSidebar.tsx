@@ -101,7 +101,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },
       { icon: Brain, label: 'Learning Path', path: '/dashboard/learning-path' },
       { icon: Award, label: 'Assessments', path: '/dashboard/assessments' },
-      { icon: Cloud, label: 'Cloud Usage', path: '/dashboard/cloud-usage' }
+      { icon: Cloud, label: 'Cloud Usage', path: '/dashboard/cloud-usage' },
+      { icon: CreditCard, label: 'Purchase History', path: '/dashboard/purchase-history' }
     ]
   };
 
@@ -133,16 +134,37 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
 
       <nav className="mt-5 px-2 overflow-y-auto h-full">
         <div className="space-y-1">
-          {currentMenuItems.map((item) => (
-            <SidebarItem
-              key={item.path}
-              icon={item.icon}
-              label={item.label}
-              path={item.path}
-              isActive={location.pathname === item.path}
-              isCollapsed={isCollapsed}
-            />
-          ))}
+          {currentMenuItems.map((item) => {
+            // Conditionally render Lab Catalogue based on role and path
+            if (item.label === 'Lab Catalogue') {
+              const isLabCatalogueRoute = location.pathname.startsWith('/dashboard/labs/catalogue');
+              if (user?.role === 'superadmin' || user?.role === 'orgsuperadmin' || user?.role === 'orgadmin' || user?.role === 'trainer' || user?.role === 'user') {
+                return (
+                  <SidebarItem
+                    key={item.path}
+                    icon={item.icon}
+                    label={item.label}
+                    path={item.path}
+                    isActive={isLabCatalogueRoute}
+                    isCollapsed={isCollapsed}
+                  />
+                );
+              }
+              return null; // Don't render if role doesn't match
+            }
+
+            // For other menu items, use the existing logic
+            return (
+              <SidebarItem
+                key={item.path}
+                icon={item.icon}
+                label={item.label}
+                path={item.path}
+                isActive={location.pathname === item.path}
+                isCollapsed={isCollapsed}
+              />
+            );
+          })}
         </div>
       </nav>
     </aside>
