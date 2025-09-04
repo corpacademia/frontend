@@ -177,19 +177,11 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
             </div>
           );
         } else {
-          // If modular, go directly to review step
-          return (
-            <ReviewAndSubmit
-              data={{ ...labDetails, ...config, ...labData }}
-              documents={documents}
-              userGuides={userGuides}
-              onPrevious={handlePrevious}
-              onSubmit={handleSubmit}
-            />
-          );
+          // For modular labs, this step should not be reached due to direct navigation
+          return null;
         }
       case 6:
-        // Review step for non-modular labs
+        // Review step for non-modular labs only
         return (
           <ReviewAndSubmit
             data={{ ...labDetails, ...config, ...labData }}
@@ -216,6 +208,16 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
         userGuides: userGuides
       };
 
+      // For modular labs, navigate to modules creation page
+      if (labDetails?.isModular) {
+        // Store lab config in sessionStorage for the modules page
+        sessionStorage.setItem('labConfig', JSON.stringify(completeLabData));
+        // Navigate to CreateModulesPage with lab config
+        window.location.href = `/dashboard/labs/create-modules?labType=cloudslice`;
+        return;
+      }
+
+      // For non-modular labs, create the lab directly
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/create`, completeLabData, {
         headers: {
           'Content-Type': 'application/json',

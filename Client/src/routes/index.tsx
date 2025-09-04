@@ -136,6 +136,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="labs/cloud-slices/:sliceId/modules" element={<CloudSliceModulesPage />} />
         <Route path="labs/cluster" element={<ClusterPage />} />
         <Route path="labs/create" element={<CreateLabEnvironment />} />
+        <Route path="labs/create-modules" element={<CreateModulesPage />} />
         <Route path="labs/vm-session/:vmId" element={<VMSessionPage />} />
         <Route path="cloud" element={<CloudResources />} />
         <Route path="reports" element={<ReportsPage />} />

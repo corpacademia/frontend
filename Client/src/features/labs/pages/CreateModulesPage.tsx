@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Plus, 
@@ -98,14 +98,14 @@ export const CreateModulesPage: React.FC = () => {
   const navigate = useNavigate();
   const labConfig = location.state?.labConfig;
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  
+
   const [modules, setModules] = useState<Module[]>([{
     id: `module-${Date.now()}`,
     name: '',
     description: '',
     exercises: []
   }]);
-  
+
   const [currentModuleIndex, setCurrentModuleIndex] = useState(0);
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -146,12 +146,12 @@ export const CreateModulesPage: React.FC = () => {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAwsServices`);
         if (response.data.success) {
           const categories: Record<string, Service[]> = {};
-          
+
           response.data.data.forEach((service: any) => {
             if (!categories[service.category]) {
               categories[service.category] = [];
             }
-            
+
             categories[service.category].push({
               name: service.services,
               category: service.category,
@@ -159,14 +159,14 @@ export const CreateModulesPage: React.FC = () => {
               services_prefix:service.services_prefix
             });
           });
-          
+
           setAvailableCategories(categories);
         }
       } catch (error) {
         console.error('Failed to fetch AWS services:', error);
       }
     };
-    
+
     fetchAwsServiceCategories();
   }, [labConfig]);
 
@@ -205,9 +205,9 @@ export const CreateModulesPage: React.FC = () => {
   const addExercise = (moduleIndex: number, type: 'lab' | 'questions') => {
     const newModules = [...modules];
     const exerciseId = generateId('exercise');
-    
+
     let newExercise: Exercise;
-    
+
     if (type === 'lab') {
       newExercise = {
         id: exerciseId,
@@ -246,10 +246,10 @@ export const CreateModulesPage: React.FC = () => {
         }]
       };
     }
-    
+
     newModules[moduleIndex].exercises.push(newExercise);
     setModules(newModules);
-    
+
     // Auto-expand the new exercise
     setExpandedExercises(prev => ({
       ...prev,
@@ -271,7 +271,7 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'lab' && exercise.labExercise) {
       exercise.labExercise = {
         ...exercise.labExercise,
@@ -289,7 +289,7 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'lab' && exercise.labExercise && exercise.labExercise.cleanupPolicy) {
       exercise.labExercise.cleanupPolicy = {
         ...exercise.labExercise.cleanupPolicy,
@@ -306,7 +306,7 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'questions') {
       exercise.duration = duration;
       setModules(newModules);
@@ -320,7 +320,7 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'questions') {
       exercise.title = title;
       setModules(newModules);
@@ -330,7 +330,7 @@ export const CreateModulesPage: React.FC = () => {
   const addQuestion = (moduleIndex: number, exerciseIndex: number) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'questions' && exercise.questions) {
       exercise.questions.push({
         id: generateId('question'),
@@ -350,7 +350,7 @@ export const CreateModulesPage: React.FC = () => {
   const removeQuestion = (moduleIndex: number, exerciseIndex: number, questionIndex: number) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'questions' && exercise.questions) {
       exercise.questions.splice(questionIndex, 1);
       setModules(newModules);
@@ -366,7 +366,7 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'questions' && exercise.questions) {
       exercise.questions[questionIndex] = {
         ...exercise.questions[questionIndex],
@@ -379,7 +379,7 @@ export const CreateModulesPage: React.FC = () => {
   const addOption = (moduleIndex: number, exerciseIndex: number, questionIndex: number) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'questions' && exercise.questions) {
       exercise.questions[questionIndex].options.push({
         id: generateId('option'),
@@ -397,19 +397,19 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'questions' && exercise.questions) {
       const question = exercise.questions[questionIndex];
-      
+
       // Don't allow removing if only 2 options remain
       if (question.options.length <= 2) return;
-      
+
       // If removing the correct answer, reset it
       const removedOption = question.options[optionIndex];
       if (removedOption.id === question.correctAnswer) {
         question.correctAnswer = '';
       }
-      
+
       question.options.splice(optionIndex, 1);
       setModules(newModules);
     }
@@ -424,7 +424,7 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'questions' && exercise.questions) {
       exercise.questions[questionIndex].options[optionIndex].text = value;
       setModules(newModules);
@@ -439,7 +439,7 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'questions' && exercise.questions) {
       exercise.questions[questionIndex].correctAnswer = optionId;
       setModules(newModules);
@@ -458,7 +458,7 @@ export const CreateModulesPage: React.FC = () => {
       ...prev,
       [exerciseId]: !prev[exerciseId]
     }));
-    
+
     // Close service dropdown if category dropdown is being opened
     if (!showCategoryDropdowns[exerciseId]) {
       setShowServiceDropdowns(prev => ({
@@ -494,12 +494,12 @@ export const CreateModulesPage: React.FC = () => {
       ...prev,
       [exerciseId]: category
     }));
-    
+
     setShowCategoryDropdowns(prev => ({
       ...prev,
       [exerciseId]: false
     }));
-    
+
     setShowServiceDropdowns(prev => ({
       ...prev,
       [exerciseId]: true
@@ -512,16 +512,16 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'lab' && exercise.labExercise) {
       const services = exercise.labExercise.services || [];
-      
+
       if (services.includes(serviceName)) {
         exercise.labExercise.services = services.filter(s => s !== serviceName);
       } else {
         exercise.labExercise.services = [...services, serviceName];
       }
-      
+
       setModules(newModules);
     }
   };
@@ -533,18 +533,18 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'lab' && exercise.labExercise) {
       if (!exercise.labExercise.files) {
         exercise.labExercise.files = [];
       }
-      
+
       Array.from(files).forEach(file => {
         // Check if file already exists
         const fileExists = exercise.labExercise?.files?.some(f => 
           f.name === file.name && f.size === file.size
         );
-        
+
         if (!fileExists) {
           exercise.labExercise?.files?.push({
             id: generateId('file'),
@@ -556,7 +556,7 @@ export const CreateModulesPage: React.FC = () => {
           });
         }
       });
-      
+
       setModules(newModules);
     }
   };
@@ -568,7 +568,7 @@ export const CreateModulesPage: React.FC = () => {
   ) => {
     const newModules = [...modules];
     const exercise = newModules[moduleIndex].exercises[exerciseIndex];
-    
+
     if (exercise.type === 'lab' && exercise.labExercise && exercise.labExercise.files) {
       exercise.labExercise.files = exercise.labExercise.files.filter(f => f.id !== fileId);
       setModules(newModules);
@@ -593,7 +593,7 @@ export const CreateModulesPage: React.FC = () => {
         });
         return false;
       }
-      
+
       for (const exercise of module.exercises) {
         if (exercise.type === 'lab') {
           if (!exercise.labExercise?.title.trim()) {
@@ -611,7 +611,7 @@ export const CreateModulesPage: React.FC = () => {
             });
             return false;
           }
-          
+
           for (const question of exercise.questions || []) {
             if (!question.title.trim()) {
               setNotification({
@@ -620,7 +620,7 @@ export const CreateModulesPage: React.FC = () => {
               });
               return false;
             }
-            
+
             if (question.options.length < 2) {
               setNotification({
                 type: 'error',
@@ -628,7 +628,7 @@ export const CreateModulesPage: React.FC = () => {
               });
               return false;
             }
-            
+
             if (!question.correctAnswer) {
               setNotification({
                 type: 'error',
@@ -636,7 +636,7 @@ export const CreateModulesPage: React.FC = () => {
               });
               return false;
             }
-            
+
             for (const option of question.options) {
               if (!option.text.trim()) {
                 setNotification({
@@ -650,32 +650,32 @@ export const CreateModulesPage: React.FC = () => {
         }
       }
     }
-    
+
     return true;
   };
 
   const handleSubmit = async () => {
     if (!validateModules()) return;
-    
+
     setIsSubmitting(true);
     setNotification(null);
-    
+
     try {
       // Get the current user
       const userResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       const userId = userResponse.data.user.id;
-      
+
       // Prepare data for submission
       const submissionData = {
         labConfig,
         modules,
         createdBy: userId
       };
-      
+
       // Create FormData for file uploads
       const formData = new FormData();
       formData.append('data', JSON.stringify(submissionData));
-      
+
       // Add files to FormData
       let fileCount = 0;
       modules.forEach((module, moduleIndex) => {
@@ -692,7 +692,6 @@ export const CreateModulesPage: React.FC = () => {
           }
         });
       });
-      
       // Submit to backend
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createLabModules`, 
@@ -703,14 +702,14 @@ export const CreateModulesPage: React.FC = () => {
           }
         }
       );
-      
+
       if (response.data.success) {
         setNotification({
           type: 'success',
           message: 'Lab modules created successfully!'
         });
        navigate('dashboard/labs/cloud-slices') 
-        
+
       } else {
         throw new Error(response.data.message || 'Failed to create lab modules');
       }
@@ -735,9 +734,9 @@ export const CreateModulesPage: React.FC = () => {
   const getFilteredServices = (exerciseId: string) => {
     const search = serviceSearches[exerciseId] || '';
     const category = selectedCategories[exerciseId];
-    
+
     if (!category) return [];
-    
+
     return availableCategories[category].filter(service =>
       service.name.toLowerCase().includes(search.toLowerCase()) ||
       service.description.toLowerCase().includes(search.toLowerCase())
@@ -761,7 +760,7 @@ export const CreateModulesPage: React.FC = () => {
             Define learning modules and exercises for your cloud slice lab
           </p>
         </div>
-        
+
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}
@@ -818,7 +817,7 @@ export const CreateModulesPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div>
               <h4 className="text-sm font-medium text-gray-400 mb-2">Selected Services</h4>
               <div className="flex flex-wrap gap-2">
@@ -1224,7 +1223,7 @@ export const CreateModulesPage: React.FC = () => {
                             {/* Service Selection for this Lab Exercise */}
                             <div className="space-y-4">
                               <h4 className="text-sm font-medium text-gray-300">AWS Services for this Exercise</h4>
-                              
+
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Category Dropdown */}
                                 <div className="space-y-2">
@@ -1474,7 +1473,7 @@ export const CreateModulesPage: React.FC = () => {
                                          text-gray-300 focus:border-primary-500/40 focus:outline-none"
                               />
                             </div>
-                            
+
                             {/* Duration input for questions exercise */}
                             <div>
                               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -1600,7 +1599,7 @@ export const CreateModulesPage: React.FC = () => {
                                         Add Option
                                       </button>
                                     </div>
-                                    
+
                                     <div className="space-y-2">
                                       {question.options.map((option, optionIndex) => (
                                         <div 
@@ -1653,7 +1652,7 @@ export const CreateModulesPage: React.FC = () => {
                                 </div>
                               </div>
                             ))}
-                            
+
                             <button
                               onClick={() => addQuestion(currentModuleIndex, exerciseIndex)}
                               className="btn-secondary w-full"
@@ -1673,7 +1672,7 @@ export const CreateModulesPage: React.FC = () => {
         </div>
       </div>
 
-     
+
       <div className="flex justify-between">
         <button
           onClick={() => navigate(-1)}
@@ -1681,7 +1680,7 @@ export const CreateModulesPage: React.FC = () => {
         >
           Back to Lab Configuration
         </button>
-        
+
         <button
           onClick={handleSubmit}
           disabled={isSubmitting}

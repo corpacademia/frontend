@@ -37,7 +37,7 @@ export const LabDetailsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  
+ 
   const { 
     selectedLab, 
     reviews, 
@@ -89,8 +89,7 @@ export const LabDetailsPage: React.FC = () => {
       [moduleId]: !prev[moduleId]
     }));
   };
-  console.log(selectedLab)
-  console.log(labType)
+   console.log(selectedLab) 
   const renderLabSpecificDetails = () => {
     if (!selectedLab) return null;
 
@@ -136,7 +135,7 @@ export const LabDetailsPage: React.FC = () => {
                     <div key={module.id || index} className="border border-primary-500/20 rounded-lg p-4">
                       <div className="flex justify-between items-center cursor-pointer" 
                            onClick={() => toggleModuleExpansion(module.id || index.toString())}>
-                        <h4 className="font-medium text-gray-300">{module.title}</h4>
+                        <h4 className="font-medium text-gray-300">{module.name}</h4>
                         {expandedModules[module.id || index.toString()] ? (
                           <ChevronUp className="h-5 w-5 text-gray-400" />
                         ) : (
@@ -152,7 +151,7 @@ export const LabDetailsPage: React.FC = () => {
                               {module.exercises.map((exercise: any, exIndex: number) => (
                                 <div key={exIndex} className="text-sm text-gray-400 pl-4">
                                   <span className="inline-block w-2 h-2 bg-primary-400 rounded-full mr-2"></span>
-                                  {exercise.title}
+                                  {exercise?.details?.title || exercise?.details[0]?.title}
                                 </div>
                               ))}
                             </div>

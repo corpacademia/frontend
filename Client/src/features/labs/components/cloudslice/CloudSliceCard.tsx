@@ -475,7 +475,7 @@ const canEditContent = () => {
           <div className="mb-2 overflow-y-auto max-h-[60px]">
             <h4 className="text-xs font-medium text-gray-400 mb-1">Services:</h4>
             <div className="flex flex-wrap gap-1.5">
-              {slice.services.map((service, index) => (
+              {slice?.services?.map((service, index) => (
                 <span key={index} className="px-1.5 py-0.5 text-xs font-medium rounded-full bg-primary-500/20 text-primary-300 
                                           inline-block max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap">
                   {service}

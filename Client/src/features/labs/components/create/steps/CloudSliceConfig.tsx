@@ -40,7 +40,7 @@ import { useAuthStore } from '../../../../../store/authStore';
 //   return (
 //     <div className="glass-panel space-y-6">
 //       <h3 className="text-lg font-semibold text-gray-200">Lab Documents and Videos</h3>
-      
+
 //       <div className="space-y-4">
 //         <label className="block text-sm font-medium text-gray-300 mb-2">
 //           Upload Lab Documents
@@ -146,6 +146,7 @@ interface CloudSliceConfigProps {
     duration: number;
     cloudProvider: string;
     platform: string;
+    isModular?: boolean; // Added for modular lab check
   };
   awsServiceCategories: {
     service: string;
@@ -222,12 +223,35 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
     setUserDocuments(files);
   }
 
-  const handleNextToDocuments = (labType: 'without-modules' | 'with-modules') => {
-    if (labType === 'without-modules' && selectedServices.length === 0) {
-      setError('Please select at least one service');
-      setTimeout(() => setError(null), 3000);
+  const handleNextToDocuments = () => {
+    // Store the configuration data
+    const configData = {
+      platform: labDetails?.platform || '',
+      cloudProvider: labDetails?.cloudProvider || '',
+      region:labDetails?.region,
+      services: selectedServices,
+      duration: {
+        start: startDate,
+        end: endDate
+      },
+      cleanupPolicy: labType === 'without-modules' ? cleanupPolicy : null
+    };
+    // For modular labs, skip documents step and go directly to modules creation
+    if (labType === 'with-modules') {
+      // Store config in session storage for modules page
+      sessionStorage.setItem('labConfig', JSON.stringify({
+        ...labDetails,
+        ...configData
+      }));
+      
+      // Navigate directly to CreateModulesPage
+      navigate(`/dashboard/labs/create-modules`,{state:{labConfig:{...labDetails,startDate,endDate,labType,region:selectedRegion}}})
+      // window.location.href = `/dashboard/labs/create-modules?labType=cloudslice`;
       return;
     }
+
+    // For non-modular labs, proceed to documents step
+    // onNext(configData); // This was original call, now handled by setCurrentStep
     setCurrentStep('documents');
   };
 
@@ -238,21 +262,25 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
   const handleSubmit = async () => {
     if (!selectedRegion) {
       setError('Please select a region');
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
-    if (selectedServices.length === 0 && labType === 'without-modules') {
-      setError('Please select at least one service');
+    if (labType === 'without-modules' && selectedServices.length === 0) {
+      setError('Please select at least one service for labs without modules.');
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
     if (!startDate || !endDate) {
       setError('Please specify start and end dates');
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
-    if (credits <= 0) {
-      setError('Please enter a valid credit amount');
+    if (credits <= 0 && labType === 'without-modules') {
+      setError('Please enter a valid credit amount for labs without modules');
+      setTimeout(() => setError(null), 3000);
       return;
     }
 
@@ -273,9 +301,10 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       formData.append('startDate', startDate);
       formData.append('endDate', endDate);
       formData.append('credits', credits.toString()); 
-      formData.append('labType', 'without-modules');
+      formData.append('labType', labType);
+      formData.append('isModular', (labType === 'with-modules').toString());
       formData.append('createdBy', user.id); 
-      formData.append('accountType',accountType)
+      formData.append('accountType',accountType);
       formData.append('platform',labDetails.platform);
 
       // Add documents
@@ -301,10 +330,12 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         }, 3000);
       } else {
         setError(response.data.message || 'Failed to create cloud slice');
+        setTimeout(() => setError(null), 3000);
       }
     } catch (err: any) {
       console.error('Submission error:', err);
       setError(err.response?.data?.message || 'Failed to create cloud slice');
+      setTimeout(() => setError(null), 3000);
     } finally {
       setIsSubmitting(false);
     }
@@ -318,14 +349,21 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
           <div className={`p-4 rounded-lg ${
             'bg-red-500/10 text-red-400'
           }`}>
-            {error}
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-red-400" />
+              <span className="text-red-200">{error}</span>
+            </div>
           </div>
         )}
-
+        {/* Add DocumentUploader component here and pass necessary props */}
         <DocumentUploader
           onDocumentsChange={handleDocumentUpload}
           onUserGuidesChange={handleUserGuidesChange}
           onNext={handleSubmit}
+          onBack={handleBackToConfig}
+          isLoading={isSubmitting}
+          labDocuments={labDocuments} // Pass the actual state
+          labVideos={[]}   // Placeholder, assuming DocumentUploader handles its own video state if needed
         />
       </div>
     );
@@ -337,7 +375,10 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         <div className={`p-4 rounded-lg ${
           'bg-red-500/10 text-red-400'
         }`}>
-          {error}
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-red-400" />
+            <span className="text-red-200">{error}</span>
+          </div>
         </div>
       )}
       {success && (
@@ -748,8 +789,8 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         </button>
         <button
           type="button"
-          onClick={()=>handleNextToDocuments(labType)}
-          disabled={labType === 'without-modules' ? selectedServices.length === 0 : false}
+          onClick={handleNextToDocuments}
+          disabled={labType === 'without-modules' && selectedServices.length === 0}
           className="btn-primary flex items-center"
         >
           Next: Add Documents
