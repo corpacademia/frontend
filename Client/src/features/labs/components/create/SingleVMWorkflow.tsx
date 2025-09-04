@@ -4,7 +4,7 @@ import { CloudProviderSelector } from './steps/CloudProviderSelector';
 import { VMSizeSelector } from './steps/VMSizeSelector';
 import { AIRecommendations } from './steps/AIRecommendations';
 import { DeploymentStatus } from './steps/DeploymentStatus';
-import { LabDetailsInput } from './steps/LabDetailsInput';
+import { BasicInfoStep } from './steps/BasicInfoStep';
 import { DocumentUploader } from './steps/DocumentUploader';
 import { DatacenterConfig } from './steps/DatacenterConfig';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
@@ -179,8 +179,9 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
     switch (step) {
       case 1:
         return (
-          <LabDetailsInput 
+          <BasicInfoStep 
             onNext={(details) => updateConfig(details)} 
+            type="single-vm"
           />
         );
       case 2:

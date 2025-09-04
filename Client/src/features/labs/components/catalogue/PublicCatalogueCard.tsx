@@ -132,7 +132,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
     
     navigate(`/dashboard/labs/details/${course.id}`, { 
       state: { 
-        labType: 'catalogue',
+        labType: course?.type,
         labDetails: course 
       } 
     });

@@ -79,20 +79,25 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
       let response;
       
       switch (labType) {
-        case 'cloud-slice':
+        case 'cloudslice':
           response = await axios.post(
-            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCloudSliceOnId`,
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetailsForCatalogue`,
             { labId }
           );
           break;
-        case 'cloud-vm':
-        case 'catalogue':
+        case 'singlevm-aws':
           response = await axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`,
             { labId }
           );
           break;
-        case 'cluster':
+        case  'singlevmdatacenter':
+          response = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`,
+            { labId }
+          );
+          break;
+        case 'vmclusterdatacenter':
           response = await axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getClusterOnId`,
             { labId }

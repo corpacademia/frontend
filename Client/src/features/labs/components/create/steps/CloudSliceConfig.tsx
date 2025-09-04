@@ -222,8 +222,8 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
     setUserDocuments(files);
   }
 
-  const handleNextToDocuments = () => {
-    if (selectedServices.length === 0) {
+  const handleNextToDocuments = (labType: 'without-modules' | 'with-modules') => {
+    if (labType === 'without-modules' && selectedServices.length === 0) {
       setError('Please select at least one service');
       setTimeout(() => setError(null), 3000);
       return;
@@ -748,8 +748,8 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         </button>
         <button
           type="button"
-          onClick={handleNextToDocuments}
-          disabled={selectedServices.length === 0}
+          onClick={()=>handleNextToDocuments(labType)}
+          disabled={labType === 'without-modules' ? selectedServices.length === 0 : false}
           className="btn-primary flex items-center"
         >
           Next: Add Documents

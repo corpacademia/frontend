@@ -55,7 +55,7 @@ export const LabDetailsPage: React.FC = () => {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
 
-  const labType = location.state?.labType || 'catalogue';
+  const labType =  location.state?.labType ;
   
   useEffect(() => {
     if (labId) {
@@ -89,12 +89,13 @@ export const LabDetailsPage: React.FC = () => {
       [moduleId]: !prev[moduleId]
     }));
   };
-
+  console.log(selectedLab)
+  console.log(labType)
   const renderLabSpecificDetails = () => {
     if (!selectedLab) return null;
 
     switch (labType) {
-      case 'cloud-slice':
+      case 'cloudslice':
         return (
           <div className="space-y-6">
             {/* Provider & Region Info */}
@@ -166,8 +167,8 @@ export const LabDetailsPage: React.FC = () => {
           </div>
         );
 
-      case 'cloud-vm':
-      case 'catalogue':
+      case 'singlevm':
+      case 'singlevmdatacenter':
         return (
           <div className="space-y-6">
             {/* Technical Specifications */}
@@ -216,11 +217,11 @@ export const LabDetailsPage: React.FC = () => {
             )}
 
             {/* Lab Guides */}
-            {(selectedLab.labGuide || selectedLab.userGuide) && (
+            {(selectedLab.labguide || selectedLab.userguide) && (
               <div className="bg-dark-300/50 rounded-lg p-4">
                 <h3 className="text-lg font-semibold mb-4 text-gray-300">Lab Resources</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedLab.labGuide && (
+                  {selectedLab.labguide && (
                     <div className="flex items-center justify-between p-3 bg-dark-400/50 rounded-lg">
                       <div className="flex items-center">
                         <FileText className="h-5 w-5 mr-3 text-primary-400" />
@@ -229,7 +230,7 @@ export const LabDetailsPage: React.FC = () => {
                       <ExternalLink className="h-4 w-4 text-gray-400" />
                     </div>
                   )}
-                  {selectedLab.userGuide && (
+                  {selectedLab.userguide && (
                     <div className="flex items-center justify-between p-3 bg-dark-400/50 rounded-lg">
                       <div className="flex items-center">
                         <BookOpen className="h-5 w-5 mr-3 text-primary-400" />
@@ -244,7 +245,7 @@ export const LabDetailsPage: React.FC = () => {
           </div>
         );
 
-      case 'cluster':
+      case 'vmclusterdatacenter':
         return (
           <div className="space-y-6">
             {/* Cluster Configuration */}
@@ -311,7 +312,7 @@ export const LabDetailsPage: React.FC = () => {
     );
   }
 
-  const canEdit = user?.role === 'superadmin' || user?.role === 'orgadmin' || selectedLab.createdBy === user?.id;
+  const canEdit = user?.role === 'superadmin' || user?.role === 'orgsuperadmin' || selectedLab.createdBy === user?.id;
   const averageRating = reviews.length > 0 ? 
     reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length : 
     selectedLab.rating || 0;
@@ -366,10 +367,10 @@ export const LabDetailsPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-4 mb-6">
-                  {selectedLab.difficulty && (
+                  {selectedLab.level && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Difficulty:</span>
-                      <span className="text-primary-300">{selectedLab.difficulty}</span>
+                      <span className="text-gray-400">Level:</span>
+                      <span className="text-primary-300">{selectedLab.level}</span>
                     </div>
                   )}
                   {selectedLab.type && (
@@ -452,24 +453,24 @@ export const LabDetailsPage: React.FC = () => {
                     <p className="text-primary-300">{selectedLab.category}</p>
                   </div>
                 )}
-                {selectedLab.estimatedDuration && (
+                {/* {selectedLab?.estimatedduration  && ( */}
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Duration</h4>
-                    <p className="text-secondary-300">{selectedLab.estimatedDuration} minutes</p>
+                    <p className="text-secondary-300">{selectedLab?.estimatedduration || selectedLab?.number_days} Days</p>
                   </div>
-                )}
+                {/* )} */}
                 {selectedLab.instructor && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Instructor</h4>
                     <p className="text-emerald-300">{selectedLab.instructor}</p>
                   </div>
                 )}
-                {selectedLab.language && (
+                {/* {selectedLab.language && ( */}
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Language</h4>
-                    <p className="text-gray-300">{selectedLab.language}</p>
+                    <p className="text-gray-300">{selectedLab.language || 'English'}</p>
                   </div>
-                )}
+                {/* )} */}
                 {selectedLab.certificate !== undefined && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Certificate</h4>
@@ -479,7 +480,7 @@ export const LabDetailsPage: React.FC = () => {
                 {selectedLab.lastUpdated && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Last Updated</h4>
-                    <p className="text-gray-300">{formatDateTime(selectedLab.lastUpdated)}</p>
+                    <p className="text-gray-300">{formatDate(selectedLab.lastUpdated)}</p>
                   </div>
                 )}
               </div>
@@ -496,13 +497,13 @@ export const LabDetailsPage: React.FC = () => {
                   {selectedLab.startDate && (
                     <div className="flex items-center text-gray-400">
                       <Calendar className="h-5 w-5 mr-3 text-primary-400" />
-                      <span>Start: {formatDateTime(selectedLab.startDate)}</span>
+                      <span>Start: {formatDate(selectedLab.startDate)}</span>
                     </div>
                   )}
                   {selectedLab.endDate && (
                     <div className="flex items-center text-gray-400">
                       <Calendar className="h-5 w-5 mr-3 text-secondary-400" />
-                      <span>End: {formatDateTime(selectedLab.endDate)}</span>
+                      <span>End: {formatDate(selectedLab.endDate)}</span>
                     </div>
                   )}
                 </div>
@@ -603,7 +604,7 @@ export const LabDetailsPage: React.FC = () => {
                               ))}
                             </div>
                             <span className="text-sm text-gray-500">
-                              {formatDateTime(review.createdAt)}
+                              {formatDate(review?.createdAt)}
                             </span>
                           </div>
                           <p className="text-gray-400">{review.comment}</p>

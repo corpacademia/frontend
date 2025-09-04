@@ -155,11 +155,9 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({ lab }) => {
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    console.log('working')
     // Don't navigate if clicking on action buttons
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
-    
     navigate(`/dashboard/labs/details/${lab.lab_id}`, { 
       state: { 
         labType: 'catalogue',

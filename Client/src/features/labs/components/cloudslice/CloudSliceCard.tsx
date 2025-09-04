@@ -346,7 +346,6 @@ const canEditContent = () => {
       setIsDeleteModalOpen(false);
     }
   };
-
   return (
     <>
       <div className="flex flex-col min-h-[240px] sm:min-h-[280px] lg:min-h-[260px] xl:min-h-[280px] 
