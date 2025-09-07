@@ -74,7 +74,7 @@ export const LabTypeSelector: React.FC<LabTypeSelectorProps> = ({ onSelect }) =>
               <option.icon className="h-6 w-6 text-primary-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-200">
+              <h3 className="text-lg font-semibold text-gray-400">
                 {option.title}
               </h3>
               <p className="mt-1 text-sm text-gray-400">

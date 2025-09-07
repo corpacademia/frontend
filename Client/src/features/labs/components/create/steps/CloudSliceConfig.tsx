@@ -18,125 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../../../../store/authStore';
 
-// Assuming DocumentUploader component is in the same directory or imported correctly
-// import { DocumentUploader } from './DocumentUploader'; 
-// Mocking DocumentUploader for now as it's not provided.
-// const DocumentUploader = ({ onDocumentUpload, onBack, onNext, isLoading, labDocuments, labVideos }: any) => {
-//   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, type: 'documents' | 'videos') => {
-//     const files = Array.from(event.target.files || []);
-//     onDocumentUpload(files, type);
-//   };
 
-//   const handleDelete = (fileName: string, type: 'documents' | 'videos') => {
-//     if (type === 'documents') {
-//       const updatedDocs = labDocuments.filter((doc: File) => doc.name !== fileName);
-//       onDocumentUpload(updatedDocs, 'documents');
-//     } else {
-//       const updatedVideos = labVideos.filter((vid: File) => vid.name !== fileName);
-//       onDocumentUpload(updatedVideos, 'videos');
-//     }
-//   };
-
-//   return (
-//     <div className="glass-panel space-y-6">
-//       <h3 className="text-lg font-semibold text-gray-200">Lab Documents and Videos</h3>
-
-//       <div className="space-y-4">
-//         <label className="block text-sm font-medium text-gray-300 mb-2">
-//           Upload Lab Documents
-//         </label>
-//         <div className="flex items-center justify-center w-full">
-//           <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-dark-400/50 border-primary-500/20 hover:border-primary-500/40">
-//             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-//               <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-//                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A53.86 53.86 0 0 0 16 6V5a53.86 53.86 0 0 0-3.975-8.75C11.5 0.516 10.77 0 10 0 9.23 0 8.484.516 7.532 1.25C6.085 2.008 5 3.847 5 6v2.575A53.86 53.86 0 0 0 4 11H3a3 3 0 0 0 0 6h3"/>
-//               </svg>
-//               <p className="mb-2 text-sm text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-//               <p className="text-xs text-gray-500 dark:text-gray-400">PDF, DOCX, TXT, PNG, JPG, GIF (Max 5MB each)</p>
-//             </div>
-//             <input type="file" multiple className="hidden" onChange={(e) => handleFileChange(e, 'documents')} />
-//           </label>
-//         </div>
-//         {labDocuments.length > 0 && (
-//           <div className="mt-2">
-//             <h4 className="text-sm font-medium text-gray-400 mb-2">Uploaded Documents:</h4>
-//             <div className="flex flex-wrap gap-2">
-//               {labDocuments.map((doc, index) => (
-//                 <div key={index} className="flex items-center px-3 py-1 bg-primary-500/10 text-primary-300 rounded-full text-sm">
-//                   {doc.name}
-//                   <button onClick={() => handleDelete(doc.name, 'documents')} className="ml-2 hover:text-primary-400">
-//                     <X className="h-4 w-4" />
-//                   </button>
-//                 </div>
-//               ))}
-//             </div>
-//           </div>
-//         )}
-//       </div>
-
-//       <div className="space-y-4">
-//         <label className="block text-sm font-medium text-gray-300 mb-2">
-//           Upload Lab Videos
-//         </label>
-//         <div className="flex items-center justify-center w-full">
-//           <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer bg-dark-400/50 border-primary-500/20 hover:border-primary-500/40">
-//             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-//               <svg className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-//                 <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A53.86 53.86 0 0 0 16 6V5a53.86 53.86 0 0 0-3.975-8.75C11.5 0.516 10.77 0 10 0 9.23 0 8.484.516 7.532 1.25C6.085 2.008 5 3.847 5 6v2.575A53.86 53.86 0 0 0 4 11H3a3 3 0 0 0 0 6h3"/>
-//               </svg>
-//               <p className="mb-2 text-sm text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-//               <p className="text-xs text-gray-500 dark:text-gray-400">MP4, MOV, AVI (Max 50MB each)</p>
-//             </div>
-//             <input type="file" multiple className="hidden" onChange={(e) => handleFileChange(e, 'videos')} />
-//           </label>
-//         </div>
-//         {labVideos.length > 0 && (
-//           <div className="mt-2">
-//             <h4 className="text-sm font-medium text-gray-400 mb-2">Uploaded Videos:</h4>
-//             <div className="flex flex-wrap gap-2">
-//               {labVideos.map((video, index) => (
-//                 <div key={index} className="flex items-center px-3 py-1 bg-primary-500/10 text-primary-300 rounded-full text-sm">
-//                   {video.name}
-//                   <button onClick={() => handleDelete(video.name, 'videos')} className="ml-2 hover:text-primary-400">
-//                     <X className="h-4 w-4" />
-//                   </button>
-//                 </div>
-//               ))}
-//             </div>
-//           </div>
-//         )}
-//       </div>
-
-//       <div className="flex justify-between pt-6">
-//         <button
-//           type="button"
-//           onClick={onBack}
-//           className="px-6 py-2 text-gray-400 hover:text-white transition-colors"
-//         >
-//           Back
-//         </button>
-//         <button
-//           type="button"
-//           onClick={onNext}
-//           disabled={isLoading}
-//           className="btn-primary flex items-center"
-//         >
-//           {isLoading ? (
-//             <>
-//               <Loader className="animate-spin h-4 w-4 mr-2" />
-//               Creating Lab...
-//             </>
-//           ) : (
-//             <>
-//               <Check className="h-4 w-4 mr-2" />
-//               Create Cloud Slice Lab
-//             </>
-//           )}
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
 import { DocumentUploader } from './DocumentUploader';
 interface CloudSliceConfigProps {
   onBack: () => void;
@@ -305,7 +187,12 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       formData.append('isModular', (labType === 'with-modules').toString());
       formData.append('createdBy', user.id); 
       formData.append('accountType',accountType);
-      formData.append('platform',labDetails.platform);
+      formData.append('platform',labDetails.platform); 
+      formData.append('learningObjectives',labDetails?.learningObjectives);
+      formData.append('prerequisites',labDetails?.prerequisites);
+      formData.append('targetAudience',labDetails?.targetAudience);
+      formData.append('technologies',labDetails?.technologies);
+      formData.append('additionalDetails',labDetails?.additionalDetails);
 
       // Add documents
       labDocuments.forEach((file, index) => {
@@ -793,7 +680,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
           disabled={labType === 'without-modules' && selectedServices.length === 0}
           className="btn-primary flex items-center"
         >
-          Next: Add Documents
+          {labType === 'without-modules' ? 'Next: Add Documents' : 'Continue to create modules'}
         </button>
       </div>
     </div>

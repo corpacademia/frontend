@@ -809,11 +809,11 @@ export const CreateModulesPage: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Title:</span>
-                  <span className="text-gray-200">{labConfig.title}</span>
+                  <span className="text-gray-400">{labConfig.title}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Cloud Provider:</span>
-                  <span className="text-gray-200">{labConfig.cloudProvider}</span>
+                  <span className="text-gray-400">{labConfig.cloudProvider}</span>
                 </div>
               </div>
             </div>
@@ -881,7 +881,7 @@ export const CreateModulesPage: React.FC = () => {
 
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-400 mb-2">
               Module Name
             </label>
             <input
@@ -895,7 +895,7 @@ export const CreateModulesPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-400 mb-2">
               Module Description
             </label>
             <textarea
@@ -911,7 +911,7 @@ export const CreateModulesPage: React.FC = () => {
           {/* Exercises */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-200">Exercises</h3>
+              <h3 className="text-lg font-medium text-gray-400">Exercises</h3>
               <div className="flex space-x-2">
                 <button
                   onClick={() => addExercise(currentModuleIndex, 'lab')}

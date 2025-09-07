@@ -37,7 +37,7 @@ export const LabDetailsPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
- 
+  
   const { 
     selectedLab, 
     reviews, 
@@ -54,9 +54,12 @@ export const LabDetailsPage: React.FC = () => {
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
+  const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
+  const [showAllModules, setShowAllModules] = useState(false);
+  const [expandAllModules, setExpandAllModules] = useState(false);
 
-  const labType =  location.state?.labType ;
-  
+  const labType = location.state?.labType ;
+  console.log(selectedLab)
   useEffect(() => {
     if (labId) {
       fetchLabDetails(labId, labType);
@@ -70,7 +73,6 @@ export const LabDetailsPage: React.FC = () => {
 
   const handleSubmitReview = async () => {
     if (!newReview.comment.trim() || !labId) return;
-    
     setIsSubmittingReview(true);
     try {
       await addReview(labId, newReview.rating, newReview.comment);
@@ -89,7 +91,39 @@ export const LabDetailsPage: React.FC = () => {
       [moduleId]: !prev[moduleId]
     }));
   };
-   console.log(selectedLab) 
+
+  const toggleExerciseExpansion = (exerciseId: string) => {
+    setExpandedExercises(prev => ({
+      ...prev,
+      [exerciseId]: !prev[exerciseId]
+    }));
+  };
+
+  const handleExpandAll = () => {
+    const newExpandedState = !expandAllModules;
+    setExpandAllModules(newExpandedState);
+    
+    if (selectedLab?.modules) {
+      const moduleExpandState: Record<string, boolean> = {};
+      const exerciseExpandState: Record<string, boolean> = {};
+      
+      selectedLab.modules.forEach((module: any, index: number) => {
+        const moduleKey = module.id || index.toString();
+        moduleExpandState[moduleKey] = newExpandedState;
+        
+        if (module.exercises) {
+          module.exercises.forEach((exercise: any, exIndex: number) => {
+            const exerciseKey = `${moduleKey}-${exIndex}`;
+            exerciseExpandState[exerciseKey] = newExpandedState;
+          });
+        }
+      });
+      
+      setExpandedModules(moduleExpandState);
+      setExpandedExercises(exerciseExpandState);
+    }
+  };
+
   const renderLabSpecificDetails = () => {
     if (!selectedLab) return null;
 
@@ -129,44 +163,105 @@ export const LabDetailsPage: React.FC = () => {
             {/* Modules & Exercises */}
             {selectedLab.modules && selectedLab.modules.length > 0 && (
               <div className="bg-dark-300/50 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4 text-gray-300">Learning Modules</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-300">Learning Modules</h3>
+                  <button
+                    onClick={handleExpandAll}
+                    className="text-sm px-3 py-1 bg-primary-500/20 text-primary-300 rounded-lg hover:bg-primary-500/30 transition-colors"
+                  >
+                    {expandAllModules ? 'Collapse All' : 'Expand All'}
+                  </button>
+                </div>
                 <div className="space-y-3">
-                  {selectedLab.modules.map((module: any, index: number) => (
-                    <div key={module.id || index} className="border border-primary-500/20 rounded-lg p-4">
-                      <div className="flex justify-between items-center cursor-pointer" 
-                           onClick={() => toggleModuleExpansion(module.id || index.toString())}>
-                        <h4 className="font-medium text-gray-300">{module.name}</h4>
-                        {expandedModules[module.id || index.toString()] ? (
-                          <ChevronUp className="h-5 w-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-gray-400" />
-                        )}
-                      </div>
-                      {expandedModules[module.id || index.toString()] && (
-                        <div className="mt-3 space-y-2">
-                          <p className="text-sm text-gray-400">{module.description}</p>
-                          {module.exercises && module.exercises.length > 0 && (
-                            <div className="space-y-2">
-                              <h5 className="text-sm font-medium text-gray-300">Exercises:</h5>
-                              {module.exercises.map((exercise: any, exIndex: number) => (
-                                <div key={exIndex} className="text-sm text-gray-400 pl-4">
-                                  <span className="inline-block w-2 h-2 bg-primary-400 rounded-full mr-2"></span>
-                                  {exercise?.details?.title || exercise?.details[0]?.title}
-                                </div>
-                              ))}
-                            </div>
+                  {(showAllModules ? selectedLab.modules : selectedLab.modules.slice(0, 3)).map((module: any, index: number) => {
+                    const moduleKey = module.id || index.toString();
+                    const totalDuration = module.exercises?.reduce((total: number, exercise: any) => {
+                      return total + (exercise?.details?.estimated_duration || exercise?.details[0]?.duration);
+                    }, 0) || 0;
+                    
+                    return (
+                      <div key={moduleKey} className="border border-primary-500/20 rounded-lg p-4">
+                        <div className="flex justify-between items-center cursor-pointer" 
+                             onClick={() => toggleModuleExpansion(moduleKey)}>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-300">{module.name}</h4>
+                            {totalDuration > 0 && (
+                              <p className="text-sm text-primary-400 mt-1">Total Duration: {totalDuration} minutes</p>
+                            )}
+                          </div>
+                          {expandedModules[moduleKey] ? (
+                            <ChevronUp className="h-5 w-5 text-gray-400" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-gray-400" />
                           )}
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        {expandedModules[moduleKey] && (
+                          <div className="mt-3 space-y-3">
+                            <p className="text-sm text-gray-400">{module.description}</p>
+                            {module.exercises && module.exercises.length > 0 && (
+                              <div className="space-y-3">
+                                <h5 className="text-sm font-medium text-gray-300">Exercises:</h5>
+                                {module.exercises.map((exercise: any, exIndex: number) => {
+                                  const exerciseKey = `${moduleKey}-${exIndex}`;
+                                  return (
+                                    <div key={exIndex} className="pl-4 border-l border-primary-500/20">
+                                      <div 
+                                        className="flex justify-between items-center cursor-pointer p-2 hover:bg-dark-400/30 rounded"
+                                        onClick={() => toggleExerciseExpansion(exerciseKey)}
+                                      >
+                                        <div className="flex items-center space-x-3">
+                                          <span className="inline-block w-2 h-2 bg-primary-400 rounded-full"></span>
+                                          <span className="text-sm text-gray-300">{exercise?.details?.title || exercise?.details[0]?.title}</span>
+                                          <div className="flex items-center space-x-2">
+                                            <span className="text-xs px-2 py-1 bg-secondary-500/20 text-secondary-300 rounded">
+                                              {exercise.type || 'lab'}
+                                            </span>
+                                              <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-300 rounded">
+                                                {exercise?.details?.estimated_duration || exercise?.details[0]?.duration}m
+                                              </span>
+                                          </div>
+                                        </div>
+                                        {expandedExercises[exerciseKey] ? (
+                                          <ChevronUp className="h-4 w-4 text-gray-400" />
+                                        ) : (
+                                          <ChevronDown className="h-4 w-4 text-gray-400" />
+                                        )}
+                                      </div>
+                                      {expandedExercises[exerciseKey] && exercise.description && (
+                                        <div className="mt-2 ml-5 p-3 bg-dark-400/30 rounded-lg">
+                                          <p className="text-xs text-gray-400">{exercise.description}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+                {selectedLab.modules.length > 3 && (
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={() => setShowAllModules(!showAllModules)}
+                      className="px-4 py-2 bg-primary-500/20 text-primary-300 rounded-lg hover:bg-primary-500/30 transition-colors"
+                    >
+                      {showAllModules 
+                        ? `Show Less (${selectedLab.modules.length - 3} hidden)` 
+                        : `Show ${selectedLab.modules.length - 3} More Modules`
+                      }
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
         );
 
-      case 'singlevm':
+      case 'singlevmaws':
       case 'singlevmdatacenter':
         return (
           <div className="space-y-6">
@@ -216,11 +311,11 @@ export const LabDetailsPage: React.FC = () => {
             )}
 
             {/* Lab Guides */}
-            {(selectedLab.labguide || selectedLab.userguide) && (
+            {(selectedLab.labGuide || selectedLab.userGuide) && (
               <div className="bg-dark-300/50 rounded-lg p-4">
                 <h3 className="text-lg font-semibold mb-4 text-gray-300">Lab Resources</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedLab.labguide && (
+                  {selectedLab.labGuide && (
                     <div className="flex items-center justify-between p-3 bg-dark-400/50 rounded-lg">
                       <div className="flex items-center">
                         <FileText className="h-5 w-5 mr-3 text-primary-400" />
@@ -229,7 +324,7 @@ export const LabDetailsPage: React.FC = () => {
                       <ExternalLink className="h-4 w-4 text-gray-400" />
                     </div>
                   )}
-                  {selectedLab.userguide && (
+                  {selectedLab.userGuide && (
                     <div className="flex items-center justify-between p-3 bg-dark-400/50 rounded-lg">
                       <div className="flex items-center">
                         <BookOpen className="h-5 w-5 mr-3 text-primary-400" />
@@ -366,10 +461,10 @@ export const LabDetailsPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-4 mb-6">
-                  {selectedLab.level && (
+                  {selectedLab.difficulty && (
                     <div className="flex justify-between">
-                      <span className="text-gray-400">Level:</span>
-                      <span className="text-primary-300">{selectedLab.level}</span>
+                      <span className="text-gray-400">Difficulty:</span>
+                      <span className="text-primary-300">{selectedLab.difficulty}</span>
                     </div>
                   )}
                   {selectedLab.type && (
@@ -386,11 +481,11 @@ export const LabDetailsPage: React.FC = () => {
                   )}
                 </div>
 
-                {selectedLab.technologies && selectedLab.technologies.length > 0 && (
+                {selectedLab.key_technologies && selectedLab.key_technologies.length > 0 && (
                   <div className="mb-6">
                     <h4 className="text-sm font-medium text-gray-400 mb-2">Technologies:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedLab.technologies.map((tech, index) => (
+                      {selectedLab.key_technologies.map((tech, index) => (
                         <span key={index} className="px-2 py-1 text-xs bg-dark-400/50 text-primary-300 rounded-full">
                           {tech}
                         </span>
@@ -415,11 +510,20 @@ export const LabDetailsPage: React.FC = () => {
               <p className="text-gray-400 leading-relaxed mb-6">{selectedLab.description}</p>
               
               {/* Learning Objectives */}
-              {selectedLab.learningObjectives && (
+              {selectedLab.learning_objectives && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">What You'll Learn</h3>
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <p className="text-gray-400 leading-relaxed">{selectedLab.learningObjectives}</p>
+                    <p className="text-gray-400 leading-relaxed">{selectedLab.learning_objectives}</p>
+                  </div>
+                </div>
+              )}
+              {/* additional details */}
+               {selectedLab.additional_details && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-medium mb-3 text-gray-300">Additional Details</h3>
+                  <div className="bg-dark-300/50 rounded-lg p-4">
+                    <p className="text-gray-400 leading-relaxed">{selectedLab.additional_details}</p>
                   </div>
                 </div>
               )}
@@ -435,11 +539,11 @@ export const LabDetailsPage: React.FC = () => {
               )}
 
               {/* Target Audience */}
-              {selectedLab.targetAudience && (
+              {selectedLab.target_audience && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">Who This Lab Is For</h3>
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <p className="text-gray-400">{selectedLab.targetAudience}</p>
+                    <p className="text-gray-400">{selectedLab.target_audience}</p>
                   </div>
                 </div>
               )}
@@ -448,28 +552,26 @@ export const LabDetailsPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {selectedLab.category && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-gray-400 mb-1">Category</h4>
+                    <h4 className="text-sm font-medium text-gray-400 mb-1">Level</h4>
                     <p className="text-primary-300">{selectedLab.category}</p>
                   </div>
                 )}
-                {/* {selectedLab?.estimatedduration  && ( */}
+                {selectedLab.estimatedDuration && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Duration</h4>
-                    <p className="text-secondary-300">{selectedLab?.estimatedduration || selectedLab?.number_days} Days</p>
+                    <p className="text-secondary-300">{selectedLab.estimatedDuration} minutes</p>
                   </div>
-                {/* )} */}
+                )}
                 {selectedLab.instructor && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Instructor</h4>
                     <p className="text-emerald-300">{selectedLab.instructor}</p>
                   </div>
                 )}
-                {/* {selectedLab.language && ( */}
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Language</h4>
                     <p className="text-gray-300">{selectedLab.language || 'English'}</p>
                   </div>
-                {/* )} */}
                 {selectedLab.certificate !== undefined && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Certificate</h4>
@@ -603,7 +705,7 @@ export const LabDetailsPage: React.FC = () => {
                               ))}
                             </div>
                             <span className="text-sm text-gray-500">
-                              {formatDate(review?.createdAt)}
+                              {formatDate(review.createdAt)}
                             </span>
                           </div>
                           <p className="text-gray-400">{review.comment}</p>
