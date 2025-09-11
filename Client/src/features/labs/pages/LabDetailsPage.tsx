@@ -27,7 +27,8 @@ import {
   Send,
   Loader,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Filter
 } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import { formatDate } from '../../../utils/date';
@@ -57,9 +58,13 @@ export const LabDetailsPage: React.FC = () => {
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
   const [showAllModules, setShowAllModules] = useState(false);
   const [expandAllModules, setExpandAllModules] = useState(false);
+  // Review filtering and pagination states
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [reviewFilter, setReviewFilter] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
 
-  const labType = location.state?.labType ;
-  console.log(selectedLab)
+  const labType = location.state?.labType || 'catalogue';
+
   useEffect(() => {
     if (labId) {
       fetchLabDetails(labId, labType);
@@ -72,10 +77,11 @@ export const LabDetailsPage: React.FC = () => {
   }, [labId, labType]);
 
   const handleSubmitReview = async () => {
-    if (!newReview.comment.trim() || !labId) return;
+    if (!newReview.comment.trim() || !labId || !user) return;
+    
     setIsSubmittingReview(true);
     try {
-      await addReview(labId, newReview.rating, newReview.comment);
+      await addReview(labId,user?.id, newReview.rating, newReview.comment);
       setNewReview({ rating: 5, comment: '' });
       setShowReviewForm(false);
     } catch (error) {
@@ -124,10 +130,60 @@ export const LabDetailsPage: React.FC = () => {
     }
   };
 
+  const handleEditLab = () => {
+    // Navigate to edit page based on lab type
+    switch (labType) {
+      case 'cloud-slice':
+      case 'cloudslice':
+        navigate(`/dashboard/labs/cloudslice/edit/${labId}`);
+        break;
+      case 'cloud-vm':
+      case 'catalogue':
+        navigate(`/dashboard/labs/cloudvm/edit/${labId}`);
+        break;
+      case 'cluster':
+        navigate(`/dashboard/labs/cluster/edit/${labId}`);
+        break;
+      default:
+        navigate(`/dashboard/labs/edit/${labId}`);
+    }
+  };
+
+  // Filter and sort reviews
+  const getFilteredAndSortedReviews = () => {
+    let filteredReviews;
+     filteredReviews = [...reviews];
+    // Filter by rating
+    if (reviewFilter !== 'all') {
+      filteredReviews = filteredReviews.filter(review =>review.rating === Number(reviewFilter));
+    }
+    // Sort reviews
+    filteredReviews.sort((a, b) => {
+      switch (sortOrder) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'highest':
+          return b.rating - a.rating;
+        case 'lowest':
+          return a.rating - b.rating;
+        default:
+          return 0;
+      }
+    });
+    
+    return filteredReviews;
+  };
+
+  const filteredReviews = getFilteredAndSortedReviews();
+  const displayedReviews = showAllReviews ? filteredReviews : filteredReviews.slice(0, 5);
+
   const renderLabSpecificDetails = () => {
     if (!selectedLab) return null;
 
     switch (labType) {
+      case 'cloud-slice':
       case 'cloudslice':
         return (
           <div className="space-y-6">
@@ -176,7 +232,7 @@ export const LabDetailsPage: React.FC = () => {
                   {(showAllModules ? selectedLab.modules : selectedLab.modules.slice(0, 3)).map((module: any, index: number) => {
                     const moduleKey = module.id || index.toString();
                     const totalDuration = module.exercises?.reduce((total: number, exercise: any) => {
-                      return total + (exercise?.details?.estimated_duration || exercise?.details[0]?.duration);
+                      return total + (exercise?.details?.estimated_duration || exercise?.details[0]?.duration || exercise?.duration || 0);
                     }, 0) || 0;
                     
                     return (
@@ -184,7 +240,7 @@ export const LabDetailsPage: React.FC = () => {
                         <div className="flex justify-between items-center cursor-pointer" 
                              onClick={() => toggleModuleExpansion(moduleKey)}>
                           <div className="flex-1">
-                            <h4 className="font-medium text-gray-300">{module.name}</h4>
+                            <h4 className="font-medium text-gray-300">{module.name || module.title}</h4>
                             {totalDuration > 0 && (
                               <p className="text-sm text-primary-400 mt-1">Total Duration: {totalDuration} minutes</p>
                             )}
@@ -203,6 +259,10 @@ export const LabDetailsPage: React.FC = () => {
                                 <h5 className="text-sm font-medium text-gray-300">Exercises:</h5>
                                 {module.exercises.map((exercise: any, exIndex: number) => {
                                   const exerciseKey = `${moduleKey}-${exIndex}`;
+                                  const exerciseDuration = exercise?.details?.estimated_duration || exercise?.details?.[0]?.duration || exercise?.duration || 0;
+                                  const exerciseType = exercise.type || 'lab';
+                                  const exerciseTitle = exercise?.details?.title || exercise?.details?.[0]?.title || exercise?.title || `Exercise ${exIndex + 1}`;
+                                  
                                   return (
                                     <div key={exIndex} className="pl-4 border-l border-primary-500/20">
                                       <div 
@@ -211,14 +271,16 @@ export const LabDetailsPage: React.FC = () => {
                                       >
                                         <div className="flex items-center space-x-3">
                                           <span className="inline-block w-2 h-2 bg-primary-400 rounded-full"></span>
-                                          <span className="text-sm text-gray-300">{exercise?.details?.title || exercise?.details[0]?.title}</span>
+                                          <span className="text-sm text-gray-300">{exerciseTitle}</span>
                                           <div className="flex items-center space-x-2">
                                             <span className="text-xs px-2 py-1 bg-secondary-500/20 text-secondary-300 rounded">
-                                              {exercise.type || 'lab'}
+                                              {exerciseType}
                                             </span>
+                                            {exerciseDuration > 0 && (
                                               <span className="text-xs px-2 py-1 bg-amber-500/20 text-amber-300 rounded">
-                                                {exercise?.details?.estimated_duration || exercise?.details[0]?.duration}m
+                                                {exerciseDuration}m
                                               </span>
+                                            )}
                                           </div>
                                         </div>
                                         {expandedExercises[exerciseKey] ? (
@@ -261,6 +323,8 @@ export const LabDetailsPage: React.FC = () => {
           </div>
         );
 
+      case 'cloud-vm':
+      case 'catalogue':
       case 'singlevmaws':
       case 'singlevmdatacenter':
         return (
@@ -339,6 +403,7 @@ export const LabDetailsPage: React.FC = () => {
           </div>
         );
 
+      case 'cluster':
       case 'vmclusterdatacenter':
         return (
           <div className="space-y-6">
@@ -406,7 +471,7 @@ export const LabDetailsPage: React.FC = () => {
     );
   }
 
-  const canEdit = user?.role === 'superadmin' || user?.role === 'orgsuperadmin' || selectedLab.createdBy === user?.id;
+  const canEdit = user?.role === 'superadmin' || user?.role === 'orgadmin' || selectedLab.createdBy === user?.id;
   const averageRating = reviews.length > 0 ? 
     reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length : 
     selectedLab.rating || 0;
@@ -425,7 +490,10 @@ export const LabDetailsPage: React.FC = () => {
               <span>Back to Labs</span>
             </button>
             {canEdit && (
-              <button className="btn-secondary flex items-center space-x-2">
+              <button 
+                onClick={handleEditLab}
+                className="btn-secondary flex items-center space-x-2"
+              >
                 <Edit className="h-4 w-4" />
                 <span>Edit Lab</span>
               </button>
@@ -481,11 +549,11 @@ export const LabDetailsPage: React.FC = () => {
                   )}
                 </div>
 
-                {selectedLab.key_technologies && selectedLab.key_technologies.length > 0 && (
+                {((selectedLab.technologies && selectedLab.technologies.length > 0) || (selectedLab.key_technologies && selectedLab.key_technologies.length > 0)) && (
                   <div className="mb-6">
                     <h4 className="text-sm font-medium text-gray-400 mb-2">Technologies:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedLab.key_technologies.map((tech, index) => (
+                      {(selectedLab.technologies || selectedLab.key_technologies || []).map((tech, index) => (
                         <span key={index} className="px-2 py-1 text-xs bg-dark-400/50 text-primary-300 rounded-full">
                           {tech}
                         </span>
@@ -510,16 +578,17 @@ export const LabDetailsPage: React.FC = () => {
               <p className="text-gray-400 leading-relaxed mb-6">{selectedLab.description}</p>
               
               {/* Learning Objectives */}
-              {selectedLab.learning_objectives && (
+              {(selectedLab.learningObjectives || selectedLab.learning_objectives) && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">What You'll Learn</h3>
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <p className="text-gray-400 leading-relaxed">{selectedLab.learning_objectives}</p>
+                    <p className="text-gray-400 leading-relaxed">{selectedLab.learningObjectives || selectedLab.learning_objectives}</p>
                   </div>
                 </div>
               )}
-              {/* additional details */}
-               {selectedLab.additional_details && (
+
+              {/* Additional Details */}
+              {selectedLab.additional_details && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">Additional Details</h3>
                   <div className="bg-dark-300/50 rounded-lg p-4">
@@ -539,11 +608,11 @@ export const LabDetailsPage: React.FC = () => {
               )}
 
               {/* Target Audience */}
-              {selectedLab.target_audience && (
+              {(selectedLab.targetAudience || selectedLab.target_audience) && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">Who This Lab Is For</h3>
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <p className="text-gray-400">{selectedLab.target_audience}</p>
+                    <p className="text-gray-400">{selectedLab.targetAudience || selectedLab.target_audience}</p>
                   </div>
                 </div>
               )}
@@ -552,7 +621,7 @@ export const LabDetailsPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {selectedLab.category && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-gray-400 mb-1">Level</h4>
+                    <h4 className="text-sm font-medium text-gray-400 mb-1">Category</h4>
                     <p className="text-primary-300">{selectedLab.category}</p>
                   </div>
                 )}
@@ -568,10 +637,10 @@ export const LabDetailsPage: React.FC = () => {
                     <p className="text-emerald-300">{selectedLab.instructor}</p>
                   </div>
                 )}
-                  <div className="bg-dark-300/50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-gray-400 mb-1">Language</h4>
-                    <p className="text-gray-300">{selectedLab.language || 'English'}</p>
-                  </div>
+                <div className="bg-dark-300/50 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-gray-400 mb-1">Language</h4>
+                  <p className="text-gray-300">{selectedLab.language || 'English'}</p>
+                </div>
                 {selectedLab.certificate !== undefined && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Certificate</h4>
@@ -615,16 +684,19 @@ export const LabDetailsPage: React.FC = () => {
             <div className="bg-dark-200/80 backdrop-blur-sm rounded-xl border border-primary-500/10 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-semibold text-gray-300">Reviews & Ratings</h2>
-                <button 
-                  onClick={() => setShowReviewForm(!showReviewForm)}
-                  className="btn-secondary text-sm"
-                >
-                  Write Review
-                </button>
+                {user && (
+                  <button 
+                    onClick={() => setShowReviewForm(!showReviewForm)}
+                    className="btn-secondary text-sm"
+                  >
+                    <GradientText>
+                    Write Review</GradientText>
+                  </button>
+                )}
               </div>
 
-              {/* Review Form */}
-              {showReviewForm && (
+              {/* Review Form - Only for logged in users */}
+              {showReviewForm && user && (
                 <div className="mb-6 p-4 bg-dark-300/50 rounded-lg border border-primary-500/20">
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-300 mb-2">Rating</label>
@@ -664,14 +736,54 @@ export const LabDetailsPage: React.FC = () => {
                       ) : (
                         <Send className="h-4 w-4" />
                       )}
-                      <span>Submit</span>
+                      <span><GradientText>Submit</GradientText></span>
                     </button>
                     <button
                       onClick={() => setShowReviewForm(false)}
                       className="btn-secondary"
                     >
-                      Cancel
+                      <GradientText>Cancel</GradientText>
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Review Filters */}
+              {reviews.length > 0 && (
+                <div className="mb-6 p-4 bg-dark-300/30 rounded-lg border border-primary-500/10">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Filter className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm font-medium text-gray-300">Filter Reviews</span>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm text-gray-400">Rating:</label>
+                      <select
+                        value={reviewFilter}
+                        onChange={(e) => setReviewFilter(e.target.value as any)}
+                        className="px-3 py-1 bg-dark-400/50 border border-primary-500/20 rounded text-sm text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                      >
+                        <option value="all">All</option>
+                        <option value={5}>5 Stars</option>
+                        <option value={4}>4 Stars</option>
+                        <option value={3}>3 Stars</option>
+                        <option value={2}>2 Stars</option>
+                        <option value={1}>1 Star</option>
+                      </select>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <label className="text-sm text-gray-400">Sort:</label>
+                      <select
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value as any)}
+                        className="px-3 py-1 bg-dark-400/50 border border-primary-500/20 rounded text-sm text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                      >
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="highest">Highest Rating</option>
+                        <option value="lowest">Lowest Rating</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
@@ -682,41 +794,64 @@ export const LabDetailsPage: React.FC = () => {
                   <div className="flex items-center justify-center py-8">
                     <Loader className="h-6 w-6 animate-spin text-primary-400" />
                   </div>
-                ) : reviews.length > 0 ? (
-                  reviews.map((review) => (
-                    <div key={review.id} className="p-4 bg-dark-300/30 rounded-lg border border-primary-500/10">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center">
-                            <User className="h-5 w-5 text-primary-400" />
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h4 className="font-medium text-gray-300">{review.userName}</h4>
-                            <div className="flex space-x-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Star 
-                                  key={star} 
-                                  className={`h-4 w-4 ${
-                                    star <= review.rating ? 'text-amber-400 fill-current' : 'text-gray-500'
-                                  }`} 
-                                />
-                              ))}
+                ) : displayedReviews.length > 0 ? (
+                  <>
+                    {displayedReviews.map((review) => (
+                      <div key={review.id} className="p-4 bg-dark-300/30 rounded-lg border border-primary-500/10">
+                        <div className="flex items-start space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center">
+                              <User className="h-5 w-5 text-primary-400" />
                             </div>
-                            <span className="text-sm text-gray-500">
-                              {formatDate(review.createdAt)}
-                            </span>
                           </div>
-                          <p className="text-gray-400">{review.comment}</p>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <h4 className="font-medium text-gray-300">{review.username}</h4>
+                              <div className="flex space-x-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star 
+                                    key={star} 
+                                    className={`h-4 w-4 ${
+                                      star <= review.rating ? 'text-amber-400 fill-current' : 'text-gray-500'
+                                    }`} 
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-sm text-gray-500">
+                                {formatDate(review.created_at)}
+                              </span>
+                            </div>
+                            <p className="text-gray-400">{review.review_text}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                    {filteredReviews.length > 5 && (
+                      <div className="text-center pt-4">
+                        <button
+                          onClick={() => setShowAllReviews(!showAllReviews)}
+                          className="px-6 py-2 bg-primary-500/20 text-primary-300 rounded-lg hover:bg-primary-500/30 transition-colors"
+                        >
+                          {showAllReviews 
+                            ? `Show Less (${filteredReviews.length - 5} hidden)` 
+                            : `Show ${filteredReviews.length - 5} More Reviews`
+                          }
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : filteredReviews.length === 0 && reviews.length > 0 ? (
+                  <div className="text-center py-8">
+                    <MessageCircle className="h-12 w-12 text-gray-500 mx-auto mb-3" />
+                    <p className="text-gray-400">No reviews match your filter criteria.</p>
+                  </div>
                 ) : (
                   <div className="text-center py-8">
                     <MessageCircle className="h-12 w-12 text-gray-500 mx-auto mb-3" />
                     <p className="text-gray-400">No reviews yet. Be the first to review this lab!</p>
+                    {!user && (
+                      <p className="text-sm text-gray-500 mt-2">Please log in to write a review.</p>
+                    )}
                   </div>
                 )}
               </div>

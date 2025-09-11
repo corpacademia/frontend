@@ -44,13 +44,13 @@ interface LabDetails {
 
 interface Review {
   id: string;
-  userId: string;
-  userName: string;
+  user_id: string;
+  username: string;
   userAvatar?: string;
-  labId: string;
+  lab_id: string;
   rating: number;
-  comment: string;
-  createdAt: string;
+  review_text: string;
+  createdat: string;
 }
 
 interface LabDetailsState {
@@ -61,7 +61,7 @@ interface LabDetailsState {
   error: string | null;
   fetchLabDetails: (labId: string, labType: string) => Promise<void>;
   fetchReviews: (labId: string) => Promise<void>;
-  addReview: (labId: string, rating: number, comment: string) => Promise<void>;
+  addReview: (labId: string,userId:string, rating: number, comment: string) => Promise<void>;
   clearSelectedLab: () => void;
 }
 
@@ -125,50 +125,26 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
     set({ isLoadingReviews: true });
     
     try {
-      // Mock data for now - replace with actual API call
-      const mockReviews: Review[] = [
-        {
-          id: '1',
-          userId: 'user1',
-          userName: 'John Doe',
-          userAvatar: '',
-          labId,
-          rating: 5,
-          comment: 'Excellent lab! Very comprehensive and well-structured.',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: '2',
-          userId: 'user2',
-          userName: 'Jane Smith',
-          userAvatar: '',
-          labId,
-          rating: 4,
-          comment: 'Great learning experience, could use more detailed instructions.',
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-        },
-      ];
-      
-      set({ reviews: mockReviews, isLoadingReviews: false });
+      const reviewData:Review =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getReviews`,{
+        labId:labId
+      })
+      set({ reviews: reviewData.data.data, isLoadingReviews: false });
     } catch (error: any) {
       console.error('Failed to fetch reviews:', error);
       set({ isLoadingReviews: false });
     }
   },
 
-  addReview: async (labId: string, rating: number, comment: string) => {
+  addReview: async (labId: string,userId:string, rating: number, comment: string) => {
     try {
       // Mock implementation - replace with actual API call
-      const newReview: Review = {
-        id: Date.now().toString(),
-        userId: 'current-user',
-        userName: 'Current User',
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/insertReview`,{
         labId,
+        userId,
         rating,
         comment,
-        createdAt: new Date().toISOString(),
-      };
-
+      })
+      const newReview:Review = response.data.data;
       const currentReviews = get().reviews;
       set({ reviews: [newReview, ...currentReviews] });
     } catch (error: any) {

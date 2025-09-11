@@ -77,7 +77,7 @@ export const AppRoutes: React.FC = () => {
         </PrivateRoute>
       } />
       <Route path='/notifications' element={<NotificationPage/>} />
-
+      <Route path="/dashboard/labs/details/:labId" element={<LabDetailsPage />} />
       {/* Super Admin Routes */}
 
       <Route
@@ -105,11 +105,10 @@ export const AppRoutes: React.FC = () => {
         <Route path="labs/create" element={<CreateLabEnvironment />} />
         <Route path="labs/workspace" element={<WorkspacePage />} />
         {/* <Route path="labs/catalogue" element={<CataloguePage />} /> */}
-
         <Route path="labs/catalogue" element={<PublicCataloguePage />} />
         <Route path="labs/catalogue/orgadmin" element={<OrgAdminCataloguePage />} />
         <Route path="labs/catalogue/orgsuperadmin" element={<OrgSuperAdminCataloguePage />} />
-        <Route path="labs/details/:labId" element={<LabDetailsPage />} />
+        {/* <Route path="labs/details/:labId" element={<LabDetailsPage />} /> */}
         <Route path="labs/cloud-vm" element={<CloudVMPage />} />
         <Route path="labs/cloud-vm/:role" element={<CloudVMsPage />} />
         <Route path="labs/dedicated-vm" element={<DedicatedVMPage />} />
@@ -161,7 +160,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="my-labs/:labId/exercise/:exerciseId" element={<LabExercisePage />} />
         <Route path="my-labs/:labId/quiz/:exerciseId" element={<QuizExercisePage />} />
       </Route>
-
+      
       <Route path="/" element={<PublicCataloguePage />} />
     </Routes>
   );
