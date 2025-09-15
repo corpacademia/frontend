@@ -28,46 +28,53 @@ import {
   Loader,
   ChevronDown,
   ChevronUp,
-  Filter
+  Filter,
+  Trash2
 } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import { formatDate } from '../../../utils/date';
+import axios from 'axios';
 
 export const LabDetailsPage: React.FC = () => {
   const { labId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  
+
   const { 
     selectedLab, 
+    userLabDetails,
     reviews, 
     isLoadingDetails, 
     isLoadingReviews, 
     error,
     fetchLabDetails,
+    fetchUserLabDetails,
     fetchReviews,
     addReview,
+    deleteReview,
     clearSelectedLab
   } = useLabDetailsStore();
 
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isDeletingReview, setIsDeletingReview] = useState<string | null>(null);
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
   const [showAllModules, setShowAllModules] = useState(false);
   const [expandAllModules, setExpandAllModules] = useState(false);
+  const [isLaunching,setIsLaunching] = useState(false);
   // Review filtering and pagination states
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [reviewFilter, setReviewFilter] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
-
+ 
   const labType = location.state?.labType || 'catalogue';
-
   useEffect(() => {
     if (labId) {
       fetchLabDetails(labId, labType);
+      fetchUserLabDetails(labId,labType)
       fetchReviews(labId);
     }
 
@@ -90,6 +97,26 @@ export const LabDetailsPage: React.FC = () => {
       setIsSubmittingReview(false);
     }
   };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!user || user.role !== 'superadmin') return;
+    
+    setIsDeletingReview(reviewId);
+    try {
+      await deleteReview(reviewId);
+    } catch (error) {
+      console.error('Failed to delete review:', error);
+    } finally {
+      setIsDeletingReview(null);
+    }
+  };
+
+  const getDays =  (startDate: string, endDate: string) => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffInMs = end.getTime() - start.getTime();
+  return Math.ceil(diffInMs / (1000 * 60 * 60 * 24));
+};
 
   const toggleModuleExpansion = (moduleId: string) => {
     setExpandedModules(prev => ({
@@ -440,7 +467,148 @@ export const LabDetailsPage: React.FC = () => {
           </div>
         );
     }
+  
   };
+
+  const handleLaunchLab = async(e:React.MouseEvent)=>{
+     e.stopPropagation(); // Prevent triggering card click if clicking launch
+     const currentLabDetails = userLabDetails?.find((lab:any)=>lab?.user_id === user?.id) || null ;
+     {
+        setIsLaunching(true);
+        if(currentLabDetails?.status === 'expired') {
+          setIsLaunching(false);
+          return;
+        }
+        try {
+          // Assuming 'selectedLab' is the relevant lab status for the current user
+          const userLabStatus = currentLabDetails || { launched: false, status: 'not-started' }; // Fallback if selectedLab is undefined
+    
+          if( !userLabStatus.launched){
+            const update = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateDates`,{
+              labId:userLabStatus?.labid,
+              userId:user?.id,
+              duration:userLabStatus.duration,
+              status:'active',
+              launched:true,
+            })
+            if(update.data.success){
+              // Update local lab state if needed, or rely on fetched data later
+              // lab.startdate = update.data.data.start_date;
+              // lab.enddate = update.data.data.end_date;
+            }
+          }
+          if (userLabStatus.modules === 'without-modules') {
+            // Call createIamUser only if the lab is not already launched
+            if (!userLabStatus.launched) {
+              const createIamUser = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
+                userName: user?.name,
+                services: userLabStatus?.services,
+                role:user?.role,
+                labid:userLabStatus?.labid,
+                user_id:user?.id,
+                purchased:true
+              });
+    
+              if(createIamUser.data.success){
+                const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
+                  status:'active',
+                  launched:true,
+                  labId:userLabStatus?.labid,
+                  userId:user?.id,
+                  purchased:true
+                })
+    
+                if(updateUserLabStatus.data.success){
+                     // Navigate to standard lab
+                  navigate(`/dashboard/my-labs/${userLabStatus?.labid}/standard`, { // Use lab.labid for routing
+                    state: {
+                      labDetails: {
+                        ...userLabStatus,
+                        credentials: {
+                          username: 'lab-user-789',
+                          accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                          secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                        },
+                        consoleUrl: 'https://console.aws.amazon.com'
+                      }
+                    }
+                  });
+                }
+              }
+            }
+            else{
+               // Navigate to standard lab if already launched
+                navigate(`/dashboard/my-labs/${userLabStatus?.labid}/standard`, { // Use lab.labid for routing
+                  state: {
+                    labDetails: {
+                      ...userLabStatus,
+                      credentials: {
+                        username: 'lab-user-789',
+                        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                        secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                      },
+                      consoleUrl: 'https://console.aws.amazon.com'
+                    }
+                  }
+                });
+            }
+    
+          } else { // It's a module-based lab
+            if(!userLabStatus.launched){
+              const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
+                status:'active',
+                launched:true,
+                labId:userLabStatus?.labid,
+                userId:user?.id,
+                purchased:true
+              })
+              if(updateUserLabStatus.data.success){
+                 // Navigate to module-based lab
+                 navigate(`/dashboard/my-labs/${userLabStatus?.labid}/modules`, { // Use lab.labid for routing
+                  state: {
+                    labDetails: {
+                      ...userLabStatus,
+                      credentials: {
+                        username: 'lab-user-789',
+                        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                        secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                      },
+                      consoleUrl: 'https://console.aws.amazon.com'
+                    }
+                  }
+                });
+              }
+            }
+            else{
+               // Navigate to module-based lab if already launched
+               navigate(`/dashboard/my-labs/${userLabStatus.labid}/modules`, { // Use lab.labid for routing
+                state: {
+                  labDetails: {
+                    ...userLabStatus,
+                    credentials: {
+                      username: 'lab-user-789',
+                      accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                      secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                    },
+                    consoleUrl: 'https://console.aws.amazon.com'
+                  }
+                }
+              });
+            }
+    
+          }
+        } catch (error: any) {
+          console.error("Launch error:", error); // Log the full error
+          setNotification({
+            type: 'error',
+            message: error.response?.data?.message || error.message || 'Failed to launch lab'
+          });
+          setTimeout(() => setNotification(null), 3000);
+        } finally {
+          setIsLaunching(false);
+        }
+      };
+  }
 
   if (isLoadingDetails) {
     return (
@@ -523,7 +691,7 @@ export const LabDetailsPage: React.FC = () => {
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-1 text-secondary-400" />
-                      <span>{selectedLab.duration || 60}m</span>
+                      <span>{selectedLab?.number_days || getDays(selectedLab?.startdate,selectedLab?.enddate) || getDays(selectedLab?.start_date,selectedLab?.end_date)}D</span>
                     </div>
                   </div>
                 </div>
@@ -562,7 +730,9 @@ export const LabDetailsPage: React.FC = () => {
                   </div>
                 )}
 
-                <button className="w-full btn-primary flex items-center justify-center space-x-2">
+                <button className="w-full btn-primary flex items-center justify-center space-x-2"
+                onClick={handleLaunchLab}
+                >
                   <Play className="h-4 w-4" />
                   <span>Start Lab</span>
                 </button>
@@ -805,21 +975,37 @@ export const LabDetailsPage: React.FC = () => {
                             </div>
                           </div>
                           <div className="flex-1">
-                            <div className="flex items-center space-x-3 mb-2">
-                              <h4 className="font-medium text-gray-300">{review.username}</h4>
-                              <div className="flex space-x-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star 
-                                    key={star} 
-                                    className={`h-4 w-4 ${
-                                      star <= review.rating ? 'text-amber-400 fill-current' : 'text-gray-500'
-                                    }`} 
-                                  />
-                                ))}
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center space-x-3">
+                                <h4 className="font-medium text-gray-300">{review.username}</h4>
+                                <div className="flex space-x-1">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star 
+                                      key={star} 
+                                      className={`h-4 w-4 ${
+                                        star <= review.rating ? 'text-amber-400 fill-current' : 'text-gray-500'
+                                      }`} 
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-sm text-gray-500">
+                                  {formatDate(review.created_at)}
+                                </span>
                               </div>
-                              <span className="text-sm text-gray-500">
-                                {formatDate(review.created_at)}
-                              </span>
+                              {user?.role === 'superadmin' && (
+                                <button
+                                  onClick={() => handleDeleteReview(review.id)}
+                                  disabled={isDeletingReview === review.id}
+                                  className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Delete review"
+                                >
+                                  {isDeletingReview === review.id ? (
+                                    <Loader className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                </button>
+                              )}
                             </div>
                             <p className="text-gray-400">{review.review_text}</p>
                           </div>

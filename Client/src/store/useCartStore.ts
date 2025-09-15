@@ -141,4 +141,43 @@ export const useCartStore = create<CartStore>((set, get) => ({
       alert('Checkout failed. Please try again.');
     }
   },
+  
+  //  proceedToCheckout: async ({ userId, catalogues }) => {
+  //   const cartItems = get().cartItems;
+  //   if (cartItems.length === 0) return;
+  //   try {
+  //     const payload = cartItems.map((item) => {
+  //       const lab = catalogues.find(
+  //         (c) => c.id === item.labid || c.id === item.labid
+  //       );
+  //       return {
+  //         lab_id: item.labid,
+  //         name: item.name,
+  //         quantity: item.quantity,
+  //         price: item.price,
+  //         duration: item.duration,
+  //         level: lab?.level,
+  //         category: lab?.category,
+  //         by: lab?.provider,
+  //         type:lab?.type,
+  //         user_id:lab?.user_id
+  //       };
+  //     });
+  //     const response = await axios.post(
+  //       `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/create-checkout-session`,
+  //       {
+  //         amount:200, purpose:"Lab Purchase", buyer_name:'Khan', email:"xyz@gmail.com", phone:988043382,
+  //       }
+  //     );
+
+  //     if(response.data.success){
+  //       window.location.href = response.data.payment_url
+  //     }
+  //   } catch (error) {
+  //     console.error('Checkout error:', error);
+  //     alert('Checkout failed. Please try again.');
+  //   }
+  // },
+  
+
 }));

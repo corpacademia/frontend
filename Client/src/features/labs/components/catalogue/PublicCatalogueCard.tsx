@@ -25,7 +25,7 @@ interface PublicCatalogueCardProps {
     duration: string;
     level: string;
     category: string;
-    rating: number;
+    avg_rating: number;
     enrolledCount: number;
     image?: string;
     price?: number;
@@ -60,10 +60,8 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
 
   const isSuperAdmin = (currentUser || user)?.role === 'superadmin';
   const isOrgSuperAdmin = (currentUser || user)?.role === 'orgsuperadmin';
-
   // derived
   const isAvailable = (course.software || '').toLowerCase() === 'available';
-
   // Check if current user can edit/delete this lab
   const canEditDelete = () => {
     if (isSuperAdmin) return true;
@@ -184,7 +182,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
             </div>
             <div className="flex items-center text-amber-400">
               <Star className="h-4 w-4 mr-1 fill-current" />
-              <span className="text-sm font-medium">{course.rating}</span>
+              <span className="text-sm font-medium">{Number(course.avg_rating)}</span>
             </div>
           </div>
 
@@ -202,7 +200,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
           <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
             <div className="flex items-center text-gray-400">
               <Clock className="h-4 w-4 mr-2 text-primary-400" />
-              <span>{course.duration}</span>
+              <span>{course.duration} {course?.duration === 1 ? 'day' : 'days'}</span>
             </div>
             <div className="flex items-center text-gray-400">
               <User className="h-4 w-4 mr-2 text-primary-400" />
@@ -210,7 +208,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
             </div>
             <div className="flex items-center text-gray-400">
               <BookOpen className="h-4 w-4 mr-2 text-primary-400" />
-              <span>{course.enrolledCount} enrolled</span>
+              <span>{course.enrolledcount} enrolled</span>
             </div>
             <div className="flex items-center text-gray-400">
               <Calendar className="h-4 w-4 mr-2 text-primary-400" />

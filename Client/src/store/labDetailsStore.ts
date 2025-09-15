@@ -55,21 +55,27 @@ interface Review {
 
 interface LabDetailsState {
   selectedLab: LabDetails | null;
+  userLabDetails : LabDetails | null;
   reviews: Review[];
   isLoadingDetails: boolean;
+  isLoadingUserDetails: boolean;
   isLoadingReviews: boolean;
   error: string | null;
   fetchLabDetails: (labId: string, labType: string) => Promise<void>;
+  fetchUserLabDetails:(labId:string,labType:string) => Promise<void>;
   fetchReviews: (labId: string) => Promise<void>;
   addReview: (labId: string,userId:string, rating: number, comment: string) => Promise<void>;
+  deleteReview: (reviewId: string) => Promise<void>;
   clearSelectedLab: () => void;
 }
 
 export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
   selectedLab: null,
+  userLabDetails:null,
   reviews: [],
   isLoadingDetails: false,
   isLoadingReviews: false,
+  isLoadingUserDetails:false,
   error: null,
 
   fetchLabDetails: async (labId: string, labType: string) => {
@@ -77,7 +83,6 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
     
     try {
       let response;
-      
       switch (labType) {
         case 'cloudslice':
           response = await axios.post(
@@ -121,6 +126,31 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
     }
   },
 
+  fetchUserLabDetails: async(labId:string,labType:string)=>{
+   set({isLoadingUserDetails:true})
+   try {
+     let response;
+     switch(labType){
+      case 'cloudslice':
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserPurchasedLabOnId`,{
+          labId
+        });
+          break;
+        default:
+          throw new Error(`Unsupported lab type:${labType}`)
+     }
+     if(response?.data.success){
+      set({userLabDetails:response.data.data,isLoadingUserDetails:false})
+     }
+   } catch (error:any) {
+     console.error('Failed to fetch lab details:', error);
+      set({
+        isLoadingUserDetails: false,
+        error: error.response?.data?.message || 'Failed to fetch lab details',
+      });
+   }
+  },
+
   fetchReviews: async (labId: string) => {
     set({ isLoadingReviews: true });
     
@@ -149,6 +179,23 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
       set({ reviews: [newReview, ...currentReviews] });
     } catch (error: any) {
       console.error('Failed to add review:', error);
+      throw error;
+    }
+  },
+
+  deleteReview: async (reviewId: string) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteReview/${reviewId}`);
+      
+      if (response.data.success) {
+        // Remove the deleted review from the state
+        set((state) => ({
+          reviews: state.reviews.filter(review => review.id !== reviewId)
+        }));
+      }
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      set({ error: 'Failed to delete review' });
       throw error;
     }
   },

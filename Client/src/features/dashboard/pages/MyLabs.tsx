@@ -850,15 +850,21 @@ export const MyLabs: React.FC = () => {
   }
 
   const handleDeleteCloudSlice = async (labId: string, labStatus: any) => {
+    
     // This function will be passed to the CloudSliceCard component
     // It will be called when the user clicks the delete button on a cloud slice lab
-    const acountDetails = labStatus.find((lab) => lab.labid === labId)
+
+    let accountDetails;
+    if(Array.isArray(labStatus)){
+     accountDetails = labStatus.find((lab) => lab.labid === labId)
+  }
+  else accountDetails = labStatus
     try {
       let response;
       let IamSuccess;
-      if (acountDetails?.username !== null && acountDetails?.username !== undefined) {
+      if (accountDetails?.username !== null && accountDetails?.username !== undefined) {
       const deleteIam = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deleteIamAccount`, {
-        userName: acountDetails.username
+        userName: accountDetails.username
       })
      IamSuccess = deleteIam.data.success;
     }
@@ -867,7 +873,7 @@ export const MyLabs: React.FC = () => {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
           userId: user.id,
           labId: labId,
-          purchased:acountDetails?.purchased || false
+          purchased:accountDetails?.purchased || false
         })
         if (response.data.success) {
           setCloudSliceLabs(prev => prev.filter(lab => lab.labid !== labId));

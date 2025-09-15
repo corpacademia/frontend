@@ -130,37 +130,37 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
 
             if(updateUserLabStatus.data.success){
                  // Navigate to standard lab
-        navigate(`/dashboard/my-labs/${lab.labid}/standard`, { // Use lab.labid for routing
-          state: {
-            labDetails: {
-              ...lab,
-              credentials: {
-                username: 'lab-user-789',
-                accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-                secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-              },
-              consoleUrl: 'https://console.aws.amazon.com'
-            }
-          }
-        });
+              navigate(`/dashboard/my-labs/${lab.labid}/standard`, { // Use lab.labid for routing
+                state: {
+                  labDetails: {
+                    ...lab,
+                    credentials: {
+                      username: 'lab-user-789',
+                      accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                      secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                    },
+                    consoleUrl: 'https://console.aws.amazon.com'
+                  }
+                }
+              });
             }
           }
         }
         else{
            // Navigate to standard lab if already launched
-        navigate(`/dashboard/my-labs/${lab.labid}/standard`, { // Use lab.labid for routing
-          state: {
-            labDetails: {
-              ...lab,
-              credentials: {
-                username: 'lab-user-789',
-                accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-                secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-              },
-              consoleUrl: 'https://console.aws.amazon.com'
-            }
-          }
-        });
+            navigate(`/dashboard/my-labs/${lab.labid}/standard`, { // Use lab.labid for routing
+              state: {
+                labDetails: {
+                  ...lab,
+                  credentials: {
+                    username: 'lab-user-789',
+                    accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                    secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                  },
+                  consoleUrl: 'https://console.aws.amazon.com'
+                }
+              }
+            });
         }
 
       } else { // It's a module-based lab
@@ -219,7 +219,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
     }
   };
 
-
+  
   const handleDeleteClick = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering card click if clicking delete
     e.preventDefault();
@@ -394,7 +394,7 @@ const confirmDelete = async (e: React.MouseEvent) => {
         <div className="mb-3 sm:mb-4 flex-grow overflow-hidden">
           <h4 className="text-xs sm:text-sm font-medium text-gray-400 mb-1 sm:mb-2">Services:</h4>
           <div className="flex flex-wrap gap-1 sm:gap-2 max-h-[60px] sm:max-h-[80px] overflow-y-auto">
-            {lab.services.map((service, index) => (
+            {lab?.services?.map((service, index) => (
               <span key={index} className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs font-medium rounded-full bg-primary-500/20 text-primary-300 whitespace-nowrap">
                 {service}
               </span>
