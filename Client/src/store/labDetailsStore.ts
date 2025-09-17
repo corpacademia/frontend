@@ -136,6 +136,11 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
           labId
         });
           break;
+      case 'singlevm-aws':
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserPurchasedSinglvmLabsOnLabId`,{
+          labId
+        });
+        break;
         default:
           throw new Error(`Unsupported lab type:${labType}`)
      }

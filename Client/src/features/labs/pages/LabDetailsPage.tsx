@@ -480,7 +480,6 @@ export const LabDetailsPage: React.FC = () => {
           return;
         }
         try {
-          // Assuming 'selectedLab' is the relevant lab status for the current user
           const userLabStatus = currentLabDetails || { launched: false, status: 'not-started' }; // Fallback if selectedLab is undefined
     
           if( !userLabStatus.launched){
@@ -529,7 +528,8 @@ export const LabDetailsPage: React.FC = () => {
                           accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
                           secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
                         },
-                        consoleUrl: 'https://console.aws.amazon.com'
+                        consoleUrl: 'https://console.aws.amazon.com',
+                        purchased:true,
                       }
                     }
                   });
@@ -541,13 +541,14 @@ export const LabDetailsPage: React.FC = () => {
                 navigate(`/dashboard/my-labs/${userLabStatus?.labid}/standard`, { // Use lab.labid for routing
                   state: {
                     labDetails: {
-                      ...userLabStatus,
+                       ...userLabStatus,
                       credentials: {
                         username: 'lab-user-789',
                         accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
                         secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
                       },
-                      consoleUrl: 'https://console.aws.amazon.com'
+                      consoleUrl: 'https://console.aws.amazon.com',
+                      purchased:true
                     }
                   }
                 });
@@ -567,13 +568,15 @@ export const LabDetailsPage: React.FC = () => {
                  navigate(`/dashboard/my-labs/${userLabStatus?.labid}/modules`, { // Use lab.labid for routing
                   state: {
                     labDetails: {
+                      
                       ...userLabStatus,
                       credentials: {
                         username: 'lab-user-789',
                         accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
                         secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
                       },
-                      consoleUrl: 'https://console.aws.amazon.com'
+                      consoleUrl: 'https://console.aws.amazon.com',
+                      purchased:true
                     }
                   }
                 });
@@ -590,7 +593,8 @@ export const LabDetailsPage: React.FC = () => {
                       accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
                       secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
                     },
-                    consoleUrl: 'https://console.aws.amazon.com'
+                    consoleUrl: 'https://console.aws.amazon.com',
+                    purchased:true
                   }
                 }
               });

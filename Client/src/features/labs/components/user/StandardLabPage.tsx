@@ -76,6 +76,7 @@ export const StandardLabPage: React.FC = () => {
     const match = filePath.match(/[^\\\/]+$/);
     return match ? match[0] : null;
   };
+  
   useEffect(()=>{
     const fetchUserDetails = async()=>{
       try {
@@ -153,7 +154,7 @@ export const StandardLabPage: React.FC = () => {
   const handleStartLab = async () => {
     setIsStarting(true);
     setNotification(null);
-    
+     console.log(labDetails)
     // Simulate API call
     const updateRunningState = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser`,{
       isRunning:true,
