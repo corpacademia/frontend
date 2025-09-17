@@ -57,7 +57,6 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isInCart, setIsInCart] = useState(false);
   const [isDeleteModalOpenn, setIsDeleteModalOpen] = useState(false);
-
   const isSuperAdmin = (currentUser || user)?.role === 'superadmin';
   const isOrgSuperAdmin = (currentUser || user)?.role === 'orgsuperadmin';
   // derived
@@ -71,7 +70,6 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
     ) return true;
     return false;
   };
-
   const checkCartExist = (labid: string): boolean => {
     return !!cartItems?.find((c: any) => c.labid === labid);
   };
@@ -208,7 +206,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
             </div>
             <div className="flex items-center text-gray-400">
               <BookOpen className="h-4 w-4 mr-2 text-primary-400" />
-              <span>{course.enrolledcount} enrolled</span>
+              <span>{course.total_enrollments} enrolled</span>
             </div>
             <div className="flex items-center text-gray-400">
               <Calendar className="h-4 w-4 mr-2 text-primary-400" />

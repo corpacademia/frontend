@@ -35,6 +35,13 @@ import { GradientText } from '../../../components/ui/GradientText';
 import { formatDate } from '../../../utils/date';
 import axios from 'axios';
 
+interface LabControl {
+  isLaunched: boolean;
+  isLaunching: boolean;
+  isProcessing: boolean;
+  buttonLabel: 'Start Lab' | 'Stop Lab';
+}
+
 export const LabDetailsPage: React.FC = () => {
   const { labId } = useParams();
   const location = useLocation();
@@ -64,11 +71,13 @@ export const LabDetailsPage: React.FC = () => {
   const [expandedExercises, setExpandedExercises] = useState<Record<string, boolean>>({});
   const [showAllModules, setShowAllModules] = useState(false);
   const [expandAllModules, setExpandAllModules] = useState(false);
-  const [isLaunching,setIsLaunching] = useState(false);
+  const [isLaunching, setIsLaunching] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   // Review filtering and pagination states
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [reviewFilter, setReviewFilter] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
+  const [labControls,setLabControls] = useState<Record<string, LabControl>>({});
  
   const labType = location.state?.labType || 'catalogue';
   useEffect(() => {
@@ -82,6 +91,33 @@ export const LabDetailsPage: React.FC = () => {
       clearSelectedLab();
     };
   }, [labId, labType]);
+
+  const checkLabStatus = async (labId: string) => {
+    if(labType === 'singlevm-aws'){
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/checkLabStatus`, {
+          lab_id: labId,
+          user_id: user?.id
+        });
+        if (response.data.success) {
+          setLabControls(prev => ({
+            ...prev,
+            [labId]: {
+              ...prev[labId],
+              isLaunched: response.data.success,
+              buttonLabel: response.data.data.isrunning ? 'Stop Lab' : 'Start Lab'
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Error checking lab status:', error);
+      }}
+    };
+
+   function formatDateAndTime(inputDate: Date) {
+    const date = new Date(inputDate);
+    return date.toISOString().slice(0, 19).replace('T', ' ');
+  }
 
   const handleSubmitReview = async () => {
     if (!newReview.comment.trim() || !labId || !user) return;
@@ -472,147 +508,367 @@ export const LabDetailsPage: React.FC = () => {
 
   const handleLaunchLab = async(e:React.MouseEvent)=>{
      e.stopPropagation(); // Prevent triggering card click if clicking launch
-     const currentLabDetails = userLabDetails?.find((lab:any)=>lab?.user_id === user?.id) || null ;
-     {
-        setIsLaunching(true);
-        if(currentLabDetails?.status === 'expired') {
-          setIsLaunching(false);
+     const currentLabDetails = userLabDetails?.find((lab:any)=>lab?.user_id === user?.id) || null;
+     setIsLaunching(true);
+     setNotification(null);
+     
+     if(currentLabDetails?.status === 'expired') {
+       setNotification({
+         type: 'error',
+         message: 'Lab has expired and cannot be launched'
+       });
+       setIsLaunching(false);
+       setTimeout(() => setNotification(null), 3000);
+       return;
+     }
+     
+     try {
+       const userLabStatus = currentLabDetails || { launched: false, status: 'not-started' }; // Fallback if selectedLab is undefined
+      if(labType === 'cloudslice'){
+       if( !userLabStatus.launched){
+         const update = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateDates`,{
+           labId:userLabStatus?.labid,
+           userId:user?.id,
+           duration:userLabStatus.duration,
+           status:'active',
+           launched:true,
+         })
+         if(update.data.success){
+           // Update local lab state if needed, or rely on fetched data later
+           // lab.startdate = update.data.data.start_date;
+           // lab.enddate = update.data.data.end_date;
+         }
+       }
+       if (userLabStatus.modules === 'without-modules') {
+         // Call createIamUser only if the lab is not already launched
+         if (!userLabStatus.launched) {
+           const createIamUser = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
+             userName: user?.name,
+             services: userLabStatus?.services,
+             role:user?.role,
+             labid:userLabStatus?.labid,
+             user_id:user?.id,
+             purchased:true
+           });
+
+           if(createIamUser.data.success){
+             const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
+               status:'active',
+               launched:true,
+               labId:userLabStatus?.labid,
+               userId:user?.id,
+               purchased:true
+             })
+
+             if(updateUserLabStatus.data.success){
+                  // Navigate to standard lab
+               navigate(`/dashboard/my-labs/${userLabStatus?.labid}/standard`, { // Use lab.labid for routing
+                 state: {
+                   labDetails: {
+                     ...userLabStatus,
+                     credentials: {
+                       username: 'lab-user-789',
+                       accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                       secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                     },
+                     consoleUrl: 'https://console.aws.amazon.com',
+                     purchased:true,
+                   }
+                 }
+               });
+             }
+           }
+         }
+         else{
+            // Navigate to standard lab if already launched
+             navigate(`/dashboard/my-labs/${userLabStatus?.labid}/standard`, { // Use lab.labid for routing
+               state: {
+                 labDetails: {
+                    ...userLabStatus,
+                   credentials: {
+                     username: 'lab-user-789',
+                     accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                     secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                   },
+                   consoleUrl: 'https://console.aws.amazon.com',
+                   purchased:true
+                 }
+               }
+             });
+         }
+
+       } else { // It's a module-based lab
+         if(!userLabStatus.launched){
+           const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
+             status:'active',
+             launched:true,
+             labId:userLabStatus?.labid,
+             userId:user?.id,
+             purchased:true
+           })
+           if(updateUserLabStatus.data.success){
+              // Navigate to module-based lab
+              navigate(`/dashboard/my-labs/${userLabStatus?.labid}/modules`, { // Use lab.labid for routing
+               state: {
+                 labDetails: {
+                   
+                   ...userLabStatus,
+                   credentials: {
+                     username: 'lab-user-789',
+                     accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                     secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                   },
+                   consoleUrl: 'https://console.aws.amazon.com',
+                   purchased:true
+                 }
+               }
+             });
+           }
+         }
+         else{
+            // Navigate to module-based lab if already launched
+            navigate(`/dashboard/my-labs/${userLabStatus.labid}/modules`, { // Use lab.labid for routing
+             state: {
+               labDetails: {
+                 ...userLabStatus,
+                 credentials: {
+                   username: 'lab-user-789',
+                   accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+                   secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+                 },
+                 consoleUrl: 'https://console.aws.amazon.com',
+                 purchased:true
+               }
+             }
+           });
+         }
+
+       }
+      }
+      else if(labType === 'singlevm-aws'){
+        const [ami, labConfig] = await Promise.all([
+                axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: userLabStatus?.lab_id || userLabStatus?.labid }),
+                axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`, { labId: userLabStatus?.lab_id || userLabStatus?.labid }),
+                
+              ]);
+              if (!ami.data.success) {
+                throw new Error('Failed to retrieve instance details');
+              }
+          
+              // First API: Launch instance (Keep loading active)
+              const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`, {
+                name: user?.name,
+                ami_id: ami.data.result.ami_id,
+                user_id: user?.id,
+                lab_id: userLabStatus?.lab_id || userLabStatus?.labid,
+                instance_type: labConfig?.data?.data?.instance,
+                start_date: formatDateAndTime(new Date()),
+                end_date: formatDateAndTime(new Date(Date.now() + (userLabStatus.duration) * 24 * 60 * 60 * 1000) 
+              )
+              });
+      }
+     } catch (error: any) {
+       console.error("Launch error:", error); // Log the full error
+       setNotification({
+         type: 'error',
+         message: error.response?.data?.message || error.message || 'Failed to launch lab'
+       });
+       setTimeout(() => setNotification(null), 3000);
+     } finally {
+       setIsLaunching(false);
+     }
+  }
+
+   const handleStartStopLab = async (lab) => {
+      const isStop = labControls[lab?.lab_id || lab?.labid]?.buttonLabel === 'Stop Lab';
+  
+      setLabControls(prev => ({
+        ...prev,
+        [lab?.lab_id || lab?.labid]: {
+          ...prev[lab?.lab_id || lab?.labid],
+          isProcessing: true,
+          notification: null
+        }
+      }));
+  
+      const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+        user_id: user.id,
+        lab_id: lab?.lab_id || lab?.labid,
+      })
+      if (!cloudinstanceDetails.data.success) {
+        throw new Error('Failed to retrieve instance details');
+      }
+      setCloudInstanceDetails(cloudinstanceDetails.data.data);
+  
+      try {
+        const instanceId = cloudInstanceDetails?.instance_id;
+        if (isStop) {
+          const stop =await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
+            instance_id: instanceId
+          });
+          if(stop.data.success){
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+              lab_id:lab?.lab_id || lab?.labid,
+              user_id:user.id,
+              state:false,
+              isStarted:true
+            })
+          }
+  
+          setLabControls(prev => ({
+            ...prev,
+            [lab?.lab_id || lab?.labid]: {
+              ...prev[lab?.lab_id || lab?.labid],
+              isProcessing: false,
+              buttonLabel: 'Start Lab',
+              notification: {
+                type: 'success',
+                message: 'Lab stopped successfully'
+              }
+            }
+          }));
+  
+          setTimeout(() => {
+            setLabControls(prev => ({
+              ...prev,
+              [lab?.lab_id || lab?.labid]: {
+                ...prev[lab?.lab_id || lab?.labid],
+                notification: null
+              }
+            }));
+          }, 3000);
+  
           return;
         }
-        try {
-          const userLabStatus = currentLabDetails || { launched: false, status: 'not-started' }; // Fallback if selectedLab is undefined
-    
-          if( !userLabStatus.launched){
-            const update = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateDates`,{
-              labId:userLabStatus?.labid,
-              userId:user?.id,
-              duration:userLabStatus.duration,
-              status:'active',
-              launched:true,
+        
+        const checkInstanceAlreadyStarted = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkisstarted`,{
+          type:'user',
+          id:cloudinstanceDetails?.data.data.instance_id,
+        })
+        if(checkInstanceAlreadyStarted.data.isStarted === false){
+         
+            console.log('stop')
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+              os_name: lab.os,
+              instance_id: cloudinstanceDetails?.data.data.instance_id,
+              hostname: cloudinstanceDetails?.data.data.public_ip,
+              password: cloudinstanceDetails?.data.data.password,
+              buttonState: 'Start Lab'
+            });
+            
+          if (response.data.response.success && response.data.response.jwtToken) {
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+              lab_id:lab?.lab_id || lab?.labid,
+              user_id:user.id,
+              state:true,
+              isStarted:false
             })
-            if(update.data.success){
-              // Update local lab state if needed, or rely on fetched data later
-              // lab.startdate = update.data.data.start_date;
-              // lab.enddate = update.data.data.end_date;
-            }
-          }
-          if (userLabStatus.modules === 'without-modules') {
-            // Call createIamUser only if the lab is not already launched
-            if (!userLabStatus.launched) {
-              const createIamUser = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
-                userName: user?.name,
-                services: userLabStatus?.services,
-                role:user?.role,
-                labid:userLabStatus?.labid,
-                user_id:user?.id,
-                purchased:true
-              });
-    
-              if(createIamUser.data.success){
-                const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
-                  status:'active',
-                  launched:true,
-                  labId:userLabStatus?.labid,
-                  userId:user?.id,
-                  purchased:true
-                })
-    
-                if(updateUserLabStatus.data.success){
-                     // Navigate to standard lab
-                  navigate(`/dashboard/my-labs/${userLabStatus?.labid}/standard`, { // Use lab.labid for routing
-                    state: {
-                      labDetails: {
-                        ...userLabStatus,
-                        credentials: {
-                          username: 'lab-user-789',
-                          accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-                          secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-                        },
-                        consoleUrl: 'https://console.aws.amazon.com',
-                        purchased:true,
-                      }
-                    }
-                  });
-                }
+            
+             const guacUrl = `${lab.guacamole_url}?token=${response.data.response.jwtToken}`;
+             console.log(guacUrl)
+            navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
+              state: { 
+                guacUrl,
+                vmTitle: lab.title,
+                vmId: lab?.lab_id || lab?.labid,
+                doc:lab.userguide
               }
-            }
-            else{
-               // Navigate to standard lab if already launched
-                navigate(`/dashboard/my-labs/${userLabStatus?.labid}/standard`, { // Use lab.labid for routing
-                  state: {
-                    labDetails: {
-                       ...userLabStatus,
-                      credentials: {
-                        username: 'lab-user-789',
-                        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-                        secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-                      },
-                      consoleUrl: 'https://console.aws.amazon.com',
-                      purchased:true
-                    }
-                  }
-                });
-            }
-    
-          } else { // It's a module-based lab
-            if(!userLabStatus.launched){
-              const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
-                status:'active',
-                launched:true,
-                labId:userLabStatus?.labid,
-                userId:user?.id,
-                purchased:true
-              })
-              if(updateUserLabStatus.data.success){
-                 // Navigate to module-based lab
-                 navigate(`/dashboard/my-labs/${userLabStatus?.labid}/modules`, { // Use lab.labid for routing
-                  state: {
-                    labDetails: {
-                      
-                      ...userLabStatus,
-                      credentials: {
-                        username: 'lab-user-789',
-                        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-                        secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-                      },
-                      consoleUrl: 'https://console.aws.amazon.com',
-                      purchased:true
-                    }
-                  }
-                });
-              }
-            }
-            else{
-               // Navigate to module-based lab if already launched
-               navigate(`/dashboard/my-labs/${userLabStatus.labid}/modules`, { // Use lab.labid for routing
-                state: {
-                  labDetails: {
-                    ...userLabStatus,
-                    credentials: {
-                      username: 'lab-user-789',
-                      accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
-                      secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
-                    },
-                    consoleUrl: 'https://console.aws.amazon.com',
-                    purchased:true
-                  }
-                }
-              });
-            }
-    
+            });
           }
-        } catch (error: any) {
-          console.error("Launch error:", error); // Log the full error
-          setNotification({
-            type: 'error',
-            message: error.response?.data?.message || error.message || 'Failed to launch lab'
-          });
-          setTimeout(() => setNotification(null), 3000);
-        } finally {
-          setIsLaunching(false);
         }
-      };
-  }
+        else{
+          console.log('run')
+          
+          const restart = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`, {
+            instance_id: cloudinstanceDetails?.data.data.instance_id,
+            user_type:'user'
+          });
+  
+  
+    
+          if (restart.data.success ) {
+            const cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+              user_id: user.id,
+              lab_id: lab?.lab_id || lab?.labid,
+            })
+            if(cloudInstanceDetails.data.success){
+              const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+                os_name: lab.os,
+                instance_id: cloudinstanceDetails?.data.data.instance_id,
+                hostname: cloudInstanceDetails?.data.data.public_ip,
+                password: cloudinstanceDetails?.data.data.password,
+                buttonState: 'Start Lab'
+              });
+              if(response.data.success){
+                //update database that the instance is started
+                await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+                  lab_id:lab?.lab_id || lab?.labid,
+                  user_id:user.id,
+                  state:true,
+                  isStarted:true
+                })
+                const guacUrl = `${lab.guacamole_url}?token=${response.data.response.jwtToken}`;
+                
+            navigate(`/dashboard/labs/vm-session/${lab?.lab_id || lab?.labid}`, {
+              state: { 
+                guacUrl,
+                vmTitle: lab.title,
+                vmId: lab?.lab_id || lab?.labid,
+                doc:lab.userguide
+              }
+            });
+              }
+            }
+          }
+        }
+        
+        setLabControls(prev => ({
+          ...prev,
+          [lab?.lab_id || lab?.labid]: {
+            ...prev[lab?.lab_id || lab?.labid],
+            isProcessing: false,
+            buttonLabel: 'Stop Lab',
+            notification: {
+              type: 'success',
+              message: 'Lab started successfully'
+            }
+          }
+        }));
+  
+        setTimeout(() => {
+          setLabControls(prev => ({
+            ...prev,
+            [lab?.lab_id || lab?.labid]: {
+              ...prev[lab?.lab_id || lab?.labid],
+              notification: null
+            }
+          }));
+        }, 3000);
+  
+      } catch (error) {
+        setLabControls(prev => ({
+          ...prev,
+          [lab?.lab_id || lab?.labid]: {
+            ...prev[lab?.lab_id || lab?.labid],
+            isProcessing: false,
+            notification: {
+              type: 'error',
+              message: error.response?.data?.message || `Failed to ${isStop ? 'stop' : 'start'} lab`
+            }
+          }
+        }));
+  
+        setTimeout(()=>{
+          setLabControls(prev => ({
+            ...prev,
+            [lab?.lab_id || lab?.labid]: {
+              ...prev[lab?.lab_id || lab?.labid],
+              notification: null
+            }
+          }));
+        },3000)
+      }
+    };
 
   if (isLoadingDetails) {
     return (
@@ -674,7 +930,31 @@ export const LabDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Notification */}
+      {notification && (
+        <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2`}>
+          <div className={`p-4 rounded-lg border ${
+            notification.type === 'success' 
+              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' 
+              : 'bg-red-500/10 border-red-500/20 text-red-300'
+          }`}>
+            <div className="flex items-center space-x-2">
+              {notification.type === 'success' ? (
+                <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-red-400"></div>
+                </div>
+              )}
+              <span className="text-sm font-medium">{notification.message}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"></div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Lab Card */}
           <div className="lg:col-span-1">
@@ -734,11 +1014,33 @@ export const LabDetailsPage: React.FC = () => {
                   </div>
                 )}
 
-                <button className="w-full btn-primary flex items-center justify-center space-x-2"
-                onClick={handleLaunchLab}
+                <button 
+                  onClick={handleLaunchLab}
+                  disabled={isLaunching}
+                  className="w-full px-4 py-3 rounded-lg text-sm font-medium
+                           bg-gradient-to-r from-primary-500 to-secondary-500
+                           hover:from-primary-400 hover:to-secondary-400
+                           transform hover:scale-105 transition-all duration-300
+                           text-white shadow-lg shadow-primary-500/20
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           flex items-center justify-center space-x-2"
                 >
-                  <Play className="h-4 w-4" />
-                  <span>Start Lab</span>
+                  {isLaunching ? (
+                    <>
+                      <Loader className="h-4 w-4 animate-spin" />
+                      <span>Launching...</span>
+                    </>
+                  ) : userLabDetails?.find((lab:any)=>lab?.user_id === user?.id)?.launched ? (
+                    <>
+                      <ExternalLink className="h-4 w-4" />
+                      <span>Go To Lab</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" />
+                      <span>Start Lab</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -1049,6 +1351,6 @@ export const LabDetailsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    // </div>
   );
 };

@@ -711,8 +711,7 @@ export const MyLabs: React.FC = () => {
 
         return;
       }
-
-    
+      
       const checkInstanceAlreadyStarted = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkisstarted`,{
         type:'user',
         id:cloudinstanceDetails?.data.data.instance_id,
@@ -794,8 +793,6 @@ export const MyLabs: React.FC = () => {
         }
       }
       
-  
-
       setLabControls(prev => ({
         ...prev,
         [lab?.lab_id || lab?.labid]: {
