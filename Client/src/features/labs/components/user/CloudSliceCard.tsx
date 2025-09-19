@@ -288,9 +288,9 @@ const confirmDelete = async (e: React.MouseEvent) => {
     if (target.closest('button') || target.closest('a')) return; // Added check for anchor tags if any
 
     // Navigate to a generic details route, passing lab type and details
-    navigate(`/labs/details/${lab.labid}`, {
+    navigate(`/dashboard/labs/details/${lab.labid}`, {
       state: {
-        labType: 'cloud-slice', // Specify the type of lab
+        labType: 'cloudslice', // Specify the type of lab
         labDetails: lab // Pass the entire lab object
       }
     });

@@ -12,6 +12,7 @@ interface PublicCatalogueGridProps {
   isDeleteModalOpen?: boolean;
   isDeleting?: boolean;
   cartItems?:any;
+  userPurchased?:any;
 }
 
 export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({ 
@@ -23,8 +24,15 @@ export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({
   currentUser,
   isDeleting = false,
   isDeleteModalOpen = false,
-  cartItems
+  cartItems,
+  userPurchased
 }) => {
+  
+const checkPurchased = (labId: string) => {
+  return userPurchased.some(lab => lab.labid === labId);
+};
+
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -63,6 +71,7 @@ export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({
           isDeleting={isDeleting}
           isDeleteModalOpen={isDeleteModalOpen}
           cartItems={cartItems}
+          enrolled={checkPurchased(course.id)}
         />
       ))}
     </div>

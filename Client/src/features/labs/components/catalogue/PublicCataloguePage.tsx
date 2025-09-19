@@ -55,6 +55,27 @@ export const PublicCataloguePage: React.FC = () => {
       proceedToCheckout,
     } = useCartStore();
 
+  const [userPurchased,setUserPurchased] = useState([]);
+  useEffect(()=>{
+    const checkEnrolled =async()=>{
+      try {
+         const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllUserPurchasedLabs`,{
+        userId:user?.id
+      })
+      if(result.data.success){
+        const data = result.data.data;
+
+        setUserPurchased(data);
+      }
+      } catch (error) {
+        console.log(error);
+      }
+     
+    }
+    checkEnrolled();
+      
+  },[user?.id])
+
   useEffect(() => {
     const fetchCatalogues = async () => {
       setIsLoading(true);
@@ -415,6 +436,7 @@ if(isLoading) {
           <PublicCatalogueFilters
             onFilterChange={handleFilterChange}
             filters={filters}
+            
           />
 
           {/* Results Count */}
@@ -436,6 +458,7 @@ if(isLoading) {
             isDeleting={isDeleting}
             isDeleteModalOpen={isDeleteModalOpen}
             cartItems={cartItems}
+            userPurchased={userPurchased}
           />
         </div>
       </div>

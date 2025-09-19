@@ -15,7 +15,8 @@ interface PublicCatalogueFiltersProps {
 
 export const PublicCatalogueFilters: React.FC<PublicCatalogueFiltersProps> = ({
   onFilterChange,
-  filters
+  filters,
+  
 }) => {
   const handleInputChange = (key: string, value: string) => {
     onFilterChange({ ...filters, [key]: value });

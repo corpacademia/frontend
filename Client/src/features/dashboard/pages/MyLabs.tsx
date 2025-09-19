@@ -36,6 +36,7 @@ interface DeleteModalProps {
   labId: string;
   labTitle: string;
   userId: string;
+  purchased:boolean;
 }
 
 interface LabDetails {
@@ -46,7 +47,7 @@ interface LabDetails {
   password: string;
 }
 
-const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, labId, labTitle, userId }) => {
+const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, labId, labTitle, userId,purchased }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   
@@ -79,6 +80,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, labId, labTi
           instance_id: instance_details?.data?.result?.instance_id || null,
           ami_id: ami?.data?.result?.ami_id || null,
           user_id: userId,
+          purchased:purchased
         });
       } catch (error) {
         console.error("Error deleting VM:", error);
@@ -253,8 +255,11 @@ export const MyLabs: React.FC = () => {
         const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVMUserPurchsedLabs`,
            { userId: user?.id }
           );
-        labss = res.data.data;
-        setLabStatus(labss); // safe to set even if others fail
+        labss = res.data.data.map((lab: any) => ({
+        ...lab,
+        purchased: true
+       }));
+        setLabStatus(labss,); // safe to set even if others fail
       } catch (error) {
         console.error("Failed to fetch the singlevm labs")
       }
@@ -902,7 +907,6 @@ export const MyLabs: React.FC = () => {
       throw error;
     }
   };
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -1038,7 +1042,8 @@ export const MyLabs: React.FC = () => {
                               isOpen: true,
                               labId: lab.lab_id,
                               labTitle: lab.title,
-                              userId: user.id
+                              userId: user.id,
+                              purchased:lab?.purchased || false
                             })}
                             className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
                           >

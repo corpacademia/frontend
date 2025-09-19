@@ -78,6 +78,8 @@ export const LabDetailsPage: React.FC = () => {
   const [reviewFilter, setReviewFilter] = useState<'all' | 1 | 2 | 3 | 4 | 5>('all');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest');
   const [labControls,setLabControls] = useState<Record<string, LabControl>>({});
+  const [cloudInstanceDetails, setCloudInstanceDetails] = useState<any>(null);
+  const [isLabLaunched, setIsLabLaunched] = useState(false);
  
   const labType = location.state?.labType || 'catalogue';
   useEffect(() => {
@@ -85,6 +87,11 @@ export const LabDetailsPage: React.FC = () => {
       fetchLabDetails(labId, labType);
       fetchUserLabDetails(labId,labType)
       fetchReviews(labId);
+      
+      // Check lab status for singlevm-aws
+      if (labType === 'singlevm-aws') {
+        checkLabStatus(labId);
+      }
     }
 
     return () => {
@@ -100,6 +107,7 @@ export const LabDetailsPage: React.FC = () => {
           user_id: user?.id
         });
         if (response.data.success) {
+          setIsLabLaunched(true);
           setLabControls(prev => ({
             ...prev,
             [labId]: {
@@ -666,6 +674,15 @@ export const LabDetailsPage: React.FC = () => {
                 end_date: formatDateAndTime(new Date(Date.now() + (userLabStatus.duration) * 24 * 60 * 60 * 1000) 
               )
               });
+              
+              if (response.data.success) {
+                setIsLabLaunched(true);
+                setNotification({
+                  type: 'success',
+                  message: 'Lab launched successfully'
+                });
+                setTimeout(() => setNotification(null), 3000);
+              }
       }
      } catch (error: any) {
        console.error("Launch error:", error); // Log the full error
@@ -679,46 +696,48 @@ export const LabDetailsPage: React.FC = () => {
      }
   }
 
-   const handleStartStopLab = async (lab) => {
-      const isStop = labControls[lab?.lab_id || lab?.labid]?.buttonLabel === 'Stop Lab';
+   const handleStartStopLab = async () => {
+      if (!labId || !user) return;
+      
+      const isStop = labControls[labId]?.buttonLabel === 'Stop Lab';
   
       setLabControls(prev => ({
         ...prev,
-        [lab?.lab_id || lab?.labid]: {
-          ...prev[lab?.lab_id || lab?.labid],
+        [labId]: {
+          ...prev[labId],
           isProcessing: true,
           notification: null
         }
       }));
   
-      const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
-        user_id: user.id,
-        lab_id: lab?.lab_id || lab?.labid,
-      })
-      if (!cloudinstanceDetails.data.success) {
-        throw new Error('Failed to retrieve instance details');
-      }
-      setCloudInstanceDetails(cloudinstanceDetails.data.data);
-  
       try {
-        const instanceId = cloudInstanceDetails?.instance_id;
+        const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+          user_id: user.id,
+          lab_id: labId,
+        })
+        if (!cloudinstanceDetails.data.success) {
+          throw new Error('Failed to retrieve instance details');
+        }
+        setCloudInstanceDetails(cloudinstanceDetails.data.data);
+  
+      const instanceId = cloudInstanceDetails.instance_id;
         if (isStop) {
-          const stop =await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
+          const stop = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
             instance_id: instanceId
           });
           if(stop.data.success){
             await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
-              lab_id:lab?.lab_id || lab?.labid,
-              user_id:user.id,
-              state:false,
-              isStarted:true
+              lab_id: labId,
+              user_id: user.id,
+              state: false,
+              isStarted: true
             })
           }
   
           setLabControls(prev => ({
             ...prev,
-            [lab?.lab_id || lab?.labid]: {
-              ...prev[lab?.lab_id || lab?.labid],
+            [labId]: {
+              ...prev[labId],
               isProcessing: false,
               buttonLabel: 'Start Lab',
               notification: {
@@ -731,8 +750,8 @@ export const LabDetailsPage: React.FC = () => {
           setTimeout(() => {
             setLabControls(prev => ({
               ...prev,
-              [lab?.lab_id || lab?.labid]: {
-                ...prev[lab?.lab_id || lab?.labid],
+              [labId]: {
+                ...prev[labId],
                 notification: null
               }
             }));
@@ -742,36 +761,36 @@ export const LabDetailsPage: React.FC = () => {
         }
         
         const checkInstanceAlreadyStarted = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkisstarted`,{
-          type:'user',
-          id:cloudinstanceDetails?.data.data.instance_id,
+          type: 'user',
+          id: cloudInstanceDetails.instance_id,
         })
+        
         if(checkInstanceAlreadyStarted.data.isStarted === false){
-         
-            console.log('stop')
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
-              os_name: lab.os,
-              instance_id: cloudinstanceDetails?.data.data.instance_id,
-              hostname: cloudinstanceDetails?.data.data.public_ip,
-              password: cloudinstanceDetails?.data.data.password,
-              buttonState: 'Start Lab'
-            });
-            
+          console.log('stop')
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+            os_name: selectedLab.os,
+            instance_id: cloudInstanceDetails.instance_id,
+            hostname: cloudInstanceDetails.public_ip,
+            password: cloudInstanceDetails.password,
+            buttonState: 'Start Lab'
+          });
+          
           if (response.data.response.success && response.data.response.jwtToken) {
             await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
-              lab_id:lab?.lab_id || lab?.labid,
-              user_id:user.id,
-              state:true,
-              isStarted:false
+              lab_id: labId,
+              user_id: user.id,
+              state: true,
+              isStarted: false
             })
             
-             const guacUrl = `${lab.guacamole_url}?token=${response.data.response.jwtToken}`;
-             console.log(guacUrl)
-            navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
+            const guacUrl = `${selectedLab.guacamole_url}?token=${response.data.response.jwtToken}`;
+            console.log(guacUrl)
+            navigate(`/dashboard/labs/vm-session/${labId}`, {
               state: { 
                 guacUrl,
-                vmTitle: lab.title,
-                vmId: lab?.lab_id || lab?.labid,
-                doc:lab.userguide
+                vmTitle: selectedLab.title,
+                vmId: labId,
+                doc: selectedLab.userguide
               }
             });
           }
@@ -780,43 +799,41 @@ export const LabDetailsPage: React.FC = () => {
           console.log('run')
           
           const restart = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`, {
-            instance_id: cloudinstanceDetails?.data.data.instance_id,
-            user_type:'user'
+            instance_id: cloudInstanceDetails.instance_id,
+            user_type: 'user'
           });
-  
-  
     
-          if (restart.data.success ) {
-            const cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+          if (restart.data.success) {
+            const updatedCloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
               user_id: user.id,
-              lab_id: lab?.lab_id || lab?.labid,
+              lab_id: labId,
             })
-            if(cloudInstanceDetails.data.success){
+            if(updatedCloudInstanceDetails.data.success){
               const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
-                os_name: lab.os,
-                instance_id: cloudinstanceDetails?.data.data.instance_id,
-                hostname: cloudInstanceDetails?.data.data.public_ip,
-                password: cloudinstanceDetails?.data.data.password,
+                os_name: selectedLab.os,
+                instance_id: updatedCloudInstanceDetails.data.data.instance_id,
+                hostname: updatedCloudInstanceDetails.data.data.public_ip,
+                password: updatedCloudInstanceDetails.data.data.password,
                 buttonState: 'Start Lab'
               });
               if(response.data.success){
                 //update database that the instance is started
                 await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
-                  lab_id:lab?.lab_id || lab?.labid,
-                  user_id:user.id,
-                  state:true,
-                  isStarted:true
+                  lab_id: labId,
+                  user_id: user.id,
+                  state: true,
+                  isStarted: true
                 })
-                const guacUrl = `${lab.guacamole_url}?token=${response.data.response.jwtToken}`;
+                const guacUrl = `${selectedLab.guacamole_url}?token=${response.data.response.jwtToken}`;
                 
-            navigate(`/dashboard/labs/vm-session/${lab?.lab_id || lab?.labid}`, {
-              state: { 
-                guacUrl,
-                vmTitle: lab.title,
-                vmId: lab?.lab_id || lab?.labid,
-                doc:lab.userguide
-              }
-            });
+                navigate(`/dashboard/labs/vm-session/${labId}`, {
+                  state: { 
+                    guacUrl,
+                    vmTitle: selectedLab.title,
+                    vmId: labId,
+                    doc: selectedLab.userguide
+                  }
+                });
               }
             }
           }
@@ -824,8 +841,8 @@ export const LabDetailsPage: React.FC = () => {
         
         setLabControls(prev => ({
           ...prev,
-          [lab?.lab_id || lab?.labid]: {
-            ...prev[lab?.lab_id || lab?.labid],
+          [labId]: {
+            ...prev[labId],
             isProcessing: false,
             buttonLabel: 'Stop Lab',
             notification: {
@@ -838,18 +855,18 @@ export const LabDetailsPage: React.FC = () => {
         setTimeout(() => {
           setLabControls(prev => ({
             ...prev,
-            [lab?.lab_id || lab?.labid]: {
-              ...prev[lab?.lab_id || lab?.labid],
+            [labId]: {
+              ...prev[labId],
               notification: null
             }
           }));
         }, 3000);
   
-      } catch (error) {
+      } catch (error: any) {
         setLabControls(prev => ({
           ...prev,
-          [lab?.lab_id || lab?.labid]: {
-            ...prev[lab?.lab_id || lab?.labid],
+          [labId]: {
+            ...prev[labId],
             isProcessing: false,
             notification: {
               type: 'error',
@@ -861,8 +878,8 @@ export const LabDetailsPage: React.FC = () => {
         setTimeout(()=>{
           setLabControls(prev => ({
             ...prev,
-            [lab?.lab_id || lab?.labid]: {
-              ...prev[lab?.lab_id || lab?.labid],
+            [labId]: {
+              ...prev[labId],
               notification: null
             }
           }));
@@ -1014,34 +1031,88 @@ export const LabDetailsPage: React.FC = () => {
                   </div>
                 )}
 
-                <button 
-                  onClick={handleLaunchLab}
-                  disabled={isLaunching}
-                  className="w-full px-4 py-3 rounded-lg text-sm font-medium
-                           bg-gradient-to-r from-primary-500 to-secondary-500
-                           hover:from-primary-400 hover:to-secondary-400
-                           transform hover:scale-105 transition-all duration-300
-                           text-white shadow-lg shadow-primary-500/20
-                           disabled:opacity-50 disabled:cursor-not-allowed
-                           flex items-center justify-center space-x-2"
-                >
-                  {isLaunching ? (
-                    <>
-                      <Loader className="h-4 w-4 animate-spin" />
-                      <span>Launching...</span>
-                    </>
-                  ) : userLabDetails?.find((lab:any)=>lab?.user_id === user?.id)?.launched ? (
-                    <>
-                      <ExternalLink className="h-4 w-4" />
-                      <span>Go To Lab</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4" />
-                      <span>Start Lab</span>
-                    </>
-                  )}
-                </button>
+                {labType === 'singlevm-aws' ? (
+                  <>
+                    {!isLabLaunched ? (
+                      <button 
+                        onClick={handleLaunchLab}
+                        disabled={isLaunching}
+                        className="w-full px-4 py-3 rounded-lg text-sm font-medium
+                                 bg-gradient-to-r from-primary-500 to-secondary-500
+                                 hover:from-primary-400 hover:to-secondary-400
+                                 transform hover:scale-105 transition-all duration-300
+                                 text-white shadow-lg shadow-primary-500/20
+                                 disabled:opacity-50 disabled:cursor-not-allowed
+                                 flex items-center justify-center space-x-2"
+                      >
+                        {isLaunching ? (
+                          <>
+                            <Loader className="h-4 w-4 animate-spin" />
+                            <span>Launching...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4" />
+                            <span>Launch Lab</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={handleStartStopLab}
+                        disabled={labControls[labId]?.isProcessing}
+                        className="w-full px-4 py-3 rounded-lg text-sm font-medium
+                                 bg-gradient-to-r from-primary-500 to-secondary-500
+                                 hover:from-primary-400 hover:to-secondary-400
+                                 transform hover:scale-105 transition-all duration-300
+                                 text-white shadow-lg shadow-primary-500/20
+                                 disabled:opacity-50 disabled:cursor-not-allowed
+                                 flex items-center justify-center space-x-2"
+                      >
+                        {labControls[labId]?.isProcessing ? (
+                          <>
+                            <Loader className="h-4 w-4 animate-spin" />
+                            <span>Processing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="h-4 w-4" />
+                            <span>{labControls[labId]?.buttonLabel || 'Start Lab'}</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <button 
+                    onClick={handleLaunchLab}
+                    disabled={isLaunching}
+                    className="w-full px-4 py-3 rounded-lg text-sm font-medium
+                             bg-gradient-to-r from-primary-500 to-secondary-500
+                             hover:from-primary-400 hover:to-secondary-400
+                             transform hover:scale-105 transition-all duration-300
+                             text-white shadow-lg shadow-primary-500/20
+                             disabled:opacity-50 disabled:cursor-not-allowed
+                             flex items-center justify-center space-x-2"
+                  >
+                    {isLaunching ? (
+                      <>
+                        <Loader className="h-4 w-4 animate-spin" />
+                        <span>Launching...</span>
+                      </>
+                    ) : userLabDetails?.find((lab:any)=>lab?.user_id === user?.id)?.launched ? (
+                      <>
+                        <ExternalLink className="h-4 w-4" />
+                        <span>Go To Lab</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4" />
+                        <span>Start Lab</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>

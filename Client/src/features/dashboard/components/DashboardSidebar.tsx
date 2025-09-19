@@ -102,7 +102,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: Brain, label: 'Learning Path', path: '/dashboard/learning-path' },
       { icon: Award, label: 'Assessments', path: '/dashboard/assessments' },
       { icon: Cloud, label: 'Cloud Usage', path: '/dashboard/cloud-usage' },
-      { icon: CreditCard, label: 'Purchase History', path: '/dashboard/purchase-history' }
+      { icon: CreditCard, label: 'Purchase History', path: '/purchase-history' }
     ]
   };
 
