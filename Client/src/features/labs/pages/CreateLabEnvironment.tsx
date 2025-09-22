@@ -24,7 +24,6 @@ export const CreateLabEnvironment: React.FC = () => {
     if (!selectedType) {
       return <LabTypeSelector onSelect={setSelectedType} />;
     }
-
     switch (selectedType) {
       case 'single-vm':
         return (

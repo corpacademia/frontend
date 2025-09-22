@@ -57,7 +57,6 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       onBoot: false
     }
   });
-
   useEffect(() => {
     const getUserDetails = async () => {  
       try {
@@ -74,7 +73,6 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
     setConfig(prev => ({ ...prev, ...updates }));
     setStep(prev => prev + 1);
   };
-
   const getBreadcrumbs = () => {
     const breadcrumbs = [
       { label: 'Lab Types', step: 0 },
@@ -233,7 +231,7 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       setStep(prev => prev + 1);
     }
   };
-
+  
   const renderStep = () => {
     switch (step) {
       case 1:

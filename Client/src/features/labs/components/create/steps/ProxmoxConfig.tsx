@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Plus, Minus, Server, HardDrive, Cpu, Memory, Network, Power } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Minus, Server, HardDrive, Cpu, Memory, Network, Power, MemoryStick } from 'lucide-react';
 import { GradientText } from '../../../../../components/ui/GradientText';
 import axios from 'axios';
 
@@ -16,6 +15,8 @@ interface ProxmoxConfigData {
   storage: string;
   storageSize: number;
   iso: string;
+  isoType: string;
+  isoVersion: string;
   cpuModel: string;
   cores: number;
   memoryMB: number;
@@ -25,12 +26,18 @@ interface ProxmoxConfigData {
 
 interface BackendData {
   storages: Array<{ id: string; name: string; type: string }>;
-  isos: Array<{ id: string; name: string; size: string }>;
+  isos: Array<{ id: string; name: string; size: string; type?: string; version?: string }>;
   cpuModels: Array<{ id: string; name: string; features: string[] }>;
   networkBridges: Array<{ id: string; name: string; type: string }>;
 }
 
 export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }) => {
+  const [localConfig, setLocalConfig] = useState<ProxmoxConfigData>(config);
+  // State for ISO upload
+  const [isUploadingIso, setIsUploadingIso] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // Mock backend data - replace with actual API calls
   const [backendData, setBackendData] = useState<BackendData>({
     storages: [],
     isos: [],
@@ -46,10 +53,15 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
   useEffect(() => {
     // Auto-fill VM ID when component mounts
-    if (!config.vmId) {
+    if (!localConfig.vmId) {
       fetchVMId();
     }
   }, []);
+
+  // Update localConfig when the parent config changes
+  useEffect(() => {
+    setLocalConfig(config);
+  }, [config]);
 
   const fetchProxmoxData = async () => {
     try {
@@ -88,32 +100,118 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   };
 
   const updateConfig = (field: keyof ProxmoxConfigData, value: any) => {
-    const updatedConfig = { ...config, [field]: value };
-    onChange(updatedConfig);
+    const updatedConfig = { ...localConfig, [field]: value };
+    setLocalConfig(updatedConfig);
+    // onChange(updatedConfig);
   };
 
   const adjustStorageSize = (increment: boolean) => {
-    const currentSize = config.storageSize || 50;
+    const currentSize = localConfig.storageSize || 50;
     const newSize = increment ? currentSize + 50 : Math.max(50, currentSize - 50);
     updateConfig('storageSize', newSize);
   };
 
   const adjustMemory = (increment: boolean) => {
-    const currentMemory = config.memoryMB || 512;
+    const currentMemory = localConfig.memoryMB || 512;
     const newMemory = increment ? currentMemory + 32 : Math.max(32, currentMemory - 32);
     updateConfig('memoryMB', newMemory);
   };
 
   const getFilteredIsos = () => {
-    if (!config.storage) return backendData.isos;
-    return backendData.isos.filter(iso => iso.id.includes(config.storage));
+    return backendData.isos.filter(iso => iso.storage === localConfig.storage);
   };
+
+  // Function to fetch ISOs from backend
+  const fetchISOs = async () => {
+    try {
+      // Replace with actual API call
+      // const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox/isos`);
+      // setBackendData(prev => ({ ...prev, isos: response.data.isos }));
+      console.log('Fetching ISOs from backend...');
+    } catch (error) {
+      console.error('Error fetching ISOs:', error);
+    }
+  };
+
+  // Handle ISO file upload
+  const handleIsoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type (should be .iso)
+    if (!file.name.toLowerCase().endsWith('.iso')) {
+      alert('Please select a valid ISO file');
+      return;
+    }
+
+    setIsUploadingIso(true);
+    setUploadProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append('iso', file);
+      formData.append('storage', localConfig.storage);
+
+      // Replace with actual API call
+      // const response = await axios.post(
+      //   `${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox/upload-iso`,
+      //   formData,
+      //   {
+      //     headers: { 'Content-Type': 'multipart/form-data' },
+      //     onUploadProgress: (progressEvent) => {
+      //       const progress = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+      //       setUploadProgress(progress);
+      //     }
+      //   }
+      // );
+
+      // Simulate upload progress
+      for (let i = 0; i <= 100; i += 10) {
+        setUploadProgress(i);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      // Mock successful upload - add new ISO to the list
+      const newIso = {
+        id: `custom-${Date.now()}`,
+        name: file.name.replace('.iso', ''),
+        size: `${(file.size / (1024 * 1024 * 1024)).toFixed(1)}GB`,
+        storage: localConfig.storage,
+        type: 'Custom',
+        version: 'Unknown'
+      };
+
+      setBackendData(prev => ({
+        ...prev,
+        isos: [...prev.isos, newIso]
+      }));
+
+      // Refetch ISOs to get updated list
+      await fetchISOs();
+
+    } catch (error) {
+      console.error('Error uploading ISO:', error);
+      alert('Failed to upload ISO file');
+    } finally {
+      setIsUploadingIso(false);
+      setUploadProgress(0);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
+  // Fetch ISOs when storage changes
+  useEffect(() => {
+    if (localConfig.storage) {
+      fetchISOs();
+    }
+  }, [localConfig.storage]);
 
   const handleSubmit = () => {
     // Validate required fields
-    const requiredFields = ['name', 'storage', 'iso', 'cpuModel', 'networkBridge'];
-    const missingFields = requiredFields.filter(field => !config[field]);
-    
+    const requiredFields = ['name', 'storage', 'iso', 'isoType', 'isoVersion', 'cpuModel', 'networkBridge'];
+    const missingFields = requiredFields.filter(field => !localConfig[field as keyof ProxmoxConfigData]);
+
     if (missingFields.length > 0) {
       setError(`Please fill in all required fields: ${missingFields.join(', ')}`);
       return;
@@ -123,11 +221,11 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     const formData = JSON.parse(localStorage.getItem('formData') || '{}');
     localStorage.setItem('formData', JSON.stringify({
       ...formData,
-      proxmoxConfig: config
+      proxmoxConfig: localConfig
     }));
 
-    // Trigger next step
-    onChange(config);
+    // Trigger next step by calling onChange with the current localConfig
+    onChange(localConfig);
   };
 
   if (loading) {
@@ -165,7 +263,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
             <Server className="h-5 w-5 text-primary-400" />
             <h3 className="text-lg font-semibold text-gray-200">VM Identity</h3>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -173,10 +271,10 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               </label>
               <input
                 type="text"
-                value={config.vmId || ''}
+                value={localConfig.vmId || ''}
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-400 cursor-not-allowed"
                 readOnly
-                className="w-full px-4 py-2 bg-dark-400/30 border border-primary-500/20 rounded-lg
-                         text-gray-400 cursor-not-allowed"
                 placeholder="Auto-generated"
               />
               <p className="text-xs text-gray-500 mt-1">Automatically assigned by system</p>
@@ -188,10 +286,10 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               </label>
               <input
                 type="text"
-                value={config.name || ''}
+                value={localConfig.name || ''}
                 onChange={(e) => updateConfig('name', e.target.value)}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
                 placeholder="Enter VM name"
               />
             </div>
@@ -201,12 +299,12 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 Description
               </label>
               <textarea
-                value={config.description || ''}
+                value={localConfig.description || ''}
                 onChange={(e) => updateConfig('description', e.target.value)}
-                rows={3}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none resize-none"
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none resize-none"
                 placeholder="Enter VM description"
+                rows={3}
               />
             </div>
           </div>
@@ -218,7 +316,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
             <HardDrive className="h-5 w-5 text-primary-400" />
             <h3 className="text-lg font-semibold text-gray-200">Storage</h3>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -226,7 +324,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               </label>
               <div className="relative">
                 <select
-                  value={config.storage || ''}
+                  value={localConfig.storage || ''}
                   onChange={(e) => updateConfig('storage', e.target.value)}
                   className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                            text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
@@ -256,7 +354,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 </button>
                 <div className="flex-1 text-center">
                   <span className="text-lg font-medium text-gray-200">
-                    {config.storageSize || 50} GB
+                    {localConfig.storageSize || 50} GB
                   </span>
                 </div>
                 <button
@@ -272,28 +370,110 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                ISO Image <span className="text-red-400">*</span>
+                ISO Configuration <span className="text-red-400">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={config.iso || ''}
-                  onChange={(e) => updateConfig('iso', e.target.value)}
-                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                           text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
-                  disabled={!config.storage}
-                >
-                  <option value="">Select ISO image</option>
-                  {getFilteredIsos().map((iso) => (
-                    <option key={iso.id} value={iso.id}>
-                      {iso.name} ({iso.size})
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+              
+               {/* ISO Dropdown */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-400 mb-1">ISO Image</label>
+                <div className="relative">
+                  <select
+                    value={localConfig.iso || ''}
+                    onChange={(e) => updateConfig('iso', e.target.value)}
+                    className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                             text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
+                    disabled={!localConfig.storage || !localConfig.isoType || !localConfig.isoVersion}
+                  >
+                    <option value="">Select ISO image</option>
+                    {getFilteredIsos()
+                      .filter(iso => 
+                        iso.type === localConfig.isoType && 
+                        iso.version === localConfig.isoVersion
+                      )
+                      .map((iso) => (
+                        <option key={iso.id} value={iso.id}>
+                          {iso.name}
+                        </option>
+                      ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
               </div>
-              {!config.storage && (
+
+              {/* Type Dropdown */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-400 mb-1">Type</label>
+                <div className="relative">
+                  <select
+                    value={localConfig.isoType || ''}
+                    onChange={(e) => updateConfig('isoType', e.target.value)}
+                    className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                             text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
+                    disabled={!localConfig.storage}
+                  >
+                    <option value="">Select ISO type</option>
+                    {[...new Set(getFilteredIsos().map(iso => iso.type).filter(Boolean))].map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Version Dropdown */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-400 mb-1">Version</label>
+                <div className="relative">
+                  <select
+                    value={localConfig.isoVersion || ''}
+                    onChange={(e) => updateConfig('isoVersion', e.target.value)}
+                    className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                             text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
+                    disabled={!localConfig.storage || !localConfig.isoType}
+                  >
+                    <option value="">Select ISO version</option>
+                    {getFilteredIsos()
+                      .filter(iso => iso.type === localConfig.isoType)
+                      .map(iso => iso.version)
+                      .filter((version, index, arr) => version && arr.indexOf(version) === index)
+                      .map((version) => (
+                        <option key={version} value={version}>
+                          {version}
+                        </option>
+                      ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
+             
+
+              {!localConfig.storage && (
                 <p className="text-xs text-gray-500 mt-1">Select storage first to view available ISOs</p>
               )}
+              <div className="mt-2">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Upload ISO File
+                </label>
+                <input
+                  type="file"
+                  accept=".iso"
+                  onChange={handleIsoUpload}
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                             text-gray-300 focus:border-primary-500/40 focus:outline-none cursor-pointer"
+                  disabled={isUploadingIso || !localConfig.storage}
+                />
+                {isUploadingIso && (
+                  <div className="mt-2 flex items-center space-x-2">
+                    <div className="w-full bg-dark-400/50 rounded-full h-2.5">
+                      <div className="bg-primary-500 h-2.5 rounded-full" style={{ width: `${uploadProgress}%` }}></div>
+                    </div>
+                    <span className="text-xs text-gray-400">{uploadProgress}%</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -302,45 +482,47 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         <div className="glass-panel space-y-4">
           <div className="flex items-center space-x-3">
             <Cpu className="h-5 w-5 text-primary-400" />
-            <h3 className="text-lg font-semibold text-gray-200">CPU</h3>
+            <h3 className="text-lg font-semibold text-gray-200">CPU Configuration</h3>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                CPU Model <span className="text-red-400">*</span>
+                CPU Model *
               </label>
               <div className="relative">
                 <select
-                  value={config.cpuModel || ''}
+                  value={localConfig.cpuModel}
                   onChange={(e) => updateConfig('cpuModel', e.target.value)}
-                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                           text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
+                  className="w-full px-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none
+                           transition-all duration-200 appearance-none cursor-pointer"
                 >
-                  <option value="">Select CPU model</option>
+                  <option value="">Select CPU Model</option>
                   {backendData.cpuModels.map((cpu) => (
-                    <option key={cpu.id} value={cpu.id}>
+                    <option key={cpu.id} value={cpu.id} className="bg-dark-400 text-gray-300">
                       {cpu.name}
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Cores
+                CPU Cores *
               </label>
               <input
                 type="number"
                 min="1"
-                max="32"
-                value={config.cores || 1}
+                max="64"
+                value={localConfig.cores}
                 onChange={(e) => updateConfig('cores', parseInt(e.target.value) || 1)}
-                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
-                placeholder="Number of CPU cores"
+                className="w-full px-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none
+                         transition-all duration-200"
+                placeholder="Enter number of cores"
               />
             </div>
           </div>
@@ -349,10 +531,10 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         {/* Memory & Network */}
         <div className="glass-panel space-y-4">
           <div className="flex items-center space-x-3">
-            <Memory className="h-5 w-5 text-primary-400" />
+            <MemoryStick className="h-5 w-5 text-primary-400" />
             <h3 className="text-lg font-semibold text-gray-200">Memory & Network</h3>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -368,7 +550,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 </button>
                 <div className="flex-1 text-center">
                   <span className="text-lg font-medium text-gray-200">
-                    {config.memoryMB || 512} MB
+                    {localConfig.memoryMB || 512} MB
                   </span>
                 </div>
                 <button
@@ -388,7 +570,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               </label>
               <div className="relative">
                 <select
-                  value={config.networkBridge || ''}
+                  value={localConfig.networkBridge || ''}
                   onChange={(e) => updateConfig('networkBridge', e.target.value)}
                   className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                            text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
@@ -414,7 +596,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={config.onBoot || false}
+                  checked={localConfig.onBoot || false}
                   onChange={(e) => updateConfig('onBoot', e.target.checked)}
                   className="sr-only peer"
                 />
@@ -429,19 +611,15 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         </div>
       </div>
 
-      <div className="flex justify-between pt-6">
-        <button
-          type="button"
-          onClick={() => window.history.back()}
-          className="btn-secondary"
-        >
-          Previous
-        </button>
+      {/* Continue Button */}
+      <div className="flex justify-end pt-6">
         <button
           onClick={handleSubmit}
-          className="btn-primary"
+          className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg
+                   font-medium transition-colors focus:outline-none focus:ring-2 
+                   focus:ring-primary-500/20"
         >
-          Next: Documents
+          Continue to Documents
         </button>
       </div>
     </div>
