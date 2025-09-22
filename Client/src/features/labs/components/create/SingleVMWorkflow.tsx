@@ -7,6 +7,7 @@ import { DeploymentStatus } from './steps/DeploymentStatus';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { DocumentUploader } from './steps/DocumentUploader';
 import { DatacenterConfig } from './steps/DatacenterConfig';
+import { ProxmoxConfig } from './steps/ProxmoxConfig';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import axios from 'axios';
 import { GuacamoleConfig } from './GuacamoleConfig';
@@ -41,6 +42,19 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
     guacamole: {
       name: '',
       url: ''
+    },
+    proxmox: {
+      vmId: '',
+      name: '',
+      description: '',
+      storage: '',
+      storageSize: 50,
+      iso: '',
+      cpuModel: '',
+      cores: 1,
+      memoryMB: 512,
+      networkBridge: '',
+      onBoot: false
     }
   });
 
@@ -73,6 +87,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
         breadcrumbs.push({ label: 'Cloud Provider', step: 3 });
       } else if (config.platform === 'datacenter') {
         breadcrumbs.push({ label: 'Datacenter Config', step: 3 });
+      } else if (config.platform === 'proxmox') {
+        breadcrumbs.push({ label: 'Proxmox Config', step: 3 });
       }
     }
 
@@ -80,6 +96,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       if (config.platform === 'cloud') {
         breadcrumbs.push({ label: 'VM Configuration', step: 4 });
       } else if (config.platform === 'datacenter') {
+        breadcrumbs.push({ label: 'Documents', step: 4 });
+      } else if (config.platform === 'proxmox') {
         breadcrumbs.push({ label: 'Documents', step: 4 });
       } else {
         breadcrumbs.push({ label: 'VM Configuration', step: 4 });
@@ -91,6 +109,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
         breadcrumbs.push({ label: 'Documents', step: 5 });
       } else if (config.platform === 'datacenter') {
         breadcrumbs.push({ label: 'AI Recommendations', step: 5 });
+      } else if (config.platform === 'proxmox') {
+        breadcrumbs.push({ label: 'AI Recommendations', step: 5 });
       } else {
         breadcrumbs.push({ label: 'Documents', step: 5 });
       }
@@ -100,6 +120,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       if (config.platform === 'cloud') {
         breadcrumbs.push({ label: 'AI Recommendations', step: 6 });
       } else if (config.platform === 'datacenter') {
+        breadcrumbs.push({ label: 'Deployment', step: 6 });
+      } else if (config.platform === 'proxmox') {
         breadcrumbs.push({ label: 'Deployment', step: 6 });
       } else {
         breadcrumbs.push({ label: 'AI Recommendations', step: 6 });
@@ -136,10 +158,15 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
     setStep(prev => prev + 1);
   };
 
+  const handleProxmoxConfigChange = (proxmoxConfig: typeof config.proxmox) => {
+    setConfig(prev => ({ ...prev, proxmox: proxmoxConfig }));
+    setStep(prev => prev + 1);
+  };
+
   const handleDocumentUploadNext = async () => {
     if (config.platform === 'datacenter') {
       setIsLoading(true);
-    const data = JSON.parse(localStorage.getItem("formData") || "{}");
+      const data = JSON.parse(localStorage.getItem("formData") || "{}");
       try {
         // Make API call for datacenter platform
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createSingleVmDatacenterLab`, {
@@ -165,6 +192,38 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       }
 
         console.error('Error configuring datacenter:', error);
+        return;
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (config.platform === 'proxmox') {
+      setIsLoading(true);
+      const data = JSON.parse(localStorage.getItem("formData") || "{}");
+      try {
+        // Make API call for Proxmox platform
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createSingleVmProxmoxLab`, {
+          data: data,
+          user: user.id
+        });
+
+        if (response.data.success) {
+          // Navigate to cloud VMs page on success
+          window.location.href = '/dashboard/labs/cloud-vms';
+          return;
+        } else {
+          return;
+        }
+      } catch (error) {
+        const raw = localStorage.getItem('formData');
+
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          delete parsed.labGuides;
+          delete parsed.userGuides;
+          localStorage.setItem('formData', JSON.stringify(parsed));
+        }
+
+        console.error('Error configuring Proxmox:', error);
         return;
       } finally {
         setIsLoading(false);
@@ -204,6 +263,13 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
               onChange={handleDatacenterConfigChange}
             />
           );
+        } else if (config.platform === 'proxmox') {
+          return (
+            <ProxmoxConfig
+              config={config.proxmox}
+              onChange={handleProxmoxConfigChange}
+            />
+          );
         } else {
           return (
             <VMSizeSelector 
@@ -219,6 +285,14 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
             />
           );
         } else if (config.platform === 'datacenter') {
+          return (
+            <DocumentUploader
+              onDocumentsChange={handleDocumentsChange}
+              onUserGuidesChange={handleUserGuidesChange}
+              onNext={handleDocumentUploadNext}
+            />
+          );
+        } else if (config.platform === 'proxmox') {
           return (
             <DocumentUploader
               onDocumentsChange={handleDocumentsChange}
@@ -254,6 +328,16 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
               }}
             />
           );
+        } else if (config.platform === 'proxmox') {
+          return (
+            <AIRecommendations 
+              config={config} 
+              onConfirm={(region, responseData) => {
+                const lab_id = responseData?.lab_id;
+                updateConfig({ region, lab_id: lab_id });
+              }}
+            />
+          );
         } else {
           return (
             <AIRecommendations 
@@ -278,6 +362,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
           );
         } else if (config.platform === 'datacenter') {
           return <DeploymentStatus config={config} />;
+        } else if (config.platform === 'proxmox') {
+          return <DeploymentStatus config={config} />;
         } else {
           return <DeploymentStatus config={config} />;
         }
@@ -289,10 +375,14 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
   };
 
   if (isLoading) {
+    const loadingMessage = config.platform === 'proxmox' 
+      ? 'Processing Proxmox configuration...' 
+      : 'Processing datacenter configuration...';
+    
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Loader className="h-12 w-12 text-primary-400 animate-spin mb-4" />
-        <p className="text-lg text-gray-300">Processing datacenter configuration...</p>
+        <p className="text-lg text-gray-300">{loadingMessage}</p>
         <p className="text-sm text-gray-400 mt-2">This may take a few moments</p>
       </div>
     );

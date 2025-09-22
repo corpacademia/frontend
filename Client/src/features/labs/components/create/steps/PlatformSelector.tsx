@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cloud, Server, GitBranch } from 'lucide-react';
+import { Cloud, Building, Network, Server } from 'lucide-react';
 import { GradientText } from '../../../../../components/ui/GradientText';
 
 interface PlatformSelectorProps {
@@ -10,21 +10,31 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ onSelect }) 
   const platforms = [
     {
       id: 'cloud',
-      title: 'Cloud Platform',
-      description: 'Deploy on major cloud providers with flexible scaling',
-      icon: Cloud
+      name: 'Cloud',
+      description: 'Deploy on public cloud providers (AWS, Azure, GCP)',
+      icon: Cloud,
+      features: ['Auto-scaling', 'Global availability', 'Managed services']
     },
     {
       id: 'datacenter',
-      title: 'Data Center',
-      description: 'Use on-premises infrastructure for maximum control',
-      icon: Server
+      name: 'Datacenter',
+      description: 'Deploy on enterprise datacenter infrastructure',
+      icon: Building,
+      features: ['High security', 'Dedicated resources', 'Compliance ready']
+    },
+    {
+      id: 'proxmox',
+      name: 'Proxmox',
+      description: 'Deploy on Proxmox Virtual Environment',
+      icon: Server,
+      features: ['Virtualization platform', 'Container support', 'Web-based management']
     },
     {
       id: 'hybrid',
-      title: 'Hybrid',
+      name: 'Hybrid',
       description: 'Combine cloud and on-premises resources',
-      icon: GitBranch
+      icon: Network,
+      features: ['Flexible deployment', 'Cost optimization', 'Risk distribution']
     }
   ];
 

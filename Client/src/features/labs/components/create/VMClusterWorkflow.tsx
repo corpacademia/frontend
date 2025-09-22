@@ -8,6 +8,7 @@ import { BasicInfoStep } from './steps/BasicInfoStep';
 import { DocumentUploader } from './steps/DocumentUploader';
 import { DatacenterConfig } from './steps/DatacenterConfig';
 import { ClusterConfig } from './steps/ClusterConfig';
+import { ProxmoxConfig } from './steps/ProxmoxConfig';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import axios from 'axios';
 
@@ -36,7 +37,20 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
       ],
     },
     guacamoleName: '',
-    guacamoleUrl: ''
+    guacamoleUrl: '',
+    proxmox: {
+      vmId: '',
+      name: '',
+      description: '',
+      storage: '',
+      storageSize: 50,
+      iso: '',
+      cpuModel: '',
+      cores: 1,
+      memoryMB: 512,
+      networkBridge: '',
+      onBoot: false
+    }
   });
 
   useEffect(() => {
@@ -68,6 +82,8 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
         breadcrumbs.push({ label: 'Cloud Provider', step: 3 });
       } else if (config.platform === 'datacenter') {
         breadcrumbs.push({ label: 'Cluster Config', step: 3 });
+      } else if (config.platform === 'proxmox') {
+        breadcrumbs.push({ label: 'Proxmox Config', step: 3 });
       }
     }
 
