@@ -31,7 +31,8 @@ export const PublicCataloguePage: React.FC = () => {
     category: '',
     brand: '',
     level: '',
-    duration: ''
+    duration: '',
+    free: ''
   });
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
@@ -204,7 +205,6 @@ export const PublicCataloguePage: React.FC = () => {
 
 
 
-
   // Filter courses based on current filters
   useEffect(() => {
     let filtered = courses;
@@ -260,6 +260,13 @@ export const PublicCataloguePage: React.FC = () => {
   });
 }
 
+    if (filters.free) {
+      if (filters.free === 'free') {
+        filtered = filtered.filter(course => course.isfree === true);
+      } else if (filters.free === 'paid') {
+        filtered = filtered.filter(course => course.isfree === false);
+      }
+    }
 
     setFilteredCourses(filtered);
   }, [filters, courses]);
@@ -327,7 +334,7 @@ export const PublicCataloguePage: React.FC = () => {
     totalCourses: courses.length,
     totalStudents: courses.reduce((sum, course) => sum + course.enrolledCount, 0),
     averageRating: (courses.reduce((sum, course) => sum + course.rating, 0) / courses.length).toFixed(1),
-    freeCourses: courses.filter(course => course.isFree).length
+    freeCourses: courses.filter(course => course.isfree).length
   };
 if(isLoading) {
     return <div className="text-center text-gray-500">Loading courses...</div>;

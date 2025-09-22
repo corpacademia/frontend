@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Search, Filter, ChevronDown } from 'lucide-react';
 
@@ -10,13 +9,14 @@ interface PublicCatalogueFiltersProps {
     brand: string;
     level: string;
     duration: string;
+    free: string;
   };
 }
 
 export const PublicCatalogueFilters: React.FC<PublicCatalogueFiltersProps> = ({
   onFilterChange,
   filters,
-  
+
 }) => {
   const handleInputChange = (key: string, value: string) => {
     onFilterChange({ ...filters, [key]: value });
@@ -57,6 +57,11 @@ export const PublicCatalogueFilters: React.FC<PublicCatalogueFiltersProps> = ({
     '2+ weeks'
   ];
 
+  const freeOptions = [
+    'free',
+    'paid',
+  ];
+
   return (
     <div className="bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 p-6 mb-8">
       <div className="space-y-6">
@@ -68,8 +73,8 @@ export const PublicCatalogueFilters: React.FC<PublicCatalogueFiltersProps> = ({
             placeholder="Search Labs..."
             value={filters.search}
             onChange={(e) => handleInputChange('search', e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-dark-400/30 border border-primary-500/20 rounded-lg 
-                     text-white placeholder-gray-400 focus:border-primary-500/40 focus:outline-none 
+            className="w-full pl-12 pr-4 py-3 bg-dark-400/30 border border-primary-500/20 rounded-lg
+                     text-white placeholder-gray-400 focus:border-primary-500/40 focus:outline-none
                      focus:ring-2 focus:ring-primary-500/20 transition-all duration-300"
           />
         </div>
@@ -145,11 +150,26 @@ export const PublicCatalogueFilters: React.FC<PublicCatalogueFiltersProps> = ({
                 className="w-full px-4 py-3 bg-dark-400/30 border border-primary-500/20 rounded-lg
                          text-white focus:border-primary-500/40 focus:outline-none appearance-none cursor-pointer"
               >
-                <option value="">Any Duration</option>
+                <option value="">All Durations</option>
                 {durations.map(duration => (
-                  <option key={duration} value={duration} className="bg-dark-400 text-white">
-                    {duration}
-                  </option>
+                  <option key={duration} value={duration}>{duration}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-300">Free Courses</label>
+            <div className="relative">
+              <select
+                value={filters.free}
+                onChange={(e) => handleInputChange('free', e.target.value)}
+                className="w-full px-4 py-3 bg-dark-400/30 border border-primary-500/20 rounded-lg
+                         text-white focus:border-primary-500/40 focus:outline-none appearance-none cursor-pointer"
+              >
+                <option value="">All Courses</option>
+                {freeOptions.map(option => (
+                  <option key={option} value={option}>{option === 'free' ? 'Free' : 'Paid'}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
