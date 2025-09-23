@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Plus, Minus, Server, HardDrive, Cpu, Memory, Network, Power, MemoryStick } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, Minus, Server, HardDrive, Cpu, Network, Power, MemoryStick } from 'lucide-react';
 import { GradientText } from '../../../../../components/ui/GradientText';
 import axios from 'axios';
 
@@ -41,7 +41,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   const [backendData, setBackendData] = useState<BackendData>({
     storages: [],
     isos: [],
-    cpuModels: [],
+    cpuModels:[],
     networkBridges: []
   });
   const [loading, setLoading] = useState(true);
@@ -67,17 +67,16 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     try {
       setLoading(true);
       // Fetch all Proxmox configuration data
-      const [storageRes, isoRes, cpuRes, networkRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox/storages`),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox/isos`),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox/cpu-models`),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox/network-bridges`)
+      const [storageRes,isoRes,cpuRes,networkRes] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/storages`),
+        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/isos`,{storage:localConfig.storage}),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/cpu-models`),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/network-bridges`)
       ]);
-
       setBackendData({
-        storages: storageRes.data.storages || [],
+        storages: storageRes.data.data || [],
         isos: isoRes.data.isos || [],
-        cpuModels: cpuRes.data.cpuModels || [],
+        cpuModels : cpuRes.data.data || [],
         networkBridges: networkRes.data.networkBridges || []
       });
     } catch (err) {
@@ -227,7 +226,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     // Trigger next step by calling onChange with the current localConfig
     onChange(localConfig);
   };
-
+ 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -238,7 +237,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       </div>
     );
   }
-
   return (
     <div className="space-y-6">
       <div>
@@ -488,29 +486,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                CPU Model *
-              </label>
-              <div className="relative">
-                <select
-                  value={localConfig.cpuModel}
-                  onChange={(e) => updateConfig('cpuModel', e.target.value)}
-                  className="w-full px-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                           text-gray-300 focus:border-primary-500/40 focus:outline-none
-                           transition-all duration-200 appearance-none cursor-pointer"
-                >
-                  <option value="">Select CPU Model</option>
-                  {backendData.cpuModels.map((cpu) => (
-                    <option key={cpu.id} value={cpu.id} className="bg-dark-400 text-gray-300">
-                      {cpu.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
                 CPU Cores *
               </label>
               <input
@@ -538,7 +513,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Memory (MB)
+                Memory (MiB)
               </label>
               <div className="flex items-center space-x-3">
                 <button
@@ -550,7 +525,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 </button>
                 <div className="flex-1 text-center">
                   <span className="text-lg font-medium text-gray-200">
-                    {localConfig.memoryMB || 512} MB
+                    {localConfig.memoryMB || 512} MiB
                   </span>
                 </div>
                 <button
@@ -561,7 +536,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Memory adjusts in increments of 32 MB</p>
+              <p className="text-xs text-gray-500 mt-1">Memory adjusts in increments of 32 MiB</p>
             </div>
 
             <div>
