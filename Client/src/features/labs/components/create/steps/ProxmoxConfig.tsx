@@ -226,7 +226,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     // Trigger next step by calling onChange with the current localConfig
     onChange(localConfig);
   };
- 
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -370,7 +370,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 ISO Configuration <span className="text-red-400">*</span>
               </label>
-              
+
                {/* ISO Dropdown */}
               <div className="mb-3">
                 <label className="block text-xs font-medium text-gray-400 mb-1">ISO Image</label>
@@ -446,7 +446,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 </div>
               </div>
 
-             
+
 
               {!localConfig.storage && (
                 <p className="text-xs text-gray-500 mt-1">Select storage first to view available ISOs</p>
@@ -483,23 +483,21 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
             <h3 className="text-lg font-semibold text-gray-200">CPU Configuration</h3>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                CPU Cores *
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="64"
-                value={localConfig.cores}
-                onChange={(e) => updateConfig('cores', parseInt(e.target.value) || 1)}
-                className="w-full px-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none
-                         transition-all duration-200"
-                placeholder="Enter number of cores"
-              />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              CPU Cores *
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="64"
+              value={localConfig.cores}
+              onChange={(e) => updateConfig('cores', parseInt(e.target.value) || 1)}
+              className="w-full px-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                       text-gray-300 focus:border-primary-500/40 focus:outline-none
+                       transition-all duration-200"
+              placeholder="Enter number of cores"
+            />
           </div>
         </div>
 
