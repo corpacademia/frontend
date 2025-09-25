@@ -12,6 +12,7 @@ interface ProxmoxConfigData {
   vmId: string;
   name: string;
   description: string;
+  node: string;
   storage: string;
   storageSize: number;
   iso: string;
@@ -25,6 +26,7 @@ interface ProxmoxConfigData {
 }
 
 interface BackendData {
+  nodes: Array<{ id: string; name: string; cpu: number; memory: number; storage: number }>;
   storages: Array<{ id: string; name: string; type: string }>;
   isos: Array<{ id: string; name: string; size: string; type?: string; version?: string }>;
   cpuModels: Array<{ id: string; name: string; features: string[] }>;
@@ -39,6 +41,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
   // Mock backend data - replace with actual API calls
   const [backendData, setBackendData] = useState<BackendData>({
+    nodes: [],
     storages: [],
     isos: [],
     cpuModels:[],
@@ -64,28 +67,50 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   }, [config]);
 
   const fetchProxmoxData = async () => {
-    try {
-      setLoading(true);
-      // Fetch all Proxmox configuration data
-      const [storageRes,isoRes,cpuRes,networkRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/storages`),
-        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/isos`,{storage:localConfig.storage}),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/cpu-models`),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/network-bridges`)
-      ]);
-      setBackendData({
-        storages: storageRes.data.data || [],
-        isos: isoRes.data.isos || [],
-        cpuModels : cpuRes.data.data || [],
-        networkBridges: networkRes.data.networkBridges || []
-      });
-    } catch (err) {
-      console.error('Error fetching Proxmox data:', err);
-      setError('Failed to load Proxmox configuration data');
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+
+    // Step 1: Fetch nodes first
+    const nodesRes = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/nodes`
+    );
+
+    const nodes = nodesRes?.data?.nodes || nodesRes?.data?.data || [];
+    const firstNode = nodes?.[0]?.node || nodes?.[0]; // adjust based on your backend response
+
+    if (!firstNode) {
+      throw new Error("No nodes available");
     }
-  };
+
+    // Step 2: Fetch dependent resources for the node
+    const [storageRes, cpuRes, networkRes] = await Promise.all([
+      axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/storages`, {
+        NODE: firstNode,
+      }),
+      axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/cpu-models`, {
+        NODE: firstNode,
+      }),
+      axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/network-bridges`, {
+        NODE: firstNode,
+      }),
+    ]);
+
+    // Step 3: Update state
+    setBackendData({
+      nodes,
+      storages: storageRes?.data?.data || [],
+      isos: [],
+      cpuModels: cpuRes?.data?.data || [],
+      networkBridges: networkRes?.data?.networkBridges || [],
+    });
+  } catch (err) {
+    console.error("Error fetching Proxmox data:", err);
+    setError("Failed to load Proxmox configuration data");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchVMId = async () => {
     try {
@@ -101,7 +126,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   const updateConfig = (field: keyof ProxmoxConfigData, value: any) => {
     const updatedConfig = { ...localConfig, [field]: value };
     setLocalConfig(updatedConfig);
-    // onChange(updatedConfig);
   };
 
   const adjustStorageSize = (increment: boolean) => {
@@ -117,20 +141,40 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   };
 
   const getFilteredIsos = () => {
-    return backendData.isos.filter(iso => iso.storage === localConfig.storage);
+    return backendData.isos.filter(iso => (iso.volid).split(":")[0] === localConfig.storage);
   };
 
   // Function to fetch ISOs from backend
   const fetchISOs = async () => {
+    if (!localConfig.storage || !localConfig.node) return;
     try {
-      // Replace with actual API call
-      // const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox/isos`);
-      // setBackendData(prev => ({ ...prev, isos: response.data.isos }));
-      console.log('Fetching ISOs from backend...');
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/isos`, {
+        storage: localConfig.storage,
+        NODE: localConfig.node
+      });
+      setBackendData(prev => ({ 
+        ...prev, 
+        isos: response.data.isos || [] 
+      }));
     } catch (error) {
       console.error('Error fetching ISOs:', error);
     }
   };
+
+  const fetchStorages = async() =>{
+    if(!localConfig.node) return;
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/storages`, {
+        NODE: localConfig.node
+      });
+      setBackendData(prev => ({ 
+        ...prev, 
+        storages: response?.data?.data || [],
+      }));
+    } catch (error) {
+      console.error("Error fetching storages:",error);
+    }
+  }
 
   // Handle ISO file upload
   const handleIsoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,19 +194,20 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       const formData = new FormData();
       formData.append('iso', file);
       formData.append('storage', localConfig.storage);
+      formData.append('node', localConfig.node);
 
       // Replace with actual API call
-      // const response = await axios.post(
-      //   `${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox/upload-iso`,
-      //   formData,
-      //   {
-      //     headers: { 'Content-Type': 'multipart/form-data' },
-      //     onUploadProgress: (progressEvent) => {
-      //       const progress = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
-      //       setUploadProgress(progress);
-      //     }
-      //   }
-      // );
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/upload-iso`,
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+            setUploadProgress(progress);
+          }
+        }
+      );
 
       // Simulate upload progress
       for (let i = 0; i <= 100; i += 10) {
@@ -199,16 +244,23 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     }
   };
 
-  // Fetch ISOs when storage changes
+  // Fetch ISOs when node or storage changes
   useEffect(() => {
-    if (localConfig.storage) {
+    if (localConfig.storage && localConfig.node) {
       fetchISOs();
     }
-  }, [localConfig.storage]);
+  }, [localConfig.storage, localConfig.node]);
+
+  //fetch storages when node changes
+  useEffect(()=>{
+    if(localConfig.node){
+      fetchStorages();
+    }
+  },[localConfig.node])
 
   const handleSubmit = () => {
     // Validate required fields
-    const requiredFields = ['name', 'storage', 'iso', 'isoType', 'isoVersion', 'cpuModel', 'networkBridge'];
+    const requiredFields = ['name', 'node', 'storage', 'iso', 'isoType', 'isoVersion', 'networkBridge'];
     const missingFields = requiredFields.filter(field => !localConfig[field as keyof ProxmoxConfigData]);
 
     if (missingFields.length > 0) {
@@ -237,6 +289,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       </div>
     );
   }
+  console.log(backendData)
   return (
     <div className="space-y-6">
       <div>
@@ -255,11 +308,50 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Node Selection */}
+        <div className="glass-panel space-y-4">
+          <div className="flex items-center space-x-3">
+            <Server className="h-5 w-5 text-primary-400" />
+            <h3 className="text-lg font-semibold">
+              <span className="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+                Node Selection
+              </span>
+            </h3>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Proxmox Node <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <select
+                value={localConfig.node || ''}
+                onChange={(e) => updateConfig('node', e.target.value)}
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
+              >
+                <option value="">Select node</option>
+                {backendData.nodes.map((node) => (
+                  <option key={node} value={node.node}>
+                    {node.node} (CPU: {node.cpuCores}, RAM: {(node.memory.free)/(1024*1024)})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Select a node with sufficient resources</p>
+          </div>
+        </div>
+
         {/* VM ID */}
         <div className="glass-panel space-y-4">
           <div className="flex items-center space-x-3">
             <Server className="h-5 w-5 text-primary-400" />
-            <h3 className="text-lg font-semibold text-gray-200">VM Identity</h3>
+            <h3 className="text-lg font-semibold">
+              <span className="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+                VM Identity
+              </span>
+            </h3>
           </div>
 
           <div className="space-y-4">
@@ -312,7 +404,11 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         <div className="glass-panel space-y-4">
           <div className="flex items-center space-x-3">
             <HardDrive className="h-5 w-5 text-primary-400" />
-            <h3 className="text-lg font-semibold text-gray-200">Storage</h3>
+            <h3 className="text-lg font-semibold">
+              <span className="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+                Storage
+              </span>
+            </h3>
           </div>
 
           <div className="space-y-4">
@@ -328,11 +424,14 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                            text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
                 >
                   <option value="">Select storage</option>
-                  {backendData.storages.map((storage) => (
-                    <option key={storage.id} value={storage.id}>
-                      {storage.name} ({storage.type})
-                    </option>
-                  ))}
+                  {backendData.storages.map(storage =>
+                    storage.total > 0 ? (
+                      <option key={storage.id} value={storage.storage}>
+                        {storage.storage} ({storage.type})
+                      </option>
+                    ) : null
+                  )}
+
                 </select>
                 <ChevronDown className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
               </div>
@@ -380,17 +479,13 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                     onChange={(e) => updateConfig('iso', e.target.value)}
                     className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                              text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
-                    disabled={!localConfig.storage || !localConfig.isoType || !localConfig.isoVersion}
+                    // disabled={!localConfig.node || !localConfig.storage || !localConfig.isoType || !localConfig.isoVersion}
                   >
                     <option value="">Select ISO image</option>
                     {getFilteredIsos()
-                      .filter(iso => 
-                        iso.type === localConfig.isoType && 
-                        iso.version === localConfig.isoVersion
-                      )
                       .map((iso) => (
                         <option key={iso.id} value={iso.id}>
-                          {iso.name}
+                          {(iso.volid).match(/[^/]+$/)[0]}
                         </option>
                       ))}
                   </select>
@@ -407,7 +502,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                     onChange={(e) => updateConfig('isoType', e.target.value)}
                     className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                              text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
-                    disabled={!localConfig.storage}
+                    disabled={!localConfig.node || !localConfig.storage}
                   >
                     <option value="">Select ISO type</option>
                     {[...new Set(getFilteredIsos().map(iso => iso.type).filter(Boolean))].map((type) => (
@@ -429,7 +524,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                     onChange={(e) => updateConfig('isoVersion', e.target.value)}
                     className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                              text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
-                    disabled={!localConfig.storage || !localConfig.isoType}
+                    disabled={!localConfig.node || !localConfig.storage || !localConfig.isoType}
                   >
                     <option value="">Select ISO version</option>
                     {getFilteredIsos()
@@ -448,8 +543,8 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
 
 
-              {!localConfig.storage && (
-                <p className="text-xs text-gray-500 mt-1">Select storage first to view available ISOs</p>
+              {(!localConfig.node || !localConfig.storage) && (
+                <p className="text-xs text-gray-500 mt-1">Select node and storage first to view available ISOs</p>
               )}
               <div className="mt-2">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -461,7 +556,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                   onChange={handleIsoUpload}
                   className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                              text-gray-300 focus:border-primary-500/40 focus:outline-none cursor-pointer"
-                  disabled={isUploadingIso || !localConfig.storage}
+                  disabled={isUploadingIso || !localConfig.node || !localConfig.storage}
                 />
                 {isUploadingIso && (
                   <div className="mt-2 flex items-center space-x-2">
@@ -480,7 +575,11 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         <div className="glass-panel space-y-4">
           <div className="flex items-center space-x-3">
             <Cpu className="h-5 w-5 text-primary-400" />
-            <h3 className="text-lg font-semibold text-gray-200">CPU Configuration</h3>
+            <h3 className="text-lg font-semibold">
+              <span className="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+                CPU Configuration
+              </span>
+            </h3>
           </div>
 
           <div>
@@ -505,7 +604,11 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         <div className="glass-panel space-y-4">
           <div className="flex items-center space-x-3">
             <MemoryStick className="h-5 w-5 text-primary-400" />
-            <h3 className="text-lg font-semibold text-gray-200">Memory & Network</h3>
+            <h3 className="text-lg font-semibold">
+              <span className="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">
+                Memory & Network
+              </span>
+            </h3>
           </div>
 
           <div className="space-y-4">
@@ -551,7 +654,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                   <option value="">Select network bridge</option>
                   {backendData.networkBridges.map((bridge) => (
                     <option key={bridge.id} value={bridge.id}>
-                      {bridge.name} ({bridge.type})
+                      {bridge.iface} ({bridge.type})
                     </option>
                   ))}
                 </select>
