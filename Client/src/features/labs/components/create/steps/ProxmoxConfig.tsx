@@ -113,9 +113,9 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
   const fetchVMId = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox/next-vm-id`);
-      if (response.data.vmId) {
-        updateConfig('vmId', response.data.vmId);
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/next-vm-id`);
+      if (response.data.data) {
+        updateConfig('vmId', response.data.data);
       }
     } catch (err) {
       console.error('Error fetching VM ID:', err);
@@ -362,9 +362,10 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               <input
                 type="text"
                 value={localConfig.vmId || ''}
+                onChange={(e) => updateConfig('vmId', e.target.value)}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                           text-gray-400 cursor-not-allowed"
-                readOnly
+                           text-gray-300 "
+                // readOnly
                 placeholder="Auto-generated"
               />
               <p className="text-xs text-gray-500 mt-1">Automatically assigned by system</p>
