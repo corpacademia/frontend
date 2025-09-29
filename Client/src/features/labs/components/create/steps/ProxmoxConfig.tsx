@@ -28,7 +28,7 @@ interface ProxmoxConfigData {
 interface BackendData {
   nodes: Array<{ id: string; name: string; cpu: number; memory: number; storage: number }>;
   storages: Array<{ id: string; name: string; type: string }>;
-  isos: Array<{ id: string; name: string; size: string; type?: string; version?: string }>;
+  isos: Array<{ content: string; volid: string; size: string; format?: string; version?: string }>;
   cpuModels: Array<{ id: string; name: string; features: string[] }>;
   networkBridges: Array<{ id: string; name: string; type: string }>;
 }
@@ -38,7 +38,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   // State for ISO upload
   const [isUploadingIso, setIsUploadingIso] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-
   // Mock backend data - replace with actual API calls
   const [backendData, setBackendData] = useState<BackendData>({
     nodes: [],
@@ -191,11 +190,14 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     setUploadProgress(0);
 
     try {
+      
       const formData = new FormData();
       formData.append('iso', file);
-      formData.append('storage', localConfig.storage);
       formData.append('node', localConfig.node);
+      formData.append('storageName', localConfig.storage);
 
+      const storageType = backendData.storages.find((storage)=>storage.storage === localConfig.storage)?.type
+      formData.append('storageType',storageType)
       // Replace with actual API call
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/upload-iso`,
@@ -214,17 +216,17 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         setUploadProgress(i);
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-
+     
       // Mock successful upload - add new ISO to the list
       const newIso = {
-        id: `custom-${Date.now()}`,
-        name: file.name.replace('.iso', ''),
+        content:'unknown',
+        volid: file.name.replace('.iso', ''),
         size: `${(file.size / (1024 * 1024 * 1024)).toFixed(1)}GB`,
         storage: localConfig.storage,
-        type: 'Custom',
+        format: 'iso',
         version: 'Unknown'
       };
-
+      console.log(newIso)
       setBackendData(prev => ({
         ...prev,
         isos: [...prev.isos, newIso]
@@ -278,7 +280,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     // Trigger next step by calling onChange with the current localConfig
     onChange(localConfig);
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -289,7 +290,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       </div>
     );
   }
-  console.log(backendData)
   return (
     <div className="space-y-6">
       <div>
