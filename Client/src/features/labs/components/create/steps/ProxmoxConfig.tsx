@@ -23,6 +23,7 @@ interface ProxmoxConfigData {
   memoryMB: number;
   networkBridge: string;
   onBoot: boolean;
+  firewall: boolean;
 }
 
 interface BackendData {
@@ -262,7 +263,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
   const handleSubmit = () => {
     // Validate required fields
-    const requiredFields = ['name', 'node', 'storage', 'iso', 'isoType', 'isoVersion', 'networkBridge'];
+    const requiredFields = ['name', 'node', 'storage', 'iso', 'networkBridge'];
     const missingFields = requiredFields.filter(field => !localConfig[field as keyof ProxmoxConfigData]);
 
     if (missingFields.length > 0) {
@@ -494,53 +495,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 </div>
               </div>
 
-              {/* Type Dropdown */}
-              <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-400 mb-1">Type</label>
-                <div className="relative">
-                  <select
-                    value={localConfig.isoType || ''}
-                    onChange={(e) => updateConfig('isoType', e.target.value)}
-                    className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                             text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
-                    disabled={!localConfig.node || !localConfig.storage}
-                  >
-                    <option value="">Select ISO type</option>
-                    {[...new Set(getFilteredIsos().map(iso => iso.type).filter(Boolean))].map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Version Dropdown */}
-              <div className="mb-3">
-                <label className="block text-xs font-medium text-gray-400 mb-1">Version</label>
-                <div className="relative">
-                  <select
-                    value={localConfig.isoVersion || ''}
-                    onChange={(e) => updateConfig('isoVersion', e.target.value)}
-                    className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                             text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
-                    disabled={!localConfig.node || !localConfig.storage || !localConfig.isoType}
-                  >
-                    <option value="">Select ISO version</option>
-                    {getFilteredIsos()
-                      .filter(iso => iso.type === localConfig.isoType)
-                      .map(iso => iso.version)
-                      .filter((version, index, arr) => version && arr.indexOf(version) === index)
-                      .map((version) => (
-                        <option key={version} value={version}>
-                          {version}
-                        </option>
-                      ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
+              
 
 
 
@@ -593,9 +548,8 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               max="64"
               value={localConfig.cores}
               onChange={(e) => updateConfig('cores', parseInt(e.target.value) || 1)}
-              className="w-full px-4 py-3 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                       text-gray-300 focus:border-primary-500/40 focus:outline-none
-                       transition-all duration-200"
+              className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                       text-gray-300 focus:border-primary-500/40 focus:outline-none"
               placeholder="Enter number of cores"
             />
           </div>
@@ -617,28 +571,15 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Memory (MiB)
               </label>
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => adjustMemory(false)}
-                  className="p-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                           text-gray-300 hover:bg-dark-400/70 transition-colors"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <div className="flex-1 text-center">
-                  <span className="text-lg font-medium text-gray-200">
-                    {localConfig.memoryMB || 512} MiB
-                  </span>
-                </div>
-                <button
-                  onClick={() => adjustMemory(true)}
-                  className="p-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                           text-gray-300 hover:bg-dark-400/70 transition-colors"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">Memory adjusts in increments of 32 MiB</p>
+              <input
+                type="number"
+                min="32"
+                value={localConfig.memoryMB || 512}
+                onChange={(e) => updateConfig('memoryMB', parseInt(e.target.value) || 512)}
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                placeholder="Enter memory in MiB"
+              />
             </div>
 
             <div>
@@ -663,26 +604,50 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <Power className="h-4 w-4 text-primary-400" />
-                <label className="text-sm font-medium text-gray-300">
-                  Start on Boot
+            <div className="space-y-3">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <Power className="h-4 w-4 text-primary-400" />
+                  <label className="text-sm font-medium text-gray-300">
+                    Start on Boot
+                  </label>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={localConfig.onBoot || false}
+                    onChange={(e) => updateConfig('onBoot', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-dark-400 peer-focus:outline-none rounded-full peer 
+                                peer-checked:after:translate-x-full peer-checked:after:border-white 
+                                after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                                after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
+                                peer-checked:bg-primary-500"></div>
                 </label>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={localConfig.onBoot || false}
-                  onChange={(e) => updateConfig('onBoot', e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-dark-400 peer-focus:outline-none rounded-full peer 
-                              peer-checked:after:translate-x-full peer-checked:after:border-white 
-                              after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-                              after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
-                              peer-checked:bg-primary-500"></div>
-              </label>
+
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
+                  <Network className="h-4 w-4 text-primary-400" />
+                  <label className="text-sm font-medium text-gray-300">
+                    Firewall
+                  </label>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={localConfig.firewall || false}
+                    onChange={(e) => updateConfig('firewall', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-dark-400 peer-focus:outline-none rounded-full peer 
+                                peer-checked:after:translate-x-full peer-checked:after:border-white 
+                                after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                                after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
+                                peer-checked:bg-primary-500"></div>
+                </label>
+              </div>
             </div>
           </div>
         </div>
