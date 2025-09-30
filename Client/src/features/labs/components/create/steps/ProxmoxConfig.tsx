@@ -199,42 +199,46 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
       const storageType = backendData.storages.find((storage)=>storage.storage === localConfig.storage)?.type
       formData.append('storageType',storageType)
-      // Replace with actual API call
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/upload-iso`,
-        formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-          onUploadProgress: (progressEvent) => {
-            const progress = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
-            setUploadProgress(progress);
-          }
+      
+        // Simulate upload progress 
+         const response = await axios.post(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/upload-iso`,
+    formData,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total
+        );
+        setUploadProgress(percentCompleted);
+
+        // ✅ Trigger loading once the file is fully uploaded
+        if (progressEvent.loaded === progressEvent.total) {
+          setLoading(true);
         }
-      );
-
-      // Simulate upload progress
-      for (let i = 0; i <= 100; i += 10) {
-        setUploadProgress(i);
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
+      },
+    }
+  );
      
-      // Mock successful upload - add new ISO to the list
-      const newIso = {
-        content:'unknown',
-        volid: file.name.replace('.iso', ''),
-        size: `${(file.size / (1024 * 1024 * 1024)).toFixed(1)}GB`,
-        storage: localConfig.storage,
-        format: 'iso',
-        version: 'Unknown'
-      };
-      console.log(newIso)
-      setBackendData(prev => ({
-        ...prev,
-        isos: [...prev.isos, newIso]
-      }));
+      // Check if response is successful
+      if (response.data.success || response.status === 200) {
+        // Mock successful upload - add new ISO to the list
+        const newIso = {
+          content:'unknown',
+          volid: file.name.replace('.iso', ''),
+          size: `${(file.size / (1024 * 1024 * 1024)).toFixed(1)}GB`,
+          storage: localConfig.storage,
+          format: 'iso',
+          version: 'Unknown'
+        };
+        setBackendData(prev => ({
+          ...prev,
+          isos: [...prev.isos, newIso]
+        }));
 
-      // Refetch ISOs to get updated list
-      await fetchISOs();
+        // Refetch ISOs to get updated list
+        await fetchISOs();
+      }
 
     } catch (error) {
       console.error('Error uploading ISO:', error);
@@ -242,6 +246,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     } finally {
       setIsUploadingIso(false);
       setUploadProgress(0);
+      setLoading(false);
       // Reset file input
       event.target.value = '';
     }
