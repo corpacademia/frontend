@@ -286,6 +286,8 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     // Trigger next step by calling onChange with the current localConfig
     onChange(localConfig);
   };
+
+  console.log(backendData)
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Clock, FileText, Target, Users, Wrench } from 'lucide-react';
+import { ChevronRight, Clock, FileText, Target, Users, Wrench, Monitor, Globe } from 'lucide-react';
 
 interface BasicInfoStepProps {
   onNext: (data: any) => void;
@@ -15,7 +15,9 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ onNext, type }) =>
     prerequisites: '',
     targetAudience: '',
     technologies: '',
-    additionalDetails: ''
+    additionalDetails: '',
+    guacamoleName: '', // Added Guacamole Name
+    guacamoleUrl: ''   // Added Guacamole URL
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -38,12 +40,25 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ onNext, type }) =>
       newErrors.description = 'Description is required';
     }
 
+    // Guacamole validation
+    if (formData.guacamoleUrl && !formData.guacamoleUrl.trim()) {
+      newErrors.guacamoleUrl = 'Guacamole URL is required if name is provided';
+    }
+    if (formData.guacamoleName && !formData.guacamoleName.trim()) {
+      newErrors.guacamoleName = 'Guacamole Name is required if URL is provided';
+    }
+
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
     if (validateForm()) {
+    const labDetailsWithGuacamole = { ...formData };
+    const prevData = JSON.parse(localStorage.getItem('formData')) || {}
+    const updatedData = {...prevData, details: labDetailsWithGuacamole};
+    localStorage.setItem('formData',JSON.stringify(updatedData))
       onNext(formData);
     }
   };
@@ -105,8 +120,8 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ onNext, type }) =>
             onChange={(e) => handleInputChange('description', e.target.value)}
             className={`w-full px-4 py-2 bg-dark-400/50 border rounded-lg text-white 
                        placeholder-gray-400 focus:outline-none transition-colors resize-none h-24 ${
-                         errors.description 
-                           ? 'border-red-500 focus:border-red-400' 
+                         errors.description
+                           ? 'border-red-500 focus:border-red-400'
                            : 'border-primary-500/20 focus:border-primary-500/40'
                        }`}
             placeholder="Describe what students will learn and accomplish in this lab"
@@ -192,6 +207,43 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ onNext, type }) =>
                        resize-none h-20"
             placeholder="Any additional information about the lab (e.g., platform specifics, special requirements)"
           />
+        </div>
+
+        {/* Guacamole Configuration */}
+        <div className="lg:col-span-2">
+          <h3 className="text-xl font-bold text-gray-400 mb-4">Guacamole Configuration</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <label className="flex items-center text-gray-400 mb-2">
+                <Monitor className="h-4 w-4 mr-2 text-primary-400" />
+                Guacamole Name
+              </label>
+              <input
+                type="text"
+                value={formData.guacamoleName}
+                onChange={(e) => handleInputChange('guacamoleName', e.target.value)}
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-white placeholder-gray-400 focus:border-primary-500/40 focus:outline-none"
+                placeholder="Enter a name for the Guacamole connection"
+              />
+              {errors.guacamoleName && <p className="text-red-500 text-sm mt-1">{errors.guacamoleName}</p>}
+            </div>
+            <div>
+              <label className="flex items-center text-gray-400 mb-2">
+                <Globe className="h-4 w-4 mr-2 text-primary-400" />
+                Guacamole URL
+              </label>
+              <input
+                type="text"
+                value={formData.guacamoleUrl}
+                onChange={(e) => handleInputChange('guacamoleUrl', e.target.value)}
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-white placeholder-gray-400 focus:border-primary-500/40 focus:outline-none"
+                placeholder="Enter the URL for the Guacamole connection"
+              />
+              {errors.guacamoleUrl && <p className="text-red-500 text-sm mt-1">{errors.guacamoleUrl}</p>}
+            </div>
+          </div>
         </div>
       </div>
 
