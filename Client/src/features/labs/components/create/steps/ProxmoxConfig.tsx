@@ -22,6 +22,7 @@ interface ProxmoxConfigData {
   cores: number;
   memoryMB: number;
   networkBridge: string;
+  nicModel: string;
   onBoot: boolean;
   firewall: boolean;
 }
@@ -287,7 +288,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     onChange(localConfig);
   };
 
-  console.log(backendData)
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -604,6 +604,28 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                   {backendData.networkBridges.map((bridge) => (
                     <option key={bridge.id} value={bridge.id}>
                       {bridge.iface} ({bridge.type})
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                NIC Model
+              </label>
+              <div className="relative">
+                <select
+                  value={localConfig.nicModel || ''}
+                  onChange={(e) => updateConfig('nicModel', e.target.value)}
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
+                >
+                  <option value="">Select NIC model</option>
+                  {import.meta.env.VITE_NIC_MODELS?.split(',').map((model: string) => (
+                    <option key={model.trim()} value={model.trim()}>
+                      {model.trim()}
                     </option>
                   ))}
                 </select>

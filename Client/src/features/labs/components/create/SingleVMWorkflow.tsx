@@ -200,6 +200,7 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       setIsLoading(true);
       const data = JSON.parse(localStorage.getItem("formData") || "{}");
       try {
+        console.log(data)
         // Make API call for Proxmox platform
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createSingleVmProxmoxLab`, {
           data: data,
