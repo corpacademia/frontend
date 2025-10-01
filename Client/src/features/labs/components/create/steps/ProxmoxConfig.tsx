@@ -25,6 +25,8 @@ interface ProxmoxConfigData {
   nicModel: string;
   onBoot: boolean;
   firewall: boolean;
+  startDate: string;
+  endDate: string;
 }
 
 interface BackendData {
@@ -405,6 +407,35 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 placeholder="Enter VM description"
                 rows={3}
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Start Date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={localConfig.startDate || ''}
+                  onChange={(e) => updateConfig('startDate', e.target.value)}
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                             text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  End Date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={localConfig.endDate || ''}
+                  onChange={(e) => updateConfig('endDate', e.target.value)}
+                  min={localConfig.startDate || new Date().toISOString().slice(0, 16)}
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                             text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                />
+              </div>
             </div>
           </div>
         </div>
