@@ -56,7 +56,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   useEffect(() => {
     fetchProxmoxData();
   }, []);
-
   useEffect(() => {
     // Auto-fill VM ID when component mounts
     if (!localConfig.vmId) {
@@ -77,7 +76,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     const nodesRes = await axios.get(
       `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/nodes`
     );
-
+    
     const nodes = nodesRes?.data?.nodes || nodesRes?.data?.data || [];
     const firstNode = nodes?.[0]?.node || nodes?.[0]; // adjust based on your backend response
 
@@ -633,7 +632,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 >
                   <option value="">Select network bridge</option>
                   {backendData.networkBridges.map((bridge) => (
-                    <option key={bridge.id} value={bridge.id}>
+                    <option key={bridge.id} value={bridge.iface}>
                       {bridge.iface} ({bridge.type})
                     </option>
                   ))}

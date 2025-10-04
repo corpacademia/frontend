@@ -36,10 +36,10 @@ interface ProxmoxVM {
   storage: number;
   os: string;
   templateId?: string;
-  startDate: string;
-  endDate: string;
-  lab_id: string;
-  vmId?: string;
+  startdate: string;
+  enddate: string;
+  labid: string;
+  vmid?: string;
   node?: string;
 }
 
@@ -58,22 +58,27 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const [showFullTitle, setShowFullTitle] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [vmStatus, setVmStatus] = useState<'running' | 'stopped' | 'pending'>('stopped');
-
   useEffect(() => {
     checkVMStatus();
-  }, [vm.lab_id]);
-
+  }, [vm.labid]);
   const checkVMStatus = async () => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox_ms/checkVMStatus`, {
-        lab_id: vm.lab_id,
-        vmId: vm.vmId
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkVMStatus`, {
+        labId: vm.labid,
+        vmId: vm.vmid
       });
       
       if (response.data.success) {
-        const status = response.data.status;
+        const isLaunched = response.data.data.islaunched;
+        const status = response.data.data.isrunning ? 'running':'stop';
+        const isRunning = response.data.data.isrunning;
         setVmStatus(status);
-        setButtonLabel(status === 'running' ? 'Stop' : 'Launch VM');
+        setButtonLabel(() => {
+          if (!isLaunched) return "Launch VM";
+          if (isRunning) return "running";
+          return "stop";
+        });
+
       }
     } catch (error) {
       console.error('Error checking VM status:', error);
@@ -82,13 +87,28 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
   const handleLaunchVM = async () => {
     setIsLaunchProcessing(true);
-
     try {
-      if (buttonLabel === 'Stop') {
+      if( buttonLabel === 'Launch VM'){
+         const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`,{
+          node:vm.node,
+          vmid:vm.vmid, 
+          name:vm.vmname, 
+          cores:vm.cpu,
+          memory:vm.ram,
+          storageType:vm.storagetype,
+          storage:vm.storage,
+          iso:vm.isoimage,
+          nicModel:vm.nicmodel,
+          networkBridge,
+          firewall:vm.firewall,
+          boot:vm.boot
+         }) 
+      }
+      else if (buttonLabel === 'Stop') {
         // Stop the VM
         const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox_ms/stopVM`, {
-          lab_id: vm.lab_id,
-          vmId: vm.vmId,
+          lab_id: vm.labid,
+          vmId: vm.vmid,
           node: vm.node
         });
 
@@ -102,11 +122,12 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         } else {
           throw new Error(stopResponse.data.message || 'Failed to stop VM');
         }
-      } else {
+      } 
+      else {
         // Start the VM
         const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox_ms/startVM`, {
-          lab_id: vm.lab_id,
-          vmId: vm.vmId,
+          lab_id: vm.labid,
+          vmId: vm.vmid,
           node: vm.node
         });
 
@@ -120,11 +141,11 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
           // Navigate to VM session if available
           if (startResponse.data.guacamoleUrl) {
-            navigate(`/dashboard/labs/vm-session/${vm.lab_id}`, {
+            navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
               state: { 
                 guacUrl: startResponse.data.guacamoleUrl,
                 vmTitle: vm.title,
-                vmId: vm.lab_id,
+                vmId: vm.labid,
               }
             });
           }
@@ -147,7 +168,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
     setIsProcessing(true);
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox_ms/createTemplate`, {
-        lab_id: vm.lab_id,
+        lab_id: vm.labid,
         vmId: vm.vmId,
         node: vm.node
       });
@@ -157,7 +178,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         
         // Update lab status to available
         const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateProxmoxLabStatus`, {
-          labId: vm.lab_id,
+          labId: vm.labid,
           status: 'available',
           templateId: response.data.templateId
         });
@@ -281,7 +302,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           </div>
           <div className="flex items-center text-xs sm:text-sm text-gray-400 col-span-1 sm:col-span-2">
             <Hash className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-400" />
-            <span className="truncate">VM ID: {vm.vmId || 'N/A'}</span>
+            <span className="truncate">VM ID: {vm.vmid || 'N/A'}</span>
           </div>
           {vm.templateId && (
             <div className="flex items-center text-xs sm:text-sm text-gray-400 col-span-1 sm:col-span-2">
@@ -303,14 +324,14 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
             <Calendar className="h-3 w-3 mr-1 text-orange-400" />
             <div className="flex flex-col">
               <span className="text-xs font-medium">Start:</span>
-              <span className="text-xs">{formatDate(vm.startDate)}</span>
+              <span className="text-xs">{formatDate(vm.startdate)}</span>
             </div>
           </div>
           <div className="flex items-center text-xs text-gray-400">
             <Clock className="h-3 w-3 mr-1 text-orange-400" />
             <div className="flex flex-col">
               <span className="text-xs font-medium">End:</span>
-              <span className="text-xs">{formatDate(vm.endDate)}</span>
+              <span className="text-xs">{formatDate(vm.enddate)}</span>
             </div>
           </div>
         </div>
