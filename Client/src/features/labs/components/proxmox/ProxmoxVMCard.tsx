@@ -24,6 +24,8 @@ import {
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { ProxmoxDeleteModal } from './ProxmoxDeleteModal';
+import { ProxmoxEditModal } from './ProxmoxEditModal';
 
 interface ProxmoxVM {
   id: string;
@@ -58,6 +60,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const [showFullTitle, setShowFullTitle] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [vmStatus, setVmStatus] = useState<'running' | 'stopped' | 'pending'>('stopped');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   useEffect(() => {
     checkVMStatus();
   }, [vm.labid]);
@@ -200,6 +204,37 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
     }
   };
 
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteProxmoxLab/${vm.labid}`);
+
+      if (response.data.success) {
+        setNotification({ type: 'success', message: 'VM deleted successfully' });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        throw new Error(response.data.message || 'Failed to delete VM');
+      }
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to delete VM'
+      });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setNotification({ type: 'success', message: 'VM updated successfully' });
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Not set';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -280,6 +315,18 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                 {vmStatus}
               </span>
             </div>
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+            >
+              <Pencil className="h-3 w-3 sm:h-4 sm:w-4 text-orange-400" />
+            </button>
+            <button
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+            >
+              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
+            </button>
           </div>
         </div>
 
@@ -401,6 +448,21 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           </div>
         </div>
       </div>
+
+      <ProxmoxDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        isDeleting={isDeleting}
+        vmTitle={vm.title}
+      />
+
+      <ProxmoxEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        vm={vm}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   );
 };
