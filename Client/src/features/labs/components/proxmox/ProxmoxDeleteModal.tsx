@@ -21,8 +21,8 @@ export const ProxmoxDeleteModal: React.FC<ProxmoxDeleteModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-      <div className="bg-dark-200 rounded-lg w-full max-w-md mx-auto p-4 sm:p-6">
+    <div className="fixed inset-0 left-0 right-0 top-0 bottom-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-4" style={{ position: 'fixed' }}>
+      <div className="bg-dark-200 rounded-lg w-full max-w-md p-4 sm:p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
             <GradientText>Confirm Deletion</GradientText>

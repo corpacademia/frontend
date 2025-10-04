@@ -262,7 +262,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
   return (
     <div className="flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px] 
-                  max-h-fit overflow-hidden rounded-xl border border-orange-500/10 
+                  max-h-fit rounded-xl border border-orange-500/10 
                   hover:border-orange-500/30 bg-dark-200/80 backdrop-blur-sm
                   transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10 
                   hover:translate-y-[-2px] group relative">
