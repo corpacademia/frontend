@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   HardDrive, 
@@ -71,7 +70,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         labId: vm.labid,
         vmId: vm.vmid
       });
-      
+
       if (response.data.success) {
         const isLaunched = response.data.data.islaunched;
         const status = response.data.data.isrunning ? 'running':'stop';
@@ -179,7 +178,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Template created successfully' });
-        
+
         // Update lab status to available
         const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateProxmoxLabStatus`, {
           labId: vm.labid,
