@@ -71,23 +71,25 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         vmId: vm.vmid
       });
 
-      if (response.data.success) {
-        const isLaunched = response.data.data.islaunched;
-        const status = response.data.data.isrunning ? 'running':'stop';
-        const isRunning = response.data.data.isrunning;
-        setVmStatus(status);
-        setButtonLabel(() => {
-          if (!isLaunched) return "Launch VM";
-          if (isRunning) return "running";
-          return "stop";
-        });
+      if (response?.data?.success && response?.data?.data) {
+        const { islaunched, isrunning } = response.data.data;
 
+        const status = isrunning ? 'running' : 'stop';
+        const isRunning = isrunning;
+
+        setVmStatus(status);
+
+        setButtonLabel(() => {
+          if (!islaunched) return 'Launch VM';
+          if (islaunched && isRunning) return 'Stop';
+          return 'Start';
+        });
       }
+
     } catch (error) {
       console.error('Error checking VM status:', error);
     }
   };
-
   const handleLaunchVM = async () => {
     setIsLaunchProcessing(true);
     try {
@@ -107,7 +109,6 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           boot:vm.boot
          }) 
          if (launchVM.data.success) {
-          
           setButtonLabel('Start');
           setVmStatus('pending');
           setNotification({

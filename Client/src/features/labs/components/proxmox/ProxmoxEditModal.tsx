@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { X, AlertCircle, Check, Loader, Server, Cpu, HardDrive, Network, Calendar, FileText, Tag, Upload, Download, MemoryStick, Plus, Minus } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
@@ -83,7 +83,7 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     setNotification(null);
-    
+
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateProxmoxLab`, {
         labId: vm.labid,
@@ -129,15 +129,15 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
     { id: 'network', label: 'Network', icon: Network }
   ];
 
-  return (
-    <div className="fixed inset-0 left-0 right-0 top-0 bottom-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-2 sm:p-4" style={{ position: 'fixed' }}>
-      <div className="bg-dark-200 rounded-lg w-full max-w-[95vw] sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col">
+  const modalContent = (
+    <div className="fixed inset-0 left-0 right-0 top-0 bottom-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-2 sm:p-4">
+      <div className="bg-dark-200 rounded-lg w-full max-w-[95vw] sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex justify-between items-center p-4 sm:p-6 border-b border-dark-300/50">
           <h2 className="text-xl sm:text-2xl font-semibold">
             <GradientText>Edit Proxmox VM Configuration</GradientText>
           </h2>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
           >
@@ -186,7 +186,7 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                       placeholder="Enter VM title"
                     />
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Operating System
@@ -423,8 +423,8 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
             {/* Notification */}
             {notification && (
               <div className={`p-4 rounded-lg flex items-center space-x-2 ${
-                notification.type === 'success' 
-                  ? 'bg-emerald-500/20 border border-emerald-500/20' 
+                notification.type === 'success'
+                  ? 'bg-emerald-500/20 border border-emerald-500/20'
                   : 'bg-red-500/20 border border-red-500/20'
               }`}>
                 {notification.type === 'success' ? (
@@ -469,4 +469,6 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };
