@@ -55,7 +55,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const [isLaunchProcessing, setIsLaunchProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-  const [buttonLabel, setButtonLabel] = useState<'Launch VM' | 'Stop'>('Launch VM');
+  const [buttonLabel, setButtonLabel] = useState<'Launch VM' | 'Start' | 'Stop'>('Launch VM');
   const [showFullTemplateId, setShowFullTemplateId] = useState(false);
   const [showFullTitle, setShowFullTitle] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -103,10 +103,21 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           storage:vm.storage,
           iso:vm.isoimage,
           nicModel:vm.nicmodel,
-          networkBridge,
+          networkBridge:vm.networkbridge,
           firewall:vm.firewall,
           boot:vm.boot
          }) 
+         if (launchVM.data.success) {
+          
+          setButtonLabel('Start');
+          setVmStatus('pending');
+          setNotification({
+            type: 'success',
+            message: 'VM Launched successfully',
+          });
+        } else {
+          throw new Error(launchVM.data.message || 'Failed to stop VM');
+        }
       }
       else if (buttonLabel === 'Stop') {
         // Stop the VM
