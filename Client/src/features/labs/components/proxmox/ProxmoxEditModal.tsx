@@ -130,8 +130,8 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-dark-200 rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 left-0 right-0 top-0 bottom-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-2 sm:p-4" style={{ position: 'fixed' }}>
+      <div className="bg-dark-200 rounded-lg w-full max-w-[95vw] sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center p-4 sm:p-6 border-b border-dark-300/50">
           <h2 className="text-xl sm:text-2xl font-semibold">

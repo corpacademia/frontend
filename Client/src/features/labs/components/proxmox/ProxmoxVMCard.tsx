@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   HardDrive, 
@@ -71,7 +70,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         labId: vm.labid,
         vmId: vm.vmid
       });
-      
+
       if (response.data.success) {
         const isLaunched = response.data.data.islaunched;
         const status = response.data.data.isrunning ? 'running':'stop';
@@ -190,7 +189,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Template created successfully' });
-        
+
         // Update lab status to available
         const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateProxmoxLabStatus`, {
           labId: vm.labid,
@@ -274,7 +273,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
   return (
     <div className="flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px] 
-                  max-h-fit overflow-hidden rounded-xl border border-orange-500/10 
+                  max-h-fit rounded-xl border border-orange-500/10 
                   hover:border-orange-500/30 bg-dark-200/80 backdrop-blur-sm
                   transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10 
                   hover:translate-y-[-2px] group relative">
