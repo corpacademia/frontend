@@ -54,13 +54,14 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const [isLaunchProcessing, setIsLaunchProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-  const [buttonLabel, setButtonLabel] = useState<'Launch VM' | 'Start' | 'Stop'>('Launch VM');
+  const [buttonLabel, setButtonLabel] = useState<'Launch VM' | 'Stop' | 'Start VM'>('Launch VM');
   const [showFullTemplateId, setShowFullTemplateId] = useState(false);
   const [showFullTitle, setShowFullTitle] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [vmStatus, setVmStatus] = useState<'running' | 'stopped' | 'pending'>('stopped');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [hasTemplate,setHasTemplate] = useState(false);
   useEffect(() => {
     checkVMStatus();
   }, [vm.labid]);
@@ -71,25 +72,33 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         vmId: vm.vmid
       });
 
-      if (response?.data?.success && response?.data?.data) {
-        const { islaunched, isrunning } = response.data.data;
-
-        const status = isrunning ? 'running' : 'stop';
-        const isRunning = isrunning;
-
-        setVmStatus(status);
-
-        setButtonLabel(() => {
-          if (!islaunched) return 'Launch VM';
-          if (islaunched && isRunning) return 'Stop';
-          return 'Start';
-        });
+      if (response.data.success) {
+        const isLaunched = response.data.data.islaunched;
+        const isRunning = response.data.data.isrunning;
+        
+        // Update VM status
+        if (isRunning) {
+          setVmStatus('running');
+        } else if (isLaunched) {
+          setVmStatus('stopped');
+        } else {
+          setVmStatus('pending');
+        }
+        
+        // Update button label based on state
+        if (!isLaunched) {
+          setButtonLabel("Launch VM");
+        } else if (isRunning) {
+          setButtonLabel("Stop");
+        } else if(isLaunched && !isRunning) {
+          setButtonLabel("Start VM");
+        }
       }
-
     } catch (error) {
       console.error('Error checking VM status:', error);
     }
   };
+
   const handleLaunchVM = async () => {
     setIsLaunchProcessing(true);
     try {
@@ -108,16 +117,15 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           firewall:vm.firewall,
           boot:vm.boot
          }) 
-         if (launchVM.data.success) {
-          setButtonLabel('Start');
-          setVmStatus('pending');
+         if(launchVM.data.success){
+           setButtonLabel('Start VM');
+          setVmStatus('stopped');
           setNotification({
             type: 'success',
             message: 'VM Launched successfully',
           });
-        } else {
-          throw new Error(launchVM.data.message || 'Failed to stop VM');
-        }
+         }
+         
       }
       else if (buttonLabel === 'Stop') {
         // Stop the VM
@@ -168,7 +176,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           throw new Error(startResponse.data.message || 'Failed to start VM');
         }
       }
-    } catch (error) {
+    } catch (error:any) {
+      console.log(error)
       setNotification({
         type: 'error',
         message: error.response?.data?.message || 'Operation failed',
@@ -190,6 +199,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Template created successfully' });
+        setHasTemplate(true)
 
         // Update lab status to available
         const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateProxmoxLabStatus`, {
@@ -204,7 +214,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       } else {
         throw new Error(response.data.message || 'Failed to create template');
       }
-    } catch (error) {
+    } catch (error:any) {
       setNotification({
         type: 'error',
         message: error.response?.data?.message || 'Failed to create template'
@@ -418,7 +428,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                 ) : (
                   <>
                     <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Launch VM</span>
+                    <span className="hidden sm:inline">{buttonLabel}</span>
                   </>
                 )}
               </button>
@@ -446,12 +456,18 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
             </div>
 
             <button
-              className="h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium w-full
-                       bg-gradient-to-r from-orange-500 to-red-500
-                       hover:from-orange-400 hover:to-red-400
-                       transform hover:scale-105 transition-all duration-300
-                       text-white shadow-lg shadow-orange-500/20
-                       flex items-center justify-center"
+              className={`h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium w-full
+                       ${hasTemplate 
+                         ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 transform hover:scale-105 shadow-lg shadow-orange-500/20' 
+                         : 'bg-gray-500/20 cursor-not-allowed opacity-50'
+                       }
+                       transition-all duration-300
+                       text-white
+                       flex items-center justify-center`}
+              disabled = {!hasTemplate}
+              
+              title={!hasTemplate ? 'Create template first to enable this option' : ''}
+            
             >
               <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Convert to Catalogue

@@ -19,7 +19,7 @@ interface ProxmoxEditModalProps {
     templateId?: string;
     startdate: string;
     enddate: string;
-    os?: string;
+    isoimage?: string;
     nicmodel?: string;
     networkBridge?: string;
     firewall?: boolean;
@@ -42,9 +42,9 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
     ram: vm.ram || 4,
     storage: vm.storage || 50,
     node: vm.node || '',
-    os: vm.os || '',
+    isoimage: vm.isoimage || '',
     nicModel: vm.nicmodel || '',
-    networkBridge: vm.networkBridge || '',
+    networkBridge: vm.networkbridge || '',
     firewall: vm.firewall || false,
     boot: vm.boot || false,
     startDate: vm.startdate || '',
@@ -62,9 +62,9 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
         ram: vm.ram || 4,
         storage: vm.storage || 50,
         node: vm.node || '',
-        os: vm.os || '',
+        isoimage: vm.isoimage || '',
         nicModel: vm.nicmodel || '',
-        networkBridge: vm.networkBridge || '',
+        networkBridge: vm.networkbridge || '',
         firewall: vm.firewall || false,
         boot: vm.boot || false,
         startDate: vm.startdate || '',
@@ -93,7 +93,7 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
         ram: formData.ram,
         storage: formData.storage,
         node: formData.node,
-        os: formData.os,
+        isoimage: formData.isoimage,
         nicModel: formData.nicModel,
         networkBridge: formData.networkBridge,
         firewall: formData.firewall,
@@ -193,11 +193,13 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={formData.os}
-                      onChange={(e) => handleInputChange('os', e.target.value)}
+                      value={formData.isoimage}
+                      onChange={(e) => handleInputChange('isoimage', e.target.value)}
                       className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
                                text-gray-300 focus:border-orange-500/40 focus:outline-none"
                       placeholder="e.g., Ubuntu 22.04"
+                    disabled = {true}
+                    title='Read-Only'
                     />
                   </div>
                 </div>
@@ -229,6 +231,7 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                                text-gray-300 focus:border-orange-500/40 focus:outline-none"
                       placeholder="e.g., pve"
                       disabled
+                      title='Read-only'
                     />
                   </div>
 
@@ -242,6 +245,7 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                       className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
                                text-gray-300 focus:border-orange-500/40 focus:outline-none"
                       disabled
+                      title='Read-only'
                     />
                   </div>
                 </div>
