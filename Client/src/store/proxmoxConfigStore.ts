@@ -76,9 +76,9 @@ export const useProxmoxConfigStore = create<ProxmoxConfigState>((set) => ({
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/isos`,
-        { NODE: node, STORAGE: storage }
+        { NODE: node, storage: storage }
       );
-      set({ isos: response.data.data || [], isLoading: false });
+      set({ isos: response.data.isos || [], isLoading: false });
     } catch (error: any) {
       console.error('Failed to fetch ISOs:', error);
       set({

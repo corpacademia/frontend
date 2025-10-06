@@ -25,6 +25,7 @@ interface ProxmoxEditModalProps {
     networkBridge?: string;
     firewall?: boolean;
     boot?: boolean;
+    storagetype?:string;
   };
   onSuccess: () => void;
 }
@@ -49,9 +50,10 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
     firewall: vm.firewall || false,
     boot: vm.boot || false,
     startDate: vm.startdate || '',
-    endDate: vm.enddate || ''
+    endDate: vm.enddate || '',
+    storagetype: vm.storagetype || '',
   });
-  const [selectedStorage, setSelectedStorage] = useState('');
+  const [selectedStorage, setSelectedStorage] = useState(vm.storagetype);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   
@@ -82,11 +84,11 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
         firewall: vm.firewall || false,
         boot: vm.boot || false,
         startDate: vm.startdate || '',
-        endDate: vm.enddate || ''
+        endDate: vm.enddate || '',
+        storagetype: vm.storagetype || '',
       });
     }
   }, [vm]);
-
   useEffect(() => {
     if (isOpen && vm.node) {
       fetchStorages(vm.node);
@@ -155,7 +157,6 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
   };
 
   if (!isOpen) return null;
-
   const tabs = [
     { id: 'basic', label: 'Basic Info', icon: FileText },
     { id: 'resources', label: 'Resources', icon: Server },
@@ -236,8 +237,8 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                     >
                       <option value="">Select Storage</option>
                       {storages.map((storage) => (
-                        <option key={storage.id} value={storage.id}>
-                          {storage.name} ({storage.type})
+                        <option key={storage.id} value={storage.storage}>
+                          {storage.storage} ({storage.type})
                         </option>
                       ))}
                     </select>
@@ -248,7 +249,7 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                       ISO Image
                     </label>
                     <select
-                      value={formData.isoimage}
+                      value={formData?.isoimage}
                       onChange={(e) => handleInputChange('isoimage', e.target.value)}
                       className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
                                text-gray-300 focus:border-orange-500/40 focus:outline-none"
@@ -256,8 +257,8 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                     >
                       <option value="">Select ISO Image</option>
                       {isos.map((iso) => (
-                        <option key={iso.volid} value={iso.volid}>
-                          {iso.content}
+                        <option key={iso.volid} value= {(iso.volid).match(/[^/]+$/)[0]}>
+                           {(iso.volid).match(/[^/]+$/)[0]}
                         </option>
                       ))}
                     </select>
@@ -436,8 +437,8 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                     >
                       <option value="">Select Network Bridge</option>
                       {networkBridges.map((bridge) => (
-                        <option key={bridge.id} value={bridge.id}>
-                          {bridge.name} ({bridge.type})
+                        <option key={bridge.id} value={bridge.iface}>
+                          {bridge.iface} ({bridge.type})
                         </option>
                       ))}
                     </select>
