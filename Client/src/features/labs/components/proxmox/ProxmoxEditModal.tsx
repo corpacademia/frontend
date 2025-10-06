@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { X, AlertCircle, Check, Loader, Server, Cpu, HardDrive, Network, Calendar, FileText, Tag, Upload, Download, MemoryStick, Plus, Minus } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
+import { useProxmoxConfigStore } from '../../../../store/proxmoxConfigStore';
 
 interface ProxmoxEditModalProps {
   isOpen: boolean;
@@ -50,8 +51,21 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
     startDate: vm.startdate || '',
     endDate: vm.enddate || ''
   });
+  const [selectedStorage, setSelectedStorage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  
+  const { 
+    storages, 
+    isos, 
+    networkBridges, 
+    nicModels, 
+    isLoading: isLoadingConfig,
+    fetchStorages, 
+    fetchISOs, 
+    fetchNetworkBridges,
+    clearData 
+  } = useProxmoxConfigStore();
 
   useEffect(() => {
     if (vm) {
@@ -72,6 +86,25 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
       });
     }
   }, [vm]);
+
+  useEffect(() => {
+    if (isOpen && vm.node) {
+      fetchStorages(vm.node);
+      fetchNetworkBridges(vm.node);
+    }
+    
+    return () => {
+      if (!isOpen) {
+        clearData();
+      }
+    };
+  }, [isOpen, vm.node]);
+
+  useEffect(() => {
+    if (selectedStorage && vm.node) {
+      fetchISOs(vm.node, selectedStorage);
+    }
+  }, [selectedStorage, vm.node]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({
@@ -189,18 +222,45 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Operating System
+                      Storage
                     </label>
-                    <input
-                      type="text"
+                    <select
+                      value={selectedStorage}
+                      onChange={(e) => {
+                        setSelectedStorage(e.target.value);
+                        handleInputChange('isoimage', '');
+                      }}
+                      className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
+                               text-gray-300 focus:border-orange-500/40 focus:outline-none"
+                      disabled={isLoadingConfig}
+                    >
+                      <option value="">Select Storage</option>
+                      {storages.map((storage) => (
+                        <option key={storage.id} value={storage.id}>
+                          {storage.name} ({storage.type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ISO Image
+                    </label>
+                    <select
                       value={formData.isoimage}
                       onChange={(e) => handleInputChange('isoimage', e.target.value)}
                       className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
                                text-gray-300 focus:border-orange-500/40 focus:outline-none"
-                      placeholder="e.g., Ubuntu 22.04"
-                    disabled = {true}
-                    title='Read-Only'
-                    />
+                      disabled={!selectedStorage || isLoadingConfig}
+                    >
+                      <option value="">Select ISO Image</option>
+                      {isos.map((iso) => (
+                        <option key={iso.volid} value={iso.volid}>
+                          {iso.content}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -367,28 +427,39 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Network Bridge
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={formData.networkBridge}
                       onChange={(e) => handleInputChange('networkBridge', e.target.value)}
                       className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
                                text-gray-300 focus:border-orange-500/40 focus:outline-none"
-                      placeholder="e.g., vmbr0"
-                    />
+                      disabled={isLoadingConfig}
+                    >
+                      <option value="">Select Network Bridge</option>
+                      {networkBridges.map((bridge) => (
+                        <option key={bridge.id} value={bridge.id}>
+                          {bridge.name} ({bridge.type})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       NIC Model
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={formData.nicModel}
                       onChange={(e) => handleInputChange('nicModel', e.target.value)}
                       className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
                                text-gray-300 focus:border-orange-500/40 focus:outline-none"
-                      placeholder="e.g., virtio"
-                    />
+                    >
+                      <option value="">Select NIC Model</option>
+                      {nicModels.map((nic) => (
+                        <option key={nic.id} value={nic.id}>
+                          {nic.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
