@@ -25,6 +25,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ProxmoxDeleteModal } from './ProxmoxDeleteModal';
 import { ProxmoxEditModal } from './ProxmoxEditModal';
+import { ProxmoxConvertToCatalogueModal } from './ProxmoxConvertToCatalogueModal';
 
 interface ProxmoxVM {
   id: string;
@@ -42,6 +43,13 @@ interface ProxmoxVM {
   labid: string;
   vmid?: string;
   node?: string;
+  storagetype?: string;
+  isoimage?: string;
+  nicmodel?: string;
+  networkbridge?: string;
+  firewall?: boolean;
+  boot?: string;
+  vmname?: string;
 }
 
 interface ProxmoxVMProps {
@@ -61,6 +69,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const [vmStatus, setVmStatus] = useState<'running' | 'stopped' | 'pending'>('stopped');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [hasTemplate,setHasTemplate] = useState(false);
   useEffect(() => {
     checkVMStatus();
@@ -76,7 +85,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       if (response.data.success) {
         const isLaunched = response.data.data.islaunched;
         const isRunning = response.data.data.isrunning;
-        
+
         // Update VM status
         if (isRunning) {
           setVmStatus('running');
@@ -85,7 +94,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         } else {
           setVmStatus('pending');
         }
-        
+
         // Update button label based on state
         if (!isLaunched) {
           setButtonLabel("Launch VM");
@@ -136,7 +145,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
             message: 'VM Launched successfully',
           });
          }
-         
+
       }
       else if (buttonLabel === 'Stop') {
         // Stop the VM
@@ -480,9 +489,9 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                        text-white
                        flex items-center justify-center`}
               disabled = {!hasTemplate}
-              
+              onClick={() => setIsConvertModalOpen(true)}
               title={!hasTemplate ? 'Create template first to enable this option' : ''}
-            
+
             >
               <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               Convert to Catalogue
@@ -504,6 +513,12 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         onClose={() => setIsEditModalOpen(false)}
         vm={vm}
         onSuccess={handleEditSuccess}
+      />
+      
+      <ProxmoxConvertToCatalogueModal
+        isOpen={isConvertModalOpen}
+        onClose={() => setIsConvertModalOpen(false)}
+        vmId={vm.labid}
       />
     </div>
   );
