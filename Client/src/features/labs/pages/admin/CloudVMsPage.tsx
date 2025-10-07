@@ -148,7 +148,6 @@ export const AdminCloudVMsPage: React.FC = () => {
       const proxmoxResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxLabsOnAdminId`, {
         adminId: admin?.id,
       });
-
       if (proxmoxResponse.data.success) {
         setProxmoxVMs(proxmoxResponse.data.data);
       }

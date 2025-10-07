@@ -64,6 +64,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const [hasTemplate,setHasTemplate] = useState(false);
   useEffect(() => {
     checkVMStatus();
+    checkTemplateCreated();
   }, [vm.labid]);
   const checkVMStatus = async () => {
     try {
@@ -98,7 +99,17 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       console.error('Error checking VM status:', error);
     }
   };
-
+  const checkTemplateCreated = async()=>{
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getTemplateInformation/${vm.labid}`);
+        if(response.data.success){
+          setHasTemplate(true);
+          setIsProcessing(response.data.data.processing);
+        }
+      } catch (error) {
+         console.log(error);
+      }
+  }
   const handleLaunchVM = async () => {
     setIsLaunchProcessing(true);
     try {
@@ -191,9 +202,9 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const handleCreateTemplate = async () => {
     setIsProcessing(true);
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox_ms/createTemplate`, {
-        lab_id: vm.labid,
-        vmId: vm.vmId,
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createTemplate`, {
+        labId: vm.labid,
+        vmid: vm.vmid,
         node: vm.node
       });
 
@@ -202,15 +213,15 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         setHasTemplate(true)
 
         // Update lab status to available
-        const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateProxmoxLabStatus`, {
-          labId: vm.labid,
-          status: 'available',
-          templateId: response.data.templateId
-        });
+        // const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateProxmoxLabStatus`, {
+        //   labId: vm.labid,
+        //   status: 'available',
+        //   templateId: response.data.templateId
+        // });
 
-        if (updateStatus.data.success) {
-          setNotification({ type: 'success', message: 'Lab status updated successfully' });
-        }
+        // if (updateStatus.data.success) {
+        //   setNotification({ type: 'success', message: 'Lab status updated successfully' });
+        // }
       } else {
         throw new Error(response.data.message || 'Failed to create template');
       }
@@ -228,7 +239,11 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteProxmoxLab/${vm.labid}`);
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteProxmoxLab`,{
+        labId:vm.labid,
+        node:vm.node,
+        vmid:vm.vmid
+      });
 
       if (response.data.success) {
         setNotification({ type: 'success', message: 'VM deleted successfully' });

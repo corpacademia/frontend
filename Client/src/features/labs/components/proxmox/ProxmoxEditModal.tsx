@@ -17,6 +17,7 @@ interface ProxmoxEditModalProps {
     storage: number;
     node?: string;
     vmid?: string;
+    vmname?:string;
     templateId?: string;
     startdate: string;
     enddate: string;
@@ -71,6 +72,9 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
 
   useEffect(() => {
     if (vm) {
+      // Extract filename from ISO image if it contains storage prefix
+      const isoFileName = vm.isoimage ? (vm.isoimage.match(/[^/]+$/)?.[0] || vm.isoimage) : '';
+      
       setFormData({
         title: vm.title || '',
         description: vm.description || '',
@@ -78,7 +82,7 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
         ram: vm.ram || 4,
         storage: vm.storage || 50,
         node: vm.node || '',
-        isoimage: vm.isoimage || '',
+        isoimage: isoFileName,
         nicModel: vm.nicmodel || '',
         networkBridge: vm.networkbridge || '',
         firewall: vm.firewall || false,
@@ -87,6 +91,11 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
         endDate: vm.enddate || '',
         storagetype: vm.storagetype || '',
       });
+      
+      // Set the initial storage if available
+      if (vm.storagetype) {
+        setSelectedStorage(vm.storagetype);
+      }
     }
   }, [vm]);
   useEffect(() => {
@@ -95,11 +104,11 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
       fetchNetworkBridges(vm.node);
     }
     
-    return () => {
-      if (!isOpen) {
-        clearData();
-      }
-    };
+    // return () => {
+    //   if (!isOpen) {
+    //     clearData();
+    //   }
+    // };
   }, [isOpen, vm.node]);
 
   useEffect(() => {
@@ -122,11 +131,13 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateProxmoxLab`, {
         labId: vm.labid,
+        vmid:vm.vmid,
         title: formData.title,
         description: formData.description,
         cpu: formData.cpu,
         ram: formData.ram,
         storage: formData.storage,
+        storageType:formData.storagetype,
         node: formData.node,
         isoimage: formData.isoimage,
         nicModel: formData.nicModel,
@@ -162,7 +173,6 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
     { id: 'resources', label: 'Resources', icon: Server },
     { id: 'network', label: 'Network', icon: Network }
   ];
-
   const modalContent = (
     <div className="fixed inset-0 left-0 right-0 top-0 bottom-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[99999] p-2 sm:p-4">
       <div className="bg-dark-200 rounded-lg w-full max-w-[95vw] sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
