@@ -40,7 +40,7 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
     
     try {
       if (user.role === 'superadmin' || user.role === 'orgsuperadmin') {
-        const [standardResult, cloudResult, singleVMDatacenter, vmclusterDatacenter] = await Promise.allSettled([
+        const [standardResult, cloudResult, singleVMDatacenter, vmclusterDatacenter,singleVMProxmox] = await Promise.allSettled([
           axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
             admin_id: user.id,
           }),
@@ -53,6 +53,7 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
           axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabDetails`, {
             userId: user.id,
           }),
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmProxmoxLabOnUserId/${user.id}`)
         ]);
 
         const allLabs: Lab[] = [];
@@ -89,6 +90,14 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
             ...vmclusterDatacenter.value.data.data.map((lab: any) => ({
               ...lab,
               type: 'vmcluster',
+            }))
+          );
+        }
+         if (singleVMProxmox.status === 'fulfilled' && singleVMProxmox.value.data.success) {
+          allLabs.push(
+            ...singleVMProxmox.value.data.data.map((lab: any) => ({
+              ...lab,
+              type: 'singlevm-proxmox',
             }))
           );
         }
