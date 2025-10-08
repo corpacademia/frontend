@@ -28,9 +28,6 @@ type CatalogueType = 'private' | 'public';
 interface FormData {
   catalogueName: string;
   organizationId: string;
-  numberOfDays: number;
-  hoursPerDay: number;
-  expiresIn: string;
   software: string[];
   catalogueType: CatalogueType;
   level: string;
@@ -118,9 +115,6 @@ const CleanupModal: React.FC<CleanupModalProps> = ({ isOpen, onClose, onConfirm 
 const initialFormData: FormData = {
   catalogueName: '',
   organizationId: '',
-  numberOfDays: 1,
-  hoursPerDay: 1,
-  expiresIn: '',
   software: [''],
   catalogueType: 'private',
   level: '',
@@ -219,18 +213,6 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
       setError('Catalogue name is required');
       return false;
     }
-    if (formData.numberOfDays < 1) {
-      setError('Number of days must be at least 1');
-      return false;
-    }
-    if (formData.hoursPerDay < 1) {
-      setError('Hours per day must be at least 1');
-      return false;
-    }
-    if (!formData.expiresIn) {
-      setError('Expiration date is required');
-      return false;
-    }
     return true;
   };
 
@@ -243,9 +225,6 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
     try {
       const updateCatalogueDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateCatalogueDetails`, {
         catalogueName: formData.catalogueName,
-        numberOfDays: formData.numberOfDays,
-        hoursPerDay: formData.hoursPerDay,
-        expiresIn: formData.expiresIn,
         software: software.filter(s => s.trim() !== ''),
         catalogueType: formData.catalogueType,
         labId: vmId,
@@ -271,8 +250,7 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
           lab_id: vmId,
           admin_id: admin.role === 'orgsuperadmin' ? formData.organizationId : org_details?.data.data.org_admin,
           org_id: admin.role === 'orgsuperadmin' ? admin.org_id : org_details?.data.data.id,
-          configured_by: admin?.id,
-          enddate: formData.expiresIn
+          configured_by: admin?.id
         };
 
         const batch = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, batchAssignmentPayload);
@@ -281,10 +259,7 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
           const updateLabConfig = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateConfigOfLabs`, {
             lab_id: vmId,
             admin_id: admin?.id,
-            config_details: {
-              ...formData,
-              numberOfInstances: formData.hoursPerDay
-            }
+            config_details: formData
           });
 
           if (updateLabConfig.data.success) {
@@ -322,8 +297,8 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
       <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-        <div className="relative w-full max-w-2xl transform overflow-hidden rounded-xl bg-dark-200 p-4 sm:p-6 space-y-4">
-          <div className="flex justify-between items-center mb-4 sm:mb-6">
+        <div className="relative w-full max-w-2xl max-h-[90vh] transform overflow-hidden rounded-xl bg-dark-200 p-4 sm:p-6 flex flex-col">
+          <div className="flex justify-between items-center mb-4 sm:mb-6 flex-shrink-0">
             <h2 className="text-lg sm:text-xl font-semibold">
               <GradientText>Convert to Catalogue</GradientText>
             </h2>
@@ -332,7 +307,7 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
             </button>
           </div>
 
-          <div className="space-y-4 sm:space-y-6">
+          <div className="space-y-4 sm:space-y-6 overflow-y-auto flex-1 pr-2">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Catalogue Name
@@ -398,56 +373,6 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
                   <option value="private">Private</option>
                   <option value="public">Public</option>
                 </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Number of Days
-                </label>
-                <input
-                  type="number"
-                  name="numberOfDays"
-                  min="1"
-                  value={formData.numberOfDays}
-                  onChange={handleInputChange}
-                  className="w-full px-3 sm:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Hours per Day
-                </label>
-                <input
-                  type="number"
-                  name="hoursPerDay"
-                  min="1"
-                  max="24"
-                  value={formData.hoursPerDay}
-                  onChange={handleInputChange}
-                  className="w-full px-3 sm:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Expires In
-              </label>
-              <div className="relative">
-                <input
-                  type="date"
-                  name="expiresIn"
-                  value={formData.expiresIn}
-                  onChange={handleInputChange}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 sm:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
-                />
-                <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-500 pointer-events-none" />
               </div>
             </div>
 
@@ -548,7 +473,7 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4">
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 flex-shrink-0 pt-4 border-t border-primary-500/10">
               <button
                 onClick={() => setIsCleanupModalOpen(true)}
                 className="btn-secondary w-full sm:w-auto text-sm sm:text-base"
