@@ -5,7 +5,7 @@ import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { LabDetails } from '../../../labs/components/LabDetails';
-import { create } from 'zustand';
+import { useAssignLabStore } from '../../../../store/assignLabStore';
 
 interface AssignLabModalProps {
   isOpen: boolean;
@@ -22,6 +22,8 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   user,
   userDetails,
 }) => {
+  const { availableLabs, filteredLabs, searchTerm, fetchLabs, setSearchTerm, clearLabs } = useAssignLabStore();
+  
   const [selectedLab, setSelectedLab] = useState<string>('');
   const [selectedLabDetails, setSelectedLabDetails] = useState<any>(null);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -29,174 +31,13 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
-  const [availableLabs, setAvailableLabs] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filteredLabs, setFilteredLabs] = useState<any[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  
-  // Filter labs based on search term
+
   useEffect(() => {
-    if (!searchTerm) {
-      setFilteredLabs(availableLabs);
-    } else {
-      const filtered = availableLabs.filter(lab => 
-        lab.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        lab.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredLabs(filtered);
+    if (isOpen) {
+      fetchLabs(user);
     }
-  }, [searchTerm, availableLabs]);
-
-  useEffect(() => {
-    const fetchLabs = async () => {
-      try {
-        if(user.role ==='superadmin' || user.role === 'orgsuperadmin'){
-          const [standardResult, cloudResult,singleVMDatacenter,vmclusterDatacenter] = await Promise.allSettled([
-            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
-              admin_id: user.id,
-            }),
-            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getAllCloudSliceLabs`,{
-              userId: user.id,
-            }),
-            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabs`,{
-              userId: user.id,
-            }),
-            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabDetails`,{
-              userId: user.id,
-            }),
-          ]);
-          const allLabs: any[] = [];
-    
-          if (standardResult.status === 'fulfilled' && standardResult.value.data.success) {
-            allLabs.push(
-              ...standardResult.value.data.data.map((lab: any) => ({
-                ...lab,
-                type: 'standard',
-              }))
-            );
-          } else {
-            console.warn('Failed to fetch standard labs:', standardResult);
-          }
-    
-          if (cloudResult.status === 'fulfilled' && cloudResult.value.data.success) {
-            allLabs.push(
-              ...cloudResult.value.data.data.map((lab: any) => ({
-                ...lab,
-                type: 'cloudslice',
-              }))
-            );
-          } else {
-            console.warn('Failed to fetch cloudslice labs:', cloudResult);
-          }
-          if (singleVMDatacenter.status === 'fulfilled' && singleVMDatacenter.value.data.success) {
-            allLabs.push(
-              ...singleVMDatacenter.value.data.data.map((lab: any) => ({
-                ...lab,
-                type: 'singlevm',
-              }))
-            );
-          } else {
-            console.warn('Failed to fetch single VM datacenter labs:', singleVMDatacenter);
-          }
-          if (vmclusterDatacenter.status === 'fulfilled' && vmclusterDatacenter.value.data.success) {
-            allLabs.push(
-              ...vmclusterDatacenter.value.data.data.map((lab: any) => ({
-                ...lab,
-                type: 'vmcluster',
-              }))
-            );
-          } else {
-            console.warn('Failed to fetch VM cluster labs:', vmclusterDatacenter);
-          }
-          setAvailableLabs(allLabs);
-          setFilteredLabs(allLabs);
-        }
-        else{
-          const [standardResult, cloudResult,singleVMDatacenter,vmClusterDatacenter] = await Promise.allSettled([
-            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
-              admin_id: user.id,
-            }),
-            axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabDetails/${user.org_id}`),
-            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab`,{
-              orgId:user?.org_id,
-              created_by:user?.id
-            }),
-            axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,{
-              orgId:user?.org_id,
-              admin_id:user?.id
-            })
-          ]);
-    
-          const allLabs: any[] = [];
-    
-          if (standardResult.status === 'fulfilled' && standardResult.value.data.success) {
-            allLabs.push(
-              ...standardResult.value.data.data.map((lab: any) => ({
-                ...lab,
-                type: 'standard',
-              }))
-            );
-          } else {
-            console.warn('Failed to fetch standard labs:', standardResult);
-          }
-    
-          if (cloudResult.status === 'fulfilled' && cloudResult.value.data.success) {
-            allLabs.push(
-              ...cloudResult.value.data.data.map((lab: any) => ({
-                ...lab,
-                type: 'cloudslice',
-              }))
-            );
-          } else {
-            console.warn('Failed to fetch cloudslice labs:', cloudResult);
-          }
-          if (singleVMDatacenter.status === 'fulfilled' && singleVMDatacenter.value.data.success) {
-            const detailFetches = singleVMDatacenter.value.data.data.map((lab: any) =>
-              axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`, {
-                labId: lab?.labid,
-              })
-            );
-
-            const detailResults = await Promise.allSettled(detailFetches);
-            detailResults.forEach((result, index) => {
-              if (result.status === 'fulfilled' && result.value.data.success) {
-                allLabs.push({
-                  ...result.value.data.data,
-                  ...singleVMDatacenter.value.data.data[index],
-                  type: 'singlevm',
-           });
-            } else {
-              console.warn(`Failed to fetch single VM datacenter lab details for lab_id=${singleVMDatacenter.value.data.data[index].labid}`);
-            }
-          });
-            }
-
-          else{
-            console.warn('Failed to fetch single vm labs:',singleVMDatacenter)
-          }
-          if(vmClusterDatacenter?.status === 'fulfilled' && vmClusterDatacenter?.value.data.success){
-              vmClusterDatacenter.value.data.data.map((lab:any)=>{
-                allLabs.push({
-                  ...lab.lab,
-                  ...lab.org,
-                  type:'vmcluster'
-                })
-              })
-          }
-          else{
-            console.warn("Failed to fetch vmcluster labs:",vmClusterDatacenter)
-          }
-          setAvailableLabs(allLabs);
-          setFilteredLabs(allLabs);
-        }
-        
-      } catch (err) {
-        console.error('Unexpected error in fetchLabs:', err);
-      }
-    };
-  
-    fetchLabs();
-  }, []);
+  }, [isOpen, user]);
   
 
   useEffect(() => {
@@ -218,8 +59,8 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
       setError(null);
       setSearchTerm('');
       setIsDropdownOpen(false);
+      clearLabs();
     } else {
-
       // Set default start time to current time and end time to 2 hours later
       const now = new Date();
       const defaultEndTime = new Date(now.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
