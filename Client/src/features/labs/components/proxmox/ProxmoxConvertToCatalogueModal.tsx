@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Minus, AlertCircle, Calendar, Loader, Check, Clock } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
@@ -57,13 +56,13 @@ const CleanupModal: React.FC<CleanupModalProps> = ({ isOpen, onClose, onConfirm 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60]">
-      <div className="bg-dark-200 rounded-lg w-full max-w-md p-6">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[10001]">
+      <div className="bg-dark-200 rounded-lg w-full max-w-md p-6 mx-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
             <GradientText>Cleanup Configuration</GradientText>
           </h2>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
           >
