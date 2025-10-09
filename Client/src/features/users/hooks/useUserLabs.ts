@@ -167,19 +167,54 @@ export const useUserLabs = (userId: string,user:any) => {
         cloudSliceAws = detailedLabs;
         
       }
+
+      //single vm promox labs
+       const getSingleVMProxmox = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedLabs`,{
+        orgId:user?.user?.org_id,
+        userId:user?.user?.id
+      })
+      let singleVMProxmox = [];
+      if(getSingleVMProxmox.data.success){
+        const detailedLabs = await Promise.all(
+          getSingleVMProxmox.data.data.map(async(lab:any)=>{
+            try {
+              const labDetails =  await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${lab.labid}`)
+              if(labDetails?.data?.success){
+                return{
+                  ...labDetails.data.data,
+                  ...lab,
+                  type:'singlevm-proxmox'
+                }
+              }
+            } catch (error) {
+               console.log(error);
+               return{
+                ...lab,
+                type:'singlevm-proxmox'
+               }
+            }
+              
+            }
+        ))
+        singleVMProxmox = detailedLabs;
+        
+      }
+
       //merge all labs
       const allLabs = [
         ...singleVMAws,
         ...singleVMDatacenter,
         ...vmclusterDatacenter,
-        ...cloudSliceAws
+        ...cloudSliceAws,
+        ...singleVMProxmox
       ]
       //merge all lab status
       const labStatus = [
         ...getSingleVMAws.data.data,
         ...getSingleVMDatacenter.data.data,
         ...vmclusterDatacenter,
-        ...getCloudSliceAws.data.data
+        ...getCloudSliceAws.data.data,
+        ...getSingleVMProxmox.data.data
       ]
       setLabs(allLabs);
       setLabStatus(labStatus);
@@ -191,7 +226,8 @@ export const useUserLabs = (userId: string,user:any) => {
       }
       
     };
-  } else {
+  } 
+  else {
     fetchLabs = async () => {
       try {
         setIsLoading(true);

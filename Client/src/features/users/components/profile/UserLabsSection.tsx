@@ -52,6 +52,13 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
             adminId:user?.user?.id
            })
         }
+         else if(lab.type === 'singlevm-proxmox'){
+           response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteOrgAssignedLab`,{
+            labId:lab?.labid,
+            orgId:user?.user?.org_id,
+            adminId:user?.user?.id
+           })
+        }
         else{
           response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/orgAdminDeleteCloudSlice/${lab?.labid}`,{
             orgId:user?.user?.org_id
@@ -215,6 +222,16 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserLabTimingsOfVMClusterDatacenter`, {
         identifier: user?.user?.org_id,
         labId: editingLab.labid,
+        startTime: formatDate(startTime),
+        endTime: formatDate(endTime),
+        type:'org'
+        });
+      }
+      else if(editingLab.type  === 'singlevm-proxmox'){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMOrgLabTime`, {
+        identifier: user?.user?.org_id,
+        labId: editingLab.labid,
+        userId:user?.user?.id,
         startTime: formatDate(startTime),
         endTime: formatDate(endTime),
         type:'org'

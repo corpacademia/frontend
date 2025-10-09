@@ -18,7 +18,8 @@ import {
   Square,
   Calendar,
   Clock,
-  MemoryStick
+  MemoryStick,
+  Users
 } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
@@ -26,6 +27,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProxmoxDeleteModal } from './ProxmoxDeleteModal';
 import { ProxmoxEditModal } from './ProxmoxEditModal';
 import { ProxmoxConvertToCatalogueModal } from './ProxmoxConvertToCatalogueModal';
+import { AssignUsersModal } from '../catalogue/AssignUsersModal';
 
 interface ProxmoxVM {
   id: string;
@@ -70,16 +72,35 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [hasTemplate,setHasTemplate] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   useEffect(() => {
     checkVMStatus();
     checkTemplateCreated();
+    fetchCurrentUser();
   }, [vm.labid]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
+      setCurrentUser(response.data.user);
+    } catch (error) {
+      console.error('Failed to fetch current user:', error);
+    }
+  };
+
+  // Check if current user can edit content
+  const canEditContent = () => {
+    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin';
+  };
   const checkVMStatus = async () => {
     try {
+      const user = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkVMStatus`, {
         labId: vm.labid,
-        vmId: vm.vmid
+        vmId: vm.vmid,
+        type:user?.data?.user?.role === 'orgadmin' ? 'org' :'sup'
       });
 
       if (response.data.success) {
@@ -135,7 +156,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           nicModel:vm.nicmodel,
           networkBridge:vm.networkbridge,
           firewall:vm.firewall,
-          boot:vm.boot
+          boot:vm.boot,
+          type:currentUser.role === 'orgadmin' ? 'org' : 'sup'
          }) 
          if(launchVM.data.success){
            setButtonLabel('Start VM');
@@ -360,18 +382,22 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                 {vmStatus}
               </span>
             </div>
-            <button
-              onClick={() => setIsEditModalOpen(true)}
-              className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
-            >
-              <Pencil className="h-3 w-3 sm:h-4 sm:w-4 text-orange-400" />
-            </button>
-            <button
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
-            >
-              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
-            </button>
+            {canEditContent() && (
+              <>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+                >
+                  <Pencil className="h-3 w-3 sm:h-4 sm:w-4 text-orange-400" />
+                </button>
+                <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+                >
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -456,46 +482,62 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                   </>
                 )}
               </button>
-              <button 
-                onClick={handleCreateTemplate}
-                disabled={isProcessing || vmStatus !== 'stopped'}
-                className="flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
-                         bg-orange-500/20 text-orange-300 hover:bg-orange-500/30
-                         transition-colors flex items-center justify-center
-                         disabled:opacity-50 disabled:cursor-not-allowed"
-                title={vmStatus !== 'stopped' ? 'Stop VM to create template' : ''}
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-1" />
-                    <span className="hidden sm:inline">Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <FileCode className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                    <span className="hidden sm:inline">Create Template</span>
-                  </>
-                )}
-              </button>
+              {canEditContent() && (
+                <button 
+                  onClick={handleCreateTemplate}
+                  disabled={isProcessing || vmStatus !== 'stopped'}
+                  className="flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                           bg-orange-500/20 text-orange-300 hover:bg-orange-500/30
+                           transition-colors flex items-center justify-center
+                           disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={vmStatus !== 'stopped' ? 'Stop VM to create template' : ''}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-1" />
+                      <span className="hidden sm:inline">Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileCode className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                      <span className="hidden sm:inline">Create Template</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
-            <button
-              className={`h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium w-full
-                       ${hasTemplate 
-                         ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 transform hover:scale-105 shadow-lg shadow-orange-500/20' 
-                         : 'bg-gray-500/20 cursor-not-allowed opacity-50'
-                       }
-                       transition-all duration-300
-                       text-white
-                       flex items-center justify-center`}
-              disabled = {!hasTemplate}
-              onClick={() => setIsConvertModalOpen(true)}
-              title={!hasTemplate ? 'Create template first to enable this option' : ''}
-
-            >
-              <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              Convert to Catalogue
-            </button>
+            {canEditContent() ? (
+              <button
+                className={`h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium w-full
+                         ${hasTemplate 
+                           ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 transform hover:scale-105 shadow-lg shadow-orange-500/20' 
+                           : 'bg-gray-500/20 cursor-not-allowed opacity-50'
+                         }
+                         transition-all duration-300
+                         text-white
+                         flex items-center justify-center`}
+                disabled = {!hasTemplate}
+                onClick={() => setIsConvertModalOpen(true)}
+                title={!hasTemplate ? 'Create template first to enable this option' : ''}
+              >
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                Convert to Catalogue
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsAssignModalOpen(true)}
+                className="h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium w-full
+                         bg-gradient-to-r from-orange-500 to-red-500
+                         hover:from-orange-400 hover:to-red-400
+                         transform hover:scale-105 transition-all duration-300
+                         text-white shadow-lg shadow-orange-500/20
+                         flex items-center justify-center"
+              >
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                Assign Users
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -519,6 +561,13 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         isOpen={isConvertModalOpen}
         onClose={() => setIsConvertModalOpen(false)}
         vmId={vm.labid}
+      />
+
+      <AssignUsersModal
+        isOpen={isAssignModalOpen}
+        onClose={() => setIsAssignModalOpen(false)}
+        lab={vm}
+        type="proxmox"
       />
     </div>
   );

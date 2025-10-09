@@ -39,7 +39,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
     }
   }, [isOpen, user]);
   
-
+  console.log(availableLabs)
   useEffect(() => {
   const lab = availableLabs.find(l => (l.lab_id ?? l.labid) === selectedLab);
   setSelectedLabDetails(lab);
@@ -88,7 +88,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   
   const handleAssign = async () => {
     if (!selectedLabDetails) return;
-
+    console.log(selectedLabDetails)
     setError(null);
 
     // Always validate start and end time for all lab types
@@ -135,6 +135,17 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
               startDate:startTime,
               endDate:selectedLabDetails?.enddate
             })
+        }
+        else if(selectedLabDetails.type === 'singlevm-proxmox'){
+          res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabToOrg`,{
+               labId:selectedLabDetails?.labid,
+              orgId:userDetails?.user?.org_id,
+              startDate:startTime,
+              endDate:selectedLabDetails?.enddate,
+              assigned_by:user?.id,
+              user_id:userDetails?.user?.id,
+              userName:userDetails?.user?.name
+          })
         }
         else{
             res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, {
@@ -355,7 +366,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
               </p>
               <div className="flex flex-wrap gap-2 mb-2">
                 <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary-500/20 text-primary-300">
-                  {selectedLabDetails?.provider}
+                  {selectedLabDetails?.platform}
                 </span>
               </div>
               <div className="text-sm text-gray-400">

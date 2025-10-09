@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { CloudVMAssessmentCard } from '../../components/cloudvm/assessment/CloudVMAssessmentCard';
 import { DatacenterVMCard } from '../../components/datacenter/DatacenterVMCard';
-import { Plus, Search, Filter, AlertCircle, FolderX, Server } from 'lucide-react';
+import { ProxmoxVMCard } from '../../components/proxmox/ProxmoxVMCard';
+import { Plus, Search, Filter, AlertCircle, FolderX, Server, HardDrive } from 'lucide-react';
 import axios from 'axios';
 
 interface CloudVM {
@@ -43,6 +44,31 @@ interface DatacenterVM {
   }>;
 }
 
+interface ProxmoxVM {
+  id: string;
+  title: string;
+  description: string;
+  platform: string;
+  status: 'active' | 'inactive' | 'pending' | 'available' | 'expired';
+  cpu: number;
+  ram: number;
+  storage: number;
+  os: string;
+  templateId?: string;
+  startdate: string;
+  enddate: string;
+  labid: string;
+  vmid?: string;
+  node?: string;
+  storagetype?: string;
+  isoimage?: string;
+  nicmodel?: string;
+  networkbridge?: string;
+  firewall?: boolean;
+  boot?: string;
+  vmname?: string;
+}
+
 interface User{
   id:string;
   name:string;
@@ -59,6 +85,7 @@ interface User{
 export const OrgAdminCloudVMsPage: React.FC = () => {
   const [vms, setVMs] = useState<CloudVM[]>([]);
   const [datacenterVMs, setDatacenterVMs] = useState<DatacenterVM[]>([]);
+  const [proxmoxVMs, setProxmoxVMs] = useState<ProxmoxVM[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const[admin , setAdmin] = useState<User[]>([]);
@@ -66,7 +93,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     search: '',
     provider: '',
     status: '',
-    type: 'all' // Filter for VM type (assessment, datacenter, or all)
+    type: 'all' // Filter for VM type (assessment, datacenter, proxmox, or all)
   });
   
   useEffect(() => {
@@ -171,6 +198,46 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
       }
   };
 
+  const fetchProxmoxVMs = async (orgId: string, userId: string) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedLabs`,
+        { orgId, userId }
+      );
+      
+      if (response.data.success) {
+        const vmDetails = await Promise.all(
+          response.data.data.map(async (assignment: any) => {
+            try {
+              const vmResponse = await axios.get(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${ assignment.labid}`,
+                
+              );
+
+              if (vmResponse.data.success) {
+                return {
+                  ...vmResponse.data.data,
+                  ...assignment,
+                };
+              }
+              return null;
+            } catch (err) {
+              console.error(`Error fetching Proxmox VM details for ${assignment.labid}:`, err);
+              return null;
+            }
+          })
+        );
+        setProxmoxVMs(vmDetails.filter(Boolean));
+      }
+    } catch (err) {
+      console.error('Error fetching Proxmox VMs:', err);
+      setError('Failed to fetch Proxmox VMs');
+      setTimeout(() => {
+        setError(null);
+      }, 2000);
+    }
+  };
+
   const fetchAllVMs = async () => {
     try {
       const admin = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
@@ -178,7 +245,8 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
 
       if (user?.id && user?.org_id) {
         fetchAssessmentVMs(user.id);
-        fetchDatacenterVMs(user.org_id,user?.id);
+        fetchDatacenterVMs(user.org_id, user?.id);
+        fetchProxmoxVMs(user.org_id, user?.id);
       }
     } catch (err) {
       console.error('Error fetching admin profile:', err);
@@ -211,6 +279,15 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
       vm.description.toLowerCase().includes(filters.search.toLowerCase());
     const matchesStatus = !filters.status || vm.status === filters.status;
     const matchesType = filters.type === 'all' || filters.type === 'datacenter';
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  const filteredProxmoxVMs = proxmoxVMs.filter(vm => {
+    const matchesSearch = !filters.search || 
+      vm.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+      vm.description.toLowerCase().includes(filters.search.toLowerCase());
+    const matchesStatus = !filters.status || vm.status === filters.status;
+    const matchesType = filters.type === 'all' || filters.type === 'proxmox';
     return matchesSearch && matchesStatus && matchesType;
   });
   return (
@@ -278,6 +355,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
               <option value="all">All Types</option>
               <option value="assessment">Assessments</option>
               <option value="datacenter">Datacenter VMs</option>
+              <option value="proxmox">Proxmox VMs</option>
             </select>
 
             <button className="btn-secondary">
@@ -307,7 +385,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
         </div>
       ) : (
         <>
-          {filteredVMs.length === 0 && filteredDatacenterVMs.length === 0 ? (
+          {filteredVMs.length === 0 && filteredDatacenterVMs.length === 0 && filteredProxmoxVMs.length === 0 ? (
             <div className="glass-panel p-8 text-center">
               <div className="flex flex-col items-center space-y-4">
                 <div className="p-4 rounded-full bg-dark-300/50">
@@ -344,7 +422,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
 
               {/* Datacenter VMs Section */}
               {filteredDatacenterVMs.length > 0 && (filters.type === 'all' || filters.type === 'datacenter') && (
-                <div>
+                <div className="mb-8">
                   <div className="flex items-center mb-4">
                     <Server className="h-5 w-5 text-secondary-400 mr-2" />
                     <h2 className="text-xl font-semibold text-gray-400 mr-3">Datacenter VMs</h2>
@@ -355,6 +433,24 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
                     {filteredDatacenterVMs.map((vm) => (
                       <DatacenterVMCard key={vm.id} vm={vm} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Proxmox VMs Section */}
+              {filteredProxmoxVMs.length > 0 && (filters.type === 'all' || filters.type === 'proxmox') && (
+                <div>
+                  <div className="flex items-center mb-4">
+                    <HardDrive className="h-5 w-5 text-orange-400 mr-2" />
+                    <h2 className="text-xl font-semibold text-gray-400 mr-3">Proxmox VMs</h2>
+                    <div className="px-2 py-1 bg-orange-500/20 rounded-full text-xs text-orange-300">
+                      {filteredProxmoxVMs.length} VMs
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
+                    {filteredProxmoxVMs.map((vm) => (
+                      <ProxmoxVMCard key={vm.id} vm={vm} />
                     ))}
                   </div>
                 </div>
