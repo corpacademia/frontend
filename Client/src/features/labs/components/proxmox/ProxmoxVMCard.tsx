@@ -390,14 +390,16 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                 >
                   <Pencil className="h-3 w-3 sm:h-4 sm:w-4 text-orange-400" />
                 </button>
+                </>
+                 )}
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
                 >
                   <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
                 </button>
-              </>
-            )}
+              
+           
           </div>
         </div>
 
