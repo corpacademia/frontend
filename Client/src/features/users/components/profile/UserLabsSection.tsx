@@ -56,7 +56,9 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
            response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteOrgAssignedLab`,{
             labId:lab?.labid,
             orgId:user?.user?.org_id,
-            adminId:user?.user?.id
+            adminId:user?.user?.id,
+            node:lab?.node,
+            vmid:lab?.vmid
            })
         }
         else{

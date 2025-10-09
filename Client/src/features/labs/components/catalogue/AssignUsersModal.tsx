@@ -1,4 +1,5 @@
 import React, { useState ,useEffect} from 'react';
+import ReactDOM from 'react-dom';
 import { 
   Upload, 
   X, 
@@ -33,7 +34,6 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(true);
-  
   const [admin,setAdmin] = useState({});
   // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
   useEffect(() => {
@@ -100,6 +100,7 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
   };
 
   const handleAssignUsers = async () => {
+    console.log(type)
     if (selectedUsers.length === 0) {
       setNotification({ type: 'error', message: 'Please select at least one user' });
       return;
@@ -177,6 +178,27 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
       }
     }
 
+    else if(type === 'singlevm-proxmox'){
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignSingleVmProxmoxToUser`, {
+        lab: lab?.labid,
+        userIds: selectedUsers,
+        assignedBy: admin.id,
+        startDate: lab?.startdate,
+        endDate: lab?.enddate,
+        orgId:users[0]?.org_id,
+      });
+      if (response.data.success) {
+        setNotification({ type: 'success', message: 'Lab assigned successfully' });
+        setTimeout(() => {
+          setNotification(null);
+          onClose();
+          setSelectedUsers([]);
+        }, 3000);
+      } else {
+        throw new Error(response.data.message || 'Failed to assign lab');
+      }
+    }
+
     else{
      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignlab`, {
         lab: lab?.lab_id,
@@ -216,8 +238,8 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
 
   if (!isOpen || !lab) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+  const modalContent = (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
       <div className="bg-dark-200 rounded-lg w-full max-w-md p-6">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -335,4 +357,6 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
       </div>
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };

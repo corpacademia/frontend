@@ -273,7 +273,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteProxmoxLab`,{
         labId:vm.labid,
         node:vm.node,
-        vmid:vm.vmid
+        vmid:vm.vmid,
+        type:currentUser?.role === 'orgadmin' ? 'org' : 'sup'
       });
 
       if (response.data.success) {
@@ -569,7 +570,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         isOpen={isAssignModalOpen}
         onClose={() => setIsAssignModalOpen(false)}
         lab={vm}
-        type="proxmox"
+        type="singlevm-proxmox"
       />
     </div>
   );
