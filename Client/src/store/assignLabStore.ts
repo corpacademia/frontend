@@ -104,18 +104,25 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
 
         set({ availableLabs: allLabs, filteredLabs: allLabs, isLoading: false });
       } else {
-        const [standardResult, cloudResult, singleVMDatacenter, vmClusterDatacenter] = await Promise.allSettled([
+        const [standardResult, cloudResult, singleVMDatacenter, vmClusterDatacenter,singlevmProxmox] = await Promise.allSettled([
           axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
             admin_id: user.id,
           }),
-          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabDetails/${user.org_id}`),
+          axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabDetails`,{
+            orgId:user?.org_id,
+            adminId:user?.id
+          }),
           axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab`, {
             orgId: user?.org_id,
             created_by: user?.id
           }),
           axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`, {
             orgId: user?.org_id,
-            admin_id: user?.id
+            admin_id: user?.org_id,
+          }),
+          axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedLabs`,{
+              orgId:user?.org_id,
+              userId:user?.org_id,
           })
         ]);
 
@@ -138,6 +145,7 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
             }))
           );
         }
+       
 
         if (singleVMDatacenter.status === 'fulfilled' && singleVMDatacenter.value.data.success) {
           const detailFetches = singleVMDatacenter.value.data.data.map((lab: any) =>
@@ -167,7 +175,15 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
             });
           });
         }
-
+        console.log(singlevmProxmox.value.data)
+         if(singlevmProxmox.status === 'fulfilled' && singlevmProxmox.value.data.success){
+          allLabs.push(
+            ...singlevmProxmox.value.data.data.map((lab:any)=>({
+              ...lab,
+              type:'singlevm-proxmox'
+            }))
+          )
+        }
         set({ availableLabs: allLabs, filteredLabs: allLabs, isLoading: false });
       }
     } catch (err) {

@@ -39,7 +39,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
     }
   }, [isOpen, user]);
   
-  console.log(availableLabs)
+ 
   useEffect(() => {
   const lab = availableLabs.find(l => (l.lab_id ?? l.labid) === selectedLab);
   setSelectedLabDetails(lab);
