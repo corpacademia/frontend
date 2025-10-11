@@ -118,13 +118,19 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
                 })
       }
       else if(lab.type === 'vmcluster-datacenter'){
+
          response =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`,{
           labId:lab.labid,
-          orgId:user.org_id,
+          orgId:user?.user?.org_id,
           userId:userId
          })
       }
-
+       else if (lab.type === 'singlevm-proxmox'){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVMProxmoxUser`,{
+          labId:lab.labid,
+          userId:userId
+          })
+       }
       if (response?.data.success) {
         setNotification({ type: 'success', message: 'Lab deleted successfully' });
         setTimeout(() => {
@@ -179,8 +185,6 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
   // Open modal
   setIsEditModalOpen(true);
 };
-
-
 
   const handleSaveEdit = async () => {
     if (!editingLab || !startTime || !endTime) {
@@ -302,6 +306,15 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
         endTime: formatDate(endTime),
         type:'user'
         });
+      }
+      else if(editingLab.type === 'singlevm-proxmox'){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMOrgLabTime`,{
+          identifier:userId,
+          labId: editingLab.labid,
+          startTime: formatDate(startTime),
+          endTime: formatDate(endTime),
+          type:'user'
+        })
       }
       else{
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserLabTimingsOfAwsSingleVMDatacenter`, {

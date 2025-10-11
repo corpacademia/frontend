@@ -122,7 +122,7 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
           }),
           axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedLabs`,{
               orgId:user?.org_id,
-              userId:user?.org_id,
+              userId:user?.id,
           })
         ]);
 

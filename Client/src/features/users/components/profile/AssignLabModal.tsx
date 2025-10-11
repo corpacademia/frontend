@@ -88,7 +88,6 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   
   const handleAssign = async () => {
     if (!selectedLabDetails) return;
-    console.log(selectedLabDetails)
     setError(null);
 
     // Always validate start and end time for all lab types
@@ -216,6 +215,18 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
               endDate:endTime,
               orgId:userDetails?.user?.org_id
             })
+      }
+
+      else if(selectedLabDetails.type === 'singlevm-proxmox'){
+        res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignSingleVmProxmoxToUser`,{
+          lab:selectedLabDetails.labid,
+          userIds:userId,
+          assignedBy:user?.id,
+          startDate:startTime,
+          endDate:endTime,
+          orgId:userDetails?.user?.org_id,
+          userName:userDetails?.user?.name
+        })
       }
 
       else {

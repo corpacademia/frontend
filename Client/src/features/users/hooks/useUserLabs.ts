@@ -320,7 +320,48 @@ export const useUserLabs = (userId: string,user:any) => {
         }
 
         // 4. VMCluster Datacenter Labs
-        const vmclusterDatacenter = await axios.post(
+        const singleVMProxmox = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserSingleVMProxmoxLab/${userId}`
+        );
+        let singleVMProxmoxLabs: any[] = [];
+
+        if (singleVMProxmox.data.success) {
+          const assignedLabs = singleVMProxmox.data.data;
+
+          const detailedLabs = await Promise.all(
+            assignedLabs.map(async (lab: any) => {
+              try {
+                const response = await axios.get(
+                  `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${lab.labid}`
+                );
+
+                if (response.data.success) {
+                  return {
+                    ...response.data.data,
+                    ...lab,
+                    type: 'singlevm-proxmox',
+                  };
+                } else {
+                  return {
+                    ...lab,
+                    type: 'singlevm-proxmox',
+                  };
+                }
+              } catch (error) {
+                console.log('Error fetching singlevm promox lab');
+                return {
+                  ...lab,
+                  type: 'singlevm-proxmox',
+                };
+              }
+            })
+          );
+
+          singleVMProxmoxLabs = detailedLabs;
+        }
+
+        //single vm proxmox
+         const vmclusterDatacenter = await axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getUserAssignedClusterLabs/${userId}`
         );
         let vmClusterDatacenterLabs: any[] = [];
@@ -366,7 +407,8 @@ export const useUserLabs = (userId: string,user:any) => {
           ...singleVMLabs,
           ...cloudSliceLabs,
           ...singleVMDatacenterLabs,
-          ...vmClusterDatacenterLabs,
+          ...singleVMProxmoxLabs,
+          ...vmClusterDatacenterLabs
         ];
         setLabs(allLabs);
 
@@ -375,7 +417,9 @@ export const useUserLabs = (userId: string,user:any) => {
           ...labss,
           ...(cloudslicelabResponse.data.success ? cloudslicelabResponse.data.data : []),
           ...(singleVMDatacenterLabResponse.data.data ?? []),
+          ...(singleVMProxmox.data.success ? singleVMProxmox.data.data : []),
           ...(vmclusterDatacenter.data.success ? vmclusterDatacenter.data.data : []),
+         
         ];
 
         setLabStatus(allStatuses);
