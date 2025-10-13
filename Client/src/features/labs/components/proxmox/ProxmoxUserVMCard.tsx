@@ -67,7 +67,6 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
     checkVMStatus();
     fetchCurrentUser();
   }, [vm.labid]);
-
   const fetchCurrentUser = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
@@ -199,11 +198,9 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteProxmoxLab`, {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVMProxmoxUser`, {
         labId: vm.labid,
-        node: vm.node,
-        vmid: vm.vmid,
-        type: 'user'
+        userId:currentUser?.id
       });
 
       if (response.data.success) {
