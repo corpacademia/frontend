@@ -80,7 +80,6 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
 
   fetchLabDetails: async (labId: string, labType: string) => {
     set({ isLoadingDetails: true, error: null });
-    
     try {
       let response;
       switch (labType) {
@@ -106,6 +105,11 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
           response = await axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getClusterOnId`,
             { labId }
+          );
+          break;
+           case 'singlevm-proxmox':
+          response = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${labId}`,
           );
           break;
         default:
@@ -140,6 +144,9 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserPurchasedSinglvmLabsOnLabId`,{
           labId
         });
+        break;
+        case 'singlevm-proxmox':
+      response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserSingleVMProxmoxLab/${labId}`,);
         break;
         default:
           throw new Error(`Unsupported lab type:${labType}`)

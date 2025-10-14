@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { X, Plus, Minus, AlertCircle, Calendar, Loader, Check, Clock } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
@@ -222,7 +223,7 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
     setSuccess(null);
 
     try {
-      const updateCatalogueDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateCatalogueDetails`, {
+      const updateCatalogueDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createSingleVmProxmoxCatalogue`, {
         catalogueName: formData.catalogueName,
         software: software.filter(s => s.trim() !== ''),
         catalogueType: formData.catalogueType,
@@ -246,22 +247,23 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
         }
 
         const batchAssignmentPayload: any = {
-          lab_id: vmId,
-          admin_id: admin.role === 'orgsuperadmin' ? formData.organizationId : org_details?.data.data.org_admin,
-          org_id: admin.role === 'orgsuperadmin' ? admin.org_id : org_details?.data.data.id,
-          configured_by: admin?.id
+          user_id: admin.role === 'orgsuperadmin' ? formData.organizationId : org_details?.data.data.org_admin,
+          orgId: admin.role === 'orgsuperadmin' ? admin.org_id : org_details?.data.data.id,
+          assigned_by: admin?.id,
+          labId:vmId,
+          startDate:updateCatalogueDetails?.data?.data?.startdate,
+          endDate:updateCatalogueDetails?.data?.data?.enddate,
+          userName : (
+          organizations.find(
+            org => org.id === formData.organizationId || org.id === org_details?.data?.data?.org_admin
+          )?.name.match(/^([^(]+)\(/)?.[1]?.trim()
+        ) || ""
+
         };
 
-        const batch = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, batchAssignmentPayload);
+        const assingLab = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabToOrg`, batchAssignmentPayload);
 
-        if (batch?.data.success) {
-          const updateLabConfig = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateConfigOfLabs`, {
-            lab_id: vmId,
-            admin_id: admin?.id,
-            config_details: formData
-          });
-
-          if (updateLabConfig.data.success) {
+          if (assingLab.data.success) {
             setSuccess('Successfully converted to catalogue');
             setTimeout(() => {
               onClose();
@@ -270,9 +272,7 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
           } else {
             throw new Error('Failed to update lab configuration');
           }
-        } else {
-          throw new Error(batch?.data?.error || batch?.data?.message || 'Failed to create batch assignment');
-        }
+       
       } else if (updateCatalogueDetails.data.success) {
         setSuccess('Successfully converted to catalogue');
         setTimeout(() => {
@@ -291,8 +291,8 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] overflow-y-auto">
       <div className="flex min-h-full items-center justify-center p-2 sm:p-4">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
@@ -513,4 +513,6 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
       />
     </div>
   );
+
+  return ReactDOM.createPortal(modalContent, document.body);
 };

@@ -142,7 +142,8 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
           labId: course.id,
           userId: user?.id || currentUser?.id,
           duration: course.duration,
-          labType: course.type
+          labType: course.type,
+          userName:user?.name
         }
       );
 

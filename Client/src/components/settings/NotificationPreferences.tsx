@@ -331,7 +331,8 @@ export const NotificationPreferences: React.FC = () => {
           ) : (
             <>
               <Save className="h-4 w-4" />
-              <span>Save Preferences</span>
+              <span>
+                <GradientText>Save Preferences</GradientText></span>
             </>
           )}
         </button>

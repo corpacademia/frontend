@@ -988,7 +988,7 @@ export const LabDetailsPage: React.FC = () => {
                     </div>
                     <div className="flex items-center">
                       <Users className="h-4 w-4 mr-1 text-primary-400" />
-                      <span>{selectedLab.totalEnrollments || 0}</span>
+                      <span>{selectedLab.total_enrollments || 0}</span>
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-1 text-secondary-400" />

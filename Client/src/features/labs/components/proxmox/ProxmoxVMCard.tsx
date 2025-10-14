@@ -146,7 +146,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       if( buttonLabel === 'Launch VM'){
          const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`,{
           node:vm.node,
-          vmid:vm.vmid, 
+          labid:vm.labid,
           name:vm.vmname, 
           cores:vm.cpu,
           memory:vm.ram,

@@ -26,7 +26,7 @@ interface ProxmoxVM {
   title: string;
   description: string;
   platform: string;
-  status: 'active' | 'inactive' | 'pending' | 'available' | 'expired';
+  status: 'active' | 'inactive' | 'pending' | 'available' | 'expired' | 'not-started';
   cpu: number;
   ram: number;
   storage: number;
@@ -44,6 +44,7 @@ interface ProxmoxVM {
   firewall?: boolean;
   boot?: string;
   vmname?: string;
+  purchased?:boolean;
 }
 
 interface ProxmoxUserVMCardProps {
@@ -62,7 +63,6 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-
   useEffect(() => {
     checkVMStatus();
     fetchCurrentUser();
@@ -82,7 +82,8 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkVMStatus`, {
         labId: vm.labid,
         vmId: vm.vmid,
-        type: 'user'
+        type: 'user',
+        purchased:vm.purchased ? true : false
       });
 
       if (response.data.success) {
@@ -116,7 +117,7 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
       if (buttonLabel === 'Launch VM') {
         const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`, {
           node: vm.node,
-          vmid: vm.vmid,
+          labid:vm.labid,
           name: vm.vmname,
           cores: vm.cpu,
           memory: vm.ram,
@@ -127,7 +128,8 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
           networkBridge: vm.networkbridge,
           firewall: vm.firewall,
           boot: vm.boot,
-          type: 'user'
+          type: 'user',
+          purchased:vm.purchased ? true :false
         });
         
         if (launchVM.data.success) {
@@ -200,7 +202,10 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVMProxmoxUser`, {
         labId: vm.labid,
-        userId:currentUser?.id
+        userId:currentUser?.id,
+        purchased:vm.purchased ? true : false,
+        node:vm.node,
+        vmid:vm.vmid
       });
 
       if (response.data.success) {
@@ -242,6 +247,7 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
       case 'inactive':
         return 'bg-red-500/20 text-red-300';
       case 'pending':
+      case 'not-started':
         return 'bg-amber-500/20 text-amber-300';
       default:
         return 'bg-gray-500/20 text-gray-300';

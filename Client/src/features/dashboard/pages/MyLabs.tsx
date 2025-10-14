@@ -390,6 +390,31 @@ export const MyLabs: React.FC = () => {
         console.error('Error fetching Proxmox VMs:', err);
       }
 
+      //fetch single vm proxmox labs
+      
+       try {
+  const res = await axios.get(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserSingleVMPurchasedLab/${user.id}`
+  );
+
+  if (res.data.success) {
+    const proxmoxVMList = res.data.data || [];
+
+    setProxmoxVMs((prev: any[]) => [
+      ...prev,
+      ...proxmoxVMList
+    ]);
+
+    setFilteredProxmoxVMs((prev: any[]) => [
+      ...prev,
+      ...proxmoxVMList
+    ]);
+  }
+} catch (err) {
+  console.error('Error fetching Proxmox VMs:', err);
+}
+
+
       // Fetch cluster VMs
       try {
         const res = await axios.post(
