@@ -6,7 +6,7 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-gray-50 font-sans antialiased;
+    @apply bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white font-sans antialiased;
     background-attachment: fixed;
     position: relative;
   }
@@ -33,14 +33,26 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply text-gray-50;
+    @apply text-white;
   }
 
   p {
-    @apply text-gray-200;
+    @apply text-gray-100;
   }
 
   label {
+    @apply text-white;
+  }
+
+  input, textarea, select {
+    @apply text-white;
+  }
+
+  span {
+    @apply text-gray-100;
+  }
+
+  div {
     @apply text-gray-100;
   }
 }
@@ -191,11 +203,11 @@
   }
 
   .card-title {
-    @apply text-lg sm:text-xl font-semibold text-gray-50 truncate;
+    @apply text-lg sm:text-xl font-semibold text-white truncate;
   }
 
   .card-subtitle {
-    @apply text-sm text-gray-100 line-clamp-2;
+    @apply text-sm text-gray-200 line-clamp-2;
   }
 
   .card-actions {
@@ -215,11 +227,11 @@
   }
 
   .metric-label {
-    @apply text-xs sm:text-sm text-gray-100 mb-1 sm:mb-0;
+    @apply text-xs sm:text-sm text-gray-200 mb-1 sm:mb-0;
   }
 
   .metric-value {
-    @apply text-sm sm:text-base font-semibold text-gray-50;
+    @apply text-sm sm:text-base font-semibold text-white;
   }
 
   .ellipsis-content {
@@ -255,7 +267,7 @@
   }
 
   .notification-title {
-    @apply text-lg font-semibold text-gray-50;
+    @apply text-lg font-semibold text-white;
   }
 
   .notification-count {
@@ -275,11 +287,11 @@
   }
 
   .notification-message {
-    @apply text-sm text-gray-100 line-clamp-2;
+    @apply text-sm text-gray-200 line-clamp-2;
   }
 
   .notification-timestamp {
-    @apply text-xs text-gray-300 mt-1;
+    @apply text-xs text-gray-400 mt-1;
   }
 
   .notification-link {
@@ -291,7 +303,7 @@
   }
 
   .notification-settings-title {
-    @apply text-xl font-semibold text-gray-100 mb-3;
+    @apply text-xl font-semibold text-white mb-3;
   }
 
   .notification-preference {
@@ -299,7 +311,7 @@
   }
 
   .notification-preference-label {
-    @apply text-sm font-medium text-gray-50;
+    @apply text-sm font-medium text-white;
   }
 
   .notification-preference-toggle {
