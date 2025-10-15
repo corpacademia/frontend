@@ -12,7 +12,12 @@ export const DashboardLayout: React.FC = () => {
   const isCataloguePage = location.pathname.includes('/dashboard/labs/catalogue');
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
+      {/* Neural Pattern Background */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden opacity-[0.03]">
+        <div className="absolute inset-0 bg-neural-pattern"></div>
+      </div>
+
       {/* Ambient Glow Orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-radial from-primary-500/20 via-primary-500/5 to-transparent blur-3xl animate-pulse"></div>
