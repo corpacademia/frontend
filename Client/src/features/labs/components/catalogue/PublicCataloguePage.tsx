@@ -539,7 +539,8 @@ if(isLoading) {
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
                                   />
                                 </div>
-                                <div>
+                                {user?.role !== 'user' && (
+                                  <div>
                                   <label className="block text-xs text-gray-400 mb-1">Quantity</label>
                                   <input
                                     type="number"
@@ -550,6 +551,8 @@ if(isLoading) {
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
                                   />
                                 </div>
+                                )}
+                                
                               </div>
                               <div className="flex space-x-2">
                                 <button

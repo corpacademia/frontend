@@ -114,6 +114,15 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
   const handleLaunchVM = async () => {
     setIsLaunchProcessing(true);
     try {
+      if(currentUser.role === 'orgadmin'){
+        if(vm.status === 'expired') {
+          setNotification({
+            type: 'error',
+            message: 'Lab has expired',
+          });
+          return;
+        }
+      }
       if (buttonLabel === 'Launch VM') {
         const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`, {
           node: vm.node,

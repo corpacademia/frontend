@@ -359,17 +359,19 @@ export const DashboardHeader: React.FC = () => {
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
                                   />
                                 </div>
-                                <div>
+                                 {user?.role !== 'user' && (
+                                  <div>
                                   <label className="block text-xs text-gray-400 mb-1">Quantity</label>
                                   <input
                                     type="number"
                                     min="1"
                                     defaultValue={item.quantity}
                                     onChange={(e) => setEditingCartItem({...editingCartItem, quantity: parseInt(e.target.value)})}
-                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg
+                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
                                   />
                                 </div>
+                                )}
                               </div>
                               <div className="flex space-x-2">
                                 <button
