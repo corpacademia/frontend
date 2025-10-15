@@ -5,42 +5,42 @@ export default {
   theme: {
     extend: {
       colors: {
-        // New Blue color palette (Primary)
+        // Primary Colors (Blue Spectrum)
         primary: {
           50: '#f0f7ff',
-          100: '#e0efff',
-          200: '#b9ddfe',
+          100: '#e0effe',
+          200: '#bae0fd',
           300: '#7cc4fc',
-          400: '#3dabf8',
+          400: '#36a9f7',
           500: '#0c8ee7', // Main brand color
-          600: '#0070c9',
+          600: '#006fc4',
           700: '#0059a3',
           800: '#004a86',
           900: '#003f6f',
         },
-        // New Purple color palette (Secondary)
+        // Secondary Colors (Purple Spectrum)
         secondary: {
           50: '#f5f3ff',
-          100: '#ede9fe',
+          100: '#ede8ff',
           200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
+          300: '#c3b5ff',
+          400: '#a289ff',
           500: '#8257fe', // Main accent
-          600: '#7239ea',
+          600: '#7434fb',
           700: '#5e22c6',
           800: '#4d1d99',
           900: '#461d99',
         },
-        // New Teal/Green color palette (Accent)
+        // Accent Colors (Teal/Green Spectrum)
         accent: {
           50: '#edfcf7',
           100: '#d3f8ea',
-          200: '#aaf0d6',
+          200: '#aaf0d8',
           300: '#73e3bd',
-          400: '#3dcda0',
+          400: '#39cba7',
           500: '#15b38d', // Main accent
           600: '#0d9270',
-          700: '#0b755b',
+          700: '#09725d',
           800: '#0a5d49',
           900: '#0a4a3e',
         },
@@ -74,11 +74,24 @@ export default {
       },
       animation: {
         'gradient': 'gradient 8s linear infinite',
-        'float': 'float 6s ease-in-out infinite',
+        'float': 'float 3s ease-in-out infinite',
         'pulse-glow': 'pulse-glow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'shimmer': 'shimmer 2.5s linear infinite',
+        'marquee': 'marquee 30s linear infinite',
+        'bounce-x': 'bounce-x 1s infinite',
+        'fade': 'fade 1s cubic-bezier(0.4, 0, 0.2, 1)',
+        'scale-in': 'scale-in 0.3s ease-out',
+        'slide-up': 'slide-up 0.5s ease-out',
       },
       keyframes: {
+        gradient: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
         'pulse-glow': {
           '0%, 100%': {
             opacity: '1',
@@ -96,6 +109,26 @@ export default {
           '100%': {
             backgroundPosition: '1000px 0',
           },
+        },
+        marquee: {
+          '0%': { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+        'bounce-x': {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '50%': { transform: 'translateX(10px)' },
+        },
+        fade: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'scale-in': {
+          '0%': { transform: 'scale(0.9)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'slide-up': {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
         },
       },
       boxShadow: {
