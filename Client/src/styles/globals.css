@@ -6,8 +6,20 @@
 
 @layer base {
   body {
-    @apply bg-dark-300 text-gray-100 font-sans antialiased;
+    @apply bg-dark-300 text-gray-50 font-sans antialiased;
     background-image: radial-gradient(circle at 50% 50%, rgba(12, 142, 231, 0.15) 0%, rgba(130, 87, 254, 0.15) 25%, rgba(21, 179, 141, 0.15) 50%, transparent 70%), url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230c8ee7' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-gray-50;
+  }
+
+  p {
+    @apply text-gray-200;
+  }
+
+  label {
+    @apply text-gray-100;
   }
 }
 
@@ -27,7 +39,7 @@
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-4 py-2 sm:px-6 sm:py-3 rounded-lg text-sm sm:text-base text-primary-100 font-medium
+    @apply inline-flex items-center justify-center px-4 py-2 sm:px-6 sm:py-3 rounded-lg text-sm sm:text-base text-gray-50 font-medium
     bg-dark-400/80 hover:bg-dark-300/80 backdrop-blur-sm
     border border-primary-500/20 hover:border-primary-500/30
     shadow-lg shadow-primary-900/10 hover:shadow-primary-500/20
@@ -124,11 +136,11 @@
   }
 
   .card-title {
-    @apply text-lg sm:text-xl font-semibold text-gray-100 truncate;
+    @apply text-lg sm:text-xl font-semibold text-gray-50 truncate;
   }
 
   .card-subtitle {
-    @apply text-sm text-gray-200 line-clamp-2;
+    @apply text-sm text-gray-100 line-clamp-2;
   }
 
   .card-actions {
@@ -148,11 +160,11 @@
   }
 
   .metric-label {
-    @apply text-xs sm:text-sm text-gray-200 mb-1 sm:mb-0;
+    @apply text-xs sm:text-sm text-gray-100 mb-1 sm:mb-0;
   }
 
   .metric-value {
-    @apply text-sm sm:text-base font-semibold text-gray-100;
+    @apply text-sm sm:text-base font-semibold text-gray-50;
   }
 
   .ellipsis-content {
@@ -188,7 +200,7 @@
   }
 
   .notification-title {
-    @apply text-lg font-semibold text-gray-100;
+    @apply text-lg font-semibold text-gray-50;
   }
 
   .notification-count {
@@ -208,11 +220,11 @@
   }
 
   .notification-message {
-    @apply text-sm text-gray-200 line-clamp-2;
+    @apply text-sm text-gray-100 line-clamp-2;
   }
 
   .notification-timestamp {
-    @apply text-xs text-gray-400 mt-1;
+    @apply text-xs text-gray-300 mt-1;
   }
 
   .notification-link {
@@ -232,7 +244,7 @@
   }
 
   .notification-preference-label {
-    @apply text-sm font-medium text-gray-200;
+    @apply text-sm font-medium text-gray-50;
   }
 
   .notification-preference-toggle {
