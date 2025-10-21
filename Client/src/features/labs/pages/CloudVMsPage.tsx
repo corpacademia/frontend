@@ -79,9 +79,9 @@ export const CloudVMsPage: React.FC = () => {
             Manage and configure your cloud-based virtual machines
           </p>
         </div>
-        <button className="btn-primary">
-          <Plus className="h-4 w-4 mr-2" />
-          New VM Instance
+        <button className="btn-primary text-gray-200">
+          <Plus className="h-4 w-4 mr-2 text-gray-200" />
+          New Lab
         </button>
       </div>
 
@@ -167,7 +167,7 @@ export const CloudVMsPage: React.FC = () => {
                 <p className="text-gray-400 max-w-md">
                   {filters.search || filters.provider || filters.status
                     ? "No VMs match your current filters. Try adjusting your search criteria."
-                    : "You haven't created any virtual machines yet. Click 'New VM Instance' to get started."}
+                    : "You haven't created any Labs yet. Click 'New Lab' to get started."}
                 </p>
               </div>
             </div>

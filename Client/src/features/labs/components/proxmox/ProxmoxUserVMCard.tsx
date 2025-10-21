@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   HardDrive, 
   Check, 
@@ -20,7 +20,7 @@ import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ProxmoxDeleteModal } from './ProxmoxDeleteModal';
-
+import Guacamole from 'guacamole-common-js';
 interface ProxmoxVM {
   id: string;
   title: string;
@@ -63,6 +63,9 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const displayRef = useRef(null);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     checkVMStatus();
     fetchCurrentUser();
@@ -113,6 +116,47 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
 
   const handleLaunchVM = async () => {
     setIsLaunchProcessing(true);
+  //    const res = await axios.post(
+  //     `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+  //     {
+  //       protocol: "rdp",
+  //       hostname: "20.0.28.27",
+  //       port: 20027,
+  //       username: "parveez",
+  //       password: "C0rp@123",
+  //     },
+  //     {
+  //       withCredentials: true, // ✅ send cookies to maintain express-session
+  //     }
+  //   );
+
+  //   const { wsUrl } = res.data;
+  //   console.log("Connecting to:", wsUrl);
+
+  //   // ✅ Extract session token from URL
+  //   const token = new URL(wsUrl).searchParams.get("session");
+  //   if (token) {
+  //     sessionStorage.setItem("guacSessionToken", token);
+  //     console.log("Saved session token:", token);
+  //   }
+
+  //   // Step 2: Create Guacamole tunnel
+  //  const tunnel = new Guacamole.WebSocketTunnel("ws://localhost:3002/?token=" + token);
+
+  //   const client = new Guacamole.Client(tunnel);
+
+  //   // Step 3: Attach display to DOM
+  //   if (displayRef.current) {
+  //     displayRef.current.innerHTML = "";
+  //     displayRef.current.appendChild(client.getDisplay().getElement());
+  //   }
+
+  //   // Step 4: Connect
+  //   client.connect();
+
+  //   // Cleanup
+  //   window.onunload = () => client.disconnect();
+  //   return;
     try {
       if(currentUser.role === 'orgadmin'){
         if(vm.status === 'expired') {
@@ -414,4 +458,17 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
       />
     </div>
   );
+   
+  // return (
+  //   <div>
+  //     <button onClick={handleLaunchVM} disabled={loading}>
+  //       {loading ? "Connecting..." : "Connect to VM"}
+  //     </button>
+  //     <div
+  //       ref={displayRef}
+  //       style={{ width: "100%", height: "600px", background: "#000", marginTop: "20px" }}
+  //     ></div>
+  //   </div>
+  // );
+
 };

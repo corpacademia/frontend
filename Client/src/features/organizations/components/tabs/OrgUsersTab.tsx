@@ -547,10 +547,10 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
             Import Users
           </label>
           <button 
-            className="btn-primary"
+            className="btn-primary text-gray-200"
             onClick={() => setIsAddModalOpen(true)}
           >
-            <UserPlus className="h-4 w-4 mr-2" />
+            <UserPlus className="h-4 w-4 mr-2 text-gray-200" />
             Add User
           </button>
         </div>

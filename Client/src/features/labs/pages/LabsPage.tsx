@@ -140,16 +140,16 @@ export const LabsPage: React.FC = () => {
         <div className="flex space-x-4">
           <button 
             onClick={() => navigate('/dashboard/labs/catalogue')}
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
           >
-            <BookOpen className="h-4 w-4 mr-2" />
+            <BookOpen className="h-4 w-4 mr-2 text-gray-200" />
             View Catalogue
           </button>
           <button 
             onClick={() => navigate('/dashboard/labs/create')}
-            className="btn-primary"
+            className="btn-primary text-gray-200"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2 text-gray-200" />
             Create Lab Environment
           </button>
         </div>

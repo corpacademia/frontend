@@ -48,9 +48,9 @@ export const UserProfilePage: React.FC = () => {
         {canEditUser && (
           <button
             onClick={() => setIsEditModalOpen(true)}
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
           >
-            <Pencil className="h-4 w-4 mr-2" />
+            <Pencil className="h-4 w-4 mr-2 text-gray-200" />
             Edit Profile
           </button>
         )}

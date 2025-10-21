@@ -74,13 +74,13 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
             ))}
           </select>
 
-          <button className="btn-secondary">
-            <Calendar className="h-4 w-4 mr-2" />
+          <button className="btn-secondary text-gray-200">
+            <Calendar className="h-4 w-4 mr-2 text-gray-200" />
             Custom Range
           </button>
 
-          <button className="btn-primary">
-            <Download className="h-4 w-4 mr-2" />
+          <button className="btn-primary text-gray-200">
+            <Download className="h-4 w-4 mr-2 text-gray-200" />
             Generate Report
           </button>
         </div>

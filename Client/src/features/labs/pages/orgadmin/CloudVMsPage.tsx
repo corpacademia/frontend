@@ -301,8 +301,8 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
             Manage and configure assessment environments
           </p>
         </div>
-        <button className="btn-primary">
-          <Plus className="h-4 w-4 mr-2" />
+        <button className="btn-primary text-gray-200">
+          <Plus className="h-4 w-4 mr-2 text-gray-200" />
           New Assessment
         </button>
       </div>

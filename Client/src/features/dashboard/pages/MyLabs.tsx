@@ -1028,9 +1028,9 @@ export const MyLabs: React.FC = () => {
 
             <button 
               onClick={() => setFilters({ search: '', provider: '', status: '' })}
-              className="btn-secondary whitespace-nowrap"
+              className="btn-secondary whitespace-nowrap text-gray-200"
             >
-              <Filter className="h-4 w-4 mr-2" />
+              <Filter className="h-4 w-4 mr-2 text-gray-200" />
               Clear Filters
             </button>
           </div>

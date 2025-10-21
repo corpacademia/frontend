@@ -47,14 +47,14 @@ export const AssessmentFilters: React.FC<AssessmentFiltersProps> = ({
 
           <button 
             onClick={() => setFilters({ search: '', status: '', dateRange: '' })}
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <Filter className="h-4 w-4 mr-2 text-gray-200" />
             Clear Filters
           </button>
 
-          <button className="btn-secondary">
-            <Calendar className="h-4 w-4 mr-2" />
+          <button className="btn-secondary text-gray-200">
+            <Calendar className="h-4 w-4 mr-2 text-gray-200" />
             Date Range
           </button>
         </div>

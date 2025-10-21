@@ -411,9 +411,9 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
             onClick={addUser}
             className="w-full p-3 border border-dashed border-primary-500/30 rounded-lg
                      text-primary-400 hover:text-primary-300 hover:border-primary-500/50
-                     transition-colors flex items-center justify-center"
+                     transition-colors flex items-center justify-center text-gray-200"
           >
-            <Plus className="h-5 w-5 mr-2" />
+            <Plus className="h-5 w-5 mr-2 text-gray-200" />
             Add User
           </button>
         </div>

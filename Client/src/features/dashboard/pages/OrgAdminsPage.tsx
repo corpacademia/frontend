@@ -117,9 +117,9 @@ export const OrgAdminsPage: React.FC = () => {
         </div>
         <button 
           onClick={() => setIsAddModalOpen(true)}
-          className="btn-primary"
+          className="btn-primary text-gray-200"
         >
-          <UserPlus className="h-4 w-4 mr-2" />
+          <UserPlus className="h-4 w-4 mr-2 text-gray-200" />
           Add Admin
         </button>
       </div>

@@ -207,10 +207,10 @@ export const AdminCloudVMsPage: React.FC = () => {
         </div>
         <button 
           onClick={() => navigate('/dashboard/labs/create')}
-          className="btn-primary"
+          className="btn-primary text-gray-200"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          New VM Instance
+          <Plus className="h-4 w-4 mr-2 text-gray-200" />
+          New Lab
         </button>
       </div>
 
@@ -267,9 +267,9 @@ export const AdminCloudVMsPage: React.FC = () => {
 
             <button 
               onClick={() => setFilters({ search: '', provider: '', status: '', type: 'all' })}
-              className="btn-secondary"
+              className="btn-secondary text-gray-200"
             >
-              <Filter className="h-4 w-4 mr-2" />
+              <Filter className="h-4 w-4 mr-2 text-gray-200" />
               Clear Filters
             </button>
           </div>
@@ -307,7 +307,7 @@ export const AdminCloudVMsPage: React.FC = () => {
                 <p className="text-gray-400 max-w-md">
                   {filters.search || filters.provider || filters.status || filters.type !== 'all'
                     ? "No VMs match your current filters. Try adjusting your search criteria."
-                    : "You haven't created any virtual machines yet. Click 'New VM Instance' to get started."}
+                    : "You haven't created any Labs yet. Click 'New Labs' to get started."}
                 </p>
               </div>
             </div>

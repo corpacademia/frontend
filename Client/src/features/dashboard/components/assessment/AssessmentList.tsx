@@ -41,7 +41,7 @@ export const AssessmentList: React.FC<AssessmentListProps> = ({
           <thead>
             <tr className="text-left text-sm text-gray-400 border-b border-primary-500/10">
               <th className="pb-4 pl-4">Assessment</th>
-              <th className="pb-4">Date Range</th>
+              <th className="pb-4 text-gray-200">Date Range</th>
               <th className="pb-4">Assigned Users</th>
               <th className="pb-4">Status</th>
               <th className="pb-4">Passing Marks</th>

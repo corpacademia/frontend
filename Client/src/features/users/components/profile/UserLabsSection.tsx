@@ -373,9 +373,9 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
         </h2> 
         <button 
           onClick={() => setIsAssignModalOpen(true)}
-          className="btn-secondary"
+          className="btn-secondary text-gray-200"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2 text-gray-200" />
           Assign Lab
         </button>
       </div>

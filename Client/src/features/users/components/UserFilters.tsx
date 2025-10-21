@@ -76,10 +76,10 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
 
           <div className="relative">
             <button 
-              className="btn-secondary"
+              className="btn-secondary text-gray-200"
               onClick={() => setShowDatePicker(!showDatePicker)}
             >
-              <Calendar className="h-4 w-4 mr-2" />
+              <Calendar className="h-4 w-4 mr-2 text-gray-200" />
               Date Range
             </button>
 
@@ -126,7 +126,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           </div>
 
           <button 
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
             onClick={() => {
               setFilters({
                 search: '',
@@ -137,7 +137,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
               setDateRange({ startDate: '', endDate: '' });
             }}
           >
-            <Filter className="h-4 w-4 mr-2" />
+            <Filter className="h-4 w-4 mr-2 text-gray-200" />
             Clear Filters
           </button>
         </div>

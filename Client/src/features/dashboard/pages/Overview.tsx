@@ -472,7 +472,7 @@ export const Overview: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-display font-bold">
+      <h1 className="text-3xl text-gray-200 font-display font-bold">
         Welcome back, <GradientText>{user?.name}</GradientText>!
       </h1>
       

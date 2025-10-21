@@ -48,9 +48,9 @@ export const Assessments: React.FC = () => {
         </div>
         <button 
           onClick={() => setIsAddModalOpen(true)}
-          className="btn-primary"
+          className="btn-primary text-gray-200"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2 text-gray-200" />
           New Assessment
         </button>
       </div>
