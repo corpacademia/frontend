@@ -78,6 +78,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
     labadmin: [
       { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
       { icon: Users, label: 'Team', path: '/dashboard/team' },
+      { icon: Users, label: 'Batches', path: '/dashboard/batches' },
       { icon: BookOpen, label: 'Labs', path: '/dashboard/labs' },
       { icon: FolderOpen, label: 'Workspaces', path: '/dashboard/labs/workspace' },
       { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },

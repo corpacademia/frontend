@@ -57,6 +57,8 @@ import { CloudVMPage } from '../features/labs/pages/CloudVMPage';
 import { CloudVMsPage } from '../features/labs/pages/CloudVMsPage';
 import { DedicatedVMPage } from '../features/labs/pages/DedicatedVMPage';
 import { EmulatorPage } from '../features/labs/pages/EmulatorPage';
+import { BatchesPage } from '../features/batches/pages/BatchesPage';
+import { BatchDetailsPage } from '../features/batches/pages/BatchDetailsPage';
 // Assume TransactionsPage and CloudUsage are correctly imported from their respective modules
 // import { TransactionsPage } from '../features/dashboard/pages/TransactionsPage';
 
@@ -153,6 +155,16 @@ export const AppRoutes: React.FC = () => {
         <Route path="my-labs" element={<MyLabs />} />
         <Route path="cloud-usage" element={<CloudUsage />} />
         <Route path="notifications" element={<NotificationPage />} />
+        <Route path="batches" element={
+          <PrivateRoute allowedRoles={['labadmin']}>
+            <BatchesPage />
+          </PrivateRoute>
+        } />
+        <Route path="batches/:batchId" element={
+          <PrivateRoute allowedRoles={['labadmin']}>
+            <BatchDetailsPage />
+          </PrivateRoute>
+        } />
 
         {/* User Lab Routes */}
         <Route path="my-labs/:labId/standard" element={<StandardLabPage />} />
