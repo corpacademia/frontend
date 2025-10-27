@@ -17,6 +17,7 @@ import {
 import { AssignLabToBatchModal } from '../components/AssignLabToBatchModal';
 import { EditBatchModal } from '../components/EditBatchModal';
 import { AddUsersToBatchModal } from '../components/AddUsersToBatchModal';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import axios from 'axios';
 import { useAuthStore } from '../../../store/authStore';
 
@@ -207,6 +208,20 @@ export const BatchDetailsPage: React.FC = () => {
   const [isEditBatchModalOpen, setIsEditBatchModalOpen] = useState(false);
   const [isAddUsersModalOpen, setIsAddUsersModalOpen] = useState(false);
   const [selectedLab, setSelectedLab] = useState<BatchLab | null>(null);
+  
+  // Delete modals state
+  const [deleteUserModal, setDeleteUserModal] = useState<{ isOpen: boolean; userId: string; userName: string }>({
+    isOpen: false,
+    userId: '',
+    userName: ''
+  });
+  const [deleteLabModal, setDeleteLabModal] = useState<{ isOpen: boolean; labId: string; labName: string }>({
+    isOpen: false,
+    labId: '',
+    labName: ''
+  });
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [isDeletingLab, setIsDeletingLab] = useState(false);
 
   useEffect(() => {
     fetchBatchDetails();
@@ -255,39 +270,43 @@ export const BatchDetailsPage: React.FC = () => {
     }
   };
 
-  const handleRemoveUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to remove this user from the batch?')) return;
-
+  const handleRemoveUser = async () => {
+    setIsDeletingUser(true);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/removeUserFromBatch`,
-        { batch_id: batchId, user_id: userId },
+        { batch_id: batchId, user_id: deleteUserModal.userId },
         { withCredentials: true }
       );
 
       if (response.data.success) {
         fetchBatchDetails();
+        setDeleteUserModal({ isOpen: false, userId: '', userName: '' });
       }
     } catch (error) {
       console.error('Error removing user:', error);
+    } finally {
+      setIsDeletingUser(false);
     }
   };
 
-  const handleRemoveLab = async (labId: string) => {
-    if (!confirm('Are you sure you want to remove this lab from the batch?')) return;
-
+  const handleRemoveLab = async () => {
+    setIsDeletingLab(true);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/removeLabFromBatch`,
-        { batch_id: batchId, lab_id: labId },
+        { batch_id: batchId, lab_id: deleteLabModal.labId },
         { withCredentials: true }
       );
 
       if (response.data.success) {
         fetchBatchDetails();
+        setDeleteLabModal({ isOpen: false, labId: '', labName: '' });
       }
     } catch (error) {
       console.error('Error removing lab:', error);
+    } finally {
+      setIsDeletingLab(false);
     }
   };
 
@@ -519,7 +538,7 @@ export const BatchDetailsPage: React.FC = () => {
                           <Edit className="h-4 w-4 text-primary-400" />
                         </button>
                         <button
-                          onClick={() => handleRemoveLab(lab.lab_id)}
+                          onClick={() => setDeleteLabModal({ isOpen: true, labId: lab.lab_id, labName: lab.lab_name })}
                           className="p-2 hover:bg-dark-400 rounded-lg transition-colors"
                           title="Remove Lab"
                         >
@@ -598,7 +617,7 @@ export const BatchDetailsPage: React.FC = () => {
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-end">
                         <button
-                          onClick={() => handleRemoveUser(student.id)}
+                          onClick={() => setDeleteUserModal({ isOpen: true, userId: student.id, userName: student.name })}
                           className="p-2 hover:bg-dark-400 rounded-lg transition-colors"
                           title="Remove Student"
                         >
@@ -638,6 +657,25 @@ export const BatchDetailsPage: React.FC = () => {
         onClose={() => setIsAddUsersModalOpen(false)}
         onSuccess={fetchBatchDetails}
         batchId={batchId!}
+      />
+
+      {/* Delete Modals */}
+      <DeleteConfirmModal
+        isOpen={deleteUserModal.isOpen}
+        onClose={() => setDeleteUserModal({ isOpen: false, userId: '', userName: '' })}
+        onConfirm={handleRemoveUser}
+        isDeleting={isDeletingUser}
+        title="Remove Student"
+        message={`Are you sure you want to remove ${deleteUserModal.userName} from this batch? This action cannot be undone.`}
+      />
+
+      <DeleteConfirmModal
+        isOpen={deleteLabModal.isOpen}
+        onClose={() => setDeleteLabModal({ isOpen: false, labId: '', labName: '' })}
+        onConfirm={handleRemoveLab}
+        isDeleting={isDeletingLab}
+        title="Remove Lab"
+        message={`Are you sure you want to remove ${deleteLabModal.labName} from this batch? This action cannot be undone.`}
       />
     </div>
   );
