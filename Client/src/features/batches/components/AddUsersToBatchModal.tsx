@@ -223,6 +223,7 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
 
         <div className="border-t border-primary-500/10 p-6">
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+            <GradientText>
             <button
               type="button"
               onClick={handleClose}
@@ -231,6 +232,8 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
             >
               Cancel
             </button>
+            </GradientText>
+            <GradientText>
             <button
               onClick={handleSubmit}
               className="btn-primary w-full sm:w-auto"
@@ -238,6 +241,7 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
             >
               {isSubmitting ? 'Adding...' : `Add ${selectedUsers.length || ''} User(s)`}
             </button>
+            </GradientText>
           </div>
         </div>
       </div>

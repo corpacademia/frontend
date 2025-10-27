@@ -166,6 +166,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
 
           {/* Actions */}
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
+            <GradientText>
             <button
               type="button"
               onClick={handleClose}
@@ -174,6 +175,8 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
             >
               Cancel
             </button>
+            </GradientText>
+            <GradientText>
             <button
               type="submit"
               className="btn-primary w-full sm:w-auto"
@@ -181,6 +184,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
             >
               {isSubmitting ? 'Creating...' : 'Create Batch'}
             </button>
+            </GradientText>
           </div>
         </form>
       </div>

@@ -193,9 +193,9 @@ export const BatchesPage: React.FC = () => {
 
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="btn-primary w-full sm:w-auto"
+          className="btn-primary w-full sm:w-auto text-gray-200"
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2 text-gray-200" />
           Create Batch
         </button>
       </div>

@@ -365,23 +365,23 @@ export const BatchDetailsPage: React.FC = () => {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setIsEditBatchModalOpen(true)}
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
           >
-            <Edit className="h-4 w-4 mr-2" />
+            <Edit className="h-4 w-4 mr-2 text-gray-200" />
             Edit Batch
           </button>
           <button
             onClick={() => setIsAddUsersModalOpen(true)}
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2 text-gray-200" />
             Add Users
           </button>
           <button
             onClick={() => setIsAssignLabModalOpen(true)}
-            className="btn-primary"
+            className="btn-primary text-gray-200"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2 text-gray-200" />
             Assign Lab
           </button>
         </div>

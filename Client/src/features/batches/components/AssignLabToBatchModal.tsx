@@ -314,6 +314,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
 
           {/* Actions */}
           <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
+            <GradientText>
             <button
               type="button"
               onClick={handleClose}
@@ -322,6 +323,8 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
             >
               Cancel
             </button>
+            </GradientText>
+            <GradientText>
             <button
               type="submit"
               className="btn-primary w-full sm:w-auto"
@@ -329,6 +332,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
             >
               {isSubmitting ? 'Processing...' : editLab ? 'Update Lab' : 'Assign Lab'}
             </button>
+            </GradientText>
           </div>
         </form>
       </div>
