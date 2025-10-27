@@ -54,6 +54,145 @@ interface BatchLab {
   quantity?: number;
 }
 
+// Mock data
+const mockBatchDetails: Record<string, BatchDetails> = {
+  '1': {
+    id: '1',
+    name: 'DevOps Batch 2024',
+    description: 'Advanced DevOps training with AWS and Kubernetes',
+    start_date: '2024-02-01T00:00:00Z',
+    end_date: '2024-05-31T23:59:59Z',
+    created_at: '2024-01-15T10:00:00Z',
+    trainer_id: 't1',
+    trainer_name: 'John Smith'
+  },
+  '2': {
+    id: '2',
+    name: 'Cloud Computing Fundamentals',
+    description: 'Introduction to cloud platforms and services',
+    start_date: '2024-03-01T00:00:00Z',
+    end_date: '2024-06-30T23:59:59Z',
+    created_at: '2024-01-20T10:00:00Z',
+    trainer_id: 't2',
+    trainer_name: 'Sarah Johnson'
+  },
+  '3': {
+    id: '3',
+    name: 'Cybersecurity Bootcamp',
+    description: 'Comprehensive security training and penetration testing',
+    start_date: '2024-04-01T00:00:00Z',
+    end_date: '2024-07-31T23:59:59Z',
+    created_at: '2024-02-01T10:00:00Z',
+    trainer_id: 't3',
+    trainer_name: 'Mike Davis'
+  }
+};
+
+const mockBatchUsers: Record<string, BatchUser[]> = {
+  '1': [
+    { id: 'u1', name: 'Alice Cooper', email: 'alice@example.com', labs_started: 6, labs_completed: 4, total_labs: 8 },
+    { id: 'u2', name: 'Bob Wilson', email: 'bob@example.com', labs_started: 5, labs_completed: 3, total_labs: 8 },
+    { id: 'u3', name: 'Carol Martinez', email: 'carol@example.com', labs_started: 7, labs_completed: 5, total_labs: 8 },
+    { id: 'u4', name: 'David Lee', email: 'david@example.com', labs_started: 4, labs_completed: 2, total_labs: 8 },
+    { id: 'u5', name: 'Emma Thompson', email: 'emma@example.com', labs_started: 8, labs_completed: 6, total_labs: 8 }
+  ],
+  '2': [
+    { id: 'u6', name: 'Frank Harris', email: 'frank@example.com', labs_started: 4, labs_completed: 3, total_labs: 6 },
+    { id: 'u7', name: 'Grace Kim', email: 'grace@example.com', labs_started: 5, labs_completed: 4, total_labs: 6 },
+    { id: 'u8', name: 'Henry Chen', email: 'henry@example.com', labs_started: 3, labs_completed: 2, total_labs: 6 }
+  ],
+  '3': [
+    { id: 'u9', name: 'Ivy Rodriguez', email: 'ivy@example.com', labs_started: 8, labs_completed: 5, total_labs: 12 },
+    { id: 'u10', name: 'Jack Brown', email: 'jack@example.com', labs_started: 10, labs_completed: 7, total_labs: 12 }
+  ]
+};
+
+const mockBatchLabs: Record<string, BatchLab[]> = {
+  '1': [
+    {
+      id: 'bl1',
+      lab_id: 'l1',
+      lab_name: 'Docker Fundamentals',
+      start_date: '2024-02-01T00:00:00Z',
+      end_date: '2024-02-15T23:59:59Z',
+      users_started: 20,
+      users_completed: 18,
+      total_users: 25,
+      remaining_days: 0,
+      is_purchased: true,
+      quantity: 30
+    },
+    {
+      id: 'bl2',
+      lab_id: 'l2',
+      lab_name: 'Kubernetes Deployment',
+      start_date: '2024-02-16T00:00:00Z',
+      end_date: '2024-03-15T23:59:59Z',
+      users_started: 15,
+      users_completed: 10,
+      total_users: 25,
+      remaining_days: 45,
+      is_purchased: true,
+      quantity: 30
+    },
+    {
+      id: 'bl3',
+      lab_id: 'l3',
+      lab_name: 'AWS EC2 & S3',
+      start_date: '2024-03-16T00:00:00Z',
+      end_date: '2024-04-15T23:59:59Z',
+      users_started: 12,
+      users_completed: 5,
+      total_users: 25,
+      remaining_days: 75,
+      is_purchased: true,
+      quantity: 25
+    }
+  ],
+  '2': [
+    {
+      id: 'bl4',
+      lab_id: 'l4',
+      lab_name: 'Azure Basics',
+      start_date: '2024-03-01T00:00:00Z',
+      end_date: '2024-03-31T23:59:59Z',
+      users_started: 25,
+      users_completed: 20,
+      total_users: 30,
+      remaining_days: 60,
+      is_purchased: true,
+      quantity: 35
+    },
+    {
+      id: 'bl5',
+      lab_id: 'l5',
+      lab_name: 'GCP Introduction',
+      start_date: '2024-04-01T00:00:00Z',
+      end_date: '2024-04-30T23:59:59Z',
+      users_started: 10,
+      users_completed: 0,
+      total_users: 30,
+      remaining_days: 90,
+      is_purchased: false
+    }
+  ],
+  '3': [
+    {
+      id: 'bl6',
+      lab_id: 'l6',
+      lab_name: 'Network Security',
+      start_date: '2024-04-01T00:00:00Z',
+      end_date: '2024-04-30T23:59:59Z',
+      users_started: 18,
+      users_completed: 12,
+      total_users: 20,
+      remaining_days: 90,
+      is_purchased: true,
+      quantity: 25
+    }
+  ]
+};
+
 export const BatchDetailsPage: React.FC = () => {
   const { batchId } = useParams<{ batchId: string }>();
   const navigate = useNavigate();
@@ -76,6 +215,17 @@ export const BatchDetailsPage: React.FC = () => {
   const fetchBatchDetails = async () => {
     try {
       setLoading(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Use mock data
+      if (batchId && mockBatchDetails[batchId]) {
+        setBatchDetails(mockBatchDetails[batchId]);
+        setUsers(mockBatchUsers[batchId] || []);
+        setLabs(mockBatchLabs[batchId] || []);
+      }
+      
+      /* Real API call - uncomment when backend is ready
       const [detailsRes, usersRes, labsRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatch/${batchId}`, {
           withCredentials: true
@@ -91,8 +241,15 @@ export const BatchDetailsPage: React.FC = () => {
       if (detailsRes.data.success) setBatchDetails(detailsRes.data.data);
       if (usersRes.data.success) setUsers(usersRes.data.data);
       if (labsRes.data.success) setLabs(labsRes.data.data);
+      */
     } catch (error) {
       console.error('Error fetching batch details:', error);
+      // Fallback to mock data on error
+      if (batchId && mockBatchDetails[batchId]) {
+        setBatchDetails(mockBatchDetails[batchId]);
+        setUsers(mockBatchUsers[batchId] || []);
+        setLabs(mockBatchLabs[batchId] || []);
+      }
     } finally {
       setLoading(false);
     }

@@ -19,6 +19,20 @@ interface User {
   role: string;
 }
 
+// Mock data
+const mockAvailableUsers: User[] = [
+  { id: 'u11', name: 'Kevin Zhang', email: 'kevin@example.com', role: 'user' },
+  { id: 'u12', name: 'Laura Miller', email: 'laura@example.com', role: 'user' },
+  { id: 'u13', name: 'Michael Scott', email: 'michael@example.com', role: 'user' },
+  { id: 'u14', name: 'Nina Patel', email: 'nina@example.com', role: 'user' },
+  { id: 'u15', name: 'Oliver Green', email: 'oliver@example.com', role: 'user' },
+  { id: 'u16', name: 'Paula White', email: 'paula@example.com', role: 'user' },
+  { id: 'u17', name: 'Quinn Adams', email: 'quinn@example.com', role: 'user' },
+  { id: 'u18', name: 'Rachel Black', email: 'rachel@example.com', role: 'user' },
+  { id: 'u19', name: 'Steven Taylor', email: 'steven@example.com', role: 'user' },
+  { id: 'u20', name: 'Tina Moore', email: 'tina@example.com', role: 'user' }
+];
+
 export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
   isOpen,
   onClose,
@@ -41,6 +55,11 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
 
   const fetchAvailableUsers = async () => {
     try {
+      // Use mock data
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setAvailableUsers(mockAvailableUsers);
+      
+      /* Real API call - uncomment when backend is ready
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getAvailableUsers/${batchId}/${user?.org_id}`,
         { withCredentials: true }
@@ -49,8 +68,10 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
       if (response.data.success) {
         setAvailableUsers(response.data.data);
       }
+      */
     } catch (error) {
       console.error('Error fetching users:', error);
+      setAvailableUsers(mockAvailableUsers);
     }
   };
 

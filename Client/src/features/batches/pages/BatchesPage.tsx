@@ -22,6 +22,75 @@ interface Batch {
   end_date?: string;
 }
 
+// Mock data
+const mockBatches: Batch[] = [
+  {
+    id: '1',
+    name: 'DevOps Batch 2024',
+    description: 'Advanced DevOps training with AWS and Kubernetes',
+    created_at: '2024-01-15T10:00:00Z',
+    created_by: 'admin1',
+    user_count: 25,
+    lab_count: 8,
+    trainer_id: 't1',
+    trainer_name: 'John Smith',
+    start_date: '2024-02-01T00:00:00Z',
+    end_date: '2024-05-31T23:59:59Z'
+  },
+  {
+    id: '2',
+    name: 'Cloud Computing Fundamentals',
+    description: 'Introduction to cloud platforms and services',
+    created_at: '2024-01-20T10:00:00Z',
+    created_by: 'admin1',
+    user_count: 30,
+    lab_count: 6,
+    trainer_id: 't2',
+    trainer_name: 'Sarah Johnson',
+    start_date: '2024-03-01T00:00:00Z',
+    end_date: '2024-06-30T23:59:59Z'
+  },
+  {
+    id: '3',
+    name: 'Cybersecurity Bootcamp',
+    description: 'Comprehensive security training and penetration testing',
+    created_at: '2024-02-01T10:00:00Z',
+    created_by: 'admin1',
+    user_count: 20,
+    lab_count: 12,
+    trainer_id: 't3',
+    trainer_name: 'Mike Davis',
+    start_date: '2024-04-01T00:00:00Z',
+    end_date: '2024-07-31T23:59:59Z'
+  },
+  {
+    id: '4',
+    name: 'Data Science & ML',
+    description: 'Machine Learning and AI fundamentals',
+    created_at: '2023-12-10T10:00:00Z',
+    created_by: 'admin1',
+    user_count: 18,
+    lab_count: 10,
+    trainer_id: 't4',
+    trainer_name: 'Emma Wilson',
+    start_date: '2024-01-15T00:00:00Z',
+    end_date: '2024-03-15T23:59:59Z'
+  },
+  {
+    id: '5',
+    name: 'Full Stack Development',
+    description: 'MERN stack web development course',
+    created_at: '2024-02-15T10:00:00Z',
+    created_by: 'admin1',
+    user_count: 35,
+    lab_count: 15,
+    trainer_id: 't5',
+    trainer_name: 'Alex Brown',
+    start_date: '2024-05-01T00:00:00Z',
+    end_date: '2024-08-31T23:59:59Z'
+  }
+];
+
 export const BatchesPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -43,6 +112,13 @@ export const BatchesPage: React.FC = () => {
   const fetchBatches = async () => {
     try {
       setLoading(true);
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Use mock data
+      setBatches(mockBatches);
+      
+      /* Real API call - uncomment when backend is ready
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatches/${user?.org_id}`,
         { withCredentials: true }
@@ -51,8 +127,11 @@ export const BatchesPage: React.FC = () => {
       if (response.data.success) {
         setBatches(response.data.data);
       }
+      */
     } catch (error) {
       console.error('Error fetching batches:', error);
+      // Fallback to mock data on error
+      setBatches(mockBatches);
     } finally {
       setLoading(false);
     }

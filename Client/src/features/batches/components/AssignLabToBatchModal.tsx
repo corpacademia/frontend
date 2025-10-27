@@ -26,6 +26,26 @@ interface Trainer {
   email: string;
 }
 
+// Mock data
+const mockLabs: Lab[] = [
+  { lab_id: 'l1', title: 'Docker Fundamentals', is_purchased: true, quantity: 30 },
+  { lab_id: 'l2', title: 'Kubernetes Deployment', is_purchased: true, quantity: 30 },
+  { lab_id: 'l3', title: 'AWS EC2 & S3', is_purchased: true, quantity: 25 },
+  { lab_id: 'l4', title: 'Azure Basics', is_purchased: true, quantity: 35 },
+  { lab_id: 'l5', title: 'GCP Introduction', is_purchased: false },
+  { lab_id: 'l6', title: 'Network Security', is_purchased: true, quantity: 25 },
+  { lab_id: 'l7', title: 'Penetration Testing', is_purchased: false },
+  { lab_id: 'l8', title: 'CI/CD with Jenkins', is_purchased: true, quantity: 20 }
+];
+
+const mockTrainers: Trainer[] = [
+  { id: 't1', name: 'John Smith', email: 'john@example.com' },
+  { id: 't2', name: 'Sarah Johnson', email: 'sarah@example.com' },
+  { id: 't3', name: 'Mike Davis', email: 'mike@example.com' },
+  { id: 't4', name: 'Emma Wilson', email: 'emma@example.com' },
+  { id: 't5', name: 'Alex Brown', email: 'alex@example.com' }
+];
+
 export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
   isOpen,
   onClose,
@@ -72,6 +92,11 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
 
   const fetchLabs = async () => {
     try {
+      // Use mock data
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setLabs(mockLabs);
+      
+      /* Real API call - uncomment when backend is ready
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCatalogues`,
         { withCredentials: true }
@@ -80,13 +105,20 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
       if (response.data.success) {
         setLabs(response.data.data);
       }
+      */
     } catch (error) {
       console.error('Error fetching labs:', error);
+      setLabs(mockLabs);
     }
   };
 
   const fetchTrainers = async () => {
     try {
+      // Use mock data
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setTrainers(mockTrainers);
+      
+      /* Real API call - uncomment when backend is ready
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getTrainers/${user?.org_id}`,
         { withCredentials: true }
@@ -95,8 +127,10 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
       if (response.data.success) {
         setTrainers(response.data.data);
       }
+      */
     } catch (error) {
       console.error('Error fetching trainers:', error);
+      setTrainers(mockTrainers);
     }
   };
 
