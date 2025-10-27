@@ -27,7 +27,7 @@ export const Team: React.FC = () => {
       const user_list = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(user_list.data.user);
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationUsers`, {
-        admin_id: user_list.data.user.id
+        org_id: user_list.data.user.org_id
       });
       setOriginalUsers(response.data.data);
       setUsers(response.data.data);
@@ -93,10 +93,10 @@ export const Team: React.FC = () => {
           <GradientText>Team Members</GradientText>
         </h1>
         <button 
-          className="btn-primary"
+          className="btn-primary text-gray-200"
           onClick={() => setIsAddModalOpen(true)}
         >
-          <UserPlus className="h-4 w-4 mr-2" />
+          <UserPlus className="h-4 w-4 mr-2 text-gray-200" />
           Add Team Member
         </button>
       </div>

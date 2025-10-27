@@ -35,7 +35,7 @@ export const OrgAdminsPage: React.FC = () => {
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.org_id}`
         );
         if (response.data.success) {
-          const admins = response.data.data.filter(u => u.role === 'orgadmin');
+          const admins = response.data.data.filter(u => u.role === 'labadmin');
           setOrgAdmins(admins);
           setOriginalOrgAdmins(admins);
           
@@ -82,7 +82,7 @@ export const OrgAdminsPage: React.FC = () => {
   const handleAddOrgAdmin = async (userData: any) => {
     try {
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addOrgAdmin`, {
-        formData: { ...userData, role: 'orgadmin' },
+        formData: { ...userData, role: 'labadmin' },
         organizationId: user?.organization_id,
         createdBy: user
       });
@@ -94,7 +94,7 @@ export const OrgAdminsPage: React.FC = () => {
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrgAdmins/${user?.organization_id}`
         );
         if (response.data.success) {
-          const admins = response.data.data.filter(u => u.role === 'orgadmin');
+          const admins = response.data.data.filter(u => u.role === 'labadmin');
           setOrgAdmins(admins);
           setOriginalOrgAdmins(admins);
         }
@@ -109,7 +109,7 @@ export const OrgAdminsPage: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-display font-bold">
-            <GradientText>Organization Admins</GradientText>
+            <GradientText>Lab Admins</GradientText>
           </h1>
           <p className="text-gray-400 mt-2">
             Manage administrators for your organization
@@ -183,9 +183,9 @@ export const OrgAdminsPage: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddOrgAdmin}
-        defaultRole="orgadmin"
+        defaultRole="labadmin"
         roleOptions={[
-          { value: 'orgadmin', label: 'Organization Admin' },
+          { value: 'labadmin', label: 'Lab Admin' },
           { value: 'orgsuperadmin', label: 'Organization Super Admin' }
         ]}
       />

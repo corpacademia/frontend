@@ -297,8 +297,8 @@ const canEditContent = () => {
     }
   };
 
-  // Check if the user is an orgadmin and not the creator of this slice
-  const isOrgAdminNotCreator = user?.role === 'orgadmin' && slice.createdby && slice.createdby !== user.id;
+  // Check if the user is an labadmin and not the creator of this slice
+  const isOrgAdminNotCreator = user?.role === 'labadmin' && slice.createdby && slice.createdby !== user.id;
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsDeleteModalOpen(true);
@@ -307,7 +307,7 @@ const canEditContent = () => {
     setIsDeleting(true);
 
     try {
-      // Use different API endpoint if user is orgadmin and not creator
+      // Use different API endpoint if user is labadmin and not creator
       const creds = orgStatus?.find((cred: any) => cred.labid === slice.labid);
       if (isOrgAdminNotCreator) {
         if(creds?.username != null) {

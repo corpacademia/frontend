@@ -166,7 +166,7 @@ function extractFileName(filePath: string) {
   const sectionTabs = [
     { id: 'profile' as const, label: 'Profile Settings', icon: User },
     { id: 'notifications' as const, label: 'Notifications', icon: Bell },
-    ...(user?.role === 'superadmin' || user?.role === 'orgadmin' || user?.role === 'orgsuperadmin' 
+    ...(user?.role === 'superadmin' || user?.role === 'labadmin' || user?.role === 'orgsuperadmin' 
       ? [{ id: 'billing' as const, label: 'Billing & Transactions', icon: CreditCard }] 
       : []
     )

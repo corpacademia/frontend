@@ -111,7 +111,7 @@ export const Organizations: React.FC = () => {
     console.log('Viewing details for:', org);
   };
 
-  const isOrgRole = user?.role === 'orgadmin' || user?.role === 'orgsuperadmin';
+  const isOrgRole = user?.role === 'labadmin' || user?.role === 'orgsuperadmin';
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Building2 },
@@ -126,13 +126,13 @@ export const Organizations: React.FC = () => {
         <div>
           <h1 className="text-3xl font-bold">
             <GradientText>
-              {user?.role === 'orgadmin' ? 'My Organization' : 
+              {user?.role === 'labadmin' ? 'My Organization' : 
                user?.role === 'orgsuperadmin' ? 'Organization Settings' : 
                'Organizations'}
             </GradientText>
           </h1>
           <p className="text-gray-400 mt-1">
-            {user?.role === 'orgadmin' ? 'Manage your organization settings and data' :
+            {user?.role === 'labadmin' ? 'Manage your organization settings and data' :
              user?.role === 'orgsuperadmin' ? 'Configure organization settings and preferences' :
              'Manage and monitor all organizations'}
           </p>
@@ -140,9 +140,9 @@ export const Organizations: React.FC = () => {
         {user?.role === 'superadmin' && (
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-primary flex items-center"
+            className="btn-primary flex items-center text-gray-200"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2 text-gray-200" />
             Add Organization
           </button>
         )}
@@ -203,7 +203,6 @@ export const Organizations: React.FC = () => {
                     <OrganizationFilters
                       filters={filters}
                       onFilterChange={handleFilterChange}
-                      onReset={resetFilters}
                     />
                   </div>
 

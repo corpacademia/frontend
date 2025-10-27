@@ -5,15 +5,15 @@ import { useAuthStore } from '../../../store/authStore';
 interface Organization {
   id: string;
   name: string;
-  role: 'orgadmin';
+  role: 'labadmin';
 }
 
 // Mock data - Replace with API call
 const mockOrganizations: Organization[] = [
-  { id: '1', name: 'TechCorp Labs', role: 'orgadmin' },
-  { id: '2', name: 'EduTech Solutions', role: 'orgadmin' },
-  { id: '3', name: 'Cloud Academy', role: 'orgadmin' },
-  { id: '4', name: 'DevOps Institute', role: 'orgadmin' },
+  { id: '1', name: 'TechCorp Labs', role: 'labadmin' },
+  { id: '2', name: 'EduTech Solutions', role: 'labadmin' },
+  { id: '3', name: 'Cloud Academy', role: 'labadmin' },
+  { id: '4', name: 'DevOps Institute', role: 'labadmin' },
 ];
 
 export const OrganizationSwitcher: React.FC = () => {

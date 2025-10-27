@@ -26,7 +26,7 @@ export const UserList: React.FC<UserListProps> = ({
   const [editModalUser, setEditModalUser] = useState<User | null>(null);
 
   const handleViewDetails = (user: User) => {
-    const basePath = currentUser?.role === 'orgadmin' ? 'trainer' : 'user';
+    const basePath = currentUser?.role === 'labadmin' ? 'trainer' : 'user';
     navigate(`/dashboard/${basePath}/${user.id}`);
     onViewDetails(user);
   };
@@ -177,7 +177,7 @@ export const UserList: React.FC<UserListProps> = ({
                 </td>
                 <td className="py-4">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    user.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
+                    user.role === 'labadmin' ? 'bg-primary-500/20 text-primary-300' :
                     user.role === 'trainer' ? 'bg-accent-500/20 text-accent-300' :
                     'bg-secondary-500/20 text-secondary-300'
                   }`}>

@@ -158,7 +158,7 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
   //   window.onunload = () => client.disconnect();
   //   return;
     try {
-      if(currentUser.role === 'orgadmin'){
+      if(currentUser.role === 'labadmin'){
         if(vm.status === 'expired') {
           setNotification({
             type: 'error',

@@ -115,7 +115,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
           purchased:labExercise?.purchased || false
         });
       }
-      else if(user.role === 'orgadmin'){
+      else if(user.role === 'labadmin'){
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
           userName: user.name, 
           services: labExercise?.services || [],

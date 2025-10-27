@@ -65,7 +65,7 @@ export const UserForm: React.FC<UserFormProps> = ({
           >
             <option value="user">User</option>
             <option value="trainer">Trainer</option>
-            <option value="orgadmin">Organization Admin</option>
+            <option value="labadmin">Lab Admin</option>
           </select>
           {errors.role && (
             <p className="mt-1 text-sm text-red-400">{errors.role}</p>

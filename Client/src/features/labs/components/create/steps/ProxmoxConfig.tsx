@@ -50,6 +50,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     cpuModels:[],
     networkBridges: []
   });
+  console.log(backendData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

@@ -20,8 +20,8 @@ export const UserRoleUpgrade: React.FC<UserRoleUpgradeProps> = ({ userId, curren
       description: 'Can create and manage labs, assess students, and track progress'
     },
     {
-      value: 'orgadmin',
-      label: 'Organization Admin',
+      value: 'labadmin',
+      label: 'Lab Admin',
       description: 'Full access to organization resources, user management, and billing'
     }
   ];

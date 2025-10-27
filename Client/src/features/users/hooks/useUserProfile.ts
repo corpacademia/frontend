@@ -50,12 +50,12 @@ const mockUserProfiles: Record<string, UserProfile> = {
     }
   },
 
-  // 3. Training Organization Admin
-  'orgadmin-1': {
-    id: 'orgadmin-1',
+  // 3. Training Lab Admin
+  'labadmin-1': {
+    id: 'labadmin-1',
     name: 'Michael Chen',
     email: 'michael.chen@techtraining.com',
-    role: 'orgadmin',
+    role: 'labadmin',
     organization: 'TechTraining Solutions',
     organizationType: 'training',
     status: 'active',
@@ -82,11 +82,11 @@ const mockUserProfiles: Record<string, UserProfile> = {
   },
 
   // 4. Educational Institution Admin
-  'orgadmin-2': {
-    id: 'orgadmin-2',
+  'labadmin-2': {
+    id: 'labadmin-2',
     name: 'Dr. Patricia Williams',
     email: 'p.williams@techuniversity.edu',
-    role: 'orgadmin',
+    role: 'labadmin',
     organization: 'Tech University',
     organizationType: 'education',
     status: 'active',

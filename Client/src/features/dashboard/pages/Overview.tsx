@@ -123,7 +123,7 @@ const OrgSuperAdminOverview: React.FC = () => {
           <div className="space-y-3">
             <button className="w-full btn-secondary justify-start">
               <Users className="h-4 w-4 mr-2" />
-              Manage Organization Admins
+              Manage Lab Admins
             </button>
             <button className="w-full btn-secondary justify-start">
               <BookOpen className="h-4 w-4 mr-2" />
@@ -183,7 +183,7 @@ const OrgAdminOverview: React.FC = () => {
             <h2 className="text-xl font-semibold text-white mb-1">
               {user?.organization || 'Your Team'}
             </h2>
-            <p className="text-gray-400">Organization Admin Dashboard</p>
+            <p className="text-gray-400">Lab Admin Dashboard</p>
           </div>
           <Building2 className="h-12 w-12 text-primary-400" />
         </div>
@@ -459,7 +459,7 @@ export const Overview: React.FC = () => {
         return <SuperAdminOverview />;
       case 'orgsuperadmin':
         return <OrgSuperAdminOverview />;
-      case 'orgadmin':
+      case 'labadmin':
         return <OrgAdminOverview />;
       case 'trainer':
         return <TrainerOverview />;

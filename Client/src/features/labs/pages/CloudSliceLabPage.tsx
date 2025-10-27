@@ -74,7 +74,7 @@ export const CloudSliceLabPage: React.FC = () => {
         setFetching(true);
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setCurrentUser(response.data.user);
-        if(response.data.user.role === 'orgadmin'){
+        if(response.data.user.role === 'labadmin'){
           const orgLabDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
             orgId: response.data.user.org_id,
             admin_id: response.data.user.id
@@ -201,7 +201,7 @@ export const CloudSliceLabPage: React.FC = () => {
     if (currentUser.role === 'superadmin') return true;
     
     // Org admin can only edit content they created
-    if (currentUser.role === 'orgadmin') {
+    if (currentUser.role === 'labadmin') {
       return sliceDetails.createdby === currentUser.id;
     }
     

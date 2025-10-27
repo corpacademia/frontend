@@ -9,7 +9,7 @@ interface DemoUser {
 
 const demoUsers: DemoUser[] = [
   { email: 'superadmin@golabing.ai', role: 'Super Admin', icon: Key },
-  { email: 'orgadmin@golabing.ai', role: 'Organization Admin', icon: Briefcase },
+  { email: 'labadmin@golabing.ai', role: 'Lab Admin', icon: Briefcase },
   { email: 'trainer@golabing.ai', role: 'Trainer', icon: GraduationCap },
   { email: 'demo@golabing.ai', role: 'User', icon: User },
 ];

@@ -143,7 +143,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
             >
               <option value="user">User</option>
               <option value="trainer">Trainer</option>
-              <option value="orgadmin">Organization Admin</option>
+              <option value="labadmin">Lab Admin</option>
               <option value="orgsuperadmin">Organization Super Admin</option>
             </select>
           </div>
@@ -261,7 +261,7 @@ const ViewUserModal: React.FC<ViewUserModalProps> = ({ isOpen, onClose, user }) 
           <div>
             <label className="block text-sm text-gray-400">Role</label>
             <span className={`px-2 py-1 text-sm font-medium rounded-full ${
-              user.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
+              user.role === 'labadmin' ? 'bg-primary-500/20 text-primary-300' :
               user.role === 'trainer' ? 'bg-accent-500/20 text-accent-300' :
               'bg-secondary-500/20 text-secondary-300'
             }`}>
@@ -492,7 +492,7 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-accent-400">
-              {users.filter(u => u.role === 'orgadmin' || u.role === 'orgsuperadmin').length}
+              {users.filter(u => u.role === 'labadmin' || u.role === 'orgsuperadmin').length}
             </div>
             <div className="text-sm text-gray-400">Administrators</div>
           </div>
@@ -508,11 +508,11 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
                 <p className="text-sm text-gray-400">Your Role</p>
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                   admin.role === 'orgsuperadmin' ? 'bg-gradient-to-r from-primary-500/20 to-accent-500/20 text-primary-300 border border-primary-500/30' :
-                  admin.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
+                  admin.role === 'labadmin' ? 'bg-primary-500/20 text-primary-300' :
                   'bg-secondary-500/20 text-secondary-300'
                 }`}>
                   {admin.role === 'orgsuperadmin' ? 'Organization Super Admin' : 
-                   admin.role === 'orgadmin' ? 'Organization Admin' :
+                   admin.role === 'labadmin' ? 'Lab Admin' :
                    admin.role}
                 </span>
               </div>
@@ -622,12 +622,12 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
                   <td className="py-4">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                       user.role === 'orgsuperadmin' ? 'bg-gradient-to-r from-primary-500/20 to-accent-500/20 text-primary-300 border border-primary-500/30' :
-                      user.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
+                      user.role === 'labadmin' ? 'bg-primary-500/20 text-primary-300' :
                       user.role === 'trainer' ? 'bg-accent-500/20 text-accent-300' :
                       'bg-secondary-500/20 text-secondary-300'
                     }`}>
                       {user.role === 'orgsuperadmin' ? 'Org Super Admin' : 
-                       user.role === 'orgadmin' ? 'Admin' :
+                       user.role === 'labadmin' ? 'Admin' :
                        user.role === 'trainer' ? 'Trainer' : 'User'}
                     </span>
                   </td>

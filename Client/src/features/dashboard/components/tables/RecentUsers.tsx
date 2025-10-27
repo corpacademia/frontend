@@ -3,7 +3,7 @@ import { GradientText } from '../../../../components/ui/GradientText';
 import { Users, MoreVertical } from 'lucide-react';
 
 const mockUsers = [
-  { id: 1, name: 'John Doe', email: 'john@example.com', role: 'orgadmin', organization: 'TechCorp Labs' },
+  { id: 1, name: 'John Doe', email: 'john@example.com', role: 'labadmin', organization: 'TechCorp Labs' },
   { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'trainer', organization: 'EduTech Solutions' },
   { id: 3, name: 'Mike Johnson', email: 'mike@example.com', role: 'user', organization: 'Cloud Academy' },
   { id: 4, name: 'Sarah Wilson', email: 'sarah@example.com', role: 'trainer', organization: 'DevOps Institute' },
@@ -37,7 +37,7 @@ export const RecentUsers: React.FC = () => {
                 <td className="py-4">{user.email}</td>
                 <td className="py-4">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                    user.role === 'orgadmin' ? 'bg-primary-500/20 text-primary-300' :
+                    user.role === 'labadmin' ? 'bg-primary-500/20 text-primary-300' :
                     user.role === 'trainer' ? 'bg-accent-500/20 text-accent-300' :
                     'bg-secondary-500/20 text-secondary-300'
                   }`}>

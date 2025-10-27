@@ -65,7 +65,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
     orgsuperadmin: [
       { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
       { icon: Building2, label: 'My Organization', path: '/dashboard/my-organization' },
-      { icon: Users, label: 'Organization Admins', path: '/dashboard/org-admins' },
+      { icon: Users, label: 'Lab Admins', path: '/dashboard/org-admins' },
       { icon: Users, label: 'All Users', path: '/dashboard/all-users' },
       { icon: BookOpen, label: 'Labs', path: '/dashboard/labs' },
       { icon: FolderOpen, label: 'Workspaces', path: '/dashboard/labs/workspace' },
@@ -75,7 +75,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
       { icon: Settings, label: 'Organization Settings', path: '/dashboard/org-settings' }
     ],
-    orgadmin: [
+    labadmin: [
       { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
       { icon: Users, label: 'Team', path: '/dashboard/team' },
       { icon: BookOpen, label: 'Labs', path: '/dashboard/labs' },
@@ -138,7 +138,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
             // Conditionally render Lab Catalogue based on role and path
             if (item.label === 'Lab Catalogue') {
               const isLabCatalogueRoute = location.pathname.startsWith('/dashboard/labs/catalogue');
-              if (user?.role === 'superadmin' || user?.role === 'orgsuperadmin' || user?.role === 'orgadmin' || user?.role === 'trainer' || user?.role === 'user') {
+              if (user?.role === 'superadmin' || user?.role === 'orgsuperadmin' || user?.role === 'labadmin' || user?.role === 'trainer' || user?.role === 'user') {
                 return (
                   <SidebarItem
                     key={item.path}

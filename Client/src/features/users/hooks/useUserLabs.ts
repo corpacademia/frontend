@@ -30,7 +30,7 @@ export const useUserLabs = (userId: string,user:any) => {
 
   let fetchLabs: (() => Promise<void>) | undefined;
 
-  if (user.user.role === 'orgadmin') {
+  if (user.user.role === 'labadmin') {
     fetchLabs = async () => {
       try {
         setIsLoading(true);

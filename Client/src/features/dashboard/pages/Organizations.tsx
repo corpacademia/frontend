@@ -102,7 +102,7 @@ export const Organizations: React.FC = () => {
         <h1 className="text-3xl font-display font-bold">
           <GradientText>Organizations</GradientText>
         </h1>
-        <button className="btn-primary">
+        <button className="btn-primary text-gray-200">
           Add Organization
         </button>
       </div>

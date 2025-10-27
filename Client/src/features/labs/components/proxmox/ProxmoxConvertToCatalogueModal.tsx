@@ -151,7 +151,7 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
         if (admin?.role === 'orgsuperadmin') {
           const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${admin.org_id}`);
           if (response.data.success) {
-            const orgAdmins = response.data.data.filter((user: any) => user.role === 'orgadmin');
+            const orgAdmins = response.data.data.filter((user: any) => user.role === 'labadmin');
             setOrganizations(orgAdmins.map((admin: any) => ({
               id: admin.id,
               name: `${admin.name} (${admin.email})`

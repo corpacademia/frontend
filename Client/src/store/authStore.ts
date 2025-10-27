@@ -9,7 +9,7 @@ interface AuthState {
   showSessionExpiryModal: boolean;
   login: (user: User) => void;
   logout: () => void;
-  switchOrganization: (org: { id: string; name: string; role: 'orgadmin' }) => void;
+  switchOrganization: (org: { id: string; name: string; role: 'labadmin' }) => void;
   resetRole: () => void;
   fetchUser: () => Promise<void>;
   setSessionExpiryModal: (show: boolean) => void;
@@ -19,7 +19,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'trainer' | 'orgadmin' | 'superadmin' | 'orgsuperadmin';
+  role: 'user' | 'trainer' | 'labadmin' | 'superadmin' | 'orgsuperadmin';
   organization?: string;
   phone?: string;
   location?: string;

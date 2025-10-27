@@ -59,7 +59,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
             <option value="">All Roles</option>
             <option value="user">User</option>
             <option value="trainer">Trainer</option>
-            <option value="orgadmin">Organization Admin</option>
+            <option value="labadmin">Lab Admin</option>
           </select>
 
           <select

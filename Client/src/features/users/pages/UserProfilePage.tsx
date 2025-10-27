@@ -36,7 +36,7 @@ export const UserProfilePage: React.FC = () => {
   if (error) return <div className="text-red-400">Error loading user profile</div>;
   if (!user) return <div className="text-gray-300">User not found</div>;
 
-  const isOrgAdmin = currentUser?.role === 'orgadmin';
+  const isOrgAdmin = currentUser?.role === 'labadmin';
   const isOrgSuperAdmin = currentUser?.role === 'orgsuperadmin';
   const isSuperAdmin = currentUser?.role === 'superadmin';
   const canEditUser = isOrgAdmin || isOrgSuperAdmin || isSuperAdmin;
@@ -71,7 +71,7 @@ export const UserProfilePage: React.FC = () => {
 
       {user.user.role === 'trainer' ? (
         <TrainerStats userId={userId!} />
-      ) : user.user.role === 'orgadmin' ? (
+      ) : user.user.role === 'labadmin' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <UserLabsSection userId={userId!} user={user!}/>
         <OrgAdminStats userId={userId!} />

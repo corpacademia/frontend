@@ -793,7 +793,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
               User List
             </button>
 
-            {!canEditContent() && currentUser?.role === "orgadmin" ? (
+            {!canEditContent() && currentUser?.role === "labadmin" ? (
               <button
                 onClick={() => setIsAssignModalOpen(true)}
                 className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium

@@ -42,7 +42,7 @@ export const ReportsPage: React.FC = () => {
     switch (user?.role) {
       case 'superadmin':
         return ['user', 'trainer', 'organization', 'lab', 'cloud', 'revenue'];
-      case 'orgadmin':
+      case 'labadmin':
         return ['user', 'trainer', 'lab', 'cloud'];
       case 'trainer':
         return ['user', 'lab'];

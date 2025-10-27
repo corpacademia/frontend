@@ -30,7 +30,7 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
     setIsDeleting(lab.lab_id || lab.labid);
     setNotification(null);
     //if its organization admin
-   if(user?.user?.role === 'orgadmin' ){
+   if(user?.user?.role === 'labadmin' ){
       try {
         let response;
         if(lab.type === 'singlevm'){
@@ -202,7 +202,7 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
     setIsEditing(true);
     setNotification(null);
 
-    if(user?.user?.role === 'orgadmin'){
+    if(user?.user?.role === 'labadmin'){
        try {
       let response;
 

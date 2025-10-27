@@ -916,7 +916,7 @@ export const LabDetailsPage: React.FC = () => {
     );
   }
 
-  const canEdit = user?.role === 'superadmin' || user?.role === 'orgadmin' || selectedLab.createdBy === user?.id;
+  const canEdit = user?.role === 'superadmin' || user?.role === 'labadmin' || selectedLab.createdBy === user?.id;
   const averageRating = reviews.length > 0 ? 
     reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length : 
     selectedLab.rating || 0;

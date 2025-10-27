@@ -38,7 +38,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           // Fetch org admins for this organization
           const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user.org_id}`);
           if (response.data.success) {
-            const orgAdmins = response.data.data.filter(admin => admin.role === 'orgadmin');
+            const orgAdmins = response.data.data.filter(admin => admin.role === 'labadmin');
             setOrganizations(orgAdmins.map(admin => ({
               id: admin.id,
               organization_name: `${admin.name}  (${admin.email})`

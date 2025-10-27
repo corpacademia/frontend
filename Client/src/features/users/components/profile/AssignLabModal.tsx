@@ -100,7 +100,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
       return;
     }
 
-    if(userDetails?.user?.role === 'orgadmin'){
+    if(userDetails?.user?.role === 'labadmin'){
       
       try {
         setIsAssigning(true);

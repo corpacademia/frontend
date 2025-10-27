@@ -24,7 +24,7 @@ export const validateUserData = (users: any[]): UserUploadError[] => {
     }
 
     // Role validation
-    const validRoles = ['user', 'trainer', 'orgadmin'];
+    const validRoles = ['user', 'trainer', 'labadmin'];
     if (user.role && !validRoles.includes(user.role.toLowerCase())) {
       errors.push({ row: rowNumber, message: 'Invalid role' });
     }

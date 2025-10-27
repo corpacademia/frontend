@@ -112,7 +112,7 @@ export const RoleNotificationTypes: Record<string, NotificationType[]> = {
     'course_update',
     'software_expiry',
   ],
-  orgadmin: [
+  labadmin: [
     'user_registered',
     'lab_assigned',
     'lab_completed',

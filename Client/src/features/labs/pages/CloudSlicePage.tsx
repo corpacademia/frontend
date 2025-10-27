@@ -52,7 +52,7 @@ export const CloudSlicePage: React.FC = () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
-        if(response.data.user.role === 'orgadmin'){
+        if(response.data.user.role === 'labadmin'){
            const orgLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
             
               orgId: response.data.user.org_id,
@@ -101,8 +101,8 @@ export const CloudSlicePage: React.FC = () => {
       // First, get the user's own cloud slices
      
       
-      // If user is an orgadmin, also fetch organization-assigned slices
-      else if (user.role === 'orgadmin') {
+      // If user is an labadmin, also fetch organization-assigned slices
+      else if (user.role === 'labadmin') {
 
         try {
           const getOrgAssignedSlices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
@@ -176,8 +176,8 @@ export const CloudSlicePage: React.FC = () => {
   }, [filters, cloudSlices]);
 
   const handleEditSlice = (slice: CloudSlice) => {
-    // Only allow editing if the user is not an orgadmin or if they created the slice
-    if (user?.role !== 'orgadmin' || slice.createdby === user.id) {
+    // Only allow editing if the user is not an labadmin or if they created the slice
+    if (user?.role !== 'labadmin' || slice.createdby === user.id) {
       setEditSlice(slice);
     }
   };
@@ -420,7 +420,7 @@ export const CloudSlicePage: React.FC = () => {
                         onSelect={handleSelectSlice}
                         userRole={user?.role}
                         orgStatus = {orgStatus}
-                        onAssignUsers={user?.role === 'orgadmin' && slice.createdby && slice.createdby !== user.id ? handleAssignUsers : undefined}
+                        onAssignUsers={user?.role === 'labadmin' && slice.createdby && slice.createdby !== user.id ? handleAssignUsers : undefined}
                       />
                     ))}
                   </div>
