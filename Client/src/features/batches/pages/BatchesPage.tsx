@@ -90,8 +90,7 @@ const mockBatches: Batch[] = [
 export const BatchesPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { deleteBatch } = useBatchStore();
-  const [batches, setBatches] = useState<Batch[]>([]);
+  const { deleteBatch,fetchBatches,batches } = useBatchStore();
   const [filteredBatches, setFilteredBatches] = useState<Batch[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -105,40 +104,14 @@ export const BatchesPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    fetchBatches();
+    fetchBatches(user?.id);
   }, []);
 
   useEffect(() => {
     filterBatches();
   }, [searchTerm, filterStatus, batches]);
 
-  const fetchBatches = async () => {
-    try {
-      setLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Use mock data
-      setBatches(mockBatches);
-      
-      /* Real API call - uncomment when backend is ready
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatches/${user?.org_id}`,
-        { withCredentials: true }
-      );
-      
-      if (response.data.success) {
-        setBatches(response.data.data);
-      }
-      */
-    } catch (error) {
-      console.error('Error fetching batches:', error);
-      // Fallback to mock data on error
-      setBatches(mockBatches);
-    } finally {
-      setLoading(false);
-    }
-  };
+ 
 
   const filterBatches = () => {
     let filtered = [...batches];

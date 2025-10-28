@@ -148,11 +148,11 @@ export const useBatchStore = create<BatchState>((set, get) => ({
   isLoadingUsers: false,
   error: null,
 
-  fetchBatches: async (orgId: string) => {
+  fetchBatches: async (userId: string) => {
     set({ isLoading: true, error: null });
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatches/${orgId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getBatches/${userId}`,
         { withCredentials: true }
       );
 

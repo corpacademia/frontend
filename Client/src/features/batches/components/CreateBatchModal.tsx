@@ -18,10 +18,10 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
 }) => {
   const { user } = useAuthStore();
   const [formData, setFormData] = useState({
-    name: '',
+    batchName: '',
     description: '',
-    start_date: '',
-    end_date: ''
+    startDate: '',
+    endDate: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,11 +37,10 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/createBatch`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createBatch`,
         {
           ...formData,
-          org_id: user?.org_id,
-          created_by: user?.id
+          createdBy: user?.id
         },
         { withCredentials: true }
       );
@@ -61,7 +60,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
   };
 
   const handleClose = () => {
-    setFormData({ name: '', description: '', start_date: '', end_date: '' });
+    setFormData({ batchName: '', description: '', startDate: '', endDate: '' });
     setError(null);
     setSuccess(null);
     onClose();
@@ -92,8 +91,8 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
             </label>
             <input
               type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              value={formData.batchName}
+              onChange={(e) => setFormData({ ...formData, batchName: e.target.value })}
               placeholder="e.g., DevOps Batch 2024"
               className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-white placeholder-gray-400 focus:border-primary-500/40 focus:outline-none"
@@ -124,8 +123,8 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
               </label>
               <input
                 type="date"
-                value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                value={formData.startDate}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                          text-white focus:border-primary-500/40 focus:outline-none"
               />
@@ -136,9 +135,9 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
               </label>
               <input
                 type="date"
-                value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                min={formData.start_date}
+                value={formData.endDate}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                min={formData.startDate}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                          text-white focus:border-primary-500/40 focus:outline-none"
               />
