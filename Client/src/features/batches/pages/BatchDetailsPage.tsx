@@ -19,7 +19,6 @@ import { EditBatchModal } from '../components/EditBatchModal';
 import { AddUsersToBatchModal } from '../components/AddUsersToBatchModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { DeleteBatchModal } from '../components/DeleteBatchModal';
-import axios from 'axios';
 import { useAuthStore } from '../../../store/authStore';
 import { useBatchStore } from '../../../store/batchStore';
 
@@ -214,12 +213,16 @@ export const BatchDetailsPage: React.FC = () => {
   const { batchId } = useParams<{ batchId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { deleteBatch } = useBatchStore();
-  
-  const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null);
-  const [users, setUsers] = useState<BatchUser[]>([]);
-  const [labs, setLabs] = useState<BatchLab[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    deleteBatch, 
+    fetchBatchDetails, 
+    removeUserFromBatch, 
+    removeLabFromBatch,
+    currentBatch,
+    batchUsers,
+    batchLabs,
+    isLoadingDetails
+  } = useBatchStore();
   
   const [isAssignLabModalOpen, setIsAssignLabModalOpen] = useState(false);
   const [isEditBatchModalOpen, setIsEditBatchModalOpen] = useState(false);
@@ -243,87 +246,50 @@ export const BatchDetailsPage: React.FC = () => {
   const [isDeletingBatch, setIsDeletingBatch] = useState(false);
 
   useEffect(() => {
-    fetchBatchDetails();
+    if (batchId) {
+      fetchBatchDetails(batchId);
+    }
   }, [batchId]);
 
-  const fetchBatchDetails = async () => {
-    try {
-      setLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Use mock data
-      if (batchId && mockBatchDetails[batchId]) {
-        setBatchDetails(mockBatchDetails[batchId]);
-        setUsers(mockBatchUsers[batchId] || []);
-        setLabs(mockBatchLabs[batchId] || []);
-      }
-      
-      /* Real API call - uncomment when backend is ready
-      const [detailsRes, usersRes, labsRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatch/${batchId}`, {
-          withCredentials: true
-        }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatchUsers/${batchId}`, {
-          withCredentials: true
-        }),
-        axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatchLabs/${batchId}`, {
-          withCredentials: true
-        })
-      ]);
-
-      if (detailsRes.data.success) setBatchDetails(detailsRes.data.data);
-      if (usersRes.data.success) setUsers(usersRes.data.data);
-      if (labsRes.data.success) setLabs(labsRes.data.data);
-      */
-    } catch (error) {
-      console.error('Error fetching batch details:', error);
-      // Fallback to mock data on error
-      if (batchId && mockBatchDetails[batchId]) {
-        setBatchDetails(mockBatchDetails[batchId]);
-        setUsers(mockBatchUsers[batchId] || []);
-        setLabs(mockBatchLabs[batchId] || []);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   const handleRemoveUser = async () => {
+    if (!batchId) return;
+    
     setIsDeletingUser(true);
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/removeUserFromBatch`,
-        { batch_id: batchId, user_id: deleteUserModal.userId },
-        { withCredentials: true }
-      );
-
-      if (response.data.success) {
-        fetchBatchDetails();
+      const result = await removeUserFromBatch(batchId, deleteUserModal.userId);
+      
+      if (result.success) {
         setDeleteUserModal({ isOpen: false, userId: '', userName: '' });
+      } else {
+        console.error('Failed to remove user:', result.message);
+        alert(result.message || 'Failed to remove user');
       }
     } catch (error) {
       console.error('Error removing user:', error);
+      alert('An error occurred while removing the user');
     } finally {
       setIsDeletingUser(false);
     }
   };
 
   const handleRemoveLab = async () => {
+    if (!batchId) return;
+    
     setIsDeletingLab(true);
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/removeLabFromBatch`,
-        { batch_id: batchId, lab_id: deleteLabModal.labId },
-        { withCredentials: true }
-      );
-
-      if (response.data.success) {
-        fetchBatchDetails();
+      const result = await removeLabFromBatch(batchId, deleteLabModal.labId);
+      
+      if (result.success) {
         setDeleteLabModal({ isOpen: false, labId: '', labName: '' });
+      } else {
+        console.error('Failed to remove lab:', result.message);
+        alert(result.message || 'Failed to remove lab');
       }
     } catch (error) {
       console.error('Error removing lab:', error);
+      alert('An error occurred while removing the lab');
     } finally {
       setIsDeletingLab(false);
     }
@@ -367,7 +333,7 @@ export const BatchDetailsPage: React.FC = () => {
     return Math.round((completed / total) * 100);
   };
 
-  if (loading) {
+  if (isLoadingDetails) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
@@ -375,7 +341,7 @@ export const BatchDetailsPage: React.FC = () => {
     );
   }
 
-  if (!batchDetails) {
+  if (!currentBatch) {
     return (
       <div className="text-center py-12">
         <AlertCircle className="h-16 w-16 mx-auto text-red-400 mb-4" />
@@ -397,10 +363,10 @@ export const BatchDetailsPage: React.FC = () => {
           </button>
           <div>
             <h1 className="text-2xl sm:text-3xl font-display font-bold">
-              <GradientText>{batchDetails.name}</GradientText>
+              <GradientText>{currentBatch.name}</GradientText>
             </h1>
-            {batchDetails.description && (
-              <p className="mt-1 text-sm text-gray-400">{batchDetails.description}</p>
+            {currentBatch.description && (
+              <p className="mt-1 text-sm text-gray-400">{currentBatch.description}</p>
             )}
           </div>
         </div>
@@ -446,7 +412,7 @@ export const BatchDetailsPage: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-400">Total Students</p>
-              <p className="text-2xl font-bold text-white">{users.length}</p>
+              <p className="text-2xl font-bold text-white">{batchUsers.length}</p>
             </div>
           </div>
         </div>
@@ -458,7 +424,7 @@ export const BatchDetailsPage: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-400">Total Labs</p>
-              <p className="text-2xl font-bold text-white">{labs.length}</p>
+              <p className="text-2xl font-bold text-white">{batchLabs.length}</p>
             </div>
           </div>
         </div>
@@ -470,7 +436,7 @@ export const BatchDetailsPage: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-400">Start Date</p>
-              <p className="text-sm font-semibold text-white">{formatDate(batchDetails.start_date)}</p>
+              <p className="text-sm font-semibold text-white">{formatDate(currentBatch.start_date)}</p>
             </div>
           </div>
         </div>
@@ -482,7 +448,7 @@ export const BatchDetailsPage: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-400">End Date</p>
-              <p className="text-sm font-semibold text-white">{formatDate(batchDetails.end_date)}</p>
+              <p className="text-sm font-semibold text-white">{formatDate(currentBatch.end_date)}</p>
             </div>
           </div>
         </div>
@@ -494,7 +460,7 @@ export const BatchDetailsPage: React.FC = () => {
           <GradientText>Assigned Labs</GradientText>
         </h3>
         
-        {labs.length === 0 ? (
+        {batchLabs.length === 0 ? (
           <div className="text-center py-8">
             <BookOpen className="h-12 w-12 mx-auto text-gray-500 mb-3" />
             <p className="text-gray-400">No labs assigned yet</p>
@@ -520,7 +486,7 @@ export const BatchDetailsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {labs.map((lab) => (
+                {batchLabs.map((lab) => (
                   <tr key={lab.id} className="border-b border-primary-500/5 hover:bg-dark-300/30">
                     <td className="py-3 px-4">
                       <div>
@@ -617,7 +583,7 @@ export const BatchDetailsPage: React.FC = () => {
           <GradientText>Students</GradientText>
         </h3>
 
-        {users.length === 0 ? (
+        {batchUsers.length === 0 ? (
           <div className="text-center py-8">
             <Users className="h-12 w-12 mx-auto text-gray-500 mb-3" />
             <p className="text-gray-400">No students added yet</p>
@@ -643,7 +609,7 @@ export const BatchDetailsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.map((student) => (
+                {batchUsers.map((student) => (
                   <tr key={student.id} className="border-b border-primary-500/5 hover:bg-dark-300/30">
                     <td className="py-3 px-4 text-sm font-medium text-white">{student.name}</td>
                     <td className="py-3 px-4 text-sm text-gray-300">{student.email}</td>
@@ -697,7 +663,7 @@ export const BatchDetailsPage: React.FC = () => {
           setIsAssignLabModalOpen(false);
           setSelectedLab(null);
         }}
-        onSuccess={fetchBatchDetails}
+        onSuccess={() => batchId && fetchBatchDetails(batchId)}
         batchId={batchId!}
         editLab={selectedLab}
       />
@@ -705,14 +671,14 @@ export const BatchDetailsPage: React.FC = () => {
       <EditBatchModal
         isOpen={isEditBatchModalOpen}
         onClose={() => setIsEditBatchModalOpen(false)}
-        onSuccess={fetchBatchDetails}
-        batchDetails={batchDetails}
+        onSuccess={() => batchId && fetchBatchDetails(batchId)}
+        batchDetails={currentBatch}
       />
 
       <AddUsersToBatchModal
         isOpen={isAddUsersModalOpen}
         onClose={() => setIsAddUsersModalOpen(false)}
-        onSuccess={fetchBatchDetails}
+        onSuccess={() => batchId && fetchBatchDetails(batchId)}
         batchId={batchId!}
       />
 
@@ -740,7 +706,7 @@ export const BatchDetailsPage: React.FC = () => {
         onClose={() => setDeleteBatchModal(false)}
         onConfirm={handleDeleteBatch}
         isDeleting={isDeletingBatch}
-        batchName={batchDetails?.name || ''}
+        batchName={currentBatch?.name || ''}
       />
     </div>
   );

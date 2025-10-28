@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, CheckCircle, Search } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
-import axios from 'axios';
 import { useAuthStore } from '../../../store/authStore';
+import { useBatchStore } from '../../../store/batchStore';
 
 interface AddUsersToBatchModalProps {
   isOpen: boolean;
@@ -40,7 +40,7 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
   batchId
 }) => {
   const { user } = useAuthStore();
-  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
+  const { fetchAvailableUsers, addUsersToBatch, availableUsers, isLoadingUsers } = useBatchStore();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,32 +48,10 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchAvailableUsers();
+    if (isOpen && user?.org_id) {
+      fetchAvailableUsers(batchId, user.org_id);
     }
-  }, [isOpen]);
-
-  const fetchAvailableUsers = async () => {
-    try {
-      // Use mock data
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setAvailableUsers(mockAvailableUsers);
-      
-      /* Real API call - uncomment when backend is ready
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getAvailableUsers/${batchId}/${user?.org_id}`,
-        { withCredentials: true }
-      );
-      
-      if (response.data.success) {
-        setAvailableUsers(response.data.data);
-      }
-      */
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      setAvailableUsers(mockAvailableUsers);
-    }
-  };
+  }, [isOpen, batchId, user?.org_id]);
 
   const filteredUsers = availableUsers.filter(u =>
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,24 +79,19 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/addUsersToBatch`,
-        {
-          batch_id: batchId,
-          user_ids: selectedUsers
-        },
-        { withCredentials: true }
-      );
+      const result = await addUsersToBatch(batchId, selectedUsers);
 
-      if (response.data.success) {
+      if (result.success) {
         setSuccess(`${selectedUsers.length} user(s) added successfully!`);
         setTimeout(() => {
           onSuccess();
           handleClose();
         }, 1500);
+      } else {
+        setError(result.message || 'Failed to add users');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to add users');
+      setError('Failed to add users');
     } finally {
       setIsSubmitting(false);
     }

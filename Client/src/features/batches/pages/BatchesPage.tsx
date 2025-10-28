@@ -6,7 +6,6 @@ import { Plus, Search, Filter, Users, Calendar, BookOpen } from 'lucide-react';
 import { CreateBatchModal } from '../components/CreateBatchModal';
 import { BatchCard } from '../components/BatchCard';
 import { DeleteBatchModal } from '../components/DeleteBatchModal';
-import axios from 'axios';
 import { useAuthStore } from '../../../store/authStore';
 import { useBatchStore } from '../../../store/batchStore';
 
@@ -90,10 +89,9 @@ const mockBatches: Batch[] = [
 export const BatchesPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { deleteBatch,fetchBatches,batches } = useBatchStore();
+  const { deleteBatch, fetchBatches, batches, isLoading } = useBatchStore();
   const [filteredBatches, setFilteredBatches] = useState<Batch[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; batchId: string; batchName: string }>({
@@ -104,8 +102,10 @@ export const BatchesPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    fetchBatches(user?.id);
-  }, []);
+    if (user?.id) {
+      fetchBatches(user.id);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     filterBatches();
@@ -142,7 +142,9 @@ export const BatchesPage: React.FC = () => {
   };
 
   const handleBatchCreated = () => {
-    fetchBatches();
+    if (user?.id) {
+      fetchBatches(user.id);
+    }
     setIsCreateModalOpen(false);
   };
 
@@ -152,8 +154,6 @@ export const BatchesPage: React.FC = () => {
       const result = await deleteBatch(deleteModal.batchId);
       
       if (result.success) {
-        // Remove from local state
-        setBatches(prev => prev.filter(b => b.id !== deleteModal.batchId));
         setDeleteModal({ isOpen: false, batchId: '', batchName: '' });
       } else {
         console.error('Failed to delete batch:', result.message);
@@ -167,7 +167,7 @@ export const BatchesPage: React.FC = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>

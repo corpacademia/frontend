@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, CheckCircle } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
-import axios from 'axios';
+import { useBatchStore } from '../../../store/batchStore';
 
 interface EditBatchModalProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
   onSuccess,
   batchDetails
 }) => {
+  const { updateBatch } = useBatchStore();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -42,29 +43,26 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!batchDetails?.id) return;
+
     setError(null);
     setSuccess(null);
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/updateBatch`,
-        {
-          batch_id: batchDetails.id,
-          ...formData
-        },
-        { withCredentials: true }
-      );
+      const result = await updateBatch(batchDetails.id, formData);
 
-      if (response.data.success) {
+      if (result.success) {
         setSuccess('Batch updated successfully!');
         setTimeout(() => {
           onSuccess();
           handleClose();
         }, 1500);
+      } else {
+        setError(result.message || 'Failed to update batch');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update batch');
+      setError('Failed to update batch');
     } finally {
       setIsSubmitting(false);
     }

@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, CheckCircle } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
-import axios from 'axios';
 import { useAuthStore } from '../../../store/authStore';
+import { useBatchStore } from '../../../store/batchStore';
 
 interface AssignLabToBatchModalProps {
   isOpen: boolean;
@@ -54,8 +54,17 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
   editLab
 }) => {
   const { user } = useAuthStore();
-  const [labs, setLabs] = useState<Lab[]>([]);
-  const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const { 
+    fetchAvailableLabs, 
+    fetchAvailableTrainers, 
+    assignLabToBatch, 
+    updateBatchLab,
+    availableLabs, 
+    availableTrainers,
+    isLoadingLabs,
+    isLoadingTrainers
+  } = useBatchStore();
+  
   const [formData, setFormData] = useState({
     lab_id: '',
     trainer_id: '',
@@ -69,8 +78,10 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      fetchLabs();
-      fetchTrainers();
+      fetchAvailableLabs();
+      if (user?.org_id) {
+        fetchAvailableTrainers(user.org_id);
+      }
       
       if (editLab) {
         setFormData({
@@ -81,89 +92,46 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
         });
       }
     }
-  }, [isOpen, editLab]);
+  }, [isOpen, editLab, user?.org_id]);
 
   useEffect(() => {
     if (formData.lab_id) {
-      const lab = labs.find(l => l.lab_id === formData.lab_id);
+      const lab = availableLabs.find(l => l.lab_id === formData.lab_id);
       setSelectedLab(lab || null);
     }
-  }, [formData.lab_id, labs]);
-
-  const fetchLabs = async () => {
-    try {
-      // Use mock data
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setLabs(mockLabs);
-      
-      /* Real API call - uncomment when backend is ready
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCatalogues`,
-        { withCredentials: true }
-      );
-      
-      if (response.data.success) {
-        setLabs(response.data.data);
-      }
-      */
-    } catch (error) {
-      console.error('Error fetching labs:', error);
-      setLabs(mockLabs);
-    }
-  };
-
-  const fetchTrainers = async () => {
-    try {
-      // Use mock data
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setTrainers(mockTrainers);
-      
-      /* Real API call - uncomment when backend is ready
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getTrainers/${user?.org_id}`,
-        { withCredentials: true }
-      );
-      
-      if (response.data.success) {
-        setTrainers(response.data.data);
-      }
-      */
-    } catch (error) {
-      console.error('Error fetching trainers:', error);
-      setTrainers(mockTrainers);
-    }
-  };
+  }, [formData.lab_id, availableLabs]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.id) return;
+
     setError(null);
     setSuccess(null);
     setIsSubmitting(true);
 
     try {
-      const endpoint = editLab
-        ? `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/updateBatchLab`
-        : `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/assignLabToBatch`;
+      const result = editLab
+        ? await updateBatchLab({
+            batch_id: batchId,
+            ...formData
+          })
+        : await assignLabToBatch({
+            batch_id: batchId,
+            ...formData,
+            assigned_by: user.id
+          });
 
-      const response = await axios.post(
-        endpoint,
-        {
-          batch_id: batchId,
-          ...formData,
-          assigned_by: user?.id
-        },
-        { withCredentials: true }
-      );
-
-      if (response.data.success) {
+      if (result.success) {
         setSuccess(editLab ? 'Lab updated successfully!' : 'Lab assigned successfully!');
         setTimeout(() => {
           onSuccess();
           handleClose();
         }, 1500);
+      } else {
+        setError(result.message || 'Failed to assign lab');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to assign lab');
+      setError('Failed to assign lab');
     } finally {
       setIsSubmitting(false);
     }
@@ -208,10 +176,10 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
               className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-white focus:border-primary-500/40 focus:outline-none"
               required
-              disabled={!!editLab}
+              disabled={!!editLab || isLoadingLabs}
             >
               <option value="">Choose a lab...</option>
-              {labs.map((lab) => (
+              {availableLabs.map((lab) => (
                 <option key={lab.lab_id} value={lab.lab_id}>
                   {lab.title}
                   {lab.is_purchased ? ` (Purchased - ${lab.quantity} licenses)` : ' (Not Purchased)'}
@@ -252,9 +220,10 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
               onChange={(e) => setFormData({ ...formData, trainer_id: e.target.value })}
               className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-white focus:border-primary-500/40 focus:outline-none"
+              disabled={isLoadingTrainers}
             >
               <option value="">No trainer assigned for this lab</option>
-              {trainers.map((trainer) => (
+              {availableTrainers.map((trainer) => (
                 <option key={trainer.id} value={trainer.id}>
                   {trainer.name} ({trainer.email})
                 </option>

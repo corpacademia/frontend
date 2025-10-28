@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { X, AlertCircle, CheckCircle } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
-import axios from 'axios';
 import { useAuthStore } from '../../../store/authStore';
+import { useBatchStore } from '../../../store/batchStore';
 
 interface CreateBatchModalProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
   onSuccess
 }) => {
   const { user } = useAuthStore();
+  const { createBatch } = useBatchStore();
   const [formData, setFormData] = useState({
     batchName: '',
     description: '',
@@ -31,29 +32,33 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?.id || !user?.org_id) return;
+
     setError(null);
     setSuccess(null);
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createBatch`,
-        {
-          ...formData,
-          createdBy: user?.id
-        },
-        { withCredentials: true }
-      );
+      const result = await createBatch({
+        name: formData.batchName,
+        description: formData.description,
+        start_date: formData.startDate,
+        end_date: formData.endDate,
+        org_id: user.org_id,
+        created_by: user.id
+      });
 
-      if (response.data.success) {
+      if (result.success) {
         setSuccess('Batch created successfully!');
         setTimeout(() => {
           onSuccess();
           handleClose();
         }, 1500);
+      } else {
+        setError(result.message || 'Failed to create batch');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create batch');
+      setError('Failed to create batch');
     } finally {
       setIsSubmitting(false);
     }
