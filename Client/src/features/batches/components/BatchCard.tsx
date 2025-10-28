@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Users, Calendar, BookOpen, TrendingUp } from 'lucide-react';
+import { Users, BookOpen, Calendar, TrendingUp, Trash2 } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 
 interface BatchCardProps {
@@ -15,9 +14,10 @@ interface BatchCardProps {
     end_date?: string;
   };
   onClick: () => void;
+  onDelete?: () => void;
 }
 
-export const BatchCard: React.FC<BatchCardProps> = ({ batch, onClick }) => {
+export const BatchCard: React.FC<BatchCardProps> = ({ batch, onClick, onDelete }) => {
   const isActive = batch.end_date ? new Date(batch.end_date) >= new Date() : true;
 
   const formatDate = (dateString?: string) => {
@@ -32,11 +32,25 @@ export const BatchCard: React.FC<BatchCardProps> = ({ batch, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="glass-panel hover:border-primary-500/40 transition-all duration-300 cursor-pointer group"
+      className="glass-panel hover:border-primary-500/40 transition-all duration-300 cursor-pointer group relative"
     >
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="absolute top-4 right-4 p-2 bg-red-500/10 hover:bg-red-500/20 rounded-lg 
+                     transition-colors opacity-0 group-hover:opacity-100 z-10"
+          title="Delete Batch"
+        >
+          <Trash2 className="h-4 w-4 text-red-400" />
+        </button>
+      )}
+
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-1 group-hover:text-primary-400 transition-colors">
+          <h3 className="text-lg font-semibold mb-1 group-hover:text-primary-400 transition-colors pr-10">
             <GradientText>{batch.name}</GradientText>
           </h3>
           {batch.description && (

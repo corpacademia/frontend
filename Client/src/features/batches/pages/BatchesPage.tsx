@@ -5,8 +5,10 @@ import { GradientText } from '../../../components/ui/GradientText';
 import { Plus, Search, Filter, Users, Calendar, BookOpen } from 'lucide-react';
 import { CreateBatchModal } from '../components/CreateBatchModal';
 import { BatchCard } from '../components/BatchCard';
+import { DeleteBatchModal } from '../components/DeleteBatchModal';
 import axios from 'axios';
 import { useAuthStore } from '../../../store/authStore';
+import { useBatchStore } from '../../../store/batchStore';
 
 interface Batch {
   id: string;
@@ -94,12 +96,19 @@ const mockBatches: Batch[] = [
 export const BatchesPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { deleteBatch } = useBatchStore();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [filteredBatches, setFilteredBatches] = useState<Batch[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; batchId: string; batchName: string }>({
+    isOpen: false,
+    batchId: '',
+    batchName: ''
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchBatches();
@@ -168,6 +177,27 @@ export const BatchesPage: React.FC = () => {
   const handleBatchCreated = () => {
     fetchBatches();
     setIsCreateModalOpen(false);
+  };
+
+  const handleDeleteBatch = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteBatch(deleteModal.batchId);
+      
+      if (result.success) {
+        // Remove from local state
+        setBatches(prev => prev.filter(b => b.id !== deleteModal.batchId));
+        setDeleteModal({ isOpen: false, batchId: '', batchName: '' });
+      } else {
+        console.error('Failed to delete batch:', result.message);
+        alert(result.message || 'Failed to delete batch');
+      }
+    } catch (error) {
+      console.error('Error deleting batch:', error);
+      alert('An error occurred while deleting the batch');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (loading) {
@@ -257,6 +287,7 @@ export const BatchesPage: React.FC = () => {
               key={batch.id}
               batch={batch}
               onClick={() => navigate(`/dashboard/batches/${batch.id}`)}
+              onDelete={() => setDeleteModal({ isOpen: true, batchId: batch.id, batchName: batch.name })}
             />
           ))}
         </div>
@@ -267,6 +298,15 @@ export const BatchesPage: React.FC = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleBatchCreated}
+      />
+
+      {/* Delete Batch Modal */}
+      <DeleteBatchModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, batchId: '', batchName: '' })}
+        onConfirm={handleDeleteBatch}
+        isDeleting={isDeleting}
+        batchName={deleteModal.batchName}
       />
     </div>
   );

@@ -18,8 +18,10 @@ import { AssignLabToBatchModal } from '../components/AssignLabToBatchModal';
 import { EditBatchModal } from '../components/EditBatchModal';
 import { AddUsersToBatchModal } from '../components/AddUsersToBatchModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
+import { DeleteBatchModal } from '../components/DeleteBatchModal';
 import axios from 'axios';
 import { useAuthStore } from '../../../store/authStore';
+import { useBatchStore } from '../../../store/batchStore';
 
 interface BatchDetails {
   id: string;
@@ -198,6 +200,7 @@ export const BatchDetailsPage: React.FC = () => {
   const { batchId } = useParams<{ batchId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { deleteBatch } = useBatchStore();
   
   const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null);
   const [users, setUsers] = useState<BatchUser[]>([]);
@@ -220,8 +223,10 @@ export const BatchDetailsPage: React.FC = () => {
     labId: '',
     labName: ''
   });
+  const [deleteBatchModal, setDeleteBatchModal] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [isDeletingLab, setIsDeletingLab] = useState(false);
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
 
   useEffect(() => {
     fetchBatchDetails();
@@ -310,6 +315,30 @@ export const BatchDetailsPage: React.FC = () => {
     }
   };
 
+  const handleDeleteBatch = async () => {
+    if (!batchId) return;
+    
+    setIsDeletingBatch(true);
+    try {
+      const result = await deleteBatch(batchId);
+      
+      if (result.success) {
+        // Navigate back to batches page after successful deletion
+        navigate('/dashboard/batches');
+      } else {
+        console.error('Failed to delete batch:', result.message);
+        alert(result.message || 'Failed to delete batch');
+        setDeleteBatchModal(false);
+      }
+    } catch (error) {
+      console.error('Error deleting batch:', error);
+      alert('An error occurred while deleting the batch');
+      setDeleteBatchModal(false);
+    } finally {
+      setIsDeletingBatch(false);
+    }
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Not set';
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -383,6 +412,13 @@ export const BatchDetailsPage: React.FC = () => {
           >
             <Plus className="h-4 w-4 mr-2 text-gray-200" />
             Assign Lab
+          </button>
+          <button
+            onClick={() => setDeleteBatchModal(true)}
+            className="btn-secondary bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete Batch
           </button>
         </div>
       </div>
@@ -676,6 +712,14 @@ export const BatchDetailsPage: React.FC = () => {
         isDeleting={isDeletingLab}
         title="Remove Lab"
         message={`Are you sure you want to remove ${deleteLabModal.labName} from this batch? This action cannot be undone.`}
+      />
+
+      <DeleteBatchModal
+        isOpen={deleteBatchModal}
+        onClose={() => setDeleteBatchModal(false)}
+        onConfirm={handleDeleteBatch}
+        isDeleting={isDeletingBatch}
+        batchName={batchDetails?.name || ''}
       />
     </div>
   );
