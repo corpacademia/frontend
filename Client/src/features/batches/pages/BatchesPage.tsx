@@ -18,8 +18,7 @@ interface Batch {
   created_by: string;
   user_count: number;
   lab_count: number;
-  trainer_id?: string;
-  trainer_name?: string;
+  trainer_count?: number;
   start_date?: string;
   end_date?: string;
 }
@@ -34,8 +33,7 @@ const mockBatches: Batch[] = [
     created_by: 'admin1',
     user_count: 25,
     lab_count: 8,
-    trainer_id: 't1',
-    trainer_name: 'John Smith',
+    trainer_count: 3,
     start_date: '2024-02-01T00:00:00Z',
     end_date: '2024-05-31T23:59:59Z'
   },
@@ -47,8 +45,7 @@ const mockBatches: Batch[] = [
     created_by: 'admin1',
     user_count: 30,
     lab_count: 6,
-    trainer_id: 't2',
-    trainer_name: 'Sarah Johnson',
+    trainer_count: 2,
     start_date: '2024-03-01T00:00:00Z',
     end_date: '2024-06-30T23:59:59Z'
   },
@@ -60,8 +57,7 @@ const mockBatches: Batch[] = [
     created_by: 'admin1',
     user_count: 20,
     lab_count: 12,
-    trainer_id: 't3',
-    trainer_name: 'Mike Davis',
+    trainer_count: 4,
     start_date: '2024-04-01T00:00:00Z',
     end_date: '2024-07-31T23:59:59Z'
   },
@@ -73,8 +69,7 @@ const mockBatches: Batch[] = [
     created_by: 'admin1',
     user_count: 18,
     lab_count: 10,
-    trainer_id: 't4',
-    trainer_name: 'Emma Wilson',
+    trainer_count: 2,
     start_date: '2024-01-15T00:00:00Z',
     end_date: '2024-03-15T23:59:59Z'
   },
@@ -86,8 +81,7 @@ const mockBatches: Batch[] = [
     created_by: 'admin1',
     user_count: 35,
     lab_count: 15,
-    trainer_id: 't5',
-    trainer_name: 'Alex Brown',
+    trainer_count: 5,
     start_date: '2024-05-01T00:00:00Z',
     end_date: '2024-08-31T23:59:59Z'
   }

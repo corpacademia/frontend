@@ -9,7 +9,7 @@ interface BatchCardProps {
     description?: string;
     user_count: number;
     lab_count: number;
-    trainer_name?: string;
+    trainer_count?: number;
     start_date?: string;
     end_date?: string;
   };
@@ -87,11 +87,13 @@ export const BatchCard: React.FC<BatchCardProps> = ({ batch, onClick, onDelete }
           </div>
         </div>
 
-        {/* Trainer */}
-        {batch.trainer_name && (
+        {/* Trainers */}
+        {(batch.trainer_count !== undefined && batch.trainer_count > 0) && (
           <div className="flex items-center space-x-2 text-sm text-gray-300">
             <TrendingUp className="h-4 w-4 text-accent-400" />
-            <span>Trainer: {batch.trainer_name}</span>
+            <span>
+              {batch.trainer_count} {batch.trainer_count === 1 ? 'Trainer' : 'Trainers'}
+            </span>
           </div>
         )}
 

@@ -10,8 +10,7 @@ interface Batch {
   created_by: string;
   user_count: number;
   lab_count: number;
-  trainer_id?: string;
-  trainer_name?: string;
+  trainer_count?: number;
   start_date?: string;
   end_date?: string;
 }
