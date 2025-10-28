@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GradientText } from '../../../components/ui/GradientText';
-import { Plus, Search, Filter, Users, Calendar, BookOpen } from 'lucide-react';
+import { Plus, Search, Filter, Users, Calendar, BookOpen, Trash2 } from 'lucide-react';
 import { CreateBatchModal } from '../components/CreateBatchModal';
 import { BatchCard } from '../components/BatchCard';
 import { DeleteBatchModal } from '../components/DeleteBatchModal';
@@ -89,16 +89,28 @@ const mockBatches: Batch[] = [
 export const BatchesPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { deleteBatch, fetchBatches, batches, isLoading } = useBatchStore();
+  const { 
+    deleteBatch, 
+    fetchBatches, 
+    batches, 
+    isLoading,
+    selectedBatchIds,
+    toggleBatchSelection,
+    selectAllBatches,
+    clearSelection,
+    deleteSelectedBatches
+  } = useBatchStore();
   const [filteredBatches, setFilteredBatches] = useState<Batch[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
+  const [selectionMode, setSelectionMode] = useState(false);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; batchId: string; batchName: string }>({
     isOpen: false,
     batchId: '',
     batchName: ''
   });
+  const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -167,6 +179,33 @@ export const BatchesPage: React.FC = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteSelectedBatches();
+      
+      if (result.success) {
+        setBulkDeleteModal(false);
+        setSelectionMode(false);
+      } else {
+        console.error('Failed to delete batches:', result.message);
+        alert(result.message || 'Failed to delete batches');
+      }
+    } catch (error) {
+      console.error('Error deleting batches:', error);
+      alert('An error occurred while deleting the batches');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleToggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    if (selectionMode) {
+      clearSelection();
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -184,17 +223,56 @@ export const BatchesPage: React.FC = () => {
             <GradientText>Batch Management</GradientText>
           </h1>
           <p className="mt-2 text-sm sm:text-base text-gray-400">
-            Create and manage student batches
+            {selectionMode 
+              ? `${selectedBatchIds.length} batch${selectedBatchIds.length !== 1 ? 'es' : ''} selected`
+              : 'Create and manage student batches'
+            }
           </p>
         </div>
 
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="btn-primary w-full sm:w-auto text-gray-200"
-        >
-          <Plus className="h-4 w-4 mr-2 text-gray-200" />
-          Create Batch
-        </button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          {selectionMode ? (
+            <>
+              <button
+                onClick={selectAllBatches}
+                className="btn-secondary flex-1 sm:flex-initial"
+                disabled={selectedBatchIds.length === batches.length}
+              >
+                Select All
+              </button>
+              <button
+                onClick={() => setBulkDeleteModal(true)}
+                className="btn-primary bg-red-500 hover:bg-red-600 flex-1 sm:flex-initial"
+                disabled={selectedBatchIds.length === 0}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete ({selectedBatchIds.length})
+              </button>
+              <button
+                onClick={handleToggleSelectionMode}
+                className="btn-secondary flex-1 sm:flex-initial"
+              >
+                Cancel
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={handleToggleSelectionMode}
+                className="btn-secondary"
+              >
+                Select
+              </button>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="btn-primary text-gray-200"
+              >
+                <Plus className="h-4 w-4 mr-2 text-gray-200" />
+                Create Batch
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -255,6 +333,9 @@ export const BatchesPage: React.FC = () => {
               batch={batch}
               onClick={() => navigate(`/dashboard/batches/${batch.id}`)}
               onDelete={() => setDeleteModal({ isOpen: true, batchId: batch.id, batchName: batch.name })}
+              isSelected={selectedBatchIds.includes(batch.id)}
+              onToggleSelect={() => toggleBatchSelection(batch.id)}
+              selectionMode={selectionMode}
             />
           ))}
         </div>
@@ -274,6 +355,15 @@ export const BatchesPage: React.FC = () => {
         onConfirm={handleDeleteBatch}
         isDeleting={isDeleting}
         batchName={deleteModal.batchName}
+      />
+
+      {/* Bulk Delete Modal */}
+      <DeleteBatchModal
+        isOpen={bulkDeleteModal}
+        onClose={() => setBulkDeleteModal(false)}
+        onConfirm={handleBulkDelete}
+        isDeleting={isDeleting}
+        batchName={`${selectedBatchIds.length} batch${selectedBatchIds.length !== 1 ? 'es' : ''}`}
       />
     </div>
   );

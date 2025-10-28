@@ -15,9 +15,19 @@ interface BatchCardProps {
   };
   onClick: () => void;
   onDelete?: () => void;
+  isSelected?: boolean;
+  onToggleSelect?: (e: React.MouseEvent) => void;
+  selectionMode?: boolean;
 }
 
-export const BatchCard: React.FC<BatchCardProps> = ({ batch, onClick, onDelete }) => {
+export const BatchCard: React.FC<BatchCardProps> = ({ 
+  batch, 
+  onClick, 
+  onDelete, 
+  isSelected = false,
+  onToggleSelect,
+  selectionMode = false
+}) => {
   const isActive = batch.end_date ? new Date(batch.end_date) >= new Date() : true;
 
   const formatDate = (dateString?: string) => {
@@ -29,12 +39,38 @@ export const BatchCard: React.FC<BatchCardProps> = ({ batch, onClick, onDelete }
     });
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    if (selectionMode && onToggleSelect) {
+      onToggleSelect(e);
+    } else if (!selectionMode) {
+      onClick();
+    }
+  };
+
   return (
     <div
-      onClick={onClick}
-      className="glass-panel hover:border-primary-500/40 transition-all duration-300 cursor-pointer group relative"
+      onClick={handleCardClick}
+      className={`glass-panel hover:border-primary-500/40 transition-all duration-300 cursor-pointer group relative ${
+        isSelected ? 'border-primary-500 bg-primary-500/10' : ''
+      }`}
     >
-      {onDelete && (
+      {selectionMode && onToggleSelect && (
+        <div className="absolute top-4 left-4 z-10" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleSelect(e as any);
+            }}
+            className="w-5 h-5 rounded border-2 border-primary-500 bg-dark-400 
+                       checked:bg-primary-500 checked:border-primary-500 cursor-pointer
+                       focus:ring-2 focus:ring-primary-500 focus:ring-offset-0"
+          />
+        </div>
+      )}
+
+      {onDelete && !selectionMode && (
         <button
           onClick={(e) => {
             e.stopPropagation();

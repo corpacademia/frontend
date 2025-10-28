@@ -77,6 +77,7 @@ interface BatchState {
   availableLabs: Lab[];
   availableTrainers: Trainer[];
   availableUsers: AvailableUser[];
+  selectedBatchIds: string[];
   isLoading: boolean;
   isLoadingDetails: boolean;
   isLoadingLabs: boolean;
@@ -128,6 +129,12 @@ interface BatchState {
   addUsersToBatch: (batchId: string, userIds: string[]) => Promise<{ success: boolean; message?: string }>;
   removeUserFromBatch: (batchId: string, userId: string) => Promise<{ success: boolean; message?: string }>;
 
+  // Selection operations
+  toggleBatchSelection: (batchId: string) => void;
+  selectAllBatches: () => void;
+  clearSelection: () => void;
+  deleteSelectedBatches: () => Promise<{ success: boolean; message?: string }>;
+
   // Utility functions
   clearCurrentBatch: () => void;
   clearError: () => void;
@@ -141,6 +148,7 @@ export const useBatchStore = create<BatchState>((set, get) => ({
   availableLabs: [],
   availableTrainers: [],
   availableUsers: [],
+  selectedBatchIds: [],
   isLoading: false,
   isLoadingDetails: false,
   isLoadingLabs: false,
@@ -456,6 +464,65 @@ export const useBatchStore = create<BatchState>((set, get) => ({
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'Failed to remove user';
+      set({ error: errorMessage });
+      return { success: false, message: errorMessage };
+    }
+  },
+
+  toggleBatchSelection: (batchId: string) => {
+    set((state) => {
+      const isSelected = state.selectedBatchIds.includes(batchId);
+      return {
+        selectedBatchIds: isSelected
+          ? state.selectedBatchIds.filter(id => id !== batchId)
+          : [...state.selectedBatchIds, batchId]
+      };
+    });
+  },
+
+  selectAllBatches: () => {
+    set((state) => ({
+      selectedBatchIds: state.batches.map(b => b.id)
+    }));
+  },
+
+  clearSelection: () => {
+    set({ selectedBatchIds: [] });
+  },
+
+  deleteSelectedBatches: async () => {
+    const { selectedBatchIds } = get();
+    if (selectedBatchIds.length === 0) {
+      return { success: false, message: 'No batches selected' };
+    }
+
+    set({ error: null });
+    try {
+      const deletePromises = selectedBatchIds.map(batchId =>
+        axios.delete(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/deleteBatch/${batchId}`,
+          { withCredentials: true }
+        )
+      );
+
+      const results = await Promise.allSettled(deletePromises);
+      const failedDeletes = results.filter(r => r.status === 'rejected');
+
+      if (failedDeletes.length > 0) {
+        const errorMessage = `Failed to delete ${failedDeletes.length} batch(es)`;
+        set({ error: errorMessage });
+        return { success: false, message: errorMessage };
+      }
+
+      // Remove deleted batches from local state
+      set((state) => ({
+        batches: state.batches.filter(b => !selectedBatchIds.includes(b.id)),
+        selectedBatchIds: []
+      }));
+
+      return { success: true };
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to delete batches';
       set({ error: errorMessage });
       return { success: false, message: errorMessage };
     }
