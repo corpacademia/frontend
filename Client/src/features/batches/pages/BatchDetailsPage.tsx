@@ -55,6 +55,8 @@ interface BatchLab {
   remaining_days: number;
   is_purchased: boolean;
   quantity?: number;
+  trainer_id?: string;
+  trainer_name?: string;
 }
 
 // Mock data
@@ -123,7 +125,9 @@ const mockBatchLabs: Record<string, BatchLab[]> = {
       total_users: 25,
       remaining_days: 0,
       is_purchased: true,
-      quantity: 30
+      quantity: 30,
+      trainer_id: 't1',
+      trainer_name: 'John Smith'
     },
     {
       id: 'bl2',
@@ -136,7 +140,9 @@ const mockBatchLabs: Record<string, BatchLab[]> = {
       total_users: 25,
       remaining_days: 45,
       is_purchased: true,
-      quantity: 30
+      quantity: 30,
+      trainer_id: 't2',
+      trainer_name: 'Sarah Johnson'
     },
     {
       id: 'bl3',
@@ -149,7 +155,9 @@ const mockBatchLabs: Record<string, BatchLab[]> = {
       total_users: 25,
       remaining_days: 75,
       is_purchased: true,
-      quantity: 25
+      quantity: 25,
+      trainer_id: 't1',
+      trainer_name: 'John Smith'
     }
   ],
   '2': [
@@ -164,7 +172,9 @@ const mockBatchLabs: Record<string, BatchLab[]> = {
       total_users: 30,
       remaining_days: 60,
       is_purchased: true,
-      quantity: 35
+      quantity: 35,
+      trainer_id: 't2',
+      trainer_name: 'Sarah Johnson'
     },
     {
       id: 'bl5',
@@ -176,7 +186,9 @@ const mockBatchLabs: Record<string, BatchLab[]> = {
       users_completed: 0,
       total_users: 30,
       remaining_days: 90,
-      is_purchased: false
+      is_purchased: false,
+      trainer_id: 't4',
+      trainer_name: 'Emma Wilson'
     }
   ],
   '3': [
@@ -191,7 +203,9 @@ const mockBatchLabs: Record<string, BatchLab[]> = {
       total_users: 20,
       remaining_days: 90,
       is_purchased: true,
-      quantity: 25
+      quantity: 25,
+      trainer_id: 't3',
+      trainer_name: 'Mike Davis'
     }
   ]
 };
@@ -497,7 +511,7 @@ export const BatchDetailsPage: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-primary-500/10">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">Lab Name</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">Lab Details</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">Status</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">Progress</th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-300">Duration</th>
@@ -511,11 +525,18 @@ export const BatchDetailsPage: React.FC = () => {
                     <td className="py-3 px-4">
                       <div>
                         <p className="text-sm font-medium text-white">{lab.lab_name}</p>
-                        {lab.is_purchased && (
-                          <span className="text-xs text-emerald-400">
-                            Purchased ({lab.quantity} licenses)
-                          </span>
-                        )}
+                        <div className="flex flex-col gap-1 mt-1">
+                          {lab.is_purchased && (
+                            <span className="text-xs text-emerald-400">
+                              Purchased ({lab.quantity} licenses)
+                            </span>
+                          )}
+                          {lab.trainer_name && (
+                            <span className="text-xs text-primary-400">
+                              Trainer: {lab.trainer_name}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="py-3 px-4">

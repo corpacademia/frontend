@@ -242,10 +242,10 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
             )}
           </div>
 
-          {/* Trainer Assignment */}
+          {/* Trainer Assignment - Lab Specific */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Assign Trainer (Optional)
+              Assign Trainer to This Lab (Optional)
             </label>
             <select
               value={formData.trainer_id}
@@ -253,13 +253,16 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
               className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-white focus:border-primary-500/40 focus:outline-none"
             >
-              <option value="">No trainer assigned</option>
+              <option value="">No trainer assigned for this lab</option>
               {trainers.map((trainer) => (
                 <option key={trainer.id} value={trainer.id}>
                   {trainer.name} ({trainer.email})
                 </option>
               ))}
             </select>
+            <p className="mt-2 text-xs text-gray-400">
+              Each lab can have its own trainer. This trainer will be responsible for this specific lab only.
+            </p>
           </div>
 
           {/* Date Range */}
