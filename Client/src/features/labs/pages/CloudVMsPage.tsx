@@ -125,8 +125,8 @@ export const CloudVMsPage: React.FC = () => {
               <option value="pending">Pending</option>
             </select>
 
-            <button className="btn-secondary">
-              <Filter className="h-4 w-4 mr-2" />
+            <button className="btn-secondary text-gray-200">
+              <Filter className="h-4 w-4 mr-2 text-gray-200" />
               Advanced Filters
             </button>
           </div>

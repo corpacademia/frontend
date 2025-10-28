@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Upload, X, FileText, AlertCircle, Loader } from 'lucide-react';
 import { jsPDF } from 'jspdf';
+import { GradientText } from '../../../../../components/ui/GradientText';
 
 interface DocumentUploaderProps {
   onDocumentsChange: (documents: File[]) => void;
@@ -426,6 +427,7 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
 
       {/* Continue button */}
       <div className="mt-8 flex justify-end">
+    <GradientText>
   <button
     type="button"
     onClick={handleContinue}
@@ -441,6 +443,7 @@ const handleRemoveDocument = (index: number, type: 'document' | 'guide') => {
       'Continue'
     )}
   </button>
+  </GradientText>
 </div>
 
     </div>

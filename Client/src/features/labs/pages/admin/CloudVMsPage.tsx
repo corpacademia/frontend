@@ -87,7 +87,6 @@ export const AdminCloudVMsPage: React.FC = () => {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
         admin_id: admin.id,
       });
-      console.log(response.data.data)
       if (response.data.success) {
         setVMs(response.data.data);
       } else {

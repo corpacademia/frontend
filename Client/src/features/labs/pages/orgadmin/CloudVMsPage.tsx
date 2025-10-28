@@ -199,44 +199,57 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
   };
 
   const fetchProxmoxVMs = async (orgId: string, userId: string) => {
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedLabs`,
-        { orgId, userId }
-      );
-      
-      if (response.data.success) {
-        const vmDetails = await Promise.all(
-          response.data.data.map(async (assignment: any) => {
-            try {
-              const vmResponse = await axios.get(
-                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${ assignment.labid}`,
-                
-              );
+  try {
+    //  Fetch both sets in parallel
+    const [orgResponse, proxmoxResponse] = await Promise.all([
+      axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedLabs`, { orgId, userId }),
+      axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxLabsOnAdminId`, { adminId: userId }),
+    ]);
 
-              if (vmResponse.data.success) {
-                return {
-                  ...vmResponse.data.data,
-                  ...assignment,
-                };
-              }
-              return null;
-            } catch (err) {
-              console.error(`Error fetching Proxmox VM details for ${assignment.labid}:`, err);
-              return null;
-            }
-          })
-        );
-        setProxmoxVMs(vmDetails.filter(Boolean));
-      }
-    } catch (err) {
-      console.error('Error fetching Proxmox VMs:', err);
-      setError('Failed to fetch Proxmox VMs');
-      setTimeout(() => {
-        setError(null);
-      }, 2000);
-    }
-  };
+    const allAssignments = [
+      ...(orgResponse.data.success ? orgResponse.data.data : []),
+      ...(proxmoxResponse.data.success ? proxmoxResponse.data.data : []),
+    ];
+
+    //  Fetch detailed lab info for all assignments
+    const vmDetails = await Promise.all(
+      allAssignments.map(async (assignment: any) => {
+        try {
+          const vmResponse = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${assignment.labid}`
+          );
+
+          if (vmResponse.data.success) {
+            return {
+              ...vmResponse.data.data,
+              ...assignment,
+            };
+          }
+          return null;
+        } catch (err) {
+          console.error(`Error fetching Proxmox VM details for ${assignment.labid}:`, err);
+          return null;
+        }
+      })
+    );
+
+    //  Filter out nulls and duplicates
+    const mergedVMs = vmDetails
+      .filter(Boolean)
+      .reduce((acc: any[], vm: any) => {
+        if (!acc.find((v) => v.labid === vm.labid)) acc.push(vm);
+        return acc;
+      }, []);
+
+    //  Set final state
+    setProxmoxVMs(mergedVMs);
+  } catch (err) {
+    console.error("Error fetching Proxmox VMs:", err);
+    setError("Failed to fetch Proxmox VMs");
+    setTimeout(() => setError(null), 2000);
+  }
+};
+
 
   const fetchAllVMs = async () => {
     try {
@@ -303,7 +316,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
         </div>
         <button className="btn-primary text-gray-200">
           <Plus className="h-4 w-4 mr-2 text-gray-200" />
-          New Assessment
+          New Lab
         </button>
       </div>
 
@@ -312,7 +325,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
           <div className="relative flex-1">
             <input
               type="text"
-              placeholder="Search assessments..."
+              placeholder="Search Labs..."
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
               className="w-full pl-10 pr-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
@@ -358,8 +371,8 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
               <option value="proxmox">Proxmox VMs</option>
             </select>
 
-            <button className="btn-secondary">
-              <Filter className="h-4 w-4 mr-2" />
+            <button className="btn-secondary text-gray-200">
+              <Filter className="h-4 w-4 mr-2 text-gray-200" />
               Advanced Filters
             </button>
           </div>
@@ -397,7 +410,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
                 <p className="text-gray-400 max-w-md">
                   {filters.search || filters.provider || filters.status || filters.type !== 'all'
                     ? "No VMs match your current filters. Try adjusting your search criteria."
-                    : "You don't have any VMs yet. Click 'New Assessment' to get started."}
+                    : "You don't have any VMs yet. Click 'New Lab' to get started."}
                 </p>
               </div>
             </div>

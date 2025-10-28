@@ -92,7 +92,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
   // Check if current user can edit content
   const canEditContent = () => {
-    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin';
+    // return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin';
+    return currentUser?.id === vm?.user_id
   };
   const checkVMStatus = async () => {
     try {
@@ -190,7 +191,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       } 
       else {
         // Start the VM
-        const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox_ms/startVM`, {
+        const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
           lab_id: vm.labid,
           vmId: vm.vmid,
           node: vm.node
