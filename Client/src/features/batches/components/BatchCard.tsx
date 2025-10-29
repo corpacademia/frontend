@@ -10,8 +10,8 @@ interface BatchCardProps {
     user_count: number;
     lab_count: number;
     trainer_count?: number;
-    start_date?: string;
-    end_date?: string;
+    startdate?: string;
+    enddate?: string;
   };
   onClick: () => void;
   onDelete?: () => void;
@@ -28,7 +28,7 @@ export const BatchCard: React.FC<BatchCardProps> = ({
   onToggleSelect,
   selectionMode = false
 }) => {
-  const isActive = batch.end_date ? new Date(batch.end_date) >= new Date() : true;
+  const isActive = batch.enddate ? new Date(batch.enddate) >= new Date() : true;
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Not set';
@@ -137,10 +137,10 @@ export const BatchCard: React.FC<BatchCardProps> = ({
         <div className="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-primary-500/10">
           <div className="flex items-center space-x-1">
             <Calendar className="h-3 w-3" />
-            <span>{formatDate(batch.start_date)}</span>
+            <span>{formatDate(batch.startdate)}</span>
           </div>
           <span>→</span>
-          <span>{formatDate(batch.end_date)}</span>
+          <span>{formatDate(batch.enddate)}</span>
         </div>
       </div>
     </div>

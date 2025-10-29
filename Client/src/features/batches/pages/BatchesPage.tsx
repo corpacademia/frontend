@@ -169,11 +169,11 @@ export const BatchesPage: React.FC = () => {
         setDeleteModal({ isOpen: false, batchId: '', batchName: '' });
       } else {
         console.error('Failed to delete batch:', result.message);
-        alert(result.message || 'Failed to delete batch');
+        // alert(result.message || 'Failed to delete batch');
       }
     } catch (error) {
       console.error('Error deleting batch:', error);
-      alert('An error occurred while deleting the batch');
+      // alert('An error occurred while deleting the batch');
     } finally {
       setIsDeleting(false);
     }
@@ -235,7 +235,7 @@ export const BatchesPage: React.FC = () => {
             <>
               <button
                 onClick={selectAllBatches}
-                className="btn-secondary flex-1 sm:flex-initial"
+                className="btn-secondary flex-1 sm:flex-initial text-gray-200"
                 disabled={selectedBatchIds.length === batches.length}
               >
                 Select All
@@ -250,7 +250,7 @@ export const BatchesPage: React.FC = () => {
               </button>
               <button
                 onClick={handleToggleSelectionMode}
-                className="btn-secondary flex-1 sm:flex-initial"
+                className="btn-secondary flex-1 sm:flex-initial text-gray-200"
               >
                 Cancel
               </button>
@@ -259,7 +259,7 @@ export const BatchesPage: React.FC = () => {
             <>
               <button
                 onClick={handleToggleSelectionMode}
-                className="btn-secondary"
+                className="btn-secondary text-gray-200"
               >
                 Select
               </button>

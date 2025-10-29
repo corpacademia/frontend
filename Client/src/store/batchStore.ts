@@ -268,7 +268,7 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     set({ error: null });
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/deleteBatch/${batchId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteBatch/${batchId}`,
         { withCredentials: true }
       );
 
@@ -500,7 +500,7 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     try {
       const deletePromises = selectedBatchIds.map(batchId =>
         axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/deleteBatch/${batchId}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteBatch/${batchId}`,
           { withCredentials: true }
         )
       );
