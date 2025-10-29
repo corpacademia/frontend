@@ -302,18 +302,15 @@ export const BatchDetailsPage: React.FC = () => {
     try {
       const result = await deleteBatch(batchId);
       
-      if (result.success) {
-        // Navigate back to batches page after successful deletion
-        navigate('/dashboard/batches');
-      } else {
-        console.error('Failed to delete batch:', result.message);
-        alert(result.message || 'Failed to delete batch');
-        setDeleteBatchModal(false);
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to delete batch');
       }
-    } catch (error) {
+      
+      // Navigate back to batches page after successful deletion
+      navigate('/dashboard/batches');
+    } catch (error: any) {
       console.error('Error deleting batch:', error);
-      alert('An error occurred while deleting the batch');
-      setDeleteBatchModal(false);
+      throw error;
     } finally {
       setIsDeletingBatch(false);
     }

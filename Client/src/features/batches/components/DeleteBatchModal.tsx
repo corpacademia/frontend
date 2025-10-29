@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { X, Loader, AlertTriangle } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Loader, AlertTriangle, CheckCircle, AlertCircle } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 
 interface DeleteBatchModalProps {
@@ -18,10 +18,35 @@ export const DeleteBatchModal: React.FC<DeleteBatchModalProps> = ({
   isDeleting,
   batchName
 }) => {
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
   if (!isOpen) return null;
 
   const handleConfirm = async () => {
-    await onConfirm();
+    setError(null);
+    setSuccess(null);
+    
+    try {
+      await onConfirm();
+      setSuccess('Batch deleted successfully!');
+      
+      // Auto-close after success
+      setTimeout(() => {
+        onClose();
+        setSuccess(null);
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete batch. Please try again.');
+    }
+  };
+
+  const handleClose = () => {
+    if (!isDeleting) {
+      setError(null);
+      setSuccess(null);
+      onClose();
+    }
   };
 
   return (
@@ -32,7 +57,7 @@ export const DeleteBatchModal: React.FC<DeleteBatchModalProps> = ({
             <GradientText>Confirm Deletion</GradientText>
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
             disabled={isDeleting}
           >
@@ -56,9 +81,27 @@ export const DeleteBatchModal: React.FC<DeleteBatchModalProps> = ({
             </div>
           </div>
 
+          {error && (
+            <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+                <span className="text-red-200 text-sm">{error}</span>
+              </div>
+            </div>
+          )}
+
+          {success && (
+            <div className="p-4 bg-emerald-900/20 border border-emerald-500/20 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                <span className="text-emerald-200 text-sm">{success}</span>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end space-x-4">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="btn-secondary"
               disabled={isDeleting}
             >

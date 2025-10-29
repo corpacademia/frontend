@@ -165,15 +165,14 @@ export const BatchesPage: React.FC = () => {
     try {
       const result = await deleteBatch(deleteModal.batchId);
       
-      if (result.success) {
-        setDeleteModal({ isOpen: false, batchId: '', batchName: '' });
-      } else {
-        console.error('Failed to delete batch:', result.message);
-        // alert(result.message || 'Failed to delete batch');
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to delete batch');
       }
-    } catch (error) {
+      
+      setDeleteModal({ isOpen: false, batchId: '', batchName: '' });
+    } catch (error: any) {
       console.error('Error deleting batch:', error);
-      // alert('An error occurred while deleting the batch');
+      throw error;
     } finally {
       setIsDeleting(false);
     }
@@ -184,16 +183,15 @@ export const BatchesPage: React.FC = () => {
     try {
       const result = await deleteSelectedBatches();
       
-      if (result.success) {
-        setBulkDeleteModal(false);
-        setSelectionMode(false);
-      } else {
-        console.error('Failed to delete batches:', result.message);
-        alert(result.message || 'Failed to delete batches');
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to delete batches');
       }
-    } catch (error) {
+      
+      setBulkDeleteModal(false);
+      setSelectionMode(false);
+    } catch (error: any) {
       console.error('Error deleting batches:', error);
-      alert('An error occurred while deleting the batches');
+      throw error;
     } finally {
       setIsDeleting(false);
     }
