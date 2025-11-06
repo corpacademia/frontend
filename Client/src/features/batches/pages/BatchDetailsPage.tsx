@@ -26,8 +26,8 @@ interface BatchDetails {
   id: string;
   name: string;
   description?: string;
-  start_date?: string;
-  end_date?: string;
+  startdate?: string;
+  enddate?: string;
   created_at: string;
   trainer_id?: string;
   trainer_name?: string;
@@ -46,8 +46,8 @@ interface BatchLab {
   id: string;
   lab_id: string;
   lab_name: string;
-  start_date: string;
-  end_date: string;
+  startdate: string;
+  enddate: string;
   users_started: number;
   users_completed: number;
   total_users: number;
@@ -58,156 +58,7 @@ interface BatchLab {
   trainer_name?: string;
 }
 
-// Mock data
-// const mockBatchDetails: Record<string, BatchDetails> = {
-//   '1': {
-//     id: '1',
-//     name: 'DevOps Batch 2024',
-//     description: 'Advanced DevOps training with AWS and Kubernetes',
-//     start_date: '2024-02-01T00:00:00Z',
-//     end_date: '2024-05-31T23:59:59Z',
-//     created_at: '2024-01-15T10:00:00Z',
-//     trainer_id: 't1',
-//     trainer_name: 'John Smith'
-//   },
-//   '2': {
-//     id: '2',
-//     name: 'Cloud Computing Fundamentals',
-//     description: 'Introduction to cloud platforms and services',
-//     start_date: '2024-03-01T00:00:00Z',
-//     end_date: '2024-06-30T23:59:59Z',
-//     created_at: '2024-01-20T10:00:00Z',
-//     trainer_id: 't2',
-//     trainer_name: 'Sarah Johnson'
-//   },
-//   '3': {
-//     id: '3',
-//     name: 'Cybersecurity Bootcamp',
-//     description: 'Comprehensive security training and penetration testing',
-//     start_date: '2024-04-01T00:00:00Z',
-//     end_date: '2024-07-31T23:59:59Z',
-//     created_at: '2024-02-01T10:00:00Z',
-//     trainer_id: 't3',
-//     trainer_name: 'Mike Davis'
-//   }
-// };
 
-// const mockBatchUsers: Record<string, BatchUser[]> = {
-//   '1': [
-//     { id: 'u1', name: 'Alice Cooper', email: 'alice@example.com', labs_started: 6, labs_completed: 4, total_labs: 8 },
-//     { id: 'u2', name: 'Bob Wilson', email: 'bob@example.com', labs_started: 5, labs_completed: 3, total_labs: 8 },
-//     { id: 'u3', name: 'Carol Martinez', email: 'carol@example.com', labs_started: 7, labs_completed: 5, total_labs: 8 },
-//     { id: 'u4', name: 'David Lee', email: 'david@example.com', labs_started: 4, labs_completed: 2, total_labs: 8 },
-//     { id: 'u5', name: 'Emma Thompson', email: 'emma@example.com', labs_started: 8, labs_completed: 6, total_labs: 8 }
-//   ],
-//   '2': [
-//     { id: 'u6', name: 'Frank Harris', email: 'frank@example.com', labs_started: 4, labs_completed: 3, total_labs: 6 },
-//     { id: 'u7', name: 'Grace Kim', email: 'grace@example.com', labs_started: 5, labs_completed: 4, total_labs: 6 },
-//     { id: 'u8', name: 'Henry Chen', email: 'henry@example.com', labs_started: 3, labs_completed: 2, total_labs: 6 }
-//   ],
-//   '3': [
-//     { id: 'u9', name: 'Ivy Rodriguez', email: 'ivy@example.com', labs_started: 8, labs_completed: 5, total_labs: 12 },
-//     { id: 'u10', name: 'Jack Brown', email: 'jack@example.com', labs_started: 10, labs_completed: 7, total_labs: 12 }
-//   ]
-// };
-
-// const mockBatchLabs: Record<string, BatchLab[]> = {
-//   '1': [
-//     {
-//       id: 'bl1',
-//       lab_id: 'l1', 
-//       lab_name: 'Docker Fundamentals',
-//       start_date: '2024-02-01T00:00:00Z',
-//       end_date: '2024-02-15T23:59:59Z',
-//       users_started: 20,
-//       users_completed: 18, 
-//       total_users: 25,
-//       remaining_days: 0,
-//       is_purchased: true,
-//       quantity: 30,
-//       trainer_id: 't1',
-//       trainer_name: 'John Smith'
-//     },
-//     {
-//       id: 'bl2',
-//       lab_id: 'l2',
-//       lab_name: 'Kubernetes Deployment',
-//       start_date: '2024-02-16T00:00:00Z',
-//       end_date: '2024-03-15T23:59:59Z',
-//       users_started: 15,
-//       users_completed: 10,
-//       total_users: 25,
-//       remaining_days: 45,
-//       is_purchased: true,
-//       quantity: 30,
-//       trainer_id: 't2',
-//       trainer_name: 'Sarah Johnson'
-//     },
-//     {
-//       id: 'bl3',
-//       lab_id: 'l3',
-//       lab_name: 'AWS EC2 & S3',
-//       start_date: '2024-03-16T00:00:00Z',
-//       end_date: '2024-04-15T23:59:59Z',
-//       users_started: 12,
-//       users_completed: 5,
-//       total_users: 25,
-//       remaining_days: 75,
-//       is_purchased: true,
-//       quantity: 25,
-//       trainer_id: 't1',
-//       trainer_name: 'John Smith'
-//     }
-//   ],
-//   '2': [
-//     {
-//       id: 'bl4',
-//       lab_id: 'l4',
-//       lab_name: 'Azure Basics',
-//       start_date: '2024-03-01T00:00:00Z',
-//       end_date: '2024-03-31T23:59:59Z',
-//       users_started: 25,
-//       users_completed: 20,
-//       total_users: 30,
-//       remaining_days: 60,
-//       is_purchased: true,
-//       quantity: 35,
-//       trainer_id: 't2',
-//       trainer_name: 'Sarah Johnson'
-//     },
-//     {
-//       id: 'bl5',
-//       lab_id: 'l5',
-//       lab_name: 'GCP Introduction',
-//       start_date: '2024-04-01T00:00:00Z',
-//       end_date: '2024-04-30T23:59:59Z',
-//       users_started: 10,
-//       users_completed: 0,
-//       total_users: 30,
-//       remaining_days: 90,
-//       is_purchased: false,
-//       trainer_id: 't4',
-//       trainer_name: 'Emma Wilson'
-//     }
-//   ],
-//   '3': [
-//     {
-//       id: 'bl6',
-//       lab_id: 'l6',
-//       lab_name: 'Network Security',
-//       start_date: '2024-04-01T00:00:00Z',
-//       end_date: '2024-04-30T23:59:59Z',
-//       users_started: 18,
-//       users_completed: 12,
-//       total_users: 20,
-//       remaining_days: 90,
-//       is_purchased: true,
-//       quantity: 25,
-//       trainer_id: 't3',
-//       trainer_name: 'Mike Davis'
-//     }
-//   ]
-// };
 
 export const BatchDetailsPage: React.FC = () => {
   const { batchId } = useParams<{ batchId: string }>();
@@ -227,7 +78,6 @@ export const BatchDetailsPage: React.FC = () => {
   const [isEditBatchModalOpen, setIsEditBatchModalOpen] = useState(false);
   const [isAddUsersModalOpen, setIsAddUsersModalOpen] = useState(false);
   const [selectedLab, setSelectedLab] = useState<BatchLab | null>(null);
-  
   // Delete modals state
   const [deleteUserModal, setDeleteUserModal] = useState<{ isOpen: boolean; userId: string; userName: string }>({
     isOpen: false,
@@ -249,6 +99,7 @@ export const BatchDetailsPage: React.FC = () => {
       fetchBatchDetails(batchId);
     }
   }, [batchId]);
+
   
 
   const handleRemoveUser = async () => {
@@ -256,8 +107,8 @@ export const BatchDetailsPage: React.FC = () => {
     
     setIsDeletingUser(true);
     try {
-      const labIds = batchLabs.map(lab=>lab.lab_id);
-      const result = await removeUserFromBatch(batchId,labIds,deleteUserModal.userId);
+      const labIds = batchLabs.map(lab=>lab.lab_id)
+      const result = await removeUserFromBatch(batchId,labIds, deleteUserModal.userId);
       
       if (result.success) {
         setDeleteUserModal({ isOpen: false, userId: '', userName: '' });
@@ -316,11 +167,14 @@ export const BatchDetailsPage: React.FC = () => {
   };
 
   const formatDate = (dateString?: string) => {
+
     if (!dateString) return 'Not set';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -462,7 +316,7 @@ export const BatchDetailsPage: React.FC = () => {
             <p className="text-gray-400">No labs assigned yet</p>
             <button
               onClick={() => setIsAssignLabModalOpen(true)}
-              className="btn-primary mt-4 text-gray-300"
+              className="btn-primary mt-4"
             >
               <Plus className="h-4 w-4 mr-2" />
               Assign First Lab
@@ -532,8 +386,8 @@ export const BatchDetailsPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-300">
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-400">{formatDate(lab.start_date)}</span>
-                        <span className="text-xs text-gray-400">to {formatDate(lab.end_date)}</span>
+                        <span className="text-xs text-gray-400">{formatDate(lab.startdate)}</span>
+                        <span className="text-xs text-gray-400">to {formatDate(lab.enddate)}</span>
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -585,7 +439,7 @@ export const BatchDetailsPage: React.FC = () => {
             <p className="text-gray-400">No students added yet</p>
             <button
               onClick={() => setIsAddUsersModalOpen(true)}
-              className="btn-primary mt-4 text-gray-300"
+              className="btn-primary mt-4"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Students
@@ -636,7 +490,7 @@ export const BatchDetailsPage: React.FC = () => {
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-end">
                         <button
-                          onClick={() => setDeleteUserModal({ isOpen: true, userId: student.user_id, userName: student.name })}
+                          onClick={() => setDeleteUserModal({ isOpen: true, userId: student.id, userName: student.name })}
                           className="p-2 hover:bg-dark-400 rounded-lg transition-colors"
                           title="Remove Student"
                         >

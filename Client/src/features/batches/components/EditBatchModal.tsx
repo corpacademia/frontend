@@ -33,8 +33,8 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
       setFormData({
         name: batchDetails.name || '',
         description: batchDetails.description || '',
-        start_date: batchDetails.startdate?.split('T')[0] || '',
-        end_date: batchDetails.enddate?.split('T')[0] || ''
+        start_date: batchDetails.start_date ? batchDetails.start_date.substring(0, 16) : '',
+        end_date: batchDetails.end_date ? batchDetails.end_date.substring(0, 16) : ''
       });
     }
   }, [isOpen, batchDetails]);
@@ -122,27 +122,27 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Start Date
+                Start Date & Time
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-white focus:border-primary-500/40 focus:outline-none [color-scheme:dark] custom-date-input"
+                         text-white focus:border-primary-500/40 focus:outline-none"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                End Date
+                End Date & Time
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                 min={formData.start_date}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-white focus:border-primary-500/40 focus:outline-none [color-scheme:dark] custom-date-input"
+                         text-white focus:border-primary-500/40 focus:outline-none"
               />
             </div>
           </div>

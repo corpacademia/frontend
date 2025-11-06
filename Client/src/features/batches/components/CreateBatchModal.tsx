@@ -44,6 +44,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
         description: formData.description,
         startDate: formData.startDate,
         endDate: formData.endDate,
+        org_id: user.org_id,
         createdBy: user.id
       });
 
@@ -123,10 +124,10 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Start Date
+                Start Date & Time
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 value={formData.startDate}
                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
@@ -135,15 +136,15 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                End Date
+                End Date & Time
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 value={formData.endDate}
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                 min={formData.startDate}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-white focus:border-primary-500/40 focus:outline-none text-gray-200"
+                         text-white focus:border-primary-500/40 focus:outline-none"
               />
             </div>
           </div>
