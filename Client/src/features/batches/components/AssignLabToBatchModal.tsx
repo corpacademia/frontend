@@ -75,10 +75,9 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
   useEffect(() => {
     if (isOpen) {
-      fetchAvailableLabs();
+      fetchAvailableLabs(user?.id);
       if (user?.org_id) {
         fetchAvailableTrainers(user.org_id);
       }
@@ -100,7 +99,6 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
       setSelectedLab(lab || null);
     }
   }, [formData.lab_id, availableLabs]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) return;
@@ -110,17 +108,24 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const result = editLab
-        ? await updateBatchLab({
-            batch_id: batchId,
-            ...formData
-          })
-        : await assignLabToBatch({
-            batch_id: batchId,
-            ...formData,
-            assigned_by: user.id
-          });
+    const selectedLabData = availableLabs.find(l => l.lab_id === formData.lab_id);
+    const labTitle = selectedLabData ? selectedLabData.title : '';
+    const type = selectedLabData ? selectedLabData?.type : '';
+    const selectedTrainerData = availableTrainers.find(t => t.id === formData.trainer_id);
+    const trainerName = selectedTrainerData?.name;
 
+    const payload = {
+      batch_id: batchId,
+      ...formData,
+      lab_name: labTitle, 
+      assigned_by: user.id,
+      trainer_name:trainerName,
+      type
+    };
+      const result = editLab
+        ? await updateBatchLab(payload)
+        : await assignLabToBatch(payload);
+      console.log(result)
       if (result.success) {
         setSuccess(editLab ? 'Lab updated successfully!' : 'Lab assigned successfully!');
         setTimeout(() => {
@@ -137,6 +142,15 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
     }
   };
 
+   const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Not set';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   const handleClose = () => {
     setFormData({ lab_id: '', trainer_id: '', start_date: '', end_date: '' });
     setSelectedLab(null);
@@ -146,7 +160,6 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
   };
 
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-dark-200 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -243,9 +256,11 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
               <input
                 type="date"
                 value={formData.start_date}
+               min={selectedLab?.start_date?.split('T')[0]}
+               max={selectedLab?.end_date?.split('T')[0]}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-white focus:border-primary-500/40 focus:outline-none"
+                         text-white focus:border-primary-500/40 focus:outline-none [color-scheme:dark] custom-date-input"
                 required
               />
             </div>
@@ -258,8 +273,9 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                 min={formData.start_date}
+                max={selectedLab?.end_date?.split('T')[0]}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-white focus:border-primary-500/40 focus:outline-none"
+                         text-white focus:border-primary-500/40 focus:outline-none [color-scheme:dark] custom-date-input"
                 required
               />
             </div>

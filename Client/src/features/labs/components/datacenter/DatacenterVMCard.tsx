@@ -181,7 +181,6 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
   const [editNotification, setEditNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [labGuideFile, setLabGuideFile] = useState<File | null>(null);
   const [userGuideFile, setUserGuideFile] = useState<File | null>(null);
-
   function formatDate(dateString:string) {
     const date = new Date(dateString);
 
@@ -198,7 +197,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
 
     return `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
   }
-
+  
   // Fetch current user details
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -514,7 +513,7 @@ function extractFileName(filePath: string) {
 
   // Check if current user can edit content
   const canEditContent = () => {
-    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin';
+    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin' || currentUser?.id === vm?.user_id ;
   };
 
   return (

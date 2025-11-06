@@ -49,36 +49,79 @@ export const ClusterList: React.FC = () => {
   }, []);
 
   const fetchClusters = async () => {
-    try {
-      setLoading(true);
-      const userProfile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      if(userProfile.data.success){
-        setCurrentUser(userProfile.data.user);
-      }
-      let response;
-      if(userProfile.data.user.role === 'superadmin' || userProfile.data.user.role === 'orgsuperadmin'){
-        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabs`,{
-        userId:userProfile.data.user.id
-      });
-      }
-      else if(userProfile.data.user.role === 'labadmin'){
-         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,{
-          orgId:userProfile.data.user.org_id,
-          admin_id:userProfile.data.user.id
-         })
-      }
-       if (response?.data.success) {
-        setClusters(response.data.data || []);
-      } else {
-        setError('Failed to fetch cluster labs');
-      }
-    } catch (error: any) {
-      console.error('Error fetching clusters:', error);
-      setError(error.response?.data?.message || 'Failed to fetch cluster labs');
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+
+    const userProfileRes = await axios.get(
+      `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`
+    );
+    if (!userProfileRes.data) {
+      setError("Failed to fetch user profile");
+      return;
     }
-  };
+
+    const user = userProfileRes.data.user;
+    setCurrentUser(user);
+
+    let clusterLabs = [];
+    let orgLabs = [];
+
+    // Run both in parallel (fastest)
+    const promises = [];
+
+    // Superadmin/orgsuperadmin/labadmin → getClusterLabs
+    if (
+      user.role === "superadmin" ||
+      user.role === "orgsuperadmin" ||
+      user.role === "labadmin"
+    ) {
+      promises.push(
+        axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabs`,
+          { userId: user.id }
+        )
+      );
+    }
+
+    // Org-specific labs → only for labadmin
+    if (user.role === "labadmin") {
+      promises.push(
+        axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,
+          {
+            orgId: user.org_id,
+            admin_id: user.id,
+          }
+        )
+      );
+    }
+
+    // Wait for both calls to complete
+    const responses = await Promise.allSettled(promises);
+
+    for (const res of responses) {
+      if (res.status === "fulfilled" && res.value.data.success) {
+        const data = res.value.data.data || [];
+        if (res.value.config.url.includes("getClusterLabs")) clusterLabs = data;
+        else if (res.value.config.url.includes("getOrglabs")) orgLabs = data;
+      }
+    }
+
+    // Merge both results safely
+    const mergedLabs = [...clusterLabs, ...orgLabs];
+
+    if (mergedLabs.length > 0) {
+      setClusters(mergedLabs);
+    } else {
+      setError("No cluster labs found");
+    }
+  } catch (error: any) {
+    console.error("Error fetching clusters:", error);
+    setError(error.response?.data?.message || "Failed to fetch cluster labs");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const filteredClusters = clusters.filter(cluster => {
     const matchesSearch = cluster.lab.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

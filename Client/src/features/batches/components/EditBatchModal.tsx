@@ -33,8 +33,8 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
       setFormData({
         name: batchDetails.name || '',
         description: batchDetails.description || '',
-        start_date: batchDetails.start_date?.split('T')[0] || '',
-        end_date: batchDetails.end_date?.split('T')[0] || ''
+        start_date: batchDetails.startdate?.split('T')[0] || '',
+        end_date: batchDetails.enddate?.split('T')[0] || ''
       });
     }
   }, [isOpen, batchDetails]);
@@ -129,7 +129,7 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-white focus:border-primary-500/40 focus:outline-none"
+                         text-white focus:border-primary-500/40 focus:outline-none [color-scheme:dark] custom-date-input"
               />
             </div>
             <div>
@@ -142,7 +142,7 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                 min={formData.start_date}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-white focus:border-primary-500/40 focus:outline-none"
+                         text-white focus:border-primary-500/40 focus:outline-none [color-scheme:dark] custom-date-input"
               />
             </div>
           </div>

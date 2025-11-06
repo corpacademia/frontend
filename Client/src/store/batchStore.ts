@@ -89,7 +89,7 @@ interface BatchState {
   fetchBatches: (orgId: string) => Promise<void>;
   fetchBatchDetails: (batchId: string) => Promise<void>;
   createBatch: (data: {
-    name: string;
+    batchName: string;
     description?: string;
     start_date?: string;
     end_date?: string;
@@ -105,7 +105,7 @@ interface BatchState {
   deleteBatch: (batchId: string) => Promise<{ success: boolean; message?: string }>;
 
   // Lab assignment operations
-  fetchAvailableLabs: () => Promise<void>;
+  fetchAvailableLabs: (userId: string) => Promise<void>;
   fetchAvailableTrainers: (orgId: string) => Promise<void>;
   assignLabToBatch: (data: {
     batch_id: string;
@@ -126,8 +126,8 @@ interface BatchState {
 
   // User management operations
   fetchAvailableUsers: (batchId: string, orgId: string) => Promise<void>;
-  addUsersToBatch: (batchId: string, userIds: string[]) => Promise<{ success: boolean; message?: string }>;
-  removeUserFromBatch: (batchId: string, userId: string) => Promise<{ success: boolean; message?: string }>;
+  addUsersToBatch: (batchId: string, userIds: string[],assignedBy: string) => Promise<{ success: boolean; message?: string }>;
+  removeUserFromBatch: (batchId: string,labId:string[], userId: string) => Promise<{ success: boolean; message?: string }>;
 
   // Selection operations
   toggleBatchSelection: (batchId: string) => void;
@@ -183,15 +183,15 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     try {
       const [detailsRes, usersRes, labsRes] = await Promise.all([
         axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatch/${batchId}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getBatch/${batchId}`,
           { withCredentials: true }
         ),
         axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatchUsers/${batchId}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getBatchUsers/${batchId}`,
           { withCredentials: true }
         ),
         axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getBatchLabs/${batchId}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getBatchLabs/${batchId}`,
           { withCredentials: true }
         )
       ]);
@@ -220,7 +220,7 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     set({ error: null });
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/createBatch`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createBatch`,
         data,
         { withCredentials: true }
       );
@@ -245,8 +245,8 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     set({ error: null });
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/updateBatch`,
-        { batch_id: batchId, ...data },
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateBatch`,
+        { batchId: batchId, ...data },
         { withCredentials: true }
       );
 
@@ -288,11 +288,11 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     }
   },
 
-  fetchAvailableLabs: async () => {
+  fetchAvailableLabs: async (userId) => {
     set({ isLoadingLabs: true, error: null });
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCatalogues`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabs/${userId}`,
         { withCredentials: true }
       );
 
@@ -336,11 +336,10 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     set({ error: null });
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/assignLabToBatch`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabToBatch`,
         data,
         { withCredentials: true }
       );
-
       if (response.data.success) {
         // Refresh batch details
         get().fetchBatchDetails(data.batch_id);
@@ -359,7 +358,7 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     set({ error: null });
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/updateBatchLab`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateBatchLab`,
         data,
         { withCredentials: true }
       );
@@ -382,8 +381,8 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     set({ error: null });
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/removeLabFromBatch`,
-        { batch_id: batchId, lab_id: labId },
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/removeLabFromBatch`,
+        { batchId,labId },
         { withCredentials: true }
       );
 
@@ -405,7 +404,7 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     set({ isLoadingUsers: true, error: null });
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/getAvailableUsers/${batchId}/${orgId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${orgId}`,
         { withCredentials: true }
       );
 
@@ -423,12 +422,12 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     }
   },
 
-  addUsersToBatch: async (batchId, userIds) => {
+  addUsersToBatch: async (batchId, userIds,assignedBy) => {
     set({ error: null });
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/addUsersToBatch`,
-        { batch_id: batchId, user_ids: userIds },
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/addUsersToBatch`,
+        { batchId: batchId, userIds: userIds,assignedBy },
         { withCredentials: true }
       );
 
@@ -446,12 +445,12 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     }
   },
 
-  removeUserFromBatch: async (batchId, userId) => {
+  removeUserFromBatch: async (batchId,labIds, userId) => {
     set({ error: null });
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/batch_ms/removeUserFromBatch`,
-        { batch_id: batchId, user_id: userId },
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/removeUserFromBatch`,
+        { batchId,labIds, userId },
         { withCredentials: true }
       );
 

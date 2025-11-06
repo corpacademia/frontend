@@ -255,7 +255,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
         <div className="flex items-center space-x-3">
           <button
             onClick={toggleDocumentsPanel}
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
           >
             {showDocuments ? (
               <>
@@ -271,7 +271,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           </button>
           <button
             onClick={toggleFullscreen}
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
           >
             {isFullscreen ? (
               <>
@@ -821,9 +821,9 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                     )}
                     <button 
                       onClick={() => window.open(`http://localhost:3002/uploads/${extractFileName(documents[currentDocIndex])}`, '_blank')}
-                      className="btn-secondary py-1 px-3 text-sm"
+                      className="btn-secondary py-1 px-3 text-sm text-gray-200"
                     >
-                      <ExternalLink className="h-4 w-4 mr-2" />
+                      <ExternalLink className="h-4 w-4 mr-2 text-gray-200" />
                       Open
                     </button>
                     <button
@@ -1089,9 +1089,9 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                     )}
                     <button 
                       onClick={() => window.open(`http://localhost:3002/uploads/${extractFileName(documents[currentDocIndex])}`, '_blank')}
-                      className="btn-secondary py-1 px-3 text-sm"
+                      className="btn-secondary py-1 px-3 text-sm text-gray-200"
                     >
-                      <ExternalLink className="h-4 w-4 mr-2" />
+                      <ExternalLink className="h-4 w-4 mr-2 text-gray-200" />
                       Open
                     </button>
                     <button

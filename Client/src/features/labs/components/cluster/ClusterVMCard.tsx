@@ -179,7 +179,6 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-
   // Edit lab modal states
   const [isEditLabModalOpen, setIsEditLabModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -206,7 +205,6 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
     name: "",
     protocol: "RDP",
   });
-
   function formatDate(dateString: string) {
     const date = new Date(dateString);
 
@@ -644,7 +642,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
 
   // Check if current user can edit content
   const canEditContent = () => {
-    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin';
+    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin' || currentUser?.id === vm?.lab?.user_id;
   };
 
   // Group credentials by VM name for better organization
@@ -945,8 +943,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold">
                 <GradientText>Edit Lab</GradientText>
-              </h2>
-              The code has been updated to include orgsuperadmin role for lab edits and catalogue conversions.<button
+              </h2><button
                 onClick={() => setIsEditLabModalOpen(false)}
                 className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
               >
@@ -1456,19 +1453,22 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
             </div>
 
             <div className="flex justify-end space-x-4 mt-6">
+              <GradientText>
               <button
                 onClick={() => setIsEditLabModalOpen(false)}
                 className="btn-secondary"
                 disabled={isEditing}
               >
                 Cancel
-              </button>
+              </button></GradientText>
+              <GradientText>
               <button
                 onClick={handleEditLabSubmit}
                 disabled={isEditing}
                 className="btn-primary"
               >
                 {isEditing ? (
+                  
                   <span className="flex items-center">
                     <Loader className="animate-spin h-4 w-4 mr-2" />
                     Saving...
@@ -1476,7 +1476,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                 ) : (
                   "Save Changes"
                 )}
-              </button>
+              </button></GradientText>
             </div>
           </div>
         </div>

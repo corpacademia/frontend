@@ -80,14 +80,11 @@ export const CloudSlicePage: React.FC = () => {
     
     try {
       let allSlices: CloudSlice[] = [];
-      if(user.role === 'superadmin' || user.role === 'orgsuperadmin') {
+      if(user.role === 'superadmin' || user.role === 'orgsuperadmin' || user.role === 'labadmin') {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlices`, {
           params: { userId: user.id }
         });
-  
-       
-        
-        if (response.data.success) {
+       if (response.data.success) {
           const userSlices = response.data.data || [];
           // Ensure each slice has an id property (use labid if id is not present)
           const processedUserSlices = userSlices.map(slice => ({
@@ -99,7 +96,7 @@ export const CloudSlicePage: React.FC = () => {
         }
       }
       // First, get the user's own cloud slices
-     
+      
       
       // If user is an labadmin, also fetch organization-assigned slices
       else if (user.role === 'labadmin') {
@@ -145,6 +142,10 @@ export const CloudSlicePage: React.FC = () => {
       // Set the combined, deduplicated list of slices
       setCloudSlices(allSlices);
       setFilteredSlices(allSlices);
+      setOrgStatus((prevOrgStatus:any)=>[
+        ...allSlices,
+        prevOrgStatus
+      ])
       
     } catch (error) {
       console.error('Error fetching cloud slices:', error);
@@ -282,9 +283,9 @@ export const CloudSlicePage: React.FC = () => {
               )}
               <button 
                 onClick={() => navigate('/dashboard/labs/create')}
-                className="btn-primary"
+                className="btn-primary text-gray-400"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 mr-2 text-gray-400" />
                 New Cloud Slice
               </button>
             </div>

@@ -101,7 +101,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkVMStatus`, {
         labId: vm.labid,
         vmId: vm.vmid,
-        type:user?.data?.user?.role === 'labadmin' ? 'org' :'sup'
+        type:user?.data?.user?.role === vm?.user_id ? 'org' :'sup'
       });
 
       if (response.data.success) {
@@ -158,7 +158,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           networkBridge:vm.networkbridge,
           firewall:vm.firewall,
           boot:vm.boot,
-          type:currentUser.role === 'labadmin' ? 'org' : 'sup'
+          type:currentUser.id !== vm?.user_id ? 'org' : 'sup'
          }) 
          if(launchVM.data.success){
            setButtonLabel('Start VM');

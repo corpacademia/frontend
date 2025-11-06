@@ -19,10 +19,10 @@ export const ClusterPage: React.FC = () => {
           </p>
         </div>
         <button 
-          className="btn-primary"
+          className="btn-primary text-gray-200"
           onClick={() => navigate('/dashboard/labs/create')}
         >
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2 text-gray-200" />
           New Cluster
         </button>
       </div>

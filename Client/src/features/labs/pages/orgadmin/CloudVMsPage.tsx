@@ -103,7 +103,6 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     };
     getUserDetails();
   }, []);
-
  useEffect(() => {
   const fetchAssessmentVMs = async (adminId: string) => {
     try {
@@ -152,23 +151,33 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
 
   const fetchDatacenterVMs = async (orgId: string, createdBy: string) => {
     try {
-      const datacenterResponse = await axios.post(
+      const [orgDatacenterResponse,DatacenterResponse] = await Promise.all([
+        await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab`,
         { orgId, created_by: createdBy }
-      );
-      if (datacenterResponse.data.success) {
+       ),
+       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabOnAdminId`, {
+        adminId: createdBy,
+      })
+      ])
+       
+      const datacenterResponse = [
+        ...(orgDatacenterResponse.data.success ? orgDatacenterResponse.data.data : []),
+        ...(DatacenterResponse.data.success ? DatacenterResponse.data.data : [])
+      ]
+      
         const vmDetails = await Promise.all(
-          datacenterResponse.data.data.map(async (assignment: any) => {
+          datacenterResponse?.map(async (assignment: any) => {
             try {
               const vmResponse = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`,
-                { labId: assignment.labid }
+                { labId: assignment?.labid||assignment?.lab_id }
               );
 
               if (vmResponse.data.success) {
                 const credsResponse = await axios.post(
                   `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
-                  { labId: assignment.labid }
+                  { labId: assignment?.labid||assignment?.lab_id }
                 );
                 return {
                   ...vmResponse.data.data,
@@ -179,13 +188,13 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
 
               return null;
             } catch (err) {
-              console.error(`Error fetching details for lab ${assignment.labid}:`, err);
+              console.error(`Error fetching details for lab ${assignment?.labid||assignment?.lab_id}:`, err);
               return null;
             }
           })
         );
         setDatacenterVMs(vmDetails.filter(Boolean));
-      }
+      
     } catch (dcErr) {
       console.error('Error fetching datacenter VMs:', dcErr);
       setError('Failed to fetch datacenter VMs');

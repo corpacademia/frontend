@@ -52,11 +52,12 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
       fetchAvailableUsers(batchId, user.org_id);
     }
   }, [isOpen, batchId, user?.org_id]);
-
   const filteredUsers = availableUsers.filter(u =>
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  u.role === 'user' &&
+  (u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+   u.email.toLowerCase().includes(searchTerm.toLowerCase()))
+);
+
 
   const handleToggleUser = (userId: string) => {
     setSelectedUsers(prev =>
@@ -79,8 +80,8 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const result = await addUsersToBatch(batchId, selectedUsers);
-
+      const result = await addUsersToBatch(batchId, selectedUsers,user?.id);
+      
       if (result.success) {
         setSuccess(`${selectedUsers.length} user(s) added successfully!`);
         setTimeout(() => {

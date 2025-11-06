@@ -40,12 +40,11 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
 
     try {
       const result = await createBatch({
-        name: formData.batchName,
+        batchName: formData.batchName,
         description: formData.description,
-        start_date: formData.startDate,
-        end_date: formData.endDate,
-        org_id: user.org_id,
-        created_by: user.id
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        createdBy: user.id
       });
 
       if (result.success) {
@@ -144,7 +143,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
                 onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                 min={formData.startDate}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                         text-white focus:border-primary-500/40 focus:outline-none"
+                         text-white focus:border-primary-500/40 focus:outline-none text-gray-200"
               />
             </div>
           </div>

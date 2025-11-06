@@ -178,9 +178,9 @@ export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ config, on
 
                     <button
                       onClick={() => handleData(instanceName, region)}
-                      className="mt-4 w-full btn-primary"
+                      className="mt-4 w-full btn-primary text-gray-200"
                     >
-                      <Check className="h-4 w-4 mr-2" />
+                      <Check className="h-4 w-4 mr-2 text-gray-200" />
                       Select Instance
                     </button>
                   </div>

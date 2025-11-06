@@ -678,7 +678,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
           type="button"
           onClick={handleNextToDocuments}
           disabled={labType === 'without-modules' && selectedServices.length === 0}
-          className="btn-primary flex items-center"
+          className="btn-primary flex items-center text-gray-400 hover:text-white transition-colors"
         >
           {labType === 'without-modules' ? 'Next: Add Documents' : 'Continue to create modules'}
         </button>

@@ -83,8 +83,6 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-
-
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
