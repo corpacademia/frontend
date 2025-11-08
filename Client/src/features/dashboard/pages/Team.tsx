@@ -4,14 +4,16 @@ import { UserFilters } from '../../../features/users/components/UserFilters';
 import { UserStats } from '../../../features/users/components/UserStats';
 import { UserList } from '../../../features/users/components/UserList';
 import { AddTeamMemberModal } from '../../../features/users/components/AddTeamMemberModal';
+import { BulkUploadModal } from '../../../features/users/components/BulkUploadModal';
 import { User } from '../../../features/users/types';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Upload } from 'lucide-react';
 import axios from 'axios';
 
 export const Team: React.FC = () => {
   const [originalUsers, setOriginalUsers] = useState([]);
   const [users, setUsers] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [mockStats, setMockStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -86,19 +88,47 @@ export const Team: React.FC = () => {
   const handleViewDetails = (user: User) => {
     // Navigation is handled by the UserList component
   };
+
+  const handleBulkUpload = async (uploadedUsers: any[]) => {
+    try {
+      const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadOrgUsers`, {
+        users: uploadedUsers,
+        organizationId: admin.org_id,
+        createdBy: admin
+      });
+
+      if (result.data.success) {
+        setIsUploadModalOpen(false);
+        // Refresh the team members list
+        await fetchTeamMembers();
+      }
+    } catch (error) {
+      console.error('Error bulk uploading users:', error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-display font-bold">
           <GradientText>Team Members</GradientText>
         </h1>
-        <button 
-          className="btn-primary text-gray-200"
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          <UserPlus className="h-4 w-4 mr-2 text-gray-200" />
-          Add Team Member
-        </button>
+        <div className="flex space-x-4">
+          <button 
+            onClick={() => setIsUploadModalOpen(true)}
+            className="btn-secondary text-gray-200"
+          >
+            <Upload className="h-4 w-4 mr-2 text-gray-200" />
+            Bulk Upload
+          </button>
+          <button 
+            className="btn-primary text-gray-200"
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            <UserPlus className="h-4 w-4 mr-2 text-gray-200" />
+            Add Team Member
+          </button>
+        </div>
       </div>
 
       <UserStats stats={mockStats} />
@@ -120,6 +150,12 @@ export const Team: React.FC = () => {
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={fetchTeamMembers}
         adminDetails={admin}
+      />
+
+      <BulkUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onUpload={handleBulkUpload}
       />
     </div>
   );

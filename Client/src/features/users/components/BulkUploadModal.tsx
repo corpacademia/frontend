@@ -41,6 +41,7 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
     setIsUploading(true);
     try {
       const users = await parseCsvFile(file);
+      console.log(users)
       await onUpload(users);
       onClose();
     } catch (error) {
@@ -117,14 +118,14 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
             <div className="space-x-4">
               <button
                 onClick={onClose}
-                className="btn-secondary"
+                className="btn-secondary text-gray-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpload}
                 disabled={!file || errors.length > 0 || isUploading}
-                className="btn-primary"
+                className="btn-primary text-gray-200"
               >
                 {isUploading ? 'Uploading...' : 'Upload Users'}
               </button>
