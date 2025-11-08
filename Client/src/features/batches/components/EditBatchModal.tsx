@@ -21,8 +21,8 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    start_date: '',
-    end_date: ''
+    startdate: '',
+    enddate: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,8 +33,8 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
       setFormData({
         name: batchDetails.name || '',
         description: batchDetails.description || '',
-        start_date: batchDetails.start_date ? batchDetails.start_date.substring(0, 16) : '',
-        end_date: batchDetails.end_date ? batchDetails.end_date.substring(0, 16) : ''
+        startdate: batchDetails.startdate ? batchDetails.startdate.substring(0, 16) : '',
+        enddate: batchDetails.enddate ? batchDetails.enddate.substring(0, 16) : ''
       });
     }
   }, [isOpen, batchDetails]);
@@ -126,8 +126,8 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
               </label>
               <input
                 type="datetime-local"
-                value={formData.start_date}
-                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                value={formData.startdate}
+                onChange={(e) => setFormData({ ...formData, startdate: e.target.value })}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                          text-white focus:border-primary-500/40 focus:outline-none"
               />
@@ -138,9 +138,9 @@ export const EditBatchModal: React.FC<EditBatchModalProps> = ({
               </label>
               <input
                 type="datetime-local"
-                value={formData.end_date}
-                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                min={formData.start_date}
+                value={formData.enddate}
+                onChange={(e) => setFormData({ ...formData, enddate: e.target.value })}
+                min={formData.startdate}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                          text-white focus:border-primary-500/40 focus:outline-none"
               />

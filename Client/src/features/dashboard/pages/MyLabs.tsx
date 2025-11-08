@@ -1052,9 +1052,9 @@ export const MyLabs: React.FC = () => {
           {labs.length === 0 && cloudSliceLabs.length === 0 && datacenterVMs.length === 0 && clusterVMs.length === 0 && proxmoxVMs.length === 0 && (
             <a 
               href="/dashboard/labs/catalogue"
-              className="btn-primary"
+              className="btn-primary text-gray-200"
             >
-              <BookOpen className="h-4 w-4 mr-2" />
+              <BookOpen className="h-4 w-4 mr-2 text-gray-200" />
               Browse Lab Catalogue
             </a>
           )}

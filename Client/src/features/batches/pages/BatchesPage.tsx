@@ -317,8 +317,8 @@ export const BatchesPage: React.FC = () => {
               : 'Create your first batch to get started'}
           </p>
           {!searchTerm && filterStatus === 'all' && (
-            <button onClick={() => setIsCreateModalOpen(true)} className="btn-primary">
-              <Plus className="h-4 w-4 mr-2" />
+            <button onClick={() => setIsCreateModalOpen(true)} className="btn-primary text-gray-200">
+              <Plus className="h-4 w-4 mr-2 text-gray-200" />
               Create Your First Batch
             </button>
           )}

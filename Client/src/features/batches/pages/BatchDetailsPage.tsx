@@ -316,7 +316,7 @@ export const BatchDetailsPage: React.FC = () => {
             <p className="text-gray-400">No labs assigned yet</p>
             <button
               onClick={() => setIsAssignLabModalOpen(true)}
-              className="btn-primary mt-4"
+              className="btn-primary mt-4 text-gray-200"
             >
               <Plus className="h-4 w-4 mr-2" />
               Assign First Lab
@@ -386,8 +386,8 @@ export const BatchDetailsPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-300">
                       <div className="flex flex-col">
-                        <span className="text-xs text-gray-400">{formatDate(lab.startdate)}</span>
-                        <span className="text-xs text-gray-400">to {formatDate(lab.enddate)}</span>
+                        <span className="text-xs text-gray-400">{formatDate(lab.start_date)}</span>
+                        <span className="text-xs text-gray-400">to {formatDate(lab.end_date)}</span>
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -439,9 +439,9 @@ export const BatchDetailsPage: React.FC = () => {
             <p className="text-gray-400">No students added yet</p>
             <button
               onClick={() => setIsAddUsersModalOpen(true)}
-              className="btn-primary mt-4"
+              className="btn-primary mt-4 text-gray-200"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="h-4 w-4 mr-2 text-gray-200" />
               Add Students
             </button>
           </div>
@@ -490,7 +490,7 @@ export const BatchDetailsPage: React.FC = () => {
                     <td className="py-3 px-4">
                       <div className="flex items-center justify-end">
                         <button
-                          onClick={() => setDeleteUserModal({ isOpen: true, userId: student.id, userName: student.name })}
+                          onClick={() => setDeleteUserModal({ isOpen: true, userId: student.user_id, userName: student.name })}
                           className="p-2 hover:bg-dark-400 rounded-lg transition-colors"
                           title="Remove Student"
                         >

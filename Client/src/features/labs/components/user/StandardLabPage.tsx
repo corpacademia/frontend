@@ -375,7 +375,7 @@ export const StandardLabPage: React.FC = () => {
               <button
                 onClick={labStarted ? handleStopLab : handleStartLab}
                 disabled={isStarting || isStopping}
-                className={`btn-primary w-full text-sm py-2 ${
+                className={`btn-primary w-full text-sm py-2 text-gray-200 ${
                   labStarted ? 'bg-red-500 hover:bg-red-600' : ''
                 }`}
               >
@@ -394,9 +394,9 @@ export const StandardLabPage: React.FC = () => {
               {labStarted && userLabStatus?.console_url && (
                 <button
                   onClick={() => window.open(userLabStatus?.console_url, '_blank')}
-                  className="btn-secondary w-full text-sm py-2"
+                  className="btn-secondary w-full text-sm py-2 text-gray-200"
                 >
-                  <ExternalLink className="h-4 w-4 mr-2" />
+                  <ExternalLink className="h-4 w-4 mr-2 text-gray-200" />
                   Open Console
                 </button>
               )}

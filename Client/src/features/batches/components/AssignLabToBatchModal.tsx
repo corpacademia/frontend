@@ -26,25 +26,6 @@ interface Trainer {
   email: string;
 }
 
-// Mock data
-const mockLabs: Lab[] = [
-  { lab_id: 'l1', title: 'Docker Fundamentals', is_purchased: true, quantity: 30 },
-  { lab_id: 'l2', title: 'Kubernetes Deployment', is_purchased: true, quantity: 30 },
-  { lab_id: 'l3', title: 'AWS EC2 & S3', is_purchased: true, quantity: 25 },
-  { lab_id: 'l4', title: 'Azure Basics', is_purchased: true, quantity: 35 },
-  { lab_id: 'l5', title: 'GCP Introduction', is_purchased: false },
-  { lab_id: 'l6', title: 'Network Security', is_purchased: true, quantity: 25 },
-  { lab_id: 'l7', title: 'Penetration Testing', is_purchased: false },
-  { lab_id: 'l8', title: 'CI/CD with Jenkins', is_purchased: true, quantity: 20 }
-];
-
-const mockTrainers: Trainer[] = [
-  { id: 't1', name: 'John Smith', email: 'john@example.com' },
-  { id: 't2', name: 'Sarah Johnson', email: 'sarah@example.com' },
-  { id: 't3', name: 'Mike Davis', email: 'mike@example.com' },
-  { id: 't4', name: 'Emma Wilson', email: 'emma@example.com' },
-  { id: 't5', name: 'Alex Brown', email: 'alex@example.com' }
-];
 
 export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
   isOpen,
@@ -64,7 +45,6 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
     isLoadingLabs,
     isLoadingTrainers
   } = useBatchStore();
-  
   const [formData, setFormData] = useState({
     lab_id: '',
     trainer_id: '',
@@ -81,13 +61,12 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
       if (user?.org_id) {
         fetchAvailableTrainers(user.org_id);
       }
-      
       if (editLab) {
         setFormData({
           lab_id: editLab.lab_id,
           trainer_id: editLab.trainer_id || '',
-          start_date: editLab.start_date?.split('T')[0] || '',
-          end_date: editLab.end_date?.split('T')[0] || ''
+          start_date: editLab.start_date?.slice(0, 16) || '',
+          end_date: editLab.end_date?.slice(0, 16) || ''
         });
       }
     }
@@ -99,57 +78,77 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
       setSelectedLab(lab || null);
     }
   }, [formData.lab_id, availableLabs]);
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user?.id) return;
 
-    setError(null);
-    setSuccess(null);
-    setIsSubmitting(true);
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!user?.id) return;
 
-    try {
+  setError(null);
+  setSuccess(null);
+  setIsSubmitting(true);
+
+  try {
     const selectedLabData = availableLabs.find(l => l.lab_id === formData.lab_id);
     const labTitle = selectedLabData ? selectedLabData.title : '';
     const type = selectedLabData ? selectedLabData?.type : '';
     const selectedTrainerData = availableTrainers.find(t => t.id === formData.trainer_id);
     const trainerName = selectedTrainerData?.name;
 
+    // ✅ Convert datetime-local (which is local) into "YYYY-MM-DD HH:mm:ss"
+    const formatForBackend = (datetime: string) => {
+      if (!datetime) return '';
+      const localDate = new Date(datetime);
+      const offset = localDate.getTimezoneOffset();
+      const corrected = new Date(localDate.getTime() - offset * 60000); // remove timezone offset
+      return corrected.toISOString().slice(0, 19).replace('T', ' ');
+    };
+
+    const formattedStartDate = formatForBackend(formData.start_date);
+    const formattedEndDate = formatForBackend(formData.end_date);
+
     const payload = {
+      Id: selectedLabData?.id,
       batch_id: batchId,
       ...formData,
-      lab_name: labTitle, 
+      start_date: formattedStartDate,
+      end_date: formattedEndDate,
+      lab_name: labTitle,
       assigned_by: user.id,
-      trainer_name:trainerName,
+      trainer_name: trainerName,
       type
     };
-      const result = editLab
-        ? await updateBatchLab(payload)
-        : await assignLabToBatch(payload);
-      console.log(result)
-      if (result.success) {
-        setSuccess(editLab ? 'Lab updated successfully!' : 'Lab assigned successfully!');
-        setTimeout(() => {
-          onSuccess();
-          handleClose();
-        }, 1500);
-      } else {
-        setError(result.message || 'Failed to assign lab');
-      }
-    } catch (err: any) {
-      setError('Failed to assign lab');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
-   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Not set';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
+    const result = editLab
+      ? await updateBatchLab(payload)
+      : await assignLabToBatch(payload);
+
+    if (result.success) {
+      setSuccess(editLab ? 'Lab updated successfully!' : 'Lab assigned successfully!');
+      setTimeout(() => {
+        onSuccess();
+        handleClose();
+      }, 1500);
+    } else {
+      setError(result.message || 'Failed to assign lab');
+    }
+  } catch (err: any) {
+    setError('Failed to assign lab');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+
+const formatDate = (dateValue: string | Date | null) => {
+  if (!dateValue) return '';
+  const date = new Date(dateValue);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
 
   const handleClose = () => {
     setFormData({ lab_id: '', trainer_id: '', start_date: '', end_date: '' });
@@ -158,7 +157,6 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
     setSuccess(null);
     onClose();
   };
-
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -254,10 +252,10 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
                 Start Date *
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 value={formData.start_date}
-               min={selectedLab?.start_date?.split('T')[0]}
-               max={selectedLab?.end_date?.split('T')[0]}
+               min={selectedLab?.start_date?.split('.')[0]}
+               max={selectedLab?.end_date?.split('.')[0]}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                          text-white focus:border-primary-500/40 focus:outline-none [color-scheme:dark] custom-date-input"
@@ -269,11 +267,11 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
                 End Date *
               </label>
               <input
-                type="date"
+                type="datetime-local"
                 value={formData.end_date}
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                 min={formData.start_date}
-                max={selectedLab?.end_date?.split('T')[0]}
+                max={selectedLab?.end_date?.split('.')[0]}
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                          text-white focus:border-primary-500/40 focus:outline-none [color-scheme:dark] custom-date-input"
                 required
