@@ -9,6 +9,29 @@ import { UserPlus, Users, Shield, Building2 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import axios from 'axios';
 
+// Assuming ApproveRejectUserModal is defined elsewhere and imported
+// For this example, we'll assume it's defined in the same directory or a nearby one.
+// If it's not, you'll need to adjust the import path.
+// import { ApproveRejectUserModal } from './ApproveRejectUserModal'; // Adjust path as needed
+
+// Placeholder for ApproveRejectUserModal if not imported
+const ApproveRejectUserModal = ({ isOpen, onClose, user, onApprove, onReject }) => {
+  if (!isOpen || !user) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
+        <h2 className="text-xl font-bold text-gray-200 mb-4">Approve/Reject User</h2>
+        <p className="text-gray-300 mb-4">User: {user.name} ({user.email})</p>
+        <div className="flex justify-end space-x-4">
+          <button onClick={() => onReject(user.id)} className="btn-secondary">Reject</button>
+          <button onClick={() => onApprove(user.id)} className="btn-primary">Approve</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 export const AllUsersPage: React.FC = () => {
   const { user } = useAuthStore();
   const [allUsers, setAllUsers] = useState([]);
@@ -16,6 +39,8 @@ export const AllUsersPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [isApproveRejectModalOpen, setIsApproveRejectModalOpen] = useState(false);
+  const [pendingUser, setPendingUser] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -144,6 +169,38 @@ export const AllUsersPage: React.FC = () => {
     }
   };
 
+  const handleUserStatusUpdate = async (userId: string, status: 'active' | 'inactive') => {
+    try {
+      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/updateUserStatus/${userId}`, {
+        status,
+        updatedBy: user
+      });
+      // Refresh the user list after status update
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.org_id}`
+      );
+      if (response.data.success) {
+        setAllUsers(response.data.data);
+        setOriginalUsers(response.data.data);
+        // Update stats if necessary
+        const users = response.data.data;
+        setStats({
+          totalUsers: users.length,
+          activeUsers: users.filter(u => u.status === 'active').length,
+          trainers: users.filter(u => u.role === 'trainer').length,
+          organizations: 1
+        });
+      }
+    } catch (error) {
+      console.error('Error updating user status:', error);
+    }
+  };
+
+  const handleApproveReject = (user: any) => {
+    setPendingUser(user);
+    setIsApproveRejectModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -225,6 +282,7 @@ export const AllUsersPage: React.FC = () => {
         users={allUsers}
         onViewDetails={handleEditUser}
         hideOrganization={true}
+        onApproveReject={handleApproveReject}
       />
 
       <AddUserModal
@@ -233,16 +291,22 @@ export const AllUsersPage: React.FC = () => {
         onAdd={handleAddUser}
       />
 
-      {selectedUser && (
-        <EditUserModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setSelectedUser(null);
-          }}
-          user={selectedUser}
-        />
-      )}
+      <EditUserModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        user={selectedUser}
+      />
+
+      <ApproveRejectUserModal
+        isOpen={isApproveRejectModalOpen}
+        onClose={() => {
+          setIsApproveRejectModalOpen(false);
+          setPendingUser(null);
+        }}
+        user={pendingUser}
+        onApprove={(userId) => handleUserStatusUpdate(userId, 'active')}
+        onReject={(userId) => handleUserStatusUpdate(userId, 'inactive')}
+      />
     </div>
   );
 };

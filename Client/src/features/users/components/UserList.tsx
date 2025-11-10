@@ -10,12 +10,14 @@ interface UserListProps {
   users: User[];
   onViewDetails: (user: User) => void;
   hideOrganization?: boolean;
+  onApproveReject?: (user: User) => void;
 }
 
 export const UserList: React.FC<UserListProps> = ({ 
   users, 
   onViewDetails,
-  hideOrganization = false 
+  hideOrganization = false,
+  onApproveReject
 }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuthStore();
@@ -218,6 +220,19 @@ export const UserList: React.FC<UserListProps> = ({
                           <ExternalLink className="h-4 w-4 text-primary-400" />
                           <span>View Details</span>
                         </button>
+                        {user.status === 'pending' && onApproveReject && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onApproveReject(user);
+                              setActiveDropdown(null);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-emerald-400 hover:bg-emerald-500/10 flex items-center space-x-2"
+                          >
+                            <Check className="h-4 w-4" />
+                            <span>Approve/Reject</span>
+                          </button>
+                        )}
                         <button
                           onClick={(e) => handleEdit(e, user)}
                           className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-primary-500/10 flex items-center space-x-2"
