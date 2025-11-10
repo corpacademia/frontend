@@ -37,11 +37,9 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
 
   const handleUpload = async () => {
     if (!file || errors.length > 0) return;
-
     setIsUploading(true);
     try {
       const users = await parseCsvFile(file);
-      console.log(users)
       await onUpload(users);
       onClose();
     } catch (error) {

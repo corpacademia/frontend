@@ -94,7 +94,10 @@ export const Team: React.FC = () => {
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadOrgUsers`, {
         users: uploadedUsers,
         organizationId: admin.org_id,
-        createdBy: admin
+        createdBy: admin?.id,
+        orgName:admin?.organization,
+        orgType:admin?.organization_type,
+        role:'user'
       });
 
       if (result.data.success) {
