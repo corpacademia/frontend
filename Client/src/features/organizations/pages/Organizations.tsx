@@ -149,60 +149,37 @@ export const Organizations: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="lg:w-64 bg-dark-200 rounded-lg p-4">
-          <nav className="space-y-2">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-3 lg:p-4">
+          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center px-4 py-3 text-left rounded-lg transition-colors ${
+                className={`flex items-center px-3 py-2 lg:px-4 lg:py-3 text-left rounded-lg transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-primary-500/20 text-primary-300 border border-primary-500/30'
                     : 'text-gray-400 hover:text-gray-300 hover:bg-dark-300'
                 }`}
               >
-                <tab.icon className="h-5 w-5 mr-3" />
-                {tab.label}
+                <tab.icon className="h-4 w-4 lg:h-5 lg:w-5 mr-2 lg:mr-3" />
+                <span className="text-sm lg:text-base">{tab.label}</span>
               </button>
             ))}
           </nav>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 bg-dark-200 rounded-lg p-6">
+        <div className="flex-1 bg-dark-200 rounded-lg p-4 lg:p-6">
           {activeTab === 'overview' && (
             <div>
               {user?.role === 'superadmin' ? (
                 <>
-                  <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Search organizations..."
-                        className="input pl-10"
-                        value={filters.search}
-                        onChange={(e) => handleFilterChange({ key: 'search', value: e.target.value })}
-                      />
-                    </div>
-                    <button
-                      onClick={() => setIsAddModalOpen(true)}
-                      className="btn-secondary flex items-center"
-                    >
-                      <Filter className="h-4 w-4 mr-2" />
-                      Filters
-                    </button>
-                  </div>
-
-                  {/* This is where the filter modal should be rendered based on state */}
-                  {/* Assuming there's a FilterModal component that takes filters and onFilterChange/onReset */}
-                  {/* For now, showing the filter inputs directly or a placeholder */}
                   <div className="mb-6">
-                    {/* Placeholder for filter UI if not using a modal */}
                     <OrganizationFilters
                       filters={filters}
                       onFilterChange={handleFilterChange}
+                      setFilters={setFilters}
                     />
                   </div>
 
