@@ -121,17 +121,17 @@ export const Organizations: React.FC = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex justify-between items-center mb-6">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 lg:mb-6 gap-3 sm:gap-0">
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-2xl sm:text-3xl font-bold">
             <GradientText>
               {user?.role === 'labadmin' ? 'My Organization' : 
                user?.role === 'orgsuperadmin' ? 'Organization Settings' : 
                'Organizations'}
             </GradientText>
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-gray-400 mt-1 text-sm sm:text-base">
             {user?.role === 'labadmin' ? 'Manage your organization settings and data' :
              user?.role === 'orgsuperadmin' ? 'Configure organization settings and preferences' :
              'Manage and monitor all organizations'}
@@ -140,23 +140,23 @@ export const Organizations: React.FC = () => {
         {user?.role === 'superadmin' && (
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-primary flex items-center text-gray-200"
+            className="btn-primary flex items-center text-gray-200 w-full sm:w-auto justify-center"
           >
             <Plus className="h-4 w-4 mr-2 text-gray-200" />
-            Add Organization
+            <span className="text-sm sm:text-base">Add Organization</span>
           </button>
         )}
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-3 lg:p-4">
-          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible">
+      <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 flex-1 overflow-hidden">
+        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-3 lg:p-4 lg:flex-shrink-0">
+          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center px-3 py-2 lg:px-4 lg:py-3 text-left rounded-lg transition-colors whitespace-nowrap ${
+                className={`flex items-center px-3 py-2 lg:px-4 lg:py-3 text-left rounded-lg transition-colors whitespace-nowrap flex-shrink-0 ${
                   activeTab === tab.id
                     ? 'bg-primary-500/20 text-primary-300 border border-primary-500/30'
                     : 'text-gray-400 hover:text-gray-300 hover:bg-dark-300'
@@ -170,55 +170,59 @@ export const Organizations: React.FC = () => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 bg-dark-200 rounded-lg p-4 lg:p-6">
-          {activeTab === 'overview' && (
-            <div>
-              {user?.role === 'superadmin' ? (
-                <>
-                  <div className="mb-6">
-                    <OrganizationFilters
-                      filters={filters}
-                      onFilterChange={handleFilterChange}
-                      setFilters={setFilters}
-                    />
+        <div className="flex-1 bg-dark-200 rounded-lg overflow-hidden flex flex-col">
+          <div className="p-4 lg:p-6 overflow-y-auto flex-1">
+            {activeTab === 'overview' && (
+              <div className="h-full flex flex-col">
+                {user?.role === 'superadmin' ? (
+                  <>
+                    <div className="mb-4 lg:mb-6">
+                      <OrganizationFilters
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        setFilters={setFilters}
+                      />
+                    </div>
+
+                    <div className="flex-1 overflow-auto">
+                      <OrganizationList
+                        organizations={filteredOrganizations}
+                        onViewDetails={handleViewDetails}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Organization Overview</h2>
+                    <p className="text-gray-400 text-sm sm:text-base">View organization details and statistics</p>
                   </div>
+                )}
+              </div>
+            )}
 
-                  <OrganizationList
-                    organizations={filteredOrganizations}
-                    onViewDetails={handleViewDetails}
-                  />
-                </>
-              ) : (
-                <div>
-                  <h2 className="text-xl font-semibold text-white mb-4">Organization Overview</h2>
-                  <p className="text-gray-400">View organization details and statistics</p>
-                </div>
-              )}
-            </div>
-          )}
+            {activeTab === 'users' && (
+              <div>
+                <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Users Management</h2>
+                <p className="text-gray-400 text-sm sm:text-base">Manage organization users and permissions</p>
+              </div>
+            )}
 
-          {activeTab === 'users' && (
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-4">Users Management</h2>
-              <p className="text-gray-400">Manage organization users and permissions</p>
-            </div>
-          )}
+            {activeTab === 'analytics' && (
+              <div>
+                <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Analytics</h2>
+                <p className="text-gray-400 text-sm sm:text-base">View organization performance and usage analytics</p>
+              </div>
+            )}
 
-          {activeTab === 'analytics' && (
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-4">Analytics</h2>
-              <p className="text-gray-400">View organization performance and usage analytics</p>
-            </div>
-          )}
-
-          {activeTab === 'transactions' && isOrgRole && (
-            <div>
-              <TransactionList 
-                orgId={user?.org_id} 
-                title="Organization Transactions"
-              />
-            </div>
-          )}
+            {activeTab === 'transactions' && isOrgRole && (
+              <div className="h-full overflow-auto">
+                <TransactionList 
+                  orgId={user?.org_id} 
+                  title="Organization Transactions"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

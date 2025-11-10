@@ -24,12 +24,12 @@ const handleInputChange = (key: string, value: string) => {
 
   return (
     <div className="glass-panel">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:gap-4">
         <div className="relative w-full">
           <input
             type="text"
             placeholder="Search organizations..."
-            className="w-full pl-10 pr-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
+            className="w-full pl-9 sm:pl-10 pr-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
                      text-gray-300 placeholder-gray-500 focus:border-primary-500/40 focus:outline-none 
                      focus:ring-2 focus:ring-primary-500/20 transition-colors text-sm lg:text-base"
             onChange={(e) => handleInputChange( 'search', e.target.value )}
@@ -37,7 +37,7 @@ const handleInputChange = (key: string, value: string) => {
           <Search className="absolute left-3 top-2.5 h-4 w-4 lg:h-5 lg:w-5 text-gray-500" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
           <select
             className="px-3 lg:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg 
                      text-gray-300 focus:border-primary-500/40 focus:outline-none 
@@ -74,9 +74,9 @@ const handleInputChange = (key: string, value: string) => {
             <option value="enterprise">Enterprise</option>
           </select>
 
-          <button className="btn-secondary flex items-center justify-center text-sm lg:text-base">
+          <button className="btn-secondary flex items-center justify-center text-sm lg:text-base py-2">
             <Calendar className="h-4 w-4 mr-2" />
-            Date Range
+            <span>Date Range</span>
           </button>
         </div>
       </div>
