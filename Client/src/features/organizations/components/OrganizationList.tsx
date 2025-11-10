@@ -81,15 +81,15 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
   };
 
   return (
-    <div className="glass-panel overflow-hidden">
+    <div className="glass-panel overflow-hidden flex flex-col h-full">
       {error && (
-        <div className="mb-4 p-3 sm:p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm sm:text-base">
+        <div className="mb-4 p-3 sm:p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm sm:text-base flex-shrink-0">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 p-3 sm:p-4 bg-emerald-900/20 border border-emerald-500/20 rounded-lg mb-4">
+        <div className="mb-4 p-3 sm:p-4 bg-emerald-900/20 border border-emerald-500/20 rounded-lg flex-shrink-0">
             <div className="flex items-center space-x-2">
               <Check className="h-5 w-5 text-emerald-400" />
               <span className="text-emerald-200">{success}</span>
@@ -97,7 +97,7 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
         </div>
       )}
 
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
+      <div className="overflow-x-auto overflow-y-auto flex-1 -mx-4 sm:mx-0 scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
         <div className="inline-block min-w-full align-middle">
           <div className="overflow-hidden">
             <table className="min-w-full w-full">
@@ -221,7 +221,7 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
         </div>
       </div>
       {selectedOrgs.length > 0 && (
-          <div className="p-4 border-t border-primary-500/10 flex justify-between items-center">
+          <div className="p-4 border-t border-primary-500/10 flex justify-between items-center flex-shrink-0 bg-dark-200">
             <span className="text-sm text-gray-400">
               {selectedOrgs.length} organization(s) selected
             </span>

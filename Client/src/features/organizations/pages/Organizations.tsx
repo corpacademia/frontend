@@ -149,9 +149,9 @@ export const Organizations: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 flex-1 overflow-hidden">
-        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-3 lg:p-4 lg:flex-shrink-0">
-          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
+      <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 flex-1 overflow-hidden min-h-0">
+        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-3 lg:p-4 lg:flex-shrink-0 lg:overflow-y-auto">
+          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -170,13 +170,13 @@ export const Organizations: React.FC = () => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 bg-dark-200 rounded-lg overflow-hidden flex flex-col">
-          <div className="p-4 lg:p-6 overflow-y-auto flex-1">
+        <div className="flex-1 bg-dark-200 rounded-lg overflow-hidden flex flex-col min-w-0">
+          <div className="p-4 lg:p-6 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
             {activeTab === 'overview' && (
-              <div className="h-full flex flex-col">
+              <div className="h-full flex flex-col min-h-0">
                 {user?.role === 'superadmin' ? (
                   <>
-                    <div className="mb-4 lg:mb-6">
+                    <div className="mb-4 lg:mb-6 flex-shrink-0">
                       <OrganizationFilters
                         filters={filters}
                         onFilterChange={handleFilterChange}
@@ -184,7 +184,7 @@ export const Organizations: React.FC = () => {
                       />
                     </div>
 
-                    <div className="flex-1 overflow-auto">
+                    <div className="flex-1 min-h-0 overflow-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
                       <OrganizationList
                         organizations={filteredOrganizations}
                         onViewDetails={handleViewDetails}
@@ -215,7 +215,7 @@ export const Organizations: React.FC = () => {
             )}
 
             {activeTab === 'transactions' && isOrgRole && (
-              <div className="h-full overflow-auto">
+              <div className="h-full overflow-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
                 <TransactionList 
                   orgId={user?.org_id} 
                   title="Organization Transactions"
