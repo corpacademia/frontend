@@ -121,17 +121,17 @@ export const Organizations: React.FC = () => {
   ];
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 lg:mb-6 gap-3 sm:gap-0">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">
+    <div className="h-full flex flex-col overflow-hidden p-4 sm:p-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 lg:mb-6 gap-3 sm:gap-0 flex-shrink-0">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
             <GradientText>
               {user?.role === 'labadmin' ? 'My Organization' : 
                user?.role === 'orgsuperadmin' ? 'Organization Settings' : 
                'Organizations'}
             </GradientText>
           </h1>
-          <p className="text-gray-400 mt-1 text-sm sm:text-base">
+          <p className="text-gray-400 mt-1 text-xs sm:text-sm lg:text-base">
             {user?.role === 'labadmin' ? 'Manage your organization settings and data' :
              user?.role === 'orgsuperadmin' ? 'Configure organization settings and preferences' :
              'Manage and monitor all organizations'}
@@ -140,7 +140,7 @@ export const Organizations: React.FC = () => {
         {user?.role === 'superadmin' && (
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="btn-primary flex items-center text-gray-200 w-full sm:w-auto justify-center"
+            className="btn-primary flex items-center text-gray-200 w-full sm:w-auto justify-center flex-shrink-0"
           >
             <Plus className="h-4 w-4 mr-2 text-gray-200" />
             <span className="text-sm sm:text-base">Add Organization</span>
@@ -149,8 +149,8 @@ export const Organizations: React.FC = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 flex-1 overflow-hidden min-h-0">
-        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-3 lg:p-4 lg:flex-shrink-0 lg:overflow-y-auto">
+      <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 flex-1 min-h-0 overflow-hidden">
+        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-3 lg:p-4 flex-shrink-0 max-h-48 lg:max-h-full overflow-y-auto">
           <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
             {tabs.map((tab) => (
               <button
@@ -170,13 +170,13 @@ export const Organizations: React.FC = () => {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 bg-dark-200 rounded-lg overflow-hidden flex flex-col min-w-0">
-          <div className="p-4 lg:p-6 overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
+        <div className="flex-1 bg-dark-200 rounded-lg overflow-hidden flex flex-col min-w-0 min-h-0">
+          <div className="p-3 sm:p-4 lg:p-6 overflow-hidden flex flex-col flex-1 min-h-0">
             {activeTab === 'overview' && (
-              <div className="h-full flex flex-col min-h-0">
+              <div className="h-full flex flex-col min-h-0 overflow-hidden">
                 {user?.role === 'superadmin' ? (
                   <>
-                    <div className="mb-4 lg:mb-6 flex-shrink-0">
+                    <div className="mb-3 sm:mb-4 lg:mb-6 flex-shrink-0">
                       <OrganizationFilters
                         filters={filters}
                         onFilterChange={handleFilterChange}
@@ -184,7 +184,7 @@ export const Organizations: React.FC = () => {
                       />
                     </div>
 
-                    <div className="flex-1 min-h-0 overflow-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
+                    <div className="flex-1 min-h-0 overflow-hidden">
                       <OrganizationList
                         organizations={filteredOrganizations}
                         onViewDetails={handleViewDetails}
