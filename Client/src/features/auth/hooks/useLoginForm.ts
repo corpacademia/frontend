@@ -79,13 +79,11 @@ export const useLoginForm = () => {
         {withCredentials:true}
       )
       if(response.data.success) {
-        console.log('working')              
-        // localStorage.setItem('auth',JSON.stringify(response.data))
-       
         login(response.data.result);
         navigate('/dashboard');
       }
       else{
+        console.log('else:',response.data)
         setErrors(prev => ({
           ...prev,
           submit: 'Invalid email or password',
@@ -95,7 +93,7 @@ export const useLoginForm = () => {
     } catch (error) {
       setErrors(prev => ({
         ...prev,
-        submit: 'Invalid email or password',
+        submit: error.response.data.error || 'Invalid email or password',
       }));
     } finally {
       setLoading(false);

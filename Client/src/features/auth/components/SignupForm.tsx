@@ -145,7 +145,7 @@ export const SignupForm: React.FC = () => {
               />
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className="block text-sm font-medium  mb-2">
                   Organization (Optional)
                 </label>
                 <select

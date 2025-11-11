@@ -536,7 +536,7 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
               Delete Selected
             </button>
           )}
-          <label className="btn-secondary cursor-pointer">
+          <label className="btn-secondary cursor-pointer text-gray-200">
             <input
               type="file"
               className="hidden"

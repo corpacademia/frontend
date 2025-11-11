@@ -110,11 +110,11 @@ export const ApproveRejectUserModal: React.FC<ApproveRejectUserModalProps> = ({
           >
             {isProcessing ? (
               <span className="flex items-center">
-                <Loader className="animate-spin h-4 w-4 mr-2" />
+                <Loader className="animate-spin h-4 w-4 mr-2 text-gray-200" />
                 Processing...
               </span>
             ) : (
-              <span className="flex items-center">
+              <span className="flex items-center text-gray-200">
                 <XCircle className="h-4 w-4 mr-2" />
                 Reject
               </span>
@@ -127,12 +127,12 @@ export const ApproveRejectUserModal: React.FC<ApproveRejectUserModalProps> = ({
           >
             {isProcessing ? (
               <span className="flex items-center">
-                <Loader className="animate-spin h-4 w-4 mr-2" />
+                <Loader className="animate-spin h-4 w-4 mr-2 text-gray-200" />
                 Processing...
               </span>
             ) : (
               <span className="flex items-center">
-                <Check className="h-4 w-4 mr-2" />
+                <Check className="h-4 w-4 mr-2 text-gray-200" />
                 Approve
               </span>
             )}

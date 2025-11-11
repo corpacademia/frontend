@@ -22,10 +22,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   user
 }) => {
   const [formData, setFormData] = useState({
-    name: user.name,
-    email: user.email,
-    status: user.status,
-    role: user.role,
+    name: user?.name || '',
+    email: user?.email || '',
+    status: user?.status || 'active',
+    role: user?.role || 'user',
     password: '',
     confirmPassword: ''
   });
@@ -47,7 +47,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       }
     };
 
-    if (isOpen) {
+    if (isOpen && user) {
       fetchOrganizations();
       setFormData({
         name: user.name,
@@ -84,7 +84,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!user || !validateForm()) return;
 
     setIsSubmitting(true);
     setError(null);
@@ -112,7 +112,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !user) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">

@@ -8,11 +8,7 @@ import { UserStats } from '../../users/components/UserStats';
 import { UserPlus, Users, Shield, Building2 } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import axios from 'axios';
-
-// Assuming ApproveRejectUserModal is defined elsewhere and imported
-// For this example, we'll assume it's defined in the same directory or a nearby one.
-// If it's not, you'll need to adjust the import path.
-// import { ApproveRejectUserModal } from './ApproveRejectUserModal'; // Adjust path as needed
+// import { ApproveRejectUserModal } from '../../users/components/ApproveRejectUserModal';
 
 // Placeholder for ApproveRejectUserModal if not imported
 const ApproveRejectUserModal = ({ isOpen, onClose, user, onApprove, onReject }) => {
@@ -23,8 +19,8 @@ const ApproveRejectUserModal = ({ isOpen, onClose, user, onApprove, onReject }) 
         <h2 className="text-xl font-bold text-gray-200 mb-4">Approve/Reject User</h2>
         <p className="text-gray-300 mb-4">User: {user.name} ({user.email})</p>
         <div className="flex justify-end space-x-4">
-          <button onClick={() => onReject(user.id)} className="btn-secondary">Reject</button>
-          <button onClick={() => onApprove(user.id)} className="btn-primary">Approve</button>
+          <button onClick={() => onReject(user.id)} className="btn-secondary"><GradientText>Reject</GradientText></button>
+          <button onClick={() => onApprove(user.id)} className="btn-primary"><GradientText>Approve</GradientText></button>
         </div>
       </div>
     </div>
@@ -169,7 +165,7 @@ export const AllUsersPage: React.FC = () => {
     }
   };
 
-  const handleUserStatusUpdate = async (userId: string, status: 'active' | 'inactive') => {
+  const handleUserStatusUpdate = async (userId: string, status: 'inactive' | 'rejected') => {
     try {
       await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/updateUserStatus/${userId}`, {
         status,
@@ -304,8 +300,8 @@ export const AllUsersPage: React.FC = () => {
           setPendingUser(null);
         }}
         user={pendingUser}
-        onApprove={(userId) => handleUserStatusUpdate(userId, 'active')}
-        onReject={(userId) => handleUserStatusUpdate(userId, 'inactive')}
+        onApprove={(userId:string) => handleUserStatusUpdate(userId, 'inactive')}
+        onReject={(userId:string) => handleUserStatusUpdate(userId, 'rejected')}
       />
     </div>
   );

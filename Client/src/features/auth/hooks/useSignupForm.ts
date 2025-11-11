@@ -73,14 +73,41 @@ export const useSignupForm = () => {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
+  const getDomain = async(email:string)=>{
+    const regex = /@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})$/;
+    const match = email.match(regex);
 
+    if (match) {
+      const domain = match[1];
+      return domain;
+    }
+  }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
     
     setLoading(true);
     try {
-
+      const orgDomain = await getDomain(formData.organization.org_email);
+      if(!orgDomain){
+      setErrors(prev => ({
+        submit:'Could not get Organization domain',
+      }));
+      return ;
+    }
+      const userDomain = await getDomain(formData.email);
+      if(!userDomain){
+        setErrors(prev => ({
+        submit:'Could not get User domain',
+      }));
+      return ;
+      }
+      if(orgDomain !== userDomain){
+        setErrors(prev => ({
+        submit:'Invalid mail',
+      }));
+      return ;
+      }
       // const response = await authApi.login(formData.email, formData.password);
       const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/signup`,{
          name:formData.name,

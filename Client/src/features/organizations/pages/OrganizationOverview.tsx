@@ -354,7 +354,7 @@ export const OrganizationOverview: React.FC = () => {
           <div className="flex space-x-3">
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="btn-secondary"
+              className="btn-secondary text-gray-200"
             >
               <Pencil className="h-4 w-4 mr-2" />
               Edit
