@@ -33,7 +33,6 @@ export const ApproveRejectUserModal: React.FC<ApproveRejectUserModalProps> = ({
     setError(null);
     try {
       await onApprove(user.id);
-      onClose();
     } catch (err: any) {
       setError(err.message || 'Failed to approve user');
     } finally {
@@ -46,7 +45,6 @@ export const ApproveRejectUserModal: React.FC<ApproveRejectUserModalProps> = ({
     setError(null);
     try {
       await onReject(user.id);
-      onClose();
     } catch (err: any) {
       setError(err.message || 'Failed to reject user');
     } finally {

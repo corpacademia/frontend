@@ -171,6 +171,10 @@ export const AllUsersPage: React.FC = () => {
         status,
         updatedBy: user
       });
+      // Close modal and reset state
+      setIsApproveRejectModalOpen(false);
+      setPendingUser(null);
+      
       // Refresh the user list after status update
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.org_id}`
@@ -189,6 +193,7 @@ export const AllUsersPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Error updating user status:', error);
+      throw error;
     }
   };
 
