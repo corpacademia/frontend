@@ -6,7 +6,6 @@ import { useAuthStore } from '../../../store/authStore';
 import axios from 'axios';
 import { Building2 } from 'lucide-react';
 import { formatDate } from '../../../utils/date';
-import { GradientText } from '../../../components/ui/GradientText';
 
 interface OrganizationListProps {
   organizations: Organization[];
@@ -199,10 +198,10 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                   e.stopPropagation();
                   handleViewDetails(org);
                 }}
-                className="mt-3 w-full btn-secondary text-xs flex items-center justify-center text-gray-200"
+                className="mt-3 w-full btn-secondary text-xs flex items-center justify-center"
               >
                 <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                <GradientText>View Details</GradientText> 
+                View Details
               </button>
             </div>
           ))}
