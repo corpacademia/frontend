@@ -1,5 +1,4 @@
 
-```typescriptreact
 import React, { useState } from 'react';
 import { Organization } from '../types';
 import { MoreVertical, Pencil, Trash2, ExternalLink, AlertCircle, Check, Loader, CheckCircle, XCircle } from 'lucide-react';
@@ -8,6 +7,7 @@ import { useAuthStore } from '../../../store/authStore';
 import axios from 'axios';
 import { Building2 } from 'lucide-react';
 import { formatDate } from '../../../utils/date';
+import { GradientText } from '../../../components/ui/GradientText';
 
 interface OrganizationListProps {
   organizations: Organization[];
@@ -35,8 +35,9 @@ const ApproveRejectModal: React.FC<ApproveRejectModalProps> = ({ isOpen, organiz
     setSuccess(null);
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/${action}Organization`, {
-        org_id: organization.id
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/approve`, {
+        orgId: organization.id,
+        action
       });
 
       if (response.data.success) {
@@ -204,6 +205,9 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to delete organizations');
+      setTimeout(() => {
+         setError(null);
+        }, 1500);
     } finally {
       setIsDeleting(false);
       setActiveDropdown(null);
@@ -345,13 +349,12 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                     <p className="text-gray-300 mt-0.5">{org.lastActive}</p>
                   </div>
                 </div>
-                
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleViewDetails(org);
                   }}
-                  className="mt-3 w-full btn-secondary text-xs flex items-center justify-center"
+                  className="mt-3 w-full btn-secondary text-xs flex items-center justify-center text-gray-200"
                 >
                   <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                   View Details
@@ -533,4 +536,3 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
     </>
   );
 };
-```
