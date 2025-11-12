@@ -357,6 +357,18 @@
                     <span class="metadata-value">{{metadata.userId}}</span>
                 </div>
                 {{/if}}
+                {{#if metadata.name}}
+                <div class="metadata-item">
+                    <span class="metadata-label">User:</span>
+                    <span class="metadata-value">{{metadata.name}}</span>
+                </div>
+                {{/if}}
+                {{#if metadata.email}}
+                <div class="metadata-item">
+                    <span class="metadata-label">User Mail:</span>
+                    <span class="metadata-value">{{metadata.email}}</span>
+                </div>
+                {{/if}}
             </div>
             {{/if}}
             

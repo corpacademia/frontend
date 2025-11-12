@@ -83,7 +83,7 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addOrganizationUser`, {
         ...formData,
         admin_id: adminDetails.id,
-        organization: orgDetails.data.data.organization,
+        organization: orgDetails.data.data.organization_name,
         org_id: orgId,
         organization_type: orgDetails.data.data.organization_type
       });

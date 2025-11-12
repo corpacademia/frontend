@@ -197,7 +197,6 @@ export const OrganizationOverview: React.FC = () => {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">

@@ -23,18 +23,18 @@ export const RecentUsers: React.FC = () => {
         <table className="w-full">
           <thead>
             <tr className="text-left text-sm text-gray-400">
-              <th className="pb-4">Name</th>
-              <th className="pb-4">Email</th>
-              <th className="pb-4">Role</th>
-              <th className="pb-4">Organization</th>
-              <th className="pb-4"></th>
+              <th className="pb-4 text-gray-400">Name</th>
+              <th className="pb-4 text-gray-400">Email</th>
+              <th className="pb-4 text-gray-400">Role</th>
+              <th className="pb-4 text-gray-400">Organization</th>
+              <th className="pb-4 text-gray-400"></th>
             </tr>
           </thead>
           <tbody className="text-sm">
             {mockUsers.map((user) => (
               <tr key={user.id} className="border-t border-primary-500/10">
-                <td className="py-4">{user.name}</td>
-                <td className="py-4">{user.email}</td>
+                <td className="py-4 text-gray-200">{user.name}</td>
+                <td className="py-4 text-gray-200">{user.email}</td>
                 <td className="py-4">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                     user.role === 'labadmin' ? 'bg-primary-500/20 text-primary-300' :
@@ -44,7 +44,7 @@ export const RecentUsers: React.FC = () => {
                     {user.role}
                   </span>
                 </td>
-                <td className="py-4">{user.organization}</td>
+                <td className="py-4 text-gray-200">{user.organization}</td>
                 <td className="py-4">
                   <button className="p-1 hover:bg-dark-300/50 rounded-lg transition-colors">
                     <MoreVertical className="h-4 w-4 text-gray-400" />

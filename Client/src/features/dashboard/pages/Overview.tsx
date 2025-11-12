@@ -93,14 +93,13 @@ const OrgSuperAdminOverview: React.FC = () => {
       trend: { value: 12, isPositive: true }
     },
   ];
-
   return (
     <>
       <div className="glass-panel mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-semibold text-white mb-1">
-              {user?.organization || 'Your Organization'}
+             <GradientText> {user?.organization || 'Your Organization'}</GradientText>
             </h2>
             <p className="text-gray-400">Organization Super Admin Dashboard</p>
           </div>
@@ -121,15 +120,15 @@ const OrgSuperAdminOverview: React.FC = () => {
             <GradientText>Quick Actions</GradientText>
           </h3>
           <div className="space-y-3">
-            <button className="w-full btn-secondary justify-start">
+            <button className="w-full btn-secondary justify-start text-gray-200">
               <Users className="h-4 w-4 mr-2" />
               Manage Lab Admins
             </button>
-            <button className="w-full btn-secondary justify-start">
+            <button className="w-full btn-secondary justify-start text-gray-200">
               <BookOpen className="h-4 w-4 mr-2" />
               View Lab Catalogue
             </button>
-            <button className="w-full btn-secondary justify-start">
+            <button className="w-full btn-secondary justify-start text-gray-200">
               <Brain className="h-4 w-4 mr-2" />
               AI Lab Builder
             </button>

@@ -33,9 +33,9 @@ export const RecentOrganizations: React.FC = () => {
           <tbody className="text-sm">
             {mockOrganizations.map((org) => (
               <tr key={org.id} className="border-t border-primary-500/10">
-                <td className="py-4">{org.name}</td>
-                <td className="py-4">{org.users}</td>
-                <td className="py-4">{org.labs}</td>
+                <td className="py-4 text-gray-200">{org.name}</td>
+                <td className="py-4 text-gray-200">{org.users}</td>
+                <td className="py-4 text-gray-200">{org.labs}</td>
                 <td className="py-4">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                     org.status === 'active'

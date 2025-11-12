@@ -150,8 +150,8 @@ export const Organizations: React.FC = () => {
 
       {/* Tab Navigation */}
       <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 flex-1 min-h-0 overflow-hidden">
-        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-3 lg:p-4 flex-shrink-0 max-h-48 lg:max-h-full overflow-y-auto">
-          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
+        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-2 sm:p-3 lg:p-4 flex-shrink-0">
+          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300 pb-2 lg:pb-0 -mx-2 px-2 lg:mx-0 lg:px-0">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -162,7 +162,7 @@ export const Organizations: React.FC = () => {
                     : 'text-gray-400 hover:text-gray-300 hover:bg-dark-300'
                 }`}
               >
-                <tab.icon className="h-4 w-4 lg:h-5 lg:w-5 mr-2 lg:mr-3" />
+                <tab.icon className="h-4 w-4 lg:h-5 lg:w-5 mr-2 lg:mr-3 flex-shrink-0" />
                 <span className="text-sm lg:text-base">{tab.label}</span>
               </button>
             ))}
@@ -171,9 +171,9 @@ export const Organizations: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1 bg-dark-200 rounded-lg overflow-hidden flex flex-col min-w-0 min-h-0">
-          <div className="p-3 sm:p-4 lg:p-6 overflow-hidden flex flex-col flex-1 min-h-0">
+          <div className="p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden flex flex-col flex-1 min-h-0 scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
             {activeTab === 'overview' && (
-              <div className="h-full flex flex-col min-h-0 overflow-hidden">
+              <div className="h-full flex flex-col min-h-0">
                 {user?.role === 'superadmin' ? (
                   <>
                     <div className="mb-3 sm:mb-4 lg:mb-6 flex-shrink-0">
@@ -192,7 +192,7 @@ export const Organizations: React.FC = () => {
                     </div>
                   </>
                 ) : (
-                  <div>
+                  <div className="overflow-y-auto">
                     <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Organization Overview</h2>
                     <p className="text-gray-400 text-sm sm:text-base">View organization details and statistics</p>
                   </div>
@@ -201,21 +201,21 @@ export const Organizations: React.FC = () => {
             )}
 
             {activeTab === 'users' && (
-              <div>
+              <div className="overflow-y-auto">
                 <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Users Management</h2>
                 <p className="text-gray-400 text-sm sm:text-base">Manage organization users and permissions</p>
               </div>
             )}
 
             {activeTab === 'analytics' && (
-              <div>
+              <div className="overflow-y-auto">
                 <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Analytics</h2>
                 <p className="text-gray-400 text-sm sm:text-base">View organization performance and usage analytics</p>
               </div>
             )}
 
             {activeTab === 'transactions' && isOrgRole && (
-              <div className="h-full overflow-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
+              <div className="h-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
                 <TransactionList 
                   orgId={user?.org_id} 
                   title="Organization Transactions"

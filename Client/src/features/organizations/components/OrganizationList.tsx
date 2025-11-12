@@ -6,6 +6,7 @@ import { useAuthStore } from '../../../store/authStore';
 import axios from 'axios';
 import { Building2 } from 'lucide-react';
 import { formatDate } from '../../../utils/date';
+import { GradientText } from '../../../components/ui/GradientText';
 
 interface OrganizationListProps {
   organizations: Organization[];
@@ -97,14 +98,126 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
         </div>
       )}
 
-      <div className="flex-1 min-h-0 overflow-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
+      {/* Mobile Card View */}
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300 block lg:hidden">
+        <div className="p-3 sm:p-4 space-y-3">
+          {organizations.map((org) => (
+            <div 
+              key={org.id}
+              className="bg-dark-400/50 rounded-lg p-3 sm:p-4 border border-primary-500/20 hover:border-primary-500/40 transition-colors cursor-pointer"
+              onClick={() => handleViewDetails(org)}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
+                  {!isOrgSuperAdmin && (
+                    <input
+                      type="checkbox"
+                      checked={selectedOrgs.includes(org.id)}
+                      onChange={(e) => handleSelectOrg(org.id, e)}
+                      onClick={(e) => e.stopPropagation()}
+                      className="rounded border-gray-400 text-primary-500 focus:ring-primary-500 flex-shrink-0"
+                    />
+                  )}
+                  <Building2 className="h-5 w-5 text-primary-400 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-gray-200 font-medium text-sm truncate">{org.organization_name}</p>
+                    <p className="text-xs text-gray-400 truncate">{org.org_email}</p>
+                  </div>
+                </div>
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <button 
+                    onClick={(e) => toggleDropdown(org.id, e)}
+                    className="p-1.5 hover:bg-primary-500/10 rounded-lg transition-colors"
+                  >
+                    <MoreVertical className="h-4 w-4 text-gray-400" />
+                  </button>
+                  {activeDropdown === org.id && (
+                    <div className="absolute right-0 mt-2 w-40 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50">
+                      <button
+                        onClick={(e) => handleEdit(org, e)}
+                        className="w-full px-3 py-2 text-left text-xs text-gray-300 hover:bg-primary-500/10 flex items-center space-x-2"
+                      >
+                        <Pencil className="h-4 w-4 text-primary-400" />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete([org.id]);
+                        }}
+                        className="w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-red-500/10 flex items-center space-x-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <span className="text-gray-500">Type</span>
+                  <p className="text-gray-300 capitalize mt-0.5">{org.org_type}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Status</span>
+                  <div className="mt-0.5">
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded-full inline-block ${
+                      org.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
+                      org.status === 'pending' ? 'bg-amber-500/20 text-amber-300' :
+                      'bg-red-500/20 text-red-300'
+                    }`}>
+                      {org.status}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-500">Users</span>
+                  <p className="text-gray-300 mt-0.5">{org.usersCount}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Labs</span>
+                  <p className="text-gray-300 mt-0.5">{org.labsCount}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Subscription</span>
+                  <div className="mt-0.5">
+                    <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-primary-500/20 text-primary-300 inline-block">
+                      {org.subscriptionTier}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-gray-500">Last Active</span>
+                  <p className="text-gray-300 mt-0.5">{org.lastActive}</p>
+                </div>
+              </div>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewDetails(org);
+                }}
+                className="mt-3 w-full btn-secondary text-xs flex items-center justify-center text-gray-200"
+              >
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                <GradientText>View Details</GradientText> 
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="flex-1 min-h-0 overflow-x-auto overflow-y-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300 hidden lg:block">
         <div className="min-w-full inline-block align-middle">
           <div className="overflow-hidden">
-            <table className="w-full min-w-[800px]">
+            <table className="w-full">
               <thead className="bg-dark-400/50 sticky top-0 z-10">
-                <tr className="text-left text-xs text-gray-400 border-b border-primary-500/20">
+                <tr className="text-left text-sm text-gray-400 border-b border-primary-500/20">
                   {!isOrgSuperAdmin && (
-                    <th className="py-3 px-3 sm:px-4 w-12">
+                    <th className="py-3 px-3 w-12">
                       <input
                         type="checkbox"
                         checked={organizations.length > 0 && selectedOrgs.length === organizations.length}
@@ -113,17 +226,17 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                       />
                     </th>
                   )}
-                  <th className="py-3 px-3 sm:px-4 whitespace-nowrap font-medium">Organization</th>
-                  <th className="py-3 px-3 sm:px-4 whitespace-nowrap font-medium">Type</th>
-                  <th className="py-3 px-3 sm:px-4 whitespace-nowrap font-medium">Users</th>
-                  <th className="py-3 px-3 sm:px-4 whitespace-nowrap font-medium">Labs</th>
-                  <th className="py-3 px-3 sm:px-4 whitespace-nowrap font-medium">Status</th>
-                  <th className="py-3 px-3 sm:px-4 whitespace-nowrap font-medium">Subscription</th>
-                  <th className="py-3 px-3 sm:px-4 whitespace-nowrap font-medium">Last Active</th>
-                  <th className="py-3 px-3 sm:px-4 w-20"></th>
+                  <th className="py-3 px-3 whitespace-nowrap font-medium">Organization</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-medium">Type</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-medium">Users</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-medium">Labs</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-medium">Status</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-medium">Subscription</th>
+                  <th className="py-3 px-3 whitespace-nowrap font-medium">Last Active</th>
+                  <th className="py-3 px-3 w-20"></th>
                 </tr>
               </thead>
-              <tbody className="text-xs divide-y divide-primary-500/5">
+              <tbody className="text-sm divide-y divide-primary-500/5">
                 {organizations.map((org) => (
                   <tr 
                     key={org.id} 
@@ -131,7 +244,7 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                     onClick={() => handleViewDetails(org)}
                   >
                     {!isOrgSuperAdmin && (
-                      <td className="py-3 px-3 sm:px-4" onClick={(e) => e.stopPropagation()}>
+                      <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedOrgs.includes(org.id)}
@@ -140,22 +253,22 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                         />
                       </td>
                     )}
-                    <td className="py-3 px-3 sm:px-4">
-                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-                        <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary-400 flex-shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-gray-200 font-medium truncate max-w-[150px] sm:max-w-none">{org.organization_name}</p>
-                          <p className="text-xs text-gray-400 truncate max-w-[150px] sm:max-w-none">{org.org_email}</p>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <Building2 className="h-5 w-5 text-primary-400 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-gray-200 font-medium truncate">{org.organization_name}</p>
+                          <p className="text-xs text-gray-400 truncate">{org.org_email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-3 sm:px-4">
-                      <span className="capitalize text-gray-300 text-xs sm:text-sm whitespace-nowrap">{org.org_type}</span>
+                    <td className="py-3 px-3">
+                      <span className="capitalize text-gray-300 whitespace-nowrap">{org.org_type}</span>
                     </td>
-                    <td className="py-3 px-3 sm:px-4 whitespace-nowrap text-gray-300 text-xs sm:text-sm">{org.usersCount}</td>
-                    <td className="py-3 px-3 sm:px-4 whitespace-nowrap text-gray-300 text-xs sm:text-sm">{org.labsCount}</td>
-                    <td className="py-3 px-3 sm:px-4">
-                      <span className={`px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium rounded-full whitespace-nowrap ${
+                    <td className="py-3 px-3 whitespace-nowrap text-gray-300">{org.usersCount}</td>
+                    <td className="py-3 px-3 whitespace-nowrap text-gray-300">{org.labsCount}</td>
+                    <td className="py-3 px-3">
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap inline-block ${
                         org.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
                         org.status === 'pending' ? 'bg-amber-500/20 text-amber-300' :
                         'bg-red-500/20 text-red-300'
@@ -163,39 +276,39 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                         {org.status}
                       </span>
                     </td>
-                    <td className="py-3 px-3 sm:px-4">
-                      <span className="px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium rounded-full bg-primary-500/20 text-primary-300 whitespace-nowrap">
+                    <td className="py-3 px-3">
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary-500/20 text-primary-300 whitespace-nowrap inline-block">
                         {org.subscriptionTier}
                       </span>
                     </td>
-                    <td className="py-3 px-3 sm:px-4 text-gray-400 text-xs sm:text-sm whitespace-nowrap">
+                    <td className="py-3 px-3 text-gray-400 whitespace-nowrap">
                       {org.lastActive}
                     </td>
-                    <td className="py-3 px-3 sm:px-4" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center space-x-1 sm:space-x-2">
+                    <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center space-x-1 justify-end">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewDetails(org);
                           }}
-                          className="p-1.5 sm:p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                          className="p-1.5 hover:bg-primary-500/10 rounded-lg transition-colors"
                         >
-                          <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary-400" />
+                          <ExternalLink className="h-4 w-4 text-primary-400" />
                         </button>
                         <div className="relative">
                           <button 
                             onClick={(e) => toggleDropdown(org.id, e)}
-                            className="p-1.5 sm:p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                            className="p-1.5 hover:bg-primary-500/10 rounded-lg transition-colors"
                           >
-                            <MoreVertical className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-400" />
+                            <MoreVertical className="h-4 w-4 text-gray-400" />
                           </button>
                           {activeDropdown === org.id && (
-                            <div className="absolute right-0 mt-2 w-40 sm:w-48 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50">
+                            <div className="absolute right-0 mt-2 w-48 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50">
                               <button
                                 onClick={(e) => handleEdit(org, e)}
-                                className="w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm text-gray-300 hover:bg-primary-500/10 flex items-center space-x-2"
+                                className="w-full px-4 py-2 text-left text-sm text-gray-300 hover:bg-primary-500/10 flex items-center space-x-2"
                               >
-                                <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary-400" />
+                                <Pencil className="h-4 w-4 text-primary-400" />
                                 <span>Edit</span>
                               </button>
                               <button
@@ -203,9 +316,9 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                                   e.stopPropagation();
                                   handleDelete([org.id]);
                                 }}
-                                className="w-full px-3 sm:px-4 py-2 text-left text-xs sm:text-sm text-red-400 hover:bg-red-500/10 flex items-center space-x-2"
+                                className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center space-x-2"
                               >
-                                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                                <Trash2 className="h-4 w-4" />
                                 <span>Delete</span>
                               </button>
                             </div>
@@ -220,24 +333,25 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
           </div>
         </div>
       </div>
+
       {selectedOrgs.length > 0 && (
-          <div className="p-3 sm:p-4 border-t border-primary-500/10 flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-0 flex-shrink-0 bg-dark-400/50">
-            <span className="text-xs sm:text-sm text-gray-400">
+          <div className="p-4 border-t border-primary-500/10 flex flex-col sm:flex-row justify-between items-center gap-3 flex-shrink-0 bg-dark-400/50">
+            <span className="text-sm text-gray-400">
               {selectedOrgs.length} organization(s) selected
             </span>
             <button
               onClick={() => handleDelete(selectedOrgs)}
               disabled={isDeleting}
-              className="btn-secondary text-red-400 hover:text-red-300 text-xs sm:text-sm w-full sm:w-auto"
+              className="btn-secondary text-red-400 hover:text-red-300 text-sm w-full sm:w-auto"
             >
               {isDeleting ? (
                 <span className="flex items-center justify-center">
-                  <Loader className="animate-spin h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                  <Loader className="animate-spin h-4 w-4 mr-2" />
                   Deleting...
                 </span>
               ) : (
                 <span className="flex items-center justify-center">
-                  <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                  <Trash2 className="h-4 w-4 mr-2" />
                   Delete Selected
                 </span>
               )}
