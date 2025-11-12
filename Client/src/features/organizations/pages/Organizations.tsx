@@ -150,8 +150,8 @@ export const Organizations: React.FC = () => {
 
       {/* Tab Navigation */}
       <div className="flex flex-col lg:flex-row gap-3 lg:gap-6 flex-1 min-h-0 overflow-hidden">
-        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-2 sm:p-3 lg:p-4 flex-shrink-0">
-          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300 pb-2 lg:pb-0 -mx-2 px-2 lg:mx-0 lg:px-0">
+        <div className="w-full lg:w-64 bg-dark-200 rounded-lg p-2 sm:p-3 lg:p-4 flex-shrink-0 lg:max-h-full">
+          <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300 pb-2 lg:pb-0 -mx-2 px-2 lg:mx-0 lg:px-0 lg:max-h-full">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -171,9 +171,9 @@ export const Organizations: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1 bg-dark-200 rounded-lg overflow-hidden flex flex-col min-w-0 min-h-0">
-          <div className="p-3 sm:p-4 lg:p-6 overflow-y-auto overflow-x-hidden flex flex-col flex-1 min-h-0 scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
+          <div className="p-3 sm:p-4 lg:p-6 flex flex-col flex-1 min-h-0 overflow-hidden">
             {activeTab === 'overview' && (
-              <div className="h-full flex flex-col min-h-0">
+              <div className="h-full flex flex-col min-h-0 overflow-hidden">
                 {user?.role === 'superadmin' ? (
                   <>
                     <div className="mb-3 sm:mb-4 lg:mb-6 flex-shrink-0">
@@ -188,11 +188,12 @@ export const Organizations: React.FC = () => {
                       <OrganizationList
                         organizations={filteredOrganizations}
                         onViewDetails={handleViewDetails}
+                        onOrganizationUpdate={fetchOrganizations}
                       />
                     </div>
                   </>
                 ) : (
-                  <div className="overflow-y-auto">
+                  <div className="overflow-y-auto flex-1">
                     <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Organization Overview</h2>
                     <p className="text-gray-400 text-sm sm:text-base">View organization details and statistics</p>
                   </div>
