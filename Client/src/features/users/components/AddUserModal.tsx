@@ -94,7 +94,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
           confirmPassword: '',
           role: 'user',
           organization: '',
-          status: 'active'
+          status: 'active',
+          
         });
       }, 1500);
     } catch (err: any) {

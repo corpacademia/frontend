@@ -81,10 +81,11 @@ export const OrgAdminsPage: React.FC = () => {
 
   const handleAddOrgAdmin = async (userData: any) => {
     try {
-      const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addOrgAdmin`, {
+      console.log(userData)
+      const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addOrganizationUser`, {
         formData: { ...userData, role: 'labadmin' },
-        organizationId: user?.organization_id,
-        createdBy: user
+        org_id: user?.org_id,
+        admin_id: user?.id
       });
 
       if (result.data.success) {
@@ -151,7 +152,7 @@ export const OrgAdminsPage: React.FC = () => {
             <Building2 className="h-5 w-5 text-accent-400" />
           </div>
           <p className="text-lg font-semibold text-gray-200">
-            {user?.organization || 'N/A'}
+           <GradientText>{user?.organization || 'N/A'}</GradientText> 
           </p>
         </div>
 

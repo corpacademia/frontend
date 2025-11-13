@@ -83,13 +83,14 @@ export const UserRoleUpgrade: React.FC<UserRoleUpgradeProps> = ({ userId, curren
                   Current Role
                 </span>
               ) : (
+                <GradientText>
                 <button
                   onClick={() => handleUpgrade(role.value)}
                   disabled={isUpdating}
                   className="btn-secondary text-sm"
                 >
                   {isUpdating ? 'Upgrading...' : 'Upgrade'}
-                </button>
+                </button></GradientText>
               )}
             </div>
             <p className="text-sm text-gray-400">

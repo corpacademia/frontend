@@ -173,6 +173,11 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
     setActiveDropdown(activeDropdown === orgId ? null : orgId);
   };
 
+  const isLastRow = (orgId: string) => {
+    const index = organizations.findIndex(org => org.id === orgId);
+    return index >= organizations.length - 2;
+  };
+
   const handleEdit = (org: Organization, e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/dashboard/organizations/${org.id}`);
@@ -247,7 +252,7 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
 
         {/* Mobile Card View */}
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300 block lg:hidden">
-          <div className="p-3 sm:p-4 space-y-3">
+          <div className="p-3 sm:p-4 space-y-3 pb-24">
             {organizations.map((org) => (
               <div 
                 key={org.id}
@@ -279,7 +284,7 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                       <MoreVertical className="h-4 w-4 text-gray-400" />
                     </button>
                     {activeDropdown === org.id && (
-                      <div className="absolute right-0 mt-2 w-40 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50">
+                      <div className={`absolute right-0 w-40 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 ${isLastRow(org.id) ? 'bottom-full mb-2' : 'mt-2'}`}>
                         {org.status === 'pending' && (
                           <button
                             onClick={(e) => handleApproveReject(org, e)}
@@ -367,7 +372,7 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
         {/* Desktop Table View */}
         <div className="flex-1 min-h-0 overflow-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300 hidden lg:block">
           <div className="min-w-full inline-block align-middle">
-            <div className="overflow-hidden">
+            <div className="overflow-hidden pb-32">
               <table className="w-full">
                 <thead className="bg-dark-400/50 sticky top-0 z-10">
                   <tr className="text-left text-sm text-gray-400 border-b border-primary-500/20">
@@ -458,7 +463,7 @@ export const OrganizationList: React.FC<OrganizationListProps> = ({
                               <MoreVertical className="h-4 w-4 text-gray-400" />
                             </button>
                             {activeDropdown === org.id && (
-                              <div className="absolute right-0 mt-2 w-48 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50">
+                              <div className={`absolute right-0 w-48 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 ${isLastRow(org.id) ? 'bottom-full mb-2' : 'mt-2'}`}>
                                 {org.status === 'pending' && (
                                   <button
                                     onClick={(e) => handleApproveReject(org, e)}
