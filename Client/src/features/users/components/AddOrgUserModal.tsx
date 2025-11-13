@@ -22,7 +22,7 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
     name: '',
     email: '',
     password: '',
-    role: 'user'
+    role: 'labadmin'
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
       name: '',
       email: '',
       password: '',
-      role: 'user',
+      role: 'labadmin',
     });
     setError(null);
     setSuccess(null);
@@ -205,9 +205,7 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
               required
               disabled={isSubmitting}
             >
-              <option value="user">User</option>
-              <option value="trainer">Trainer</option>
-              <option value="labadmin">Admin</option>
+              <option value="labadmin">Lab Admin</option>
               <option value="orgsuperadmin">Organization Super Admin</option>
             </select>
           </div>

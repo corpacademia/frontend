@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { GradientText } from '../../../components/ui/GradientText';
 import { UserList } from '../../users/components/UserList';
-import { AddUserModal } from '../../users/components/AddUserModal';
+import { AddOrgUserModal } from '../../users/components/AddOrgUserModal';
 import { UserFilters } from '../../users/components/UserFilters';
 import { UserStats } from '../../users/components/UserStats';
 import { UserPlus, Users, Shield, Building2 } from 'lucide-react';
@@ -79,29 +79,26 @@ export const OrgAdminsPage: React.FC = () => {
     setOrgAdmins(filteredAdmins);
   }, [filters, originalOrgAdmins]);
 
-  const handleAddOrgAdmin = async (userData: any) => {
+  const handleAddSuccess = async () => {
     try {
-      console.log(userData)
-      const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addOrganizationUser`, {
-        formData: { ...userData, role: 'labadmin' },
-        org_id: user?.org_id,
-        admin_id: user?.id
-      });
-
-      if (result.data.success) {
-        setIsAddModalOpen(false);
-        // Refresh the org admins list
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrgAdmins/${user?.organization_id}`
-        );
-        if (response.data.success) {
-          const admins = response.data.data.filter(u => u.role === 'labadmin');
-          setOrgAdmins(admins);
-          setOriginalOrgAdmins(admins);
-        }
+      // Refresh the org admins list
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.org_id}`
+      );
+      if (response.data.success) {
+        const admins = response.data.data.filter(u => u.role === 'labadmin');
+        setOrgAdmins(admins);
+        setOriginalOrgAdmins(admins);
+        
+        setStats({
+          totalUsers: admins.length,
+          activeUsers: admins.filter(u => u.status === 'active').length,
+          trainers: 0,
+          organizations: 1
+        });
       }
     } catch (error) {
-      console.error('Error adding organization admin:', error);
+      console.error('Error refreshing organization admins:', error);
     }
   };
 
@@ -180,15 +177,12 @@ export const OrgAdminsPage: React.FC = () => {
         hideOrganization={true}
       />
 
-      <AddUserModal
+      <AddOrgUserModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onAdd={handleAddOrgAdmin}
-        defaultRole="labadmin"
-        roleOptions={[
-          { value: 'labadmin', label: 'Lab Admin' },
-          { value: 'orgsuperadmin', label: 'Organization Super Admin' }
-        ]}
+        onSuccess={handleAddSuccess}
+        adminDetails={user}
+        orgId={user?.org_id}
       />
     </div>
   );
