@@ -43,6 +43,7 @@ export const PublicCataloguePage: React.FC = () => {
 
   const isSuperAdmin = user?.role === 'superadmin';
   const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
+ 
 
   // Check if accessed from dashboard
   const isFromDashboard = location.pathname.includes('/dashboard/labs/catalogue');
@@ -81,7 +82,9 @@ export const PublicCataloguePage: React.FC = () => {
     const fetchCatalogues = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues` );
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues`,{
+          user:user
+        } );
         setCourses(response.data.data);
         setFilteredCourses(response.data.data);
       } catch (error) {
