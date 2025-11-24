@@ -43,6 +43,7 @@ export const PublicCataloguePage: React.FC = () => {
 
   const isSuperAdmin = user?.role === 'superadmin';
   const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
+  const isOrgLabAdmin = user?.role === 'labadmin';
  
 
   // Check if accessed from dashboard
@@ -462,8 +463,8 @@ if(isLoading) {
           <PublicCatalogueGrid
             courses={filteredCourses}
             isLoading={isLoading}
-            onEdit={(isSuperAdmin || isOrgSuperAdmin) ? handleEditCourse : undefined}
-            onDelete={(isSuperAdmin || isOrgSuperAdmin) ? handleDeleteCourse : undefined}
+            onEdit={(isSuperAdmin || isOrgSuperAdmin || isOrgLabAdmin) ? handleEditCourse : undefined}
+              onDelete={(isSuperAdmin || isOrgSuperAdmin ||isOrgLabAdmin) ? handleDeleteCourse : undefined}
             currentUser={user}
             isDeleting={isDeleting}
             isDeleteModalOpen={isDeleteModalOpen}

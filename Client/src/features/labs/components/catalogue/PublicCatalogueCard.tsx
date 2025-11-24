@@ -68,17 +68,19 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   
   const isSuperAdmin = (currentUser || user)?.role === 'superadmin';
   const isOrgSuperAdmin = (currentUser || user)?.role === 'orgsuperadmin';
+  const isOrgLabAdmin =(currentUser || user)?.role === 'labadmin';
   const isAvailable = (course.software || '').toLowerCase() === 'available';
-
+ 
   const canEditDelete = () => {
     if (isSuperAdmin) return true;
     if (
       isOrgSuperAdmin && 
-      (course.admin_id === (currentUser || user)?.id || course?.user_id === (currentUser || user)?.id)
+      ( course?.user_id === (currentUser || user)?.id)
     ) return true;
+    else if(isOrgLabAdmin && 
+      ( course?.user_id === (currentUser || user)?.id)) return true;
     return false;
   };
-
   const checkCartExist = (labid: string): boolean => {
     return !!cartItems?.find((c: any) => c.labid === labid);
   };

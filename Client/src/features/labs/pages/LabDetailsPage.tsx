@@ -696,7 +696,7 @@ export const LabDetailsPage: React.FC = () => {
      }
   }
 
-   const handleStartStopLab = async () => {
+const handleStartStopLab = async () => {
       if (!labId || !user) return;
       
       const isStop = labControls[labId]?.buttonLabel === 'Stop Lab';

@@ -28,6 +28,7 @@ import { ProxmoxDeleteModal } from './ProxmoxDeleteModal';
 import { ProxmoxEditModal } from './ProxmoxEditModal';
 import { ProxmoxConvertToCatalogueModal } from './ProxmoxConvertToCatalogueModal';
 import { AssignUsersModal } from '../catalogue/AssignUsersModal';
+import Guacamole from "guacamole-common-js";
 
 interface ProxmoxVM {
   id: string;
@@ -191,6 +192,24 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       } 
       else {
         // Start the VM
+       const response = await axios.post(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+    {
+      protocol: "rdp",
+      hostname: "52.65.91.54",
+      port: "3389",
+      username: "Administrator",
+      password: "JY@UqxHuP&r0EaUMWmh$crou2c.B@EMf",
+    }
+  );
+const { wsUrl } = response.data;
+
+console.log("Connecting:", wsUrl);
+
+const tunnel = new Guacamole.WebSocketTunnel(wsUrl);
+const client = new Guacamole.Client(tunnel);
+client.connect();
+       return;
         const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
           lab_id: vm.labid,
           vmId: vm.vmid,
