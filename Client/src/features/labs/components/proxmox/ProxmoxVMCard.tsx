@@ -192,51 +192,58 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       } 
       else {
         // Start the VM
-       const response = await axios.post(
+       const resp = await axios.post(
     `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
     {
       protocol: "rdp",
-      hostname: "52.65.91.54",
-      port: "3389",
-      username: "Administrator",
-      password: "JY@UqxHuP&r0EaUMWmh$crou2c.B@EMf",
+      hostname: "27.111.74.28",
+      port: "50136",
+      username: "Admin",
+      password: "P@ssw0rd",
     }
   );
-const { wsUrl } = response.data;
-
-console.log("Connecting:", wsUrl);
-
-const tunnel = new Guacamole.WebSocketTunnel(wsUrl);
-const client = new Guacamole.Client(tunnel);
-client.connect();
-       return;
-        const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
-          lab_id: vm.labid,
-          vmId: vm.vmid,
-          node: vm.node
-        });
-
-        if (startResponse.data.success) {
-          setButtonLabel('Stop');
-          setVmStatus('running');
-          setNotification({
-            type: 'success',
-            message: 'VM started successfully',
-          });
-
-          // Navigate to VM session if available
-          if (startResponse.data.guacamoleUrl) {
-            navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
-              state: { 
-                guacUrl: startResponse.data.guacamoleUrl,
-                vmTitle: vm.title,
-                vmId: vm.labid,
-              }
-            });
-          }
-        } else {
-          throw new Error(startResponse.data.message || 'Failed to start VM');
+  
+      if (resp.data.success) {
+        const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+        // Build full ws url for guacamole-common-js
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+        const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+        navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
+        state: {
+          guacUrl: wsUrl,
+          vmTitle: vm.title
         }
+      });
+      }
+
+       // const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+        //   lab_id: vm.labid,
+        //   vmId: vm.vmid,
+        //   node: vm.node
+        // });
+
+        // if (startResponse.data.success) {
+        //   setButtonLabel('Stop');
+        //   setVmStatus('running');
+        //   setNotification({
+        //     type: 'success',
+        //     message: 'VM started successfully',
+        //   });
+
+        //   // Navigate to VM session if available
+        //   if (startResponse.data.guacamoleUrl) {
+        //     navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
+        //       state: { 
+        //         guacUrl: startResponse.data.guacamoleUrl,
+        //         vmTitle: vm.title,
+        //         vmId: vm.labid,
+        //       }
+        //     });
+        //   }
+        // } else {
+        //   throw new Error(startResponse.data.message || 'Failed to start VM');
+        // }
       }
     } catch (error:any) {
       console.log(error)

@@ -59,6 +59,7 @@ import { DedicatedVMPage } from '../features/labs/pages/DedicatedVMPage';
 import { EmulatorPage } from '../features/labs/pages/EmulatorPage';
 import { BatchesPage } from '../features/batches/pages/BatchesPage';
 import { BatchDetailsPage } from '../features/batches/pages/BatchDetailsPage';
+import VmSession from '../features/labs/components/vmsession';
 // Assume TransactionsPage and CloudUsage are correctly imported from their respective modules
 // import { TransactionsPage } from '../features/dashboard/pages/TransactionsPage';
 
@@ -138,6 +139,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="labs/cluster" element={<ClusterPage />} />
         <Route path="labs/create" element={<CreateLabEnvironment />} />
         <Route path="labs/create-modules" element={<CreateModulesPage />} />
+        <Route path="/dashboard/labs/vm-session/:labId" element={<VmSession />} />
         <Route path="labs/vm-session/:vmId" element={<VMSessionPage />} />
         <Route path="cloud" element={<CloudResources />} />
         <Route path="reports" element={<ReportsPage />} />
