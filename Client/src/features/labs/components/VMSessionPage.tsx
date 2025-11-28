@@ -308,20 +308,22 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
         clientRef.current = null;
       }
 
-      const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
-        Protocol: credential.vmData?.protocol || 'RDP',
-        VmId: credential.id,
-        Ip: credential.ip,
-        userName: credential.username,
+      const resp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`, {
+        protocol: credential.vmData?.protocol || 'RDP',
+        hostname: credential.ip,
+        username: credential.username,
         password: credential.password,
         port: credential.port,
       });
 
-      console.log("📡 Token response:", tokenResponse.data);
 
-      if (tokenResponse.data.success && tokenResponse.data.token) {
+      if (resp.data.success) {
+        const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+        // Build full ws url for guacamole-common-js
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+        const wsUrl = `${protocol}://${hostPort}${wsPath}`;
         // Construct WebSocket URL
-        let wsUrl = `wss://dcweb.golabing.ai/websocket-tunnel?token=${tokenResponse.data.token.result}`;
         console.log("🌐 WebSocket URL:", wsUrl);
 
         // Create WebSocket tunnel
@@ -620,35 +622,33 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
             </button>
           </div>
           {isConnecting && (
-            <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-10">
+            <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
               <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
               <span className="text-gray-300">Connecting to VM...</span>
             </div>
           )}
-          {/* <div 
-            ref={displayContainerRef} 
-            className="w-full h-[calc(100%-40px)]"
-            style={{ 
-              background: "#000",
-              overflow: "auto",
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }} 
-          > */}
-            <div 
-              ref={displayCanvasRef} 
-              className="w-full h-full"
-              style={{ 
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }} 
-            />
-          </div>
-        // </div>
+          <div 
+  ref={displayContainerRef} 
+  className="flex-1 relative overflow-hidden"
+  style={{ 
+    background: "#000",
+    minHeight: 0,
+  }} 
+>
+  <div 
+    ref={displayCanvasRef} 
+    className="w-full h-full"
+    style={{ 
+      position: "relative",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden"
+    }} 
+  />
+</div>
+
+        </div>
       ) : (
         // Split view with documents
         <Split
@@ -667,8 +667,8 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           }}
         >
           {/* VM Panel */}
-          <div className="h-full flex flex-col">
-            <div className="bg-dark-400 p-2 flex justify-between items-center">
+          <div className="h-full flex flex-col bg-dark-200">
+            <div className="bg-dark-400 p-2 flex justify-between items-center flex-shrink-0">
               <div className="flex items-center space-x-3">
                 <div className="relative">
                   <button
@@ -799,35 +799,33 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
               </div>
             </div>
             {isConnecting && (
-              <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-10">
+              <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
                 <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
                 <span className="text-gray-300">Connecting to VM...</span>
               </div>
             )}
-            {/* <div 
-              ref={displayContainerRef} 
-              className="flex-1"
-              style={{ 
-                background: "#000",
-                overflow: "auto",
-                position: "relative",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }} 
-            > */}
-              <div 
-                ref={displayCanvasRef} 
-                className="w-full h-full"
-                style={{ 
-                  position: "relative",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center"
-                }} 
-              />
-            </div>
-          {/* </div> */}
+            <div 
+  ref={displayContainerRef} 
+  className="flex-1 relative overflow-hidden"
+  style={{ 
+    background: "#000",
+    minHeight: 0,
+  }} 
+>
+  <div 
+    ref={displayCanvasRef} 
+    className="w-full h-full"
+    style={{ 
+      position: "relative",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden"
+    }} 
+  />
+</div>
+
+          </div>
 
           {/* Documents Panel */}
           {showDocuments && documents.length > 0 && (
