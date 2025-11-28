@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { GradientText } from '../../../components/ui/GradientText';
@@ -45,10 +46,8 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   const [vmDropdownOpen, setVmDropdownOpen] = useState(false);
   const [splitRatio, setSplitRatio] = useState(70);
 
-  // Two refs for containers
-  const fullscreenRef = useRef<HTMLDivElement>(null);
-  const splitRef = useRef<HTMLDivElement>(null);
-
+  const displayContainerRef = useRef<HTMLDivElement>(null);
+  const displayCanvasRef = useRef<HTMLDivElement>(null);
   const clientRef = useRef<any>(null);
   const keyboardRef = useRef<any>(null);
   const mouseRef = useRef<any>(null);
@@ -65,6 +64,9 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
   useEffect(() => {
     const docs = location.state?.doc || location.state?.document || [];
+    console.log("📄 Documents from location state:", docs);
+    console.log("🔗 Is Group Connection:", isGroupConnection);
+    console.log("👥 Credentials List:", credentialsList);
     if (docs) {
       setDocuments(docs);
     }
@@ -87,13 +89,9 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
   // Initialize Guacamole WebSocket client
   useEffect(() => {
-    const targetRef = isFullscreen ? fullscreenRef : splitRef;
-    if (!activeGuacUrl || !targetRef.current) {
-      console.debug("Guac init aborted - missing url or targetRef", { activeGuacUrl, hasTarget: !!targetRef.current });
-      return;
-    }
+    if (!activeGuacUrl || !displayCanvasRef.current) return;
 
-    console.log("🔌 Initializing Guacamole WebSocket for:", activeGuacUrl, "target:", isFullscreen ? "fullscreenRef" : "splitRef");
+    console.log("🔌 Initializing Guacamole WebSocket for:", activeGuacUrl);
 
     // Clean up previous connection
     if (clientRef.current) {
@@ -107,7 +105,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
         mouseRef.current.onmouseup = null;
         mouseRef.current.onmousemove = null;
       }
-      try { clientRef.current.disconnect(); } catch (e) { console.warn("Error disconnecting previous client:", e); }
+      clientRef.current.disconnect();
       clientRef.current = null;
     }
 
@@ -149,75 +147,70 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       setIsConnecting(false);
     };
 
+    // Add timeout to detect connection issues
+    const connectionTimeout = setTimeout(() => {
+      if (isConnecting) {
+        console.warn("⚠️ Connection timeout - VM may not be responding");
+        setIsConnecting(false);
+      }
+    }, 15000); // 15 second timeout
+
     // Get display and attach to DOM
     const display = client.getDisplay();
     const displayEl = display.getElement();
 
-    // Clear previous contents in both refs to avoid leftover/duplicate nodes
-    [fullscreenRef, splitRef].forEach(r => {
-      if (r.current) {
-        r.current.innerHTML = '';
-      }
-    });
+    if (displayCanvasRef.current) {
+      displayCanvasRef.current.innerHTML = "";
+      
+      // Set canvas element styles to ensure visibility
+      displayEl.style.position = "relative";
+      displayEl.style.width = "100%";
+      displayEl.style.height = "100%";
+      displayEl.style.display = "block";
+      displayEl.style.margin = "0 auto";
+      displayEl.style.cursor = "default";
 
-    // Ensure container styles: target container must be positioned and allow stacking
-    targetRef.current.style.position = 'relative';
-    targetRef.current.style.background = 'transparent'; // so it doesn't visually block other panels
-    targetRef.current.style.zIndex = '0';
-    // make sure the other container is also not blocking
-    if (isFullscreen && splitRef.current) {
-      splitRef.current.style.zIndex = '0';
-    } else if (!isFullscreen && fullscreenRef.current) {
-      fullscreenRef.current.style.zIndex = '0';
+      displayCanvasRef.current.appendChild(displayEl);
+      console.log("✅ Display attached to DOM");
+      console.log("Canvas dimensions:", displayEl.offsetWidth, "x", displayEl.offsetHeight);
     }
-
-    // Style the Guacamole display element so it sits inside target with low z-index
-    displayEl.style.position = "absolute";
-    displayEl.style.top = "0";
-    displayEl.style.left = "0";
-    displayEl.style.width = "100%";
-    displayEl.style.height = "100%";
-    displayEl.style.display = "block";
-    displayEl.style.objectFit = "contain";
-    // explicit stacking:
-    displayEl.style.zIndex = "0";
-    // pointer events should be allowed on the display
-    displayEl.style.pointerEvents = "auto";
-
-    // Append to the correct target
-    targetRef.current.appendChild(displayEl);
-    console.log("✅ Display attached to target:", isFullscreen ? "fullscreenRef" : "splitRef");
 
     // Connect
     console.log("🚀 Connecting...");
     client.connect();
 
-    // Send initial size after short delay
-    const initialSizeTimeout = setTimeout(() => {
-      if (clientRef.current && targetRef.current) {
-        const width = targetRef.current.offsetWidth || 1280;
-        const height = targetRef.current.offsetHeight || 720;
+    // Send initial size and verify connection
+    setTimeout(() => {
+      if (clientRef.current && displayCanvasRef.current) {
+        const width = displayCanvasRef.current.offsetWidth || 1280;
+        const height = displayCanvasRef.current.offsetHeight || 720;
         console.log("📐 Sending size:", width, "x", height);
         clientRef.current.sendSize(width, height, 96);
-
-        // Diagnostics: list children and detect any sibling overlay nodes that might block
-        const children = Array.from(targetRef.current.children).map((c: any) => ({
-          tag: c.tagName,
-          classes: c.className,
-          z: window.getComputedStyle(c).zIndex,
-          display: window.getComputedStyle(c).display,
-          position: window.getComputedStyle(c).position
-        }));
-        console.log("Target children after attach:", children);
-
-        const canvas = targetRef.current.querySelector('canvas');
+        
+        // Check if display is actually rendering
+        const canvas = displayCanvasRef.current.querySelector('canvas');
         if (canvas) {
-          console.log("✅ Canvas found:", (canvas as HTMLCanvasElement).width, "x", (canvas as HTMLCanvasElement).height);
+          console.log("✅ Canvas found:", canvas.width, "x", canvas.height);
+          
+          // If canvas is still 0x0 after 3 seconds, there's likely an issue
+          if (canvas.width === 0 || canvas.height === 0) {
+            console.warn("⚠️ Canvas has no content - VM may not be ready or RDP connection failed");
+            setTimeout(() => {
+              const updatedCanvas = displayCanvasRef.current?.querySelector('canvas');
+              if (updatedCanvas && (updatedCanvas.width === 0 || updatedCanvas.height === 0)) {
+                console.error("❌ VM connection failed - no screen data received");
+                setIsConnecting(false);
+              } else if (updatedCanvas) {
+                console.log("✅ Canvas now rendering:", updatedCanvas.width, "x", updatedCanvas.height);
+                setIsConnecting(false);
+              }
+            }, 5000);
+          }
         } else {
-          console.warn("⚠️ No canvas element found in display (may render later)");
+          console.warn("⚠️ No canvas element found in display");
         }
       }
-    }, 500);
+    }, 1000);
 
     // Setup keyboard
     const keyboard = new Guacamole.Keyboard(document);
@@ -229,7 +222,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
     };
     keyboardRef.current = keyboard;
 
-    // Setup mouse using the actual display element
+    // Setup mouse
     const mouse = new Guacamole.Mouse(displayEl);
     mouse.onmousedown = mouse.onmouseup = mouse.onmousemove = (mouseState: any) => {
       if (clientRef.current) clientRef.current.sendMouseState(mouseState);
@@ -238,10 +231,9 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
     // Handle resize
     const handleResize = () => {
-      const activeTarget = isFullscreen ? fullscreenRef.current : splitRef.current;
-      if (clientRef.current && activeTarget) {
-        const width = activeTarget.offsetWidth || 1280;
-        const height = activeTarget.offsetHeight || 720;
+      if (clientRef.current && displayCanvasRef.current) {
+        const width = displayCanvasRef.current.offsetWidth || 1280;
+        const height = displayCanvasRef.current.offsetHeight || 720;
         clientRef.current.sendSize(width, height, 96);
       }
     };
@@ -250,9 +242,8 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
     // Cleanup
     return () => {
-      clearTimeout(initialSizeTimeout);
+      clearTimeout(connectionTimeout);
       window.removeEventListener("resize", handleResize);
-
       if (keyboardRef.current) {
         keyboardRef.current.onkeydown = null;
         keyboardRef.current.onkeyup = null;
@@ -263,17 +254,11 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
         mouseRef.current.onmousemove = null;
       }
       if (clientRef.current) {
-        try { clientRef.current.disconnect(); } catch (e) { console.warn("Error disconnecting client on cleanup:", e); }
+        clientRef.current.disconnect();
         clientRef.current = null;
       }
-
-      // Clear any display nodes left behind
-      [fullscreenRef, splitRef].forEach(r => {
-        if (r.current) r.current.innerHTML = '';
-      });
     };
-    // Re-run when activeGuacUrl or isFullscreen changes
-  }, [activeGuacUrl, isFullscreen]);
+  }, [activeGuacUrl]);
 
   const extractFileName = (filePath: string) => {
     const match = filePath.match(/[^\\\/]+$/);
@@ -303,8 +288,25 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
   const handleConnectToCredential = async (credential: any) => {
     try {
+      console.log("🔌 Connecting to credential:", credential);
       setIsConnecting(true);
       setVmDropdownOpen(false);
+
+      // Clean up previous connection
+      if (clientRef.current) {
+        console.log("🧹 Cleaning up previous connection");
+        if (keyboardRef.current) {
+          keyboardRef.current.onkeydown = null;
+          keyboardRef.current.onkeyup = null;
+        }
+        if (mouseRef.current) {
+          mouseRef.current.onmousedown = null;
+          mouseRef.current.onmouseup = null;
+          mouseRef.current.onmousemove = null;
+        }
+        clientRef.current.disconnect();
+        clientRef.current = null;
+      }
 
       const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
         Protocol: credential.vmData?.protocol || 'RDP',
@@ -315,16 +317,100 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
         port: credential.port,
       });
 
+      console.log("📡 Token response:", tokenResponse.data);
+
       if (tokenResponse.data.success && tokenResponse.data.token) {
-        const newGuacUrl = `https://dcweb.golabing.ai/guacamole/#/?token=${tokenResponse.data.token.result}`;
-        setActiveGuacUrl(newGuacUrl);
+        // Construct WebSocket URL
+        let wsUrl = `wss://dcweb.golabing.ai/websocket-tunnel?token=${tokenResponse.data.token.result}`;
+        console.log("🌐 WebSocket URL:", wsUrl);
+
+        // Create WebSocket tunnel
+        const tunnel = new Guacamole.WebSocketTunnel(wsUrl);
+
+        tunnel.onerror = (status: any) => {
+          console.error("❌ Tunnel error:", status);
+          setIsConnecting(false);
+        };
+
+        tunnel.onstatechange = (state: number) => {
+          console.log("📡 Tunnel state:", state);
+          if (state === Guacamole.Tunnel.State.OPEN) {
+            console.log("✅ Tunnel OPEN");
+            setIsConnecting(false);
+          } else if (state === Guacamole.Tunnel.State.CLOSED) {
+            console.log("⚠️ Tunnel CLOSED");
+            setIsConnecting(false);
+          }
+        };
+
+        // Create Guacamole client
+        const client = new Guacamole.Client(tunnel);
+        clientRef.current = client;
+
+        client.onstatechange = (state: number) => {
+          console.log("🖥️ Client state:", state);
+        };
+
+        client.onerror = (error: any) => {
+          console.error("❌ Client error:", error);
+          setIsConnecting(false);
+        };
+
+        // Get display and attach to DOM
+        const display = client.getDisplay();
+        const displayEl = display.getElement();
+
+        if (displayCanvasRef.current) {
+          displayCanvasRef.current.innerHTML = "";
+          
+          displayEl.style.position = "relative";
+          displayEl.style.width = "100%";
+          displayEl.style.height = "100%";
+          displayEl.style.display = "block";
+          displayEl.style.margin = "0 auto";
+          displayEl.style.cursor = "default";
+
+          displayCanvasRef.current.appendChild(displayEl);
+          console.log("✅ Display attached to DOM for credential");
+        }
+
+        // Connect
+        console.log("🚀 Connecting to VM...");
+        client.connect();
+
+        // Send initial size
+        setTimeout(() => {
+          if (clientRef.current && displayCanvasRef.current) {
+            const width = displayCanvasRef.current.offsetWidth || 1280;
+            const height = displayCanvasRef.current.offsetHeight || 720;
+            console.log("📐 Sending size:", width, "x", height);
+            clientRef.current.sendSize(width, height, 96);
+          }
+        }, 1000);
+
+        // Setup keyboard
+        const keyboard = new Guacamole.Keyboard(document);
+        keyboard.onkeydown = (keysym: number) => {
+          if (clientRef.current) clientRef.current.sendKeyEvent(1, keysym);
+        };
+        keyboard.onkeyup = (keysym: number) => {
+          if (clientRef.current) clientRef.current.sendKeyEvent(0, keysym);
+        };
+        keyboardRef.current = keyboard;
+
+        // Setup mouse
+        const mouse = new Guacamole.Mouse(displayEl);
+        mouse.onmousedown = mouse.onmouseup = mouse.onmousemove = (mouseState: any) => {
+          if (clientRef.current) clientRef.current.sendMouseState(mouseState);
+        };
+        mouseRef.current = mouse;
+
         setSelectedCredential(credential);
       } else {
         throw new Error('Failed to get connection token');
       }
     } catch (error: any) {
-      console.error('Error connecting to VM:', error);
-    } finally {
+      console.error('❌ Error connecting to VM:', error);
       setIsConnecting(false);
     }
   };
@@ -395,11 +481,10 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
       {/* Main Content */}
       {isFullscreen ? (
-        <div className="glass-panel p-0 overflow-hidden h-[calc(100vh-120px)]" style={{ position: 'relative' }}>
-          <div className="bg-dark-400 p-2 flex justify-between items-center" style={{ zIndex: 40, position: 'relative' }}>
-            {/* toolbar same as before */}
+        // Fullscreen mode
+        <div className="glass-panel p-0 overflow-hidden h-[calc(100vh-120px)]">
+          <div className="bg-dark-400 p-2 flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              {/* power, resolution, dropdowns... (omitted for brevity; same as earlier) */}
               <div className="relative">
                 <button
                   onClick={() => setIsPowerMenuOpen(!isPowerMenuOpen)}
@@ -426,7 +511,106 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                   </div>
                 )}
               </div>
-              {/* rest of toolbar items unchanged; keeping them with high z-index so they appear above canvas */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsControlsOpen(!isControlsOpen)}
+                  className="p-2 hover:bg-dark-300 rounded-lg transition-colors flex items-center space-x-2"
+                >
+                  <Monitor className="h-5 w-5 text-primary-400" />
+                  <span className="text-sm text-gray-300">{selectedResolution}</span>
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </button>
+                {isControlsOpen && (
+                  <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50">
+                    {resolutions.map(resolution => (
+                      <button
+                        key={resolution}
+                        onClick={() => handleResolutionChange(resolution)}
+                        className={`w-full px-4 py-2 text-left text-sm hover:bg-dark-300/50 transition-colors ${
+                          selectedResolution === resolution ? 'text-primary-400' : 'text-gray-300'
+                        }`}
+                      >
+                        {resolution}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {isGroupConnection && (
+                <div className="relative">
+                  <button
+                    onClick={() => setVmDropdownOpen(!vmDropdownOpen)}
+                    className="p-2 hover:bg-dark-300 rounded-lg transition-colors flex items-center space-x-2"
+                  >
+                    <Server className="h-5 w-5 text-primary-400" />
+                    <span className="text-sm text-gray-300">
+                      {selectedCredential ? (selectedCredential.vmData?.vmname || 'VM') : 'Select VM'}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  </button>
+                  {vmDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 max-h-64 overflow-y-auto">
+                      {credentialsList?.map((cred, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleConnectToCredential(cred)}
+                          className={`w-full px-4 py-2 text-left text-sm hover:bg-dark-300/50 transition-colors ${
+                            selectedCredential?.id === cred.id ? 'text-primary-400 bg-primary-500/10' : 'text-gray-300'
+                          }`}
+                        >
+                          {cred.vmData?.vmname || `VM ${index + 1}`}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              {!isGroupConnection && credentialsList && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCredentials(!showCredentials)}
+                    className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
+                  >
+                    <Key className="h-5 w-5 text-primary-400" />
+                  </button>
+                  {showCredentials && (
+                    <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 p-3 w-96">
+                      <div className="space-y-3">
+                        {credentialsList?.map((cred, index) => (
+                          <div key={index} className="p-2 bg-dark-300/50 rounded-lg">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex-1">
+                                <label className="text-xs text-gray-400 block">Username</label>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-gray-300">{cred.username}</span>
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(cred.username)}
+                                    className="text-xs text-primary-400 hover:text-primary-300"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <label className="text-xs text-gray-400 block">Password</label>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-gray-300">{cred.password}</span>
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(cred.password)}
+                                    className="text-xs text-primary-400 hover:text-primary-300"
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <button
               onClick={() => setIsFullscreen(false)}
@@ -435,37 +619,47 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
               <Minimize2 className="h-5 w-5 text-gray-400" />
             </button>
           </div>
-
-          {/* Connecting overlay has high z-index */}
           {isConnecting && (
-            <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90" style={{ zIndex: 60 }}>
+            <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-10">
               <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
               <span className="text-gray-300">Connecting to VM...</span>
             </div>
           )}
-
-          {/* VM container: ensure z-index 0 */}
-          <div
-            ref={fullscreenRef}
+          {/* <div 
+            ref={displayContainerRef} 
             className="w-full h-[calc(100%-40px)]"
-            style={{
-              background: "transparent",
-              overflow: "hidden",
+            style={{ 
+              background: "#000",
+              overflow: "auto",
               position: "relative",
               display: "flex",
-              alignItems: "stretch",
-              justifyContent: "stretch",
-              zIndex: 0
-            }}
-          />
-        </div>
+              alignItems: "center",
+              justifyContent: "center"
+            }} 
+          > */}
+            <div 
+              ref={displayCanvasRef} 
+              className="w-full h-full"
+              style={{ 
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }} 
+            />
+          </div>
+        // </div>
       ) : (
+        // Split view with documents
         <Split
           sizes={showDocuments && documents.length > 0 ? [splitRatio, 100 - splitRatio] : [100]}
           minSize={showDocuments && documents.length > 0 ? 300 : 100}
           gutterSize={showDocuments && documents.length > 0 ? 8 : 0}
           className="glass-panel p-0 overflow-hidden h-[calc(100vh-120px)] flex"
-          onDragEnd={(sizes) => setSplitRatio(sizes[0])}
+          onDragEnd={(sizes) => {
+            console.log("📊 Split sizes changed:", sizes);
+            setSplitRatio(sizes[0]);
+          }}
           gutter={() => {
             const gutter = document.createElement('div');
             gutter.className = "h-full w-2 bg-primary-500/20 hover:bg-primary-500/40 cursor-col-resize transition-colors";
@@ -474,38 +668,171 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
         >
           {/* VM Panel */}
           <div className="h-full flex flex-col">
-            <div className="bg-dark-400 p-2 flex justify-between items-center" style={{ zIndex: 30, position: 'relative' }}>
+            <div className="bg-dark-400 p-2 flex justify-between items-center">
               <div className="flex items-center space-x-3">
-                {/* toolbar items (same as earlier) */}
+                <div className="relative">
+                  <button
+                    onClick={() => setIsPowerMenuOpen(!isPowerMenuOpen)}
+                    className="p-2 hover:bg-dark-300 rounded-lg transition-colors text-red-400"
+                  >
+                    <Power className="h-5 w-5" />
+                  </button>
+                  {isPowerMenuOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50">
+                      <button
+                        onClick={() => handlePowerAction('restart')}
+                        className="w-full px-4 py-2 text-left text-sm text-green-400 hover:bg-dark-300/50 transition-colors flex items-center"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Restart
+                      </button>
+                      <button
+                        onClick={() => handlePowerAction('shutdown')}
+                        className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center"
+                      >
+                        <PowerOff className="h-4 w-4 mr-2" />
+                        Shutdown
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="relative">
+                  <button
+                    onClick={() => setIsControlsOpen(!isControlsOpen)}
+                    className="p-2 hover:bg-dark-300 rounded-lg transition-colors flex items-center space-x-2"
+                  >
+                    <Monitor className="h-5 w-5 text-primary-400" />
+                    <span className="text-sm text-gray-300">{selectedResolution}</span>
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  </button>
+                  {isControlsOpen && (
+                    <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50">
+                      {resolutions.map(resolution => (
+                        <button
+                          key={resolution}
+                          onClick={() => handleResolutionChange(resolution)}
+                          className={`w-full px-4 py-2 text-left text-sm hover:bg-dark-300/50 transition-colors ${
+                            selectedResolution === resolution ? 'text-primary-400' : 'text-gray-300'
+                          }`}
+                        >
+                          {resolution}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {isGroupConnection && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setVmDropdownOpen(!vmDropdownOpen)}
+                      className="p-2 hover:bg-dark-300 rounded-lg transition-colors flex items-center space-x-2"
+                    >
+                      <Server className="h-5 w-5 text-primary-400" />
+                      <span className="text-sm text-gray-300">
+                        {selectedCredential ? (selectedCredential.vmData?.vmname || 'VM') : 'Select VM'}
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-gray-400" />
+                    </button>
+                    {vmDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 max-h-64 overflow-y-auto">
+                        {credentialsList?.map((cred, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleConnectToCredential(cred)}
+                            className={`w-full px-4 py-2 text-left text-sm hover:bg-dark-300/50 transition-colors ${
+                              selectedCredential?.id === cred.id ? 'text-primary-400 bg-primary-500/10' : 'text-gray-300'
+                            }`}
+                          >
+                            {cred.vmData?.vmname || `VM ${index + 1}`}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {!isGroupConnection && credentialsList && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowCredentials(!showCredentials)}
+                      className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
+                    >
+                      <Key className="h-5 w-5 text-primary-400" />
+                    </button>
+                    {showCredentials && (
+                      <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 p-3 w-96">
+                        <div className="space-y-3">
+                          {credentialsList?.map((cred, index) => (
+                            <div key={index} className="p-2 bg-dark-300/50 rounded-lg">
+                              <div className="flex items-center space-x-4">
+                                <div className="flex-1">
+                                  <label className="text-xs text-gray-400 block">Username</label>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-300">{cred.username}</span>
+                                    <button
+                                      onClick={() => navigator.clipboard.writeText(cred.username)}
+                                      className="text-xs text-primary-400 hover:text-primary-300"
+                                    >
+                                      Copy
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <label className="text-xs text-gray-400 block">Password</label>
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-gray-300">{cred.password}</span>
+                                    <button
+                                      onClick={() => navigator.clipboard.writeText(cred.password)}
+                                      className="text-xs text-primary-400 hover:text-primary-300"
+                                    >
+                                      Copy
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
-
             {isConnecting && (
-              <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90" style={{ zIndex: 60 }}>
+              <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-10">
                 <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
                 <span className="text-gray-300">Connecting to VM...</span>
               </div>
             )}
-
-            <div
-              ref={splitRef}
+            {/* <div 
+              ref={displayContainerRef} 
               className="flex-1"
-              style={{
-                background: "transparent",
-                overflow: "hidden",
+              style={{ 
+                background: "#000",
+                overflow: "auto",
                 position: "relative",
                 display: "flex",
-                alignItems: "stretch",
-                justifyContent: "stretch",
-                zIndex: 0
-              }}
-            />
-          </div>
+                alignItems: "center",
+                justifyContent: "center"
+              }} 
+            > */}
+              <div 
+                ref={displayCanvasRef} 
+                className="w-full h-full"
+                style={{ 
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }} 
+              />
+            </div>
+          {/* </div> */}
 
-          {/* Documents Panel (ensure it is above the VM container) */}
+          {/* Documents Panel */}
           {showDocuments && documents.length > 0 && (
-            <div className="h-full flex flex-col overflow-hidden" style={{ zIndex: 40 }}>
-              <div className="flex justify-between items-center p-4 border-b border-primary-500/10 bg-dark-300" style={{ position: 'relative', zIndex: 45 }}>
+            <div className="h-full flex flex-col overflow-hidden">
+              <div className="flex justify-between items-center p-4 border-b border-primary-500/10 bg-dark-300">
                 <h2 className="text-lg font-semibold text-primary-300">Lab Documents</h2>
                 <div className="flex items-center space-x-2">
                   {documents.length > 1 && (
