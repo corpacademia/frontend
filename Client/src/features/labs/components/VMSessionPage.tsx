@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { GradientText } from '../../../components/ui/GradientText';
@@ -63,6 +62,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   const resolutions = ['800x600', '1024x768', '1280x720', '1366x768', '1600x900', '1920x1080'];
 
   useEffect(() => {
+    console.log('Documents:',location.state)
     const docs = location.state?.doc || location.state?.document || [];
     console.log("📄 Documents from location state:", docs);
     console.log("🔗 Is Group Connection:", isGroupConnection);
@@ -161,14 +161,16 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
     if (displayCanvasRef.current) {
       displayCanvasRef.current.innerHTML = "";
-      
+
       // Set canvas element styles to ensure visibility
-      displayEl.style.position = "relative";
+      displayEl.style.position = "absolute";
       displayEl.style.width = "100%";
       displayEl.style.height = "100%";
       displayEl.style.display = "block";
       displayEl.style.margin = "0 auto";
       displayEl.style.cursor = "default";
+      displayEl.style.zIndex = "10";
+      displayEl.style.objectFit = "contain";
 
       displayCanvasRef.current.appendChild(displayEl);
       console.log("✅ Display attached to DOM");
@@ -185,13 +187,21 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
         const width = displayCanvasRef.current.offsetWidth || 1280;
         const height = displayCanvasRef.current.offsetHeight || 720;
         console.log("📐 Sending size:", width, "x", height);
-        clientRef.current.sendSize(width, height, 96);
         
+        // Scale the display to fit the container
+        const scale = Math.min(
+          displayCanvasRef.current.offsetWidth / 1024,
+          displayCanvasRef.current.offsetHeight / 768
+        );
+        display.scale(scale);
+        
+        clientRef.current.sendSize(width, height, 96);
+
         // Check if display is actually rendering
         const canvas = displayCanvasRef.current.querySelector('canvas');
         if (canvas) {
           console.log("✅ Canvas found:", canvas.width, "x", canvas.height);
-          
+
           // If canvas is still 0x0 after 3 seconds, there's likely an issue
           if (canvas.width === 0 || canvas.height === 0) {
             console.warn("⚠️ Canvas has no content - VM may not be ready or RDP connection failed");
@@ -222,18 +232,35 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
     };
     keyboardRef.current = keyboard;
 
-    // Setup mouse
+    // Setup mouse - attach to the display element and ensure it captures events
     const mouse = new Guacamole.Mouse(displayEl);
-    mouse.onmousedown = mouse.onmouseup = mouse.onmousemove = (mouseState: any) => {
-      if (clientRef.current) clientRef.current.sendMouseState(mouseState);
+    const handleMouseState = (mouseState: any) => {
+      if (clientRef.current) {
+        clientRef.current.sendMouseState(mouseState);
+      }
     };
+    mouse.onmousedown = handleMouseState;
+    mouse.onmouseup = handleMouseState;
+    mouse.onmousemove = handleMouseState;
     mouseRef.current = mouse;
+    
+    // Ensure the display element can receive focus for input
+    displayEl.setAttribute('tabindex', '0');
+    displayEl.focus();
 
     // Handle resize
     const handleResize = () => {
       if (clientRef.current && displayCanvasRef.current) {
         const width = displayCanvasRef.current.offsetWidth || 1280;
         const height = displayCanvasRef.current.offsetHeight || 720;
+        
+        // Update scale on resize
+        const scale = Math.min(
+          displayCanvasRef.current.offsetWidth / 1024,
+          displayCanvasRef.current.offsetHeight / 768
+        );
+        display.scale(scale);
+        
         clientRef.current.sendSize(width, height, 96);
       }
     };
@@ -364,13 +391,15 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
         if (displayCanvasRef.current) {
           displayCanvasRef.current.innerHTML = "";
-          
-          displayEl.style.position = "relative";
+
+          displayEl.style.position = "absolute";
           displayEl.style.width = "100%";
           displayEl.style.height = "100%";
           displayEl.style.display = "block";
           displayEl.style.margin = "0 auto";
           displayEl.style.cursor = "default";
+          displayEl.style.zIndex = "10";
+          displayEl.style.objectFit = "contain";
 
           displayCanvasRef.current.appendChild(displayEl);
           console.log("✅ Display attached to DOM for credential");
@@ -386,6 +415,14 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
             const width = displayCanvasRef.current.offsetWidth || 1280;
             const height = displayCanvasRef.current.offsetHeight || 720;
             console.log("📐 Sending size:", width, "x", height);
+            
+            // Scale the display to fit the container
+            const scale = Math.min(
+              displayCanvasRef.current.offsetWidth / 1024,
+              displayCanvasRef.current.offsetHeight / 768
+            );
+            display.scale(scale);
+            
             clientRef.current.sendSize(width, height, 96);
           }
         }, 1000);
@@ -400,12 +437,21 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
         };
         keyboardRef.current = keyboard;
 
-        // Setup mouse
+        // Setup mouse - attach to the display element and ensure it captures events
         const mouse = new Guacamole.Mouse(displayEl);
-        mouse.onmousedown = mouse.onmouseup = mouse.onmousemove = (mouseState: any) => {
-          if (clientRef.current) clientRef.current.sendMouseState(mouseState);
+        const handleMouseState = (mouseState: any) => {
+          if (clientRef.current) {
+            clientRef.current.sendMouseState(mouseState);
+          }
         };
+        mouse.onmousedown = handleMouseState;
+        mouse.onmouseup = handleMouseState;
+        mouse.onmousemove = handleMouseState;
         mouseRef.current = mouse;
+        
+        // Ensure the display element can receive focus for input
+        displayEl.setAttribute('tabindex', '0');
+        displayEl.focus();
 
         setSelectedCredential(credential);
       } else {
@@ -628,25 +674,29 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
             </div>
           )}
           <div 
-  ref={displayContainerRef} 
-  className="flex-1 relative overflow-hidden"
-  style={{ 
-    background: "#000",
-    minHeight: 0,
-  }} 
->
-  <div 
-    ref={displayCanvasRef} 
-    className="w-full h-full"
-    style={{ 
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      overflow: "hidden"
-    }} 
-  />
-</div>
+            ref={displayContainerRef} 
+            className="flex-1"
+            style={{ 
+              minHeight: 0,
+              position: "relative",
+              backgroundColor: "#000"
+            }} 
+          >
+            <div 
+              ref={displayCanvasRef} 
+              style={{ 
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1
+              }} 
+            />
+          </div>
 
         </div>
       ) : (
@@ -805,25 +855,29 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
               </div>
             )}
             <div 
-  ref={displayContainerRef} 
-  className="flex-1 relative overflow-hidden"
-  style={{ 
-    background: "#000",
-    minHeight: 0,
-  }} 
->
-  <div 
-    ref={displayCanvasRef} 
-    className="w-full h-full"
-    style={{ 
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      overflow: "hidden"
-    }} 
-  />
-</div>
+              ref={displayContainerRef} 
+              className="flex-1"
+              style={{ 
+                minHeight: 0,
+                position: "relative",
+                backgroundColor: "#000"
+              }} 
+            >
+              <div 
+                ref={displayCanvasRef} 
+                style={{ 
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 1
+                }} 
+              />
+            </div>
 
           </div>
 

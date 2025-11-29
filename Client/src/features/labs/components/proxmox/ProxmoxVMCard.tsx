@@ -212,7 +212,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
         state: {
           guacUrl: wsUrl,
-          vmTitle: vm.title
+          vmTitle: vm.title,
+          doc:vm.labguide
         }
       });
       }
