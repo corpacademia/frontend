@@ -695,7 +695,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           }}
         >
           {/* VM Panel */}
-          <div className="h-full flex flex-col bg-dark-200">
+          <div className="h-full flex flex-col bg-dark-200 overflow-hidden">
             <div className="bg-dark-400 p-2 flex justify-between items-center flex-shrink-0">
               <div className="flex items-center space-x-3">
                 <div className="relative">
@@ -841,7 +841,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           )}
           <div 
             ref={displayContainerRef} 
-            className="flex-1"
+            className="flex-1 overflow-hidden"
             style={{ 
               minHeight: 0,
               position: "relative",
@@ -862,7 +862,6 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
               }} 
             />
           </div>
-
         </div>
 
         {/* Documents Panel */}
