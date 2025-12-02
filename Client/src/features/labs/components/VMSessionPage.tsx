@@ -676,7 +676,6 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
               }} 
             />
           </div>
-
         </div>
       ) : (
         // Split view with documents
@@ -691,7 +690,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           }}
           gutter={() => {
             const gutter = document.createElement('div');
-            gutter.className = "h-full w-100 bg-primary-500/20 hover:bg-primary-500/40 cursor-col-resize transition-colors";
+            gutter.className = "h-full w-2 bg-primary-500/20 hover:bg-primary-500/40 cursor-col-resize transition-colors";
             return gutter;
           }}
         >
@@ -842,8 +841,12 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           )}
           <div 
             ref={displayContainerRef} 
-             className="flex-1 w-full h-full min-h-0 min-w-0 relative"
-              style={{ backgroundColor: "#000" }}
+            className="flex-1"
+            style={{ 
+              minHeight: 0,
+              position: "relative",
+              backgroundColor: "#000"
+            }} 
           >
             <div 
               ref={displayCanvasRef} 
@@ -861,7 +864,8 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
             />
           </div>
 
-        {/* </div> */}
+        </div>
+
         {/* Documents Panel */}
         {showDocuments && documents.length > 0 && (
           <div className="h-full flex flex-col overflow-hidden">
@@ -944,9 +948,6 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           </div>
         )}
       </Split>
-    
-      ) 
-      };
-     </div> 
+    </div>
   );
-}
+};
