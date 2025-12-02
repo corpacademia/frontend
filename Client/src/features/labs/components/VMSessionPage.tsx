@@ -73,7 +73,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   }, [location.state]);
 
   useEffect(() => {
-    if (!guacUrl && !isGroupConnection) {
+    if (!activeGuacUrl && !isGroupConnection) {
       navigate('/dashboard/labs/cloud-vms');
     }
 
@@ -85,7 +85,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
     document.addEventListener('keydown', handleEscKey);
     return () => document.removeEventListener('keydown', handleEscKey);
-  }, [guacUrl, navigate, isFullscreen, isGroupConnection]);
+  }, [activeGuacUrl, navigate, isFullscreen, isGroupConnection]);
 
   // Initialize Guacamole WebSocket client
   useEffect(() => {
@@ -161,66 +161,45 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
     if (displayCanvasRef.current) {
       displayCanvasRef.current.innerHTML = "";
-
-      // Set canvas element styles to ensure visibility
-      displayEl.style.position = "absolute";
-      displayEl.style.width = "100%";
-      displayEl.style.height = "100%";
-      displayEl.style.display = "block";
-      displayEl.style.margin = "0 auto";
-      displayEl.style.cursor = "default";
-      displayEl.style.zIndex = "10";
-      displayEl.style.objectFit = "contain";
-
       displayCanvasRef.current.appendChild(displayEl);
-      console.log("✅ Display attached to DOM");
-      console.log("Canvas dimensions:", displayEl.offsetWidth, "x", displayEl.offsetHeight);
+      console.log("✅ Display element attached to DOM");
     }
 
     // Connect
     console.log("🚀 Connecting...");
     client.connect();
 
-    // Send initial size and verify connection
-    setTimeout(() => {
-      if (clientRef.current && displayCanvasRef.current) {
-        const width = displayCanvasRef.current.offsetWidth || 1280;
-        const height = displayCanvasRef.current.offsetHeight || 720;
-        console.log("📐 Sending size:", width, "x", height);
-        
-        // Scale the display to fit the container
-        const scale = Math.min(
-          displayCanvasRef.current.offsetWidth / 1024,
-          displayCanvasRef.current.offsetHeight / 768
-        );
-        display.scale(scale);
-        
-        clientRef.current.sendSize(width, height, 96);
+    // Wait for tunnel to open before checking canvas
+    const checkCanvas = () => {
+      const canvas = displayEl.querySelector('canvas');
+      if (canvas) {
+        console.log("✅ Canvas found:", canvas.width, "x", canvas.height);
 
-        // Check if display is actually rendering
-        const canvas = displayCanvasRef.current.querySelector('canvas');
-        if (canvas) {
-          console.log("✅ Canvas found:", canvas.width, "x", canvas.height);
+        // Send size after canvas is confirmed
+        if (clientRef.current && displayCanvasRef.current) {
+          const width = displayCanvasRef.current.offsetWidth || 1280;
+          const height = displayCanvasRef.current.offsetHeight || 720;
+          console.log("📐 Sending size:", width, "x", height);
 
-          // If canvas is still 0x0 after 3 seconds, there's likely an issue
-          if (canvas.width === 0 || canvas.height === 0) {
-            console.warn("⚠️ Canvas has no content - VM may not be ready or RDP connection failed");
-            setTimeout(() => {
-              const updatedCanvas = displayCanvasRef.current?.querySelector('canvas');
-              if (updatedCanvas && (updatedCanvas.width === 0 || updatedCanvas.height === 0)) {
-                console.error("❌ VM connection failed - no screen data received");
-                setIsConnecting(false);
-              } else if (updatedCanvas) {
-                console.log("✅ Canvas now rendering:", updatedCanvas.width, "x", updatedCanvas.height);
-                setIsConnecting(false);
-              }
-            }, 5000);
-          }
-        } else {
-          console.warn("⚠️ No canvas element found in display");
+          const scale = Math.min(
+            displayCanvasRef.current.offsetWidth / 1024,
+            displayCanvasRef.current.offsetHeight / 768
+          );
+          display.scale(scale);
+
+          clientRef.current.sendSize(width, height, 96);
         }
+
+        setIsConnecting(false);
+      } else {
+        console.log("⏳ Waiting for canvas to be created...");
+        // Retry after a short delay
+        setTimeout(checkCanvas, 500);
       }
-    }, 1000);
+    };
+
+    // Start checking for canvas after a brief delay
+    setTimeout(checkCanvas, 1000);
 
     // Setup keyboard
     const keyboard = new Guacamole.Keyboard(document);
@@ -243,7 +222,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
     mouse.onmouseup = handleMouseState;
     mouse.onmousemove = handleMouseState;
     mouseRef.current = mouse;
-    
+
     // Ensure the display element can receive focus for input
     displayEl.setAttribute('tabindex', '0');
     displayEl.focus();
@@ -253,14 +232,14 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       if (clientRef.current && displayCanvasRef.current) {
         const width = displayCanvasRef.current.offsetWidth || 1280;
         const height = displayCanvasRef.current.offsetHeight || 720;
-        
+
         // Update scale on resize
         const scale = Math.min(
           displayCanvasRef.current.offsetWidth / 1024,
           displayCanvasRef.current.offsetHeight / 768
         );
         display.scale(scale);
-        
+
         clientRef.current.sendSize(width, height, 96);
       }
     };
@@ -415,14 +394,14 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
             const width = displayCanvasRef.current.offsetWidth || 1280;
             const height = displayCanvasRef.current.offsetHeight || 720;
             console.log("📐 Sending size:", width, "x", height);
-            
+
             // Scale the display to fit the container
             const scale = Math.min(
               displayCanvasRef.current.offsetWidth / 1024,
               displayCanvasRef.current.offsetHeight / 768
             );
             display.scale(scale);
-            
+
             clientRef.current.sendSize(width, height, 96);
           }
         }, 1000);
@@ -448,7 +427,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
         mouse.onmouseup = handleMouseState;
         mouse.onmousemove = handleMouseState;
         mouseRef.current = mouse;
-        
+
         // Ensure the display element can receive focus for input
         displayEl.setAttribute('tabindex', '0');
         displayEl.focus();
@@ -675,7 +654,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           )}
           <div 
             ref={displayContainerRef} 
-            className="flex-1"
+            className="flex-1 overflow-hidden"
             style={{ 
               minHeight: 0,
               position: "relative",
@@ -712,7 +691,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           }}
           gutter={() => {
             const gutter = document.createElement('div');
-            gutter.className = "h-full w-2 bg-primary-500/20 hover:bg-primary-500/40 cursor-col-resize transition-colors";
+            gutter.className = "h-full w-100 bg-primary-500/20 hover:bg-primary-500/40 cursor-col-resize transition-colors";
             return gutter;
           }}
         >
@@ -848,122 +827,126 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                 )}
               </div>
             </div>
-            {isConnecting && (
-              <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
-                <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
-                <span className="text-gray-300">Connecting to VM...</span>
-              </div>
-            )}
-            <div 
-              ref={displayContainerRef} 
-              className="flex-1"
-              style={{ 
-                minHeight: 0,
-                position: "relative",
-                backgroundColor: "#000"
-              }} 
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
             >
-              <div 
-                ref={displayCanvasRef} 
-                style={{ 
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  zIndex: 1
-                }} 
+              <Minimize2 className="h-5 w-5 text-gray-400" />
+            </button>
+          </div>
+          {isConnecting && (
+            <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
+              <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
+              <span className="text-gray-300">Connecting to VM...</span>
+            </div>
+          )}
+          <div 
+            ref={displayContainerRef} 
+             className="flex-1 w-full h-full min-h-0 min-w-0 relative"
+              style={{ backgroundColor: "#000" }}
+          >
+            <div 
+              ref={displayCanvasRef} 
+              style={{ 
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1
+              }} 
+            />
+          </div>
+
+        {/* </div> */}
+        {/* Documents Panel */}
+        {showDocuments && documents.length > 0 && (
+          <div className="h-full flex flex-col overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b border-primary-500/10 bg-dark-300">
+              <h2 className="text-lg font-semibold text-primary-300">Lab Documents</h2>
+              <div className="flex items-center space-x-2">
+                {documents.length > 1 && (
+                  <>
+                    <button
+                      onClick={handlePrevDocument}
+                      disabled={currentDocIndex === 0}
+                      className={`p-1 rounded-lg ${currentDocIndex === 0 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <span className="text-sm text-gray-400">
+                      {currentDocIndex + 1} / {documents.length}
+                    </span>
+                    <button
+                      onClick={handleNextDocument}
+                      disabled={currentDocIndex === documents.length - 1}
+                      className={`p-1 rounded-lg ${currentDocIndex === documents.length - 1 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
+                <button 
+                  onClick={() => window.open(`http://localhost:3002/uploads/${extractFileName(documents[currentDocIndex])}`, '_blank')}
+                  className="btn-secondary py-1 px-3 text-sm text-gray-200"
+                >
+                  <ExternalLink className="h-4 w-4 mr-2 text-gray-200" />
+                  Open
+                </button>
+                <button
+                  onClick={() => setShowDocuments(false)}
+                  className="p-1 hover:bg-dark-300 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-grow overflow-auto">
+              <iframe
+                src={`http://localhost:3002/uploads/${extractFileName(documents[currentDocIndex])}`}
+                className="w-full h-full border-0"
+                title="Lab Document"
               />
             </div>
 
-          </div>
-
-          {/* Documents Panel */}
-          {showDocuments && documents.length > 0 && (
-            <div className="h-full flex flex-col overflow-hidden">
-              <div className="flex justify-between items-center p-4 border-b border-primary-500/10 bg-dark-300">
-                <h2 className="text-lg font-semibold text-primary-300">Lab Documents</h2>
-                <div className="flex items-center space-x-2">
-                  {documents.length > 1 && (
-                    <>
-                      <button
-                        onClick={handlePrevDocument}
-                        disabled={currentDocIndex === 0}
-                        className={`p-1 rounded-lg ${currentDocIndex === 0 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
-                      >
-                        <ChevronLeft className="h-5 w-5" />
-                      </button>
-                      <span className="text-sm text-gray-400">
-                        {currentDocIndex + 1} / {documents.length}
-                      </span>
-                      <button
-                        onClick={handleNextDocument}
-                        disabled={currentDocIndex === documents.length - 1}
-                        className={`p-1 rounded-lg ${currentDocIndex === documents.length - 1 ? 'text-gray-500' : 'text-primary-400 hover:bg-primary-500/10'}`}
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </button>
-                    </>
-                  )}
-                  <button 
-                    onClick={() => window.open(`http://localhost:3002/uploads/${extractFileName(documents[currentDocIndex])}`, '_blank')}
-                    className="btn-secondary py-1 px-3 text-sm text-gray-200"
+            <div className="border-t border-primary-500/10 p-4 max-h-40 overflow-y-auto bg-dark-300/50">
+              <h3 className="text-sm font-medium text-gray-400 mb-2">All Documents</h3>
+              <div className="space-y-2">
+                {documents.map((doc, index) => (
+                  <div 
+                    key={index}
+                    onClick={() => setCurrentDocIndex(index)}
+                    className={`p-2 rounded-lg flex items-center justify-between cursor-pointer ${
+                      currentDocIndex === index 
+                        ? 'bg-primary-500/20 text-primary-300' 
+                        : 'bg-dark-300/50 text-gray-300 hover:bg-dark-300'
+                    }`}
                   >
-                    <ExternalLink className="h-4 w-4 mr-2 text-gray-200" />
-                    Open
-                  </button>
-                  <button
-                    onClick={() => setShowDocuments(false)}
-                    className="p-1 hover:bg-dark-300 rounded-lg transition-colors"
-                  >
-                    <X className="h-5 w-5 text-gray-400" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-grow overflow-auto">
-                <iframe
-                  src={`http://localhost:3002/uploads/${extractFileName(documents[currentDocIndex])}`}
-                  className="w-full h-full border-0"
-                  title="Lab Document"
-                />
-              </div>
-
-              <div className="border-t border-primary-500/10 p-4 max-h-40 overflow-y-auto bg-dark-300/50">
-                <h3 className="text-sm font-medium text-gray-400 mb-2">All Documents</h3>
-                <div className="space-y-2">
-                  {documents.map((doc, index) => (
-                    <div 
-                      key={index}
-                      onClick={() => setCurrentDocIndex(index)}
-                      className={`p-2 rounded-lg flex items-center justify-between cursor-pointer ${
-                        currentDocIndex === index 
-                          ? 'bg-primary-500/20 text-primary-300' 
-                          : 'bg-dark-300/50 text-gray-300 hover:bg-dark-300'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2 truncate">
-                        <FileText className="h-4 w-4 flex-shrink-0" />
-                        <span className="text-sm truncate">{extractFileName(doc)}</span>
-                      </div>
-                      <Download 
-                        className="h-4 w-4 text-primary-400 flex-shrink-0" 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(`http://localhost:3002/uploads/${extractFileName(doc)}`, '_blank');
-                        }}
-                      />
+                    <div className="flex items-center space-x-2 truncate">
+                      <FileText className="h-4 w-4 flex-shrink-0" />
+                      <span className="text-sm truncate">{extractFileName(doc)}</span>
                     </div>
-                  ))}
-                </div>
+                    <Download 
+                      className="h-4 w-4 text-primary-400 flex-shrink-0" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(`http://localhost:3002/uploads/${extractFileName(doc)}`, '_blank');
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-        </Split>
-      )}
-    </div>
+          </div>
+        )}
+      </Split>
+    
+      ) 
+      };
+     </div> 
   );
-};
+}

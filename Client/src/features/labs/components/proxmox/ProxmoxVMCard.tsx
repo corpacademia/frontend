@@ -193,15 +193,15 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       else {
         // Start the VM
        const resp = await axios.post(
-    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-    {
-      protocol: "rdp",
-      hostname: "27.111.74.28",
-      port: "50136",
-      username: "Admin",
-      password: "P@ssw0rd",
-    }
-  );
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+        {
+          protocol: "rdp",
+          hostname: "27.111.74.28",
+          port: "50136",
+          username: "Admin",
+          password: "P@ssw0rd",
+        }
+      );
   
       if (resp.data.success) {
         const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
@@ -213,7 +213,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         state: {
           guacUrl: wsUrl,
           vmTitle: vm.title,
-          doc:vm.labguide
+          doc:vm?.labguide
         }
       });
       }
