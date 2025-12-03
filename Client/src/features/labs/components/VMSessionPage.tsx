@@ -826,44 +826,43 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                 )}
               </div>
             </div>
-          </div>
-          {isConnecting && (
-            <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
-              <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
-              <span className="text-gray-300">Connecting to VM...</span>
-            </div>
-          )}
-          <div 
-            ref={displayContainerRef} 
-            className="flex-1 w-full overflow-hidden"
-            style={{ 
-              minHeight: 0,
-              position: "relative",
-              backgroundColor: "#000"
-            }} 
-          >
+            {isConnecting && (
+              <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
+                <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
+                <span className="text-gray-300">Connecting to VM...</span>
+              </div>
+            )}
             <div 
-              ref={displayCanvasRef} 
+              ref={displayContainerRef} 
+              className="flex-1 w-full overflow-hidden"
               style={{ 
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 1
+                minHeight: 0,
+                position: "relative",
+                backgroundColor: "#000"
               }} 
-            />
+            >
+              <div 
+                ref={displayCanvasRef} 
+                style={{ 
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 1
+                }} 
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Documents Panel */}
-        {showDocuments && documents.length > 0 && (
-          <div className="h-full flex flex-col overflow-hidden">
+          {/* Documents Panel */}
+          {showDocuments && documents.length > 0 && (
+            <div className="h-full flex flex-col overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b border-primary-500/10 bg-dark-300">
               <h2 className="text-lg font-semibold text-primary-300">Lab Documents</h2>
               <div className="flex items-center space-x-2">
