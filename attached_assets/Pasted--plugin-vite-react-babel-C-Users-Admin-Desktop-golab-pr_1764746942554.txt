@@ -1,0 +1,59 @@
+[plugin:vite:react-babel] C:\Users\Admin\Desktop\golab_project\Client\src\features\labs\components\VMSessionPage.tsx: Unexpected token (862:8)
+  865 |         {showDocuments && documents.length > 0 && (
+C:/Users/Admin/Desktop/golab_project/Client/src/features/labs/components/VMSessionPage.tsx:862:8
+876|                      >
+877|                        <ChevronLeft className="h-5 w-5" />
+878|                      </button>
+   |                              ^
+879|                      <span className="text-sm text-gray-400">
+880|                        {currentDocIndex + 1} / {documents.length}
+    at constructor (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:359:19)
+    at TypeScriptParserMixin.raise (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:3327:19)
+    at TypeScriptParserMixin.unexpected (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:3347:16)
+    at TypeScriptParserMixin.checkExpressionErrors (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:3734:12)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10528:12)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:9598:20)
+    at TypeScriptParserMixin.parseExpressionBase (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10452:23)
+    at C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10448:39
+    at TypeScriptParserMixin.allowInAnd (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:12069:12)
+    at TypeScriptParserMixin.parseExpression (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10448:17)
+    at TypeScriptParserMixin.jsxParseExpressionContainer (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:6805:31)
+    at TypeScriptParserMixin.jsxParseElementAt (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:6884:36)
+    at TypeScriptParserMixin.jsxParseElement (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:6922:17)
+    at TypeScriptParserMixin.parseExprAtom (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:6932:19)
+    at TypeScriptParserMixin.parseExprSubscripts (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10734:23)
+    at TypeScriptParserMixin.parseUpdate (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10719:21)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10699:23)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:9649:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10553:61)
+    at TypeScriptParserMixin.parseExprOps (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10558:23)
+    at TypeScriptParserMixin.parseMaybeConditional (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10535:23)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10498:21)
+    at C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:9587:39
+    at TypeScriptParserMixin.tryParse (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:3665:20)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:9587:18)
+    at C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10468:39
+    at TypeScriptParserMixin.allowInAnd (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:12069:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10468:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:11328:28)
+    at TypeScriptParserMixin.parseExprAtom (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10982:23)
+    at TypeScriptParserMixin.parseExprAtom (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:6937:20)
+    at TypeScriptParserMixin.parseExprSubscripts (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10734:23)
+    at TypeScriptParserMixin.parseUpdate (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10719:21)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10699:23)
+    at TypeScriptParserMixin.parseMaybeUnary (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:9649:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10553:61)
+    at TypeScriptParserMixin.parseExprOps (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10558:23)
+    at TypeScriptParserMixin.parseMaybeConditional (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10535:23)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10498:21)
+    at TypeScriptParserMixin.parseMaybeAssign (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:9598:20)
+    at TypeScriptParserMixin.parseExpressionBase (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10452:23)
+    at C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10448:39
+    at TypeScriptParserMixin.allowInAnd (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:12064:16)
+    at TypeScriptParserMixin.parseExpression (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:10448:17)
+    at TypeScriptParserMixin.parseReturnStatement (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:12755:28)
+    at TypeScriptParserMixin.parseStatementContent (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:12406:21)
+    at TypeScriptParserMixin.parseStatementContent (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:9321:18)
+    at TypeScriptParserMixin.parseStatementLike (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:12375:17)
+    at TypeScriptParserMixin.parseStatementListItem (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:12355:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (C:\Users\Admin\Desktop\golab_project\client\node_modules\@babel\parser\lib\index.js:12929:61
