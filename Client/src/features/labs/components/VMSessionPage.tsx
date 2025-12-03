@@ -826,12 +826,6 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                 )}
               </div>
             </div>
-            <button
-              onClick={() => setIsFullscreen(false)}
-              className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
-            >
-              <Minimize2 className="h-5 w-5 text-gray-400" />
-            </button>
           </div>
           {isConnecting && (
             <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
