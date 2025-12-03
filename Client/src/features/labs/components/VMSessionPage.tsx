@@ -826,46 +826,46 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                 )}
               </div>
             </div>
-              <button
-                onClick={() => setIsFullscreen(false)}
-                className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
-              >
-                <Minimize2 className="h-5 w-5 text-gray-400" />
-              </button>
-            </div>
-            {isConnecting && (
-              <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
-                <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
-                <span className="text-gray-300">Connecting to VM...</span>
-              </div>
-            )}
-            <div 
-              ref={displayContainerRef} 
-              className="flex-1 w-full overflow-hidden"
-              style={{ 
-                minHeight: 0,
-                position: "relative",
-                backgroundColor: "#000"
-              }} 
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
             >
-              <div 
-                ref={displayCanvasRef} 
-                style={{ 
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  zIndex: 1
-                }} 
-              />
-            </div>
+              <Minimize2 className="h-5 w-5 text-gray-400" />
+            </button>
           </div>
+          {isConnecting && (
+            <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
+              <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
+              <span className="text-gray-300">Connecting to VM...</span>
+            </div>
+          )}
+          <div 
+            ref={displayContainerRef} 
+            className="flex-1 w-full overflow-hidden"
+            style={{ 
+              minHeight: 0,
+              position: "relative",
+              backgroundColor: "#000"
+            }} 
+          >
+            <div 
+              ref={displayCanvasRef} 
+              style={{ 
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1
+              }} 
+            />
+          </div>
+        </div>
 
         {/* Documents Panel */}
         {showDocuments && documents.length > 0 && (
