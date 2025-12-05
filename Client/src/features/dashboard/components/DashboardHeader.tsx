@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../store/authStore';
-import { Bell, Settings, LogOut, User, ChevronDown, ShoppingCart, X, Edit, CreditCard } from 'lucide-react';
+import { Bell, Settings, LogOut, User, ChevronDown, ShoppingCart, X, Edit, CreditCard, Building2 } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import { OrganizationSwitcher } from './OrganizationSwitcher';
 import axios from 'axios';
@@ -15,11 +15,10 @@ export const DashboardHeader: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
-  // const [cartItems, setCartItems] = useState<any[]>([]);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
-  // const [isLoadingCart, setIsLoadingCart] = useState(false);
   const [editingCartItem, setEditingCartItem] = useState<any>(null);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [organizationData, setOrganizationData] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { catalogues, isLoading, error, fetchAllCatalogues } = useCatalogueStore();
   const {
@@ -32,10 +31,37 @@ export const DashboardHeader: React.FC = () => {
     proceedToCheckout,
   } = useCartStore();
 
+  // Extract filename from path
+  const getUploadedFilePath = (fullPath: string) => {
+    const normalizedPath = fullPath.replace(/\\/g, "/");
+    const uploadIndex = normalizedPath.indexOf("uploads/");
+    if (uploadIndex === -1) return null;
+    return normalizedPath.substring(uploadIndex + 8);
+  };
+
 
   useEffect(() => {
     fetchAllCatalogues();
   }, []);
+  useEffect(() => {
+    const fetchOrganizationData = async () => {
+      if (!isAuthenticated || !user?.organization) return;
+      
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
+          org_id: user?.org_id
+        });
+        
+        if (response.data.success) {
+          setOrganizationData(response.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch organization data:', error);
+      }
+    };
+
+    fetchOrganizationData();
+  }, [isAuthenticated, user?.organization]);
   // useEffect(()=>{
   //    const fetchCatalogues = async () => {
   //         try {
@@ -182,11 +208,39 @@ export const DashboardHeader: React.FC = () => {
     const match = filePath.match(/[^\\\/]+$/);
     return match ? match[0] : null;
   };
-
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-dark-200 border-b border-dark-300 h-16">
       <div className="flex items-center justify-between h-full px-4 sm:px-6">
         <div className="flex items-center space-x-2 sm:space-x-4">
+          {/* Organization Logo */}
+          {isAuthenticated && organizationData?.logo && (
+            <div 
+              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg border"
+              style={{
+                borderColor: organizationData.branding_primary_color 
+                  ? `${organizationData.branding_primary_color}40` 
+                  : 'rgba(139, 92, 246, 0.2)',
+                backgroundColor: organizationData.branding_primary_color 
+                  ? `${organizationData.branding_primary_color}10` 
+                  : 'rgba(139, 92, 246, 0.1)'
+              }}
+            >
+              <img 
+                src={`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/uploads/${extractFileName(organizationData.logo)}`}
+                alt={organizationData.organization_name}
+                className="h-8 w-8 object-contain rounded"
+              />
+              <span 
+                className="text-sm font-medium hidden md:block"
+                style={{
+                  color: organizationData.branding_primary_color || '#8b5cf6'
+                }}
+              >
+                {organizationData.organization_name}
+              </span>
+            </div>
+          )}
+          
           <h1 className="text-lg sm:text-xl font-bold">
             <GradientText>Dashboard</GradientText>
           </h1>

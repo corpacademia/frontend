@@ -39,7 +39,6 @@ export const Header = () => {
     if (uploadIndex === -1) return null;
     return normalizedPath.substring(uploadIndex + 8);
   };
-
   const fetchCartItems = async () => {
     if (!isAuthenticated) return;
 
