@@ -15,7 +15,8 @@ import {
   User,
   ShoppingCart,
   X,
-  Edit
+  Edit,
+  Building2
 } from 'lucide-react';
 import { ChevronDown } from 'lucide-react';
 import axios from 'axios';
@@ -29,7 +30,15 @@ export const Header = () => {
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [isLoadingCart, setIsLoadingCart] = useState(false);
   const [editingCartItem, setEditingCartItem] = useState<any>(null);
+  const [organizationData, setOrganizationData] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const getUploadedFilePath = (fullPath: string) => {
+    const normalizedPath = fullPath.replace(/\\/g, "/");
+    const uploadIndex = normalizedPath.indexOf("uploads/");
+    if (uploadIndex === -1) return null;
+    return normalizedPath.substring(uploadIndex + 8);
+  };
 
   const fetchCartItems = async () => {
     if (!isAuthenticated) return;
@@ -100,6 +109,7 @@ export const Header = () => {
   useEffect(() => {
     if (isAuthenticated) {
       fetchCartItems();
+      fetchOrganizationData();
     }
 
     // Listen for cart updates
@@ -116,6 +126,22 @@ export const Header = () => {
     };
   }, [isAuthenticated]);
 
+  const fetchOrganizationData = async () => {
+    if (!user?.organization_id) return;
+    
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
+        org_id: user.organization_id
+      });
+      
+      if (response.data.success) {
+        setOrganizationData(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching organization data:', error);
+    }
+  };
+
   const handleProfileClick = () => {
     setIsDropdownOpen(false);
     navigate('/profile');
@@ -131,7 +157,36 @@ export const Header = () => {
     <header className="sticky top-0 z-40 bg-dark-200 border-b border-dark-300">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex">
+          <div className="flex items-center space-x-4">
+            {/* Organization Logo */}
+            {isAuthenticated && organizationData?.logo && (
+              <div 
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg border"
+                style={{
+                  borderColor: organizationData.branding_primary_color 
+                    ? `${organizationData.branding_primary_color}40` 
+                    : 'rgba(139, 92, 246, 0.2)',
+                  backgroundColor: organizationData.branding_primary_color 
+                    ? `${organizationData.branding_primary_color}10` 
+                    : 'rgba(139, 92, 246, 0.1)'
+                }}
+              >
+                <img 
+                  src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${getUploadedFilePath(organizationData.logo)}`}
+                  alt={organizationData.organization_name}
+                  className="h-8 w-8 object-contain rounded"
+                />
+                <span 
+                  className="text-sm font-medium hidden md:block"
+                  style={{
+                    color: organizationData.branding_primary_color || '#8b5cf6'
+                  }}
+                >
+                  {organizationData.organization_name}
+                </span>
+              </div>
+            )}
+
             <Link to="/" className="flex items-center">
               <BeakerIcon className="h-8 w-8 text-primary-400" />
               <span className="ml-2 text-xl font-bold bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">

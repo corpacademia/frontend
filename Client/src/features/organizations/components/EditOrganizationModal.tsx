@@ -24,7 +24,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     website: '',
     type: 'enterprise',
     status: 'active',
-    orgId: ''
+    orgId: '',
+    branding_primary_color: '#8b5cf6',
+    branding_secondary_color: '#06b6d4'
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -65,7 +67,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
             website: orgData.website_url || '',
             type: orgData.org_type || 'enterprise',
             status: orgData.status || 'active',
-            orgId: orgData.org_id || ''
+            orgId: orgData.org_id || '',
+            branding_primary_color: orgData.branding_primary_color || '#8b5cf6',
+            branding_secondary_color: orgData.branding_secondary_color || '#06b6d4'
           });
 
           if (orgData.logo) {
@@ -124,6 +128,8 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       formDataToSend.append('org_type', formData.type);
       formDataToSend.append('status', formData.status);
       formDataToSend.append('org_id', formData.orgId);
+      formDataToSend.append('branding_primary_color', formData.branding_primary_color);
+      formDataToSend.append('branding_secondary_color', formData.branding_secondary_color);
 
       if (logo) {
         formDataToSend.append('logo', logo);
@@ -324,6 +330,56 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                 className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                          text-gray-300 focus:border-primary-500/40 focus:outline-none"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Primary Brand Color
+              </label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  name="branding_primary_color"
+                  value={formData.branding_primary_color}
+                  onChange={handleChange}
+                  className="h-10 w-16 rounded border border-primary-500/20 bg-dark-400/50 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  name="branding_primary_color"
+                  value={formData.branding_primary_color}
+                  onChange={handleChange}
+                  placeholder="#8b5cf6"
+                  className="flex-1 px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Used for primary UI elements</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Secondary Brand Color
+              </label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  name="branding_secondary_color"
+                  value={formData.branding_secondary_color}
+                  onChange={handleChange}
+                  className="h-10 w-16 rounded border border-primary-500/20 bg-dark-400/50 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  name="branding_secondary_color"
+                  value={formData.branding_secondary_color}
+                  onChange={handleChange}
+                  placeholder="#06b6d4"
+                  className="flex-1 px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Used for accents and highlights</p>
             </div>
 
             <div className="md:col-span-2">

@@ -22,6 +22,8 @@ interface FormData {
   type: 'training' | 'enterprise' | 'education';
   orgId: string;
   logo: File | null;
+  branding_primary_color: string;
+  branding_secondary_color: string;
 }
 
 export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
@@ -38,7 +40,9 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     website: '',
     type: 'enterprise',
     orgId: '',
-    logo: null
+    logo: null,
+    branding_primary_color: '#8b5cf6',
+    branding_secondary_color: '#06b6d4'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -117,6 +121,8 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
       formDataToSend.append('org_type', formData.type);
       formDataToSend.append('org_id', formData.orgId);
       formDataToSend.append('admin_id', (admin as any).id);
+      formDataToSend.append('branding_primary_color', formData.branding_primary_color);
+      formDataToSend.append('branding_secondary_color', formData.branding_secondary_color);
       if (formData.logo) formDataToSend.append('logo', formData.logo);
 
       const response = await axios.post(
@@ -281,6 +287,53 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
               rows={2}
               className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm"
             />
+          </div>
+
+          {/* Branding Colors */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Primary Brand Color</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  name="branding_primary_color"
+                  value={formData.branding_primary_color}
+                  onChange={handleChange}
+                  className="h-10 w-16 rounded border border-primary-500/20 bg-dark-400/50 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  name="branding_primary_color"
+                  value={formData.branding_primary_color}
+                  onChange={handleChange}
+                  placeholder="#8b5cf6"
+                  className="flex-1 px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Used for primary UI elements</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Secondary Brand Color</label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  name="branding_secondary_color"
+                  value={formData.branding_secondary_color}
+                  onChange={handleChange}
+                  className="h-10 w-16 rounded border border-primary-500/20 bg-dark-400/50 cursor-pointer"
+                />
+                <input
+                  type="text"
+                  name="branding_secondary_color"
+                  value={formData.branding_secondary_color}
+                  onChange={handleChange}
+                  placeholder="#06b6d4"
+                  className="flex-1 px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Used for accents and highlights</p>
+            </div>
           </div>
 
           {/* Logo Upload */}
