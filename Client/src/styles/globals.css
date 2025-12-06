@@ -13,11 +13,11 @@
   }
 
   /* Dark mode styles */
-  .dark body {
+  html.dark body {
     @apply bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white;
   }
 
-  .dark body::before {
+  html.dark body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -34,11 +34,11 @@
   }
 
   /* Light mode styles */
-  .light body {
+  html.light body {
     @apply bg-gradient-to-b from-light-50 via-light-100 to-light-200 text-gray-900;
   }
 
-  .light body::before {
+  html.light body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -60,49 +60,53 @@
   }
 
   /* Dark mode text colors */
-  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
     @apply text-white;
   }
 
-  .dark p {
+  html.dark p {
     @apply text-gray-100;
   }
 
-  .dark label {
+  html.dark label {
     @apply text-white;
   }
 
-  .dark input, .dark textarea, .dark select {
+  html.dark input, html.dark textarea, html.dark select {
     @apply text-white;
   }
 
-  .dark span {
+  html.dark span {
+    @apply text-gray-100;
+  }
+
+  html.dark div {
     @apply text-gray-100;
   }
 
   /* Light mode text colors */
-  .light h1, .light h2, .light h3, .light h4, .light h5, .light h6 {
+  html.light h1, html.light h2, html.light h3, html.light h4, html.light h5, html.light h6 {
     @apply text-gray-900;
   }
 
-  .light p {
+  html.light p {
     @apply text-gray-800;
   }
 
-  .light label {
+  html.light label {
     @apply text-gray-900;
   }
 
-  .light input, .light textarea, .light select {
+  html.light input, html.light textarea, html.light select {
     @apply text-gray-900;
   }
 
-  .light span {
+  html.light span {
     @apply text-gray-800;
   }
 
-  div {
-    @apply text-gray-100;
+  html.light div {
+    @apply text-gray-800;
   }
 }
 
