@@ -1,17 +1,24 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useThemeStore } from '../../store/themeStore';
 
 export const ThemeToggle: React.FC = () => {
   const { mode, toggleMode } = useThemeStore();
 
+  // Ensure theme is applied on mount
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('dark', 'light');
+    root.classList.add(mode);
+    root.setAttribute('data-theme', mode);
+  }, [mode]);
+
   return (
     <button
       onClick={toggleMode}
-      className="p-2 rounded-lg bg-dark-400/50 dark:bg-dark-400/50 light:bg-light-200
-                 border border-primary-500/20 hover:border-primary-500/40 
-                 transition-all duration-200 group"
+      className="p-2 rounded-lg bg-dark-400/50 border border-primary-500/20 
+                 hover:border-primary-500/40 transition-all duration-200 group"
       aria-label="Toggle theme"
     >
       {mode === 'dark' ? (

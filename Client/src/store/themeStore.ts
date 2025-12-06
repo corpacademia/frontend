@@ -11,8 +11,12 @@ interface ThemeState {
 }
 
 const applyTheme = (mode: ThemeMode) => {
-  document.documentElement.classList.remove('dark', 'light');
-  document.documentElement.classList.add(mode);
+  const root = document.documentElement;
+  root.classList.remove('dark', 'light');
+  root.classList.add(mode);
+  
+  // Also set as data attribute for additional compatibility
+  root.setAttribute('data-theme', mode);
 };
 
 export const useThemeStore = create<ThemeState>()(
@@ -34,8 +38,15 @@ export const useThemeStore = create<ThemeState>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           applyTheme(state.mode);
+        } else {
+          // Apply default theme if no stored state
+          applyTheme('dark');
         }
       },
     }
   )
 );
+
+// Apply theme immediately on module load
+const initialState = useThemeStore.getState();
+applyTheme(initialState.mode);
