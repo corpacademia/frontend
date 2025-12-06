@@ -85,6 +85,16 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const mode = useThemeStore((state) => state.mode);
+
+  useEffect(() => {
+    // Force apply theme on app mount
+    const root = document.documentElement;
+    root.classList.remove('dark', 'light');
+    root.classList.add(mode);
+    root.setAttribute('data-theme', mode);
+  }, [mode]);
+
   return (
     <Router>
       <AppContent />
