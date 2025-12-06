@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { ChevronDown } from 'lucide-react';
 import axios from 'axios';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 export const Header = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -127,12 +128,12 @@ export const Header = () => {
 
   const fetchOrganizationData = async () => {
     if (!user?.organization_id) return;
-    
+
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
         org_id: user.organization_id
       });
-      
+
       if (response.data.success) {
         setOrganizationData(response.data.data);
       }
@@ -235,7 +236,7 @@ export const Header = () => {
                   <LayoutDashboardIcon className="h-4 w-4 mr-1" />
                   Dashboard
                 </Link>
-                
+
                 {/* Cart Button */}
                 <button
                   onClick={() => setIsCartModalOpen(true)}
@@ -250,7 +251,7 @@ export const Header = () => {
                     </span>
                   )}
                 </button>
-                
+
                 <Link 
                   to="/profile" 
                   className="p-1 rounded-full text-gray-400 hover:text-primary-300 bg-dark-300 hover:bg-dark-100/50 transition-colors"

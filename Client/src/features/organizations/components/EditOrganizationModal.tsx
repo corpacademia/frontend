@@ -25,8 +25,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     type: 'enterprise',
     status: 'active',
     orgId: '',
-    branding_primary_color: '#8b5cf6',
-    branding_secondary_color: '#06b6d4'
+    branding_primary_color: '#0c8ee7',
+    branding_secondary_color: '#8257fe',
+    theme_mode: 'dark' as 'dark' | 'light'
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -41,16 +42,16 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
     const getUploadedFilePath = (fullPath: string) => {
       const normalizedPath = fullPath.replace(/\\/g, "/"); // Convert \ to /
       const uploadIndex = normalizedPath.indexOf("uploads/");
-      
+
       if (uploadIndex === -1) return null; // If "uploads/" not found, return null
-    
+
       return normalizedPath.substring(uploadIndex + 8); // Extract everything after "uploads/"
     };
 
   useEffect(() => {
     const fetchOrgDetails = async () => {
       if (!isOpen || !organization?.id) return;
-      
+
       setIsLoading(true);
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
@@ -68,8 +69,9 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
             type: orgData.org_type || 'enterprise',
             status: orgData.status || 'active',
             orgId: orgData.org_id || '',
-            branding_primary_color: orgData.branding_primary_color || '#8b5cf6',
-            branding_secondary_color: orgData.branding_secondary_color || '#06b6d4'
+            branding_primary_color: orgData.branding_primary_color || '#0c8ee7',
+            branding_secondary_color: orgData.branding_secondary_color || '#8257fe',
+            theme_mode: orgData.theme_mode || 'dark'
           });
 
           if (orgData.logo) {
@@ -130,6 +132,8 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
       formDataToSend.append('org_id', formData.orgId);
       formDataToSend.append('branding_primary_color', formData.branding_primary_color);
       formDataToSend.append('branding_secondary_color', formData.branding_secondary_color);
+      formDataToSend.append('theme_mode', formData.theme_mode);
+
 
       if (logo) {
         formDataToSend.append('logo', logo);
@@ -349,7 +353,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   name="branding_primary_color"
                   value={formData.branding_primary_color}
                   onChange={handleChange}
-                  placeholder="#8b5cf6"
+                  placeholder="#0c8ee7"
                   className="flex-1 px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                            text-gray-300 focus:border-primary-500/40 focus:outline-none"
                 />
@@ -374,7 +378,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   name="branding_secondary_color"
                   value={formData.branding_secondary_color}
                   onChange={handleChange}
-                  placeholder="#06b6d4"
+                  placeholder="#8257fe"
                   className="flex-1 px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                            text-gray-300 focus:border-primary-500/40 focus:outline-none"
                 />
@@ -419,6 +423,22 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Theme Mode
+              </label>
+              <select
+                name="theme_mode"
+                value={formData.theme_mode}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none"
+              >
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+              </select>
             </div>
           </div>
 
@@ -467,7 +487,7 @@ export const EditOrganizationModal: React.FC<EditOrganizationModalProps> = ({
               )}
             </button>
             </GradientText>
-           
+
           </div>
         </form>
       </div>

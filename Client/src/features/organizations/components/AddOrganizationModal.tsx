@@ -24,6 +24,7 @@ interface FormData {
   logo: File | null;
   branding_primary_color: string;
   branding_secondary_color: string;
+  theme_mode: 'dark' | 'light'; // Added theme_mode
 }
 
 export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
@@ -42,7 +43,8 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
     orgId: '',
     logo: null,
     branding_primary_color: '#8b5cf6',
-    branding_secondary_color: '#06b6d4'
+    branding_secondary_color: '#06b6d4',
+    theme_mode: 'dark' // Initializing theme_mode to 'dark'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,6 +125,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
       formDataToSend.append('admin_id', (admin as any).id);
       formDataToSend.append('branding_primary_color', formData.branding_primary_color);
       formDataToSend.append('branding_secondary_color', formData.branding_secondary_color);
+      formDataToSend.append('theme_mode', formData.theme_mode); // Sending theme_mode
       if (formData.logo) formDataToSend.append('logo', formData.logo);
 
       const response = await axios.post(
@@ -158,7 +161,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6">
       <div className="bg-dark-200 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl border border-primary-500/20">
-        
+
         {/* Header */}
         <div className="flex justify-between items-center p-4 sm:p-5 border-b border-primary-500/10">
           <h2 className="text-lg sm:text-xl font-semibold">
@@ -175,7 +178,7 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            
+
             {/* Organization Name */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">Organization Name</label>
@@ -335,6 +338,38 @@ export const AddOrganizationModal: React.FC<AddOrganizationModalProps> = ({
               <p className="text-xs text-gray-400 mt-1">Used for accents and highlights</p>
             </div>
           </div>
+
+          {/* Theme Mode Toggle (Example) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Theme Mode</label>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    name="theme_mode"
+                    value="dark"
+                    checked={formData.theme_mode === 'dark'}
+                    onChange={handleChange}
+                    className="form-radio h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-600 rounded-full bg-dark-400"
+                  />
+                  <label htmlFor="dark-mode" className="ml-2 text-sm text-gray-300">Dark</label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    name="theme_mode"
+                    value="light"
+                    checked={formData.theme_mode === 'light'}
+                    onChange={handleChange}
+                    className="form-radio h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-600 rounded-full bg-dark-400"
+                  />
+                  <label htmlFor="light-mode" className="ml-2 text-sm text-gray-300">Light</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
 
           {/* Logo Upload */}
           <div>
