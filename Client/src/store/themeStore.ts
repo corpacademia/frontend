@@ -17,6 +17,11 @@ const applyTheme = (mode: ThemeMode) => {
   
   // Also set as data attribute for additional compatibility
   root.setAttribute('data-theme', mode);
+  
+  // Force a reflow to ensure styles are applied
+  void root.offsetHeight;
+  
+  console.log('Theme applied:', mode, 'Classes:', root.className);
 };
 
 export const useThemeStore = create<ThemeState>()(

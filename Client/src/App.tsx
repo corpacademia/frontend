@@ -19,12 +19,6 @@ const AppContent: React.FC = () => {
   const { mode, setMode } = useThemeStore();
   const navigate = useNavigate();
 
-  // Apply theme on mount
-  useEffect(() => {
-    document.documentElement.classList.remove('dark', 'light');
-    document.documentElement.classList.add(mode);
-  }, [mode]);
-
   useEffect(() => {
     if (!user) return;
       const socket = initSocket(user.id, user.org_id);
@@ -34,12 +28,6 @@ const AppContent: React.FC = () => {
       });
 
   }, [user]);
-
-  // Load organization branding colors
-  // Initialize theme on mount
-  useEffect(() => {
-    setMode(mode);
-  }, []);
 
   // Load organization branding colors and theme
   useEffect(() => {
@@ -85,16 +73,6 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const mode = useThemeStore((state) => state.mode);
-
-  useEffect(() => {
-    // Force apply theme on app mount
-    const root = document.documentElement;
-    root.classList.remove('dark', 'light');
-    root.classList.add(mode);
-    root.setAttribute('data-theme', mode);
-  }, [mode]);
-
   return (
     <Router>
       <AppContent />
