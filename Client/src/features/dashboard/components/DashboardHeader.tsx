@@ -10,6 +10,7 @@ import { useCatalogueStore } from '../../../store/catalogueStore';
 import { useCartStore } from '../../../store/useCartStore';
 import { NotificationDropdown } from '../../../components/notifications/NotificationDropdown';
 import { SettingsModal } from '../../../components/modals/SettingsModal';
+import { ThemeToggle } from '../../../components/ui/ThemeToggle';
 
 export const DashboardHeader: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuthStore();
@@ -253,6 +254,9 @@ export const DashboardHeader: React.FC = () => {
 
           {/* Notifications */}
           <NotificationDropdown />
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
 
           {/* Cart Button */}
           <button
