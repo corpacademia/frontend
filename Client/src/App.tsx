@@ -73,8 +73,17 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  const mode = useThemeStore((state) => state.mode);
+  
   return (
     <Router>
+      {/* Debug indicator - remove after testing */}
+      <div className="fixed top-0 left-0 z-[9999] px-3 py-1 text-xs font-bold
+                      dark:bg-yellow-500 dark:text-black
+                      light:bg-blue-500 light:text-white
+                      bg-blue-500 text-white">
+        Current Theme: {mode}
+      </div>
       <AppContent />
     </Router>
   );

@@ -6,17 +6,17 @@
 
 @layer base {
   :root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f4f6f8;
-    --bg-tertiary: #e9ecef;
+    --bg-primary: #f8f9fa;
+    --bg-secondary: #e9ecef;
+    --bg-tertiary: #dee2e6;
     --text-primary: #212529;
     --text-secondary: #495057;
   }
 
   .dark {
-    --bg-primary: #111827;
-    --bg-secondary: #1f2937;
-    --bg-tertiary: #111827;
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #1a1f35;
+    --bg-tertiary: #0f1420;
     --text-primary: #ffffff;
     --text-secondary: #e5e7eb;
   }
