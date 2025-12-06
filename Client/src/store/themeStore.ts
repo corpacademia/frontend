@@ -10,24 +10,32 @@ interface ThemeState {
   toggleMode: () => void;
 }
 
+const applyTheme = (mode: ThemeMode) => {
+  document.documentElement.classList.remove('dark', 'light');
+  document.documentElement.classList.add(mode);
+};
+
 export const useThemeStore = create<ThemeState>()(
   persist(
     (set) => ({
       mode: 'dark',
       setMode: (mode) => {
         set({ mode });
-        document.documentElement.classList.toggle('dark', mode === 'dark');
-        document.documentElement.classList.toggle('light', mode === 'light');
+        applyTheme(mode);
       },
       toggleMode: () => set((state) => {
         const newMode = state.mode === 'dark' ? 'light' : 'dark';
-        document.documentElement.classList.toggle('dark', newMode === 'dark');
-        document.documentElement.classList.toggle('light', newMode === 'light');
+        applyTheme(newMode);
         return { mode: newMode };
       }),
     }),
     {
       name: 'theme-storage',
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          applyTheme(state.mode);
+        }
+      },
     }
   )
 );

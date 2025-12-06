@@ -9,6 +9,7 @@ import { useNotificationStore } from './store/notificationStore';
 import { useBrandingStore } from './store/brandingStore';
 import { useThemeStore } from './store/themeStore';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const AppContent: React.FC = () => {
   const { isSessionExpired, closeSessionExpiredModal } = useSessionExpiry();
@@ -16,15 +17,22 @@ const AppContent: React.FC = () => {
   const {addNotification} = useNotificationStore();
   const { setBrandingColors } = useBrandingStore();
   const { mode, setMode } = useThemeStore();
+  const navigate = useNavigate();
+
+  // Apply theme on mount
+  useEffect(() => {
+    document.documentElement.classList.remove('dark', 'light');
+    document.documentElement.classList.add(mode);
+  }, [mode]);
 
   useEffect(() => {
     if (!user) return;
       const socket = initSocket(user.id, user.org_id);
-      
+
       socket.on("notification", (data) => {
         addNotification(data);
       });
-   
+
   }, [user]);
 
   // Load organization branding colors
@@ -37,19 +45,19 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const loadBrandingColors = async () => {
       if (!isAuthenticated || !user?.org_id) return;
-      
+
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
           org_id: user.org_id
         });
-        
+
         if (response.data.success) {
           const orgData = response.data.data;
           setBrandingColors(
             orgData.branding_primary_color,
             orgData.branding_secondary_color
           );
-          
+
           // Set organization's preferred theme if available
           if (orgData.theme_mode) {
             setMode(orgData.theme_mode);
@@ -66,9 +74,9 @@ const AppContent: React.FC = () => {
   return (
     <>
       {isSessionExpired && (
-        <SessionExpiredModal 
-          isOpen={isSessionExpired} 
-          onClose={closeSessionExpiredModal} 
+        <SessionExpiredModal
+          isOpen={isSessionExpired}
+          onClose={closeSessionExpiredModal}
         />
       )}
       <AppRoutes />
