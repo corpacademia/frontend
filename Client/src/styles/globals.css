@@ -13,11 +13,12 @@
   }
 
   /* Dark mode styles */
-  html.dark body {
-    @apply bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white;
+  .dark body {
+    background: linear-gradient(to bottom, #111827, #1f2937, #111827);
+    color: #ffffff;
   }
 
-  html.dark body::before {
+  .dark body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -34,11 +35,12 @@
   }
 
   /* Light mode styles */
-  html.light body {
-    @apply bg-gradient-to-b from-light-50 via-light-100 to-light-200 text-gray-900;
+  .light body {
+    background: linear-gradient(to bottom, #ffffff, #f4f6f8, #e9ecef);
+    color: #212529;
   }
 
-  html.light body::before {
+  .light body::before {
     content: '';
     position: fixed;
     top: 0;
@@ -57,56 +59,6 @@
   body > * {
     position: relative;
     z-index: 1;
-  }
-
-  /* Dark mode text colors */
-  html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
-    @apply text-white;
-  }
-
-  html.dark p {
-    @apply text-gray-100;
-  }
-
-  html.dark label {
-    @apply text-white;
-  }
-
-  html.dark input, html.dark textarea, html.dark select {
-    @apply text-white;
-  }
-
-  html.dark span {
-    @apply text-gray-100;
-  }
-
-  html.dark div {
-    @apply text-gray-100;
-  }
-
-  /* Light mode text colors */
-  html.light h1, html.light h2, html.light h3, html.light h4, html.light h5, html.light h6 {
-    @apply text-gray-900;
-  }
-
-  html.light p {
-    @apply text-gray-800;
-  }
-
-  html.light label {
-    @apply text-gray-900;
-  }
-
-  html.light input, html.light textarea, html.light select {
-    @apply text-gray-900;
-  }
-
-  html.light span {
-    @apply text-gray-800;
-  }
-
-  html.light div {
-    @apply text-gray-800;
   }
 }
 
