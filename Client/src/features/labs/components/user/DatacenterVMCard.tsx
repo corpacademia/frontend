@@ -128,29 +128,57 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
           // Update local state
           lab.isrunning = true;
           // Navigate to VM session page
-        const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
-        Protocol: lab.protocol || 'RDP',
-        VmId:lab.userscredentials[0].id,
-        Ip: lab.userscredentials[0].ip,
-        userName: lab.userscredentials[0].username,
-        password: lab.userscredentials[0].password,
-        port: lab.userscredentials[0].port,
+      //   const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
+      //   Protocol: lab.protocol || 'RDP',
+      //   VmId:lab.userscredentials[0].id,
+      //   Ip: lab.userscredentials[0].ip,
+      //   userName: lab.userscredentials[0].username,
+      //   password: lab.userscredentials[0].password,
+      //   port: lab.userscredentials[0].port,
 
-      });
+      // });
 
-      if (tokenResponse.data.success && tokenResponse.data.token) {
-        // Then connect to VM using the token
-        const guacUrl = `${lab?.guacamole_url}?token=${tokenResponse.data.token.result}`;
-          navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
-            state: { 
-              guacUrl,
-              vmTitle: lab.title,
-              vmId: lab.lab_id,
-              doc:lab.userguide,
-              credentials:lab.userscredentials
-            }
-          });
-        } else {
+      // if (tokenResponse.data.success && tokenResponse.data.token) {
+      //   // Then connect to VM using the token
+      //   const guacUrl = `${lab?.guacamole_url}?token=${tokenResponse.data.token.result}`;
+      //     navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
+      //       state: { 
+      //         guacUrl,
+      //         vmTitle: lab.title,
+      //         vmId: lab.lab_id,
+      //         doc:lab.userguide,
+      //         credentials:lab.userscredentials
+      //       }
+      //     });
+      //   } 
+       const resp = await axios.post(
+                           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                           {
+                             protocol: lab.protocol  || 'RDP',
+                             hostname:lab.userscredentials[0].ip,
+                             port:lab.userscredentials[0].port,
+                             username: lab.userscredentials[0].username,
+                             password:lab.userscredentials[0].password,
+                           }
+                         );
+                     
+                         if (resp.data.success) {
+                           const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                           // Build full ws url for guacamole-common-js
+                           const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                           const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                           const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                           navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
+                           state: {
+                             guacUrl:wsUrl,
+                            vmTitle: lab.title,
+                            vmId: lab.lab_id,
+                            doc:lab.userguide,
+                            credentials:lab.userscredentials
+                           }
+                         });
+                         }
+        else {
           throw new Error(response.data.message || 'Failed to start lab');
         }}
       } catch (error: any) {

@@ -130,28 +130,56 @@ export const UserListModal: React.FC<UserListModalProps> = ({
   const handleConnectToVM = async (user: any) => {
     try {
       // First, get JWT token
-      const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
-        Protocol: user.protocol || 'RDP',
-        VmId:user.id,
-        Ip: user.ip,
-        userName: user.username,
-        password: user.password,
-        port: user.port,
+      // const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
+      //   Protocol: user.protocol || 'RDP',
+      //   VmId:user.id,
+      //   Ip: user.ip,
+      //   userName: user.username,
+      //   password: user.password,
+      //   port: user.port,
         
-      });
-      if (tokenResponse.data.success && tokenResponse.data.token) {
-        // Then connect to VM using the token
-        const guacUrl = `${vm?.guacamole_url}?token=${tokenResponse.data.token.result}`;
-          navigate(`/dashboard/labs/vm-session/${vmId}`, {
-            state: { 
-              guacUrl,
-              vmTitle: vm.title,
-              vmId: vmId,
-              doc:vm.labguide,
-              credentials:Array.isArray(user) ? user : [user]
+      // });
+      // if (tokenResponse.data.success && tokenResponse.data.token) {
+      //   // Then connect to VM using the token
+      //   const guacUrl = `${vm?.guacamole_url}?token=${tokenResponse.data.token.result}`;
+      //     navigate(`/dashboard/labs/vm-session/${vmId}`, {
+      //       state: { 
+      //         guacUrl,
+      //         vmTitle: vm.title,
+      //         vmId: vmId,
+      //         doc:vm.labguide,
+      //         credentials:Array.isArray(user) ? user : [user]
+      //       }
+      //     });
+      // } 
+
+       const resp = await axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+              {
+                protocol: user.protocol || 'RDP',
+                hostname: user.ip,
+                port: user.port,
+                username: user.username,
+                password: user.password,
+              }
+            );
+        
+            if (resp.data.success) {
+              const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+              // Build full ws url for guacamole-common-js
+              const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+              const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+              const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+              navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
+              state: {
+                guacUrl: wsUrl,
+                vmTitle: vm.title,
+                doc:vm?.labguide,
+                credentials:Array.isArray(user) ? user : [user]
+              }
+            });
             }
-          });
-      } else {
+      else {
         throw new Error('Failed to get connection token');
       }
     } catch (error: any) {
