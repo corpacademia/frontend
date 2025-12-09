@@ -211,13 +211,14 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
           throw new Error(stopResponse.data.message || 'Failed to stop VM');
         }
       } else {
-        const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox_ms/startVM`, {
+        const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
           lab_id: vm.labid,
-          vmId: vm.vmid,
+          vmid: vm.vmid,
           node: vm.node
         });
 
         if (startResponse.data.success) {
+          const backData = startResponse.data;
           setButtonLabel('Stop');
           setVmStatus('running');
           setNotification({
@@ -225,15 +226,31 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
             message: 'VM started successfully',
           });
 
-          if (startResponse.data.guacamoleUrl) {
-            navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
-              state: {
-                guacUrl: startResponse.data.guacamoleUrl,
-                vmTitle: vm.title,
-                vmId: vm.labid,
-              }
-            });
-          }
+          const resp = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+        {
+          protocol: backData.protocol,
+          hostname: backData.hostname,
+          port: backData.port,
+          username:backData.username,
+          password: backData.password,
+        }
+      );
+  
+      if (resp.data.success) {
+        const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+        // Build full ws url for guacamole-common-js
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+        const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+        navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
+        state: {
+          guacUrl: wsUrl,
+          vmTitle: vm.title,
+          doc:vm?.userguide
+        }
+      });
+      }
         } else {
           throw new Error(startResponse.data.message || 'Failed to start VM');
         }
