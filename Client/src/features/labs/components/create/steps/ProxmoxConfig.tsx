@@ -80,7 +80,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     const nodesRes = await axios.get(
       `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/nodes`
     );
-    
+
     const nodes = nodesRes?.data?.nodes || nodesRes?.data?.data || [];
     const firstNode = nodes?.[0]?.node || nodes?.[0]; // adjust based on your backend response
 
@@ -216,7 +216,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     setUploadProgress(0);
 
     try {
-      
+
       const formData = new FormData();
       formData.append('iso', file);
       formData.append('node', localConfig.node);
@@ -224,7 +224,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
       const storageType = backendData.storages.find((storage)=>storage.storage === localConfig.storage)?.type
       formData.append('storageType',storageType)
-      
+
         // Simulate upload progress 
          const response = await axios.post(
     `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/upload-iso`,
@@ -244,7 +244,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       },
     }
   );
-     
+
       // Check if response is successful
       if (response.data.success || response.status === 200) {
         // Mock successful upload - add new ISO to the list
@@ -587,7 +587,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 </div>
               </div>
 
-              
+
 
 
 
