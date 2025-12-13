@@ -13,6 +13,7 @@ interface ProxmoxConfigData {
   name: string;
   description: string;
   node: string;
+  template: string;
   storage: string;
   storageSize: number;
   iso: string;
@@ -31,6 +32,7 @@ interface ProxmoxConfigData {
 
 interface BackendData {
   nodes: Array<{ id: string; name: string; cpu: number; memory: number; storage: number }>;
+  templates: Array<{ vmid: string; name: string; node: string; type: string }>;
   storages: Array<{ id: string; name: string; type: string }>;
   isos: Array<{ content: string; volid: string; size: string; format?: string; version?: string }>;
   cpuModels: Array<{ id: string; name: string; features: string[] }>;
@@ -45,12 +47,12 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   // Mock backend data - replace with actual API calls
   const [backendData, setBackendData] = useState<BackendData>({
     nodes: [],
+    templates: [],
     storages: [],
     isos: [],
     cpuModels:[],
     networkBridges: []
   });
-  console.log(backendData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,7 +79,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     const nodesRes = await axios.get(
       `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/nodes`
     );
-    
     const nodes = nodesRes?.data?.nodes || nodesRes?.data?.data || [];
     const firstNode = nodes?.[0]?.node || nodes?.[0]; // adjust based on your backend response
 
@@ -86,7 +87,10 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     }
 
     // Step 2: Fetch dependent resources for the node
-    const [storageRes, cpuRes, networkRes] = await Promise.all([
+    const [templatesRes, storageRes, cpuRes, networkRes] = await Promise.all([
+      axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/templates`, {
+        NODE: firstNode,
+      }),
       axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/storages`, {
         NODE: firstNode,
       }),
@@ -101,6 +105,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     // Step 3: Update state
     setBackendData({
       nodes,
+      templates: templatesRes?.data?.data || [],
       storages: storageRes?.data?.data || [],
       isos: [],
       cpuModels: cpuRes?.data?.data || [],
@@ -164,6 +169,21 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     }
   };
 
+  const fetchTemplates = async() =>{
+    if(!localConfig.node) return;
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/templates`, {
+        NODE: localConfig.node
+      });
+      setBackendData(prev => ({ 
+        ...prev, 
+        templates: response?.data?.data || [],
+      }));
+    } catch (error) {
+      console.error("Error fetching templates:",error);
+    }
+  }
+
   const fetchStorages = async() =>{
     if(!localConfig.node) return;
     try {
@@ -194,7 +214,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     setUploadProgress(0);
 
     try {
-      
+
       const formData = new FormData();
       formData.append('iso', file);
       formData.append('node', localConfig.node);
@@ -202,7 +222,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
       const storageType = backendData.storages.find((storage)=>storage.storage === localConfig.storage)?.type
       formData.append('storageType',storageType)
-      
+
         // Simulate upload progress 
          const response = await axios.post(
     `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/upload-iso`,
@@ -222,7 +242,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       },
     }
   );
-     
+
       // Check if response is successful
       if (response.data.success || response.status === 200) {
         // Mock successful upload - add new ISO to the list
@@ -262,6 +282,13 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     }
   }, [localConfig.storage, localConfig.node]);
 
+  //fetch templates when node changes
+  useEffect(()=>{
+    if(localConfig.node){
+      fetchTemplates();
+    }
+  },[localConfig.node])
+
   //fetch storages when node changes
   useEffect(()=>{
     if(localConfig.node){
@@ -271,7 +298,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
   const handleSubmit = () => {
     // Validate required fields
-    const requiredFields = ['name', 'node', 'storage', 'iso', 'networkBridge'];
+    const requiredFields = ['name', 'node', 'storage', 'networkBridge'];
     const missingFields = requiredFields.filter(field => !localConfig[field as keyof ProxmoxConfigData]);
 
     if (missingFields.length > 0) {
@@ -349,6 +376,32 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               <ChevronDown className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
             </div>
             <p className="text-xs text-gray-500 mt-1">Select a node with sufficient resources</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Template
+            </label>
+            <div className="relative">
+              <select
+                value={localConfig.template || ''}
+                onChange={(e) => updateConfig('template', e.target.value)}
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none appearance-none"
+                disabled={!localConfig.node}
+              >
+                <option value="">Select template (optional)</option>
+                {backendData.templates.map((template) => (
+                  <option key={template.vmid} value={template.vmid}>
+                    {template.name} (VMID: {template.vmid})
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {localConfig.node ? 'Select a template to clone from' : 'Select a node first to view available templates'}
+            </p>
           </div>
         </div>
 
@@ -510,7 +563,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               </label>
 
                {/* ISO Dropdown */}
-              <div className="mb-3">
+              {/* <div className="mb-3">
                 <label className="block text-xs font-medium text-gray-400 mb-1">ISO Image</label>
                 <div className="relative">
                   <select
@@ -530,10 +583,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                   </select>
                   <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
                 </div>
-              </div>
-
-              
-
+              </div> */}
 
 
               {(!localConfig.node || !localConfig.storage) && (

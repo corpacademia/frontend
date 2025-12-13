@@ -154,11 +154,11 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           memory:vm.ram,
           storageType:vm.storagetype,
           storage:vm.storage,
-          iso:vm.isoimage,
           nicModel:vm.nicmodel,
           networkBridge:vm.networkbridge,
           firewall:vm.firewall,
           boot:vm.boot,
+          template:vm?.template_id,
           type:currentUser.id !== vm?.user_id ? 'org' : 'sup'
          }) 
          if(launchVM.data.success){
