@@ -11,6 +11,7 @@ import { ProxmoxConfig } from './steps/ProxmoxConfig';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import axios from 'axios';
 import { GuacamoleConfig } from './GuacamoleConfig';
+import { GradientText } from '../../../../components/ui/GradientText';
 
 interface SingleVMWorkflowProps {
   onBack: () => void;
@@ -20,12 +21,15 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>({});
+  const [selectedCloudType, setSelectedCloudType] = useState<'global' | 'organization'>('global');
+  const [organizationClouds, setOrganizationClouds] = useState<any[]>([]);
   const [config, setConfig] = useState({
     title: '',
     description: '',
     duration: 60,
     platform: '',
     cloudProvider: '',
+    cloudType: 'global',
     vmSize: null,
     region: '',
     documents: [] as File[],
@@ -64,6 +68,20 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       try {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
+        
+        // Fetch organization cloud settings if user belongs to an organization
+        if (response.data.user?.org_id) {
+          try {
+            const cloudResponse = await axios.get(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_ms/organization-clouds/${response.data.user.org_id}`
+            );
+            if (cloudResponse.data.success) {
+              setOrganizationClouds(cloudResponse.data.clouds || []);
+            }
+          } catch (err) {
+            console.error('Error fetching organization clouds:', err);
+          }
+        }
       } catch (err) {
         console.error('Error fetching user profile:', err);
       }
@@ -72,8 +90,13 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
   }, []);
 
   const updateConfig = (updates: Partial<typeof config>) => {
-    setConfig(prev => ({ ...prev, ...updates }));
+    setConfig(prev => ({ ...prev, ...updates, cloudType: selectedCloudType }));
     setStep(prev => prev + 1);
+  };
+
+  const handleCloudTypeChange = (type: 'global' | 'organization') => {
+    setSelectedCloudType(type);
+    setConfig(prev => ({ ...prev, cloudType: type }));
   };
   const getBreadcrumbs = () => {
     const breadcrumbs = [
@@ -253,23 +276,137 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       case 3:
         if (config.platform === 'cloud') {
           return (
-            <CloudProviderSelector 
-              onSelect={(provider) => updateConfig({ cloudProvider: provider })} 
-            />
+            <div className="space-y-6">
+              {/* Cloud Selection Dropdown */}
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+                <h3 className="text-xl font-semibold mb-4">
+                  <GradientText>Select Cloud Provider</GradientText>
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Cloud Type
+                    </label>
+                    <select
+                      value={selectedCloudType}
+                      onChange={(e) => handleCloudTypeChange(e.target.value as 'global' | 'organization')}
+                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="global">Global Cloud (GoLab Cloud)</option>
+                      {organizationClouds.length > 0 && (
+                        <option value="organization">Organization Cloud</option>
+                      )}
+                    </select>
+                  </div>
+                  {selectedCloudType === 'organization' && organizationClouds.length > 0 && (
+                    <div className="mt-4 p-4 bg-gray-900/30 rounded-lg border border-gray-700/30">
+                      <p className="text-sm text-gray-400 mb-2">Available Organization Clouds:</p>
+                      <ul className="space-y-2">
+                        {organizationClouds.map((cloud: any, index: number) => (
+                          <li key={index} className="text-sm text-gray-300 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
+                            {cloud.provider} - {cloud.name || 'Default'}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <CloudProviderSelector 
+                onSelect={(provider) => updateConfig({ cloudProvider: provider })} 
+              />
+            </div>
           );
         } else if (config.platform === 'datacenter') {
           return (
-            <DatacenterConfig
-              config={config.datacenter}
-              onChange={handleDatacenterConfigChange}
-            />
+            <div className="space-y-6">
+              {/* Cloud Selection Dropdown */}
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+                <h3 className="text-xl font-semibold mb-4">
+                  <GradientText>Select Cloud Provider</GradientText>
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Cloud Type
+                    </label>
+                    <select
+                      value={selectedCloudType}
+                      onChange={(e) => handleCloudTypeChange(e.target.value as 'global' | 'organization')}
+                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="global">Global Cloud (GoLab Cloud)</option>
+                      {organizationClouds.length > 0 && (
+                        <option value="organization">Organization Cloud</option>
+                      )}
+                    </select>
+                  </div>
+                  {selectedCloudType === 'organization' && organizationClouds.length > 0 && (
+                    <div className="mt-4 p-4 bg-gray-900/30 rounded-lg border border-gray-700/30">
+                      <p className="text-sm text-gray-400 mb-2">Available Organization Clouds:</p>
+                      <ul className="space-y-2">
+                        {organizationClouds.map((cloud: any, index: number) => (
+                          <li key={index} className="text-sm text-gray-300 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
+                            {cloud.provider} - {cloud.name || 'Default'}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <DatacenterConfig
+                config={config.datacenter}
+                onChange={handleDatacenterConfigChange}
+              />
+            </div>
           );
         } else if (config.platform === 'proxmox') {
           return (
-            <ProxmoxConfig
-              config={config.proxmox}
-              onChange={handleProxmoxConfigChange}
-            />
+            <div className="space-y-6">
+              {/* Cloud Selection Dropdown */}
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+                <h3 className="text-xl font-semibold mb-4">
+                  <GradientText>Select Cloud Provider</GradientText>
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Cloud Type
+                    </label>
+                    <select
+                      value={selectedCloudType}
+                      onChange={(e) => handleCloudTypeChange(e.target.value as 'global' | 'organization')}
+                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="global">Global Cloud (GoLab Cloud)</option>
+                      {organizationClouds.length > 0 && (
+                        <option value="organization">Organization Cloud</option>
+                      )}
+                    </select>
+                  </div>
+                  {selectedCloudType === 'organization' && organizationClouds.length > 0 && (
+                    <div className="mt-4 p-4 bg-gray-900/30 rounded-lg border border-gray-700/30">
+                      <p className="text-sm text-gray-400 mb-2">Available Organization Clouds:</p>
+                      <ul className="space-y-2">
+                        {organizationClouds.map((cloud: any, index: number) => (
+                          <li key={index} className="text-sm text-gray-300 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
+                            {cloud.provider} - {cloud.name || 'Default'}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <ProxmoxConfig
+                config={config.proxmox}
+                onChange={handleProxmoxConfigChange}
+              />
+            </div>
           );
         } else {
           return (
