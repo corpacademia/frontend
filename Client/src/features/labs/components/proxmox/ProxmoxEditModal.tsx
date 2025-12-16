@@ -27,6 +27,8 @@ interface ProxmoxEditModalProps {
     firewall?: boolean;
     boot?: boolean;
     storagetype?:string;
+    username?: string;
+    password?: string;
   };
   onSuccess: () => void;
 }
@@ -53,6 +55,8 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
     startDate: vm.startdate || '',
     endDate: vm.enddate || '',
     storagetype: vm.storagetype || '',
+    username: vm.username || '',
+    password: vm.password || '',
   });
   const [selectedStorage, setSelectedStorage] = useState(vm.storagetype);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,6 +94,8 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
         startDate: vm.startdate || '',
         endDate: vm.enddate || '',
         storagetype: vm.storagetype || '',
+        username: vm.username || '',
+        password: vm.password || '',
       });
       
       // Set the initial storage if available
@@ -145,7 +151,9 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
         firewall: formData.firewall,
         boot: formData.boot,
         startDate: formData.startDate,
-        endDate: formData.endDate
+        endDate: formData.endDate,
+        username: formData.username,
+        password: formData.password
       });
 
       if (!response.data.success) {
@@ -345,6 +353,36 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
                       onChange={(e) => handleInputChange('endDate', e.target.value)}
                       className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
                                text-gray-300 focus:border-orange-500/40 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => handleInputChange('username', e.target.value)}
+                      className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
+                               text-gray-300 focus:border-orange-500/40 focus:outline-none"
+                      placeholder="Enter username"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
+                      className="w-full px-4 py-2 bg-dark-400/50 border border-orange-500/20 rounded-lg
+                               text-gray-300 focus:border-orange-500/40 focus:outline-none"
+                      placeholder="Enter password"
                     />
                   </div>
                 </div>
