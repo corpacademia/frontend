@@ -25,6 +25,7 @@ export const CloudSettings: React.FC = () => {
   const [showPassword, setShowPassword] = useState<{ [key: string]: boolean }>({});
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   const [formData, setFormData] = useState({
     provider: 'aws',
@@ -63,6 +64,7 @@ export const CloudSettings: React.FC = () => {
 
   const handleAddCredential = async () => {
     try {
+      setIsAdding(true);
       const payload = {
         provider: formData.provider,
         name: formData.name,
@@ -83,6 +85,8 @@ export const CloudSettings: React.FC = () => {
       }
     } catch (err) {
       setError('Failed to add cloud credentials');
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -318,14 +322,23 @@ export const CloudSettings: React.FC = () => {
                   resetForm();
                 }}
                 className="btn-secondary"
+                disabled={isAdding}
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddCredential}
-                className="btn-primary"
+                className="btn-primary flex items-center"
+                disabled={isAdding}
               >
-                Add Credential
+                {isAdding ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  'Add Credential'
+                )}
               </button>
             </div>
           </div>
