@@ -53,7 +53,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
     const defaultPort = formData.protocol === 'rdp' ? '3389' : 
                         formData.protocol === 'ssh' ? '22' : 
                         formData.protocol === 'vnc' ? '5900' : '3389';
-    
+
     const updatedUsers = [...formData.users, { ip: '', port: defaultPort, username: '', password: '' }];
     setFormData(prev => ({
       ...prev,
@@ -64,7 +64,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
 
   const removeUser = (index: number) => {
     if (formData.users.length <= 1) return;
-    
+
     const updatedUsers = formData.users.filter((_, i) => i !== index);
     setFormData(prev => ({
       ...prev,
@@ -75,31 +75,31 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
 
   const updateNumberOfUsers = (num: number) => {
     const newNum = Math.max(1, num);
-    
+
     // Update the number of users
     setFormData(prev => {
       const currentUsers = [...prev.users];
-      
+
       // If increasing, add new users
       if (newNum > currentUsers.length) {
         const defaultPort = prev.protocol === 'rdp' ? '3389' : 
                            prev.protocol === 'ssh' ? '22' : 
                            prev.protocol === 'vnc' ? '5900' : '3389';
-        
+
         const newUsers = Array(newNum - currentUsers.length).fill(0).map(() => ({
           ip: '',
           port: defaultPort,
           username: '',
           password: ''
         }));
-        
+
         return {
           ...prev,
           numberOfUsers: newNum,
           users: [...currentUsers, ...newUsers]
         };
       }
-      
+
       // If decreasing, remove excess users
       if (newNum < currentUsers.length) {
         return {
@@ -108,7 +108,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
           users: currentUsers.slice(0, newNum)
         };
       }
-      
+
       return { ...prev, numberOfUsers: newNum };
     });
   };
@@ -117,13 +117,13 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
     const defaultPort = protocol === 'rdp' ? '3389' : 
                        protocol === 'ssh' ? '22' : 
                        protocol === 'vnc' ? '5900' : '3389';
-    
+
     // Update all users' ports to the default for the selected protocol
     const updatedUsers = formData.users.map(user => ({
       ...user,
       port: defaultPort
     }));
-    
+
     setFormData(prev => ({
       ...prev,
       protocol,
@@ -136,20 +136,20 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
       setError('Please select a start date and time');
       return false;
     }
-    
+
     if (!formData.endDate || !formData.endTime) {
       setError('Please select an end date and time');
       return false;
     }
-    
+
     const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
     const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
-    
+
     if (endDateTime <= startDateTime) {
       setError('End date and time must be after start date and time');
       return false;
     }
-    
+
     // Validate user details
     for (let i = 0; i < formData.users.length; i++) {
       const user = formData.users[i];
@@ -157,23 +157,23 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
         setError(`User ${i + 1}: IP address is required`);
         return false;
       }
-      
+
       if (!user.port) {
         setError(`User ${i + 1}: Port is required`);
         return false;
       }
-      
+
       if (!user.username) {
         setError(`User ${i + 1}: Username is required`);
         return false;
       }
-      
+
       if (!user.password) {
         setError(`User ${i + 1}: Password is required`);
         return false;
       }
     }
-    
+
     return true;
   };
 
@@ -192,7 +192,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
       <h2 className="text-2xl font-display font-semibold">
         <GradientText>Datacenter Configuration</GradientText>
       </h2>
-      
+
       <div className="glass-panel space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Number of Users */}
@@ -227,7 +227,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
               </button>
             </div>
           </div>
-          
+
           {/* Protocol Selection */}
           <div>
             <label className="flex items-center text-gray-300 mb-2">
@@ -247,7 +247,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
             </select>
           </div>
         </div>
-        
+
         {/* Date and Time Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -265,7 +265,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
                        text-gray-300 focus:border-primary-500/40 focus:outline-none"
             />
           </div>
-          
+
           <div>
             <label className="flex items-center text-gray-300 mb-2">
               <Clock className="h-4 w-4 mr-2 text-primary-400" />
@@ -280,7 +280,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
                        text-gray-300 focus:border-primary-500/40 focus:outline-none"
             />
           </div>
-          
+
           <div>
             <label className="flex items-center text-gray-300 mb-2">
               <Calendar className="h-4 w-4 mr-2 text-primary-400" />
@@ -296,7 +296,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
                        text-gray-300 focus:border-primary-500/40 focus:outline-none"
             />
           </div>
-          
+
           <div>
             <label className="flex items-center text-gray-300 mb-2">
               <Clock className="h-4 w-4 mr-2 text-primary-400" />
@@ -313,13 +313,13 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
           </div>
         </div>
       </div>
-      
+
       {/* User Credentials Section */}
       <div className="glass-panel">
         <h3 className="text-xl font-semibold mb-6">
           <GradientText>User Credentials</GradientText>
         </h3>
-        
+
         <div className="space-y-6">
           {formData.users.map((user, index) => (
             <div key={index} className="p-4 bg-dark-300/50 rounded-lg border border-primary-500/10">
@@ -338,7 +338,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
                   </button>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -353,7 +353,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
                              text-gray-300 focus:border-primary-500/40 focus:outline-none"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Port
@@ -368,7 +368,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
                              text-gray-300 focus:border-primary-500/40 focus:outline-none"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Username
@@ -385,7 +385,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
                     <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Password
@@ -405,7 +405,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
               </div>
             </div>
           ))}
-          
+
           <button
             type="button"
             onClick={addUser}
@@ -418,7 +418,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
           </button>
         </div>
       </div>
-      
+
       {error && (
         <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-lg">
           <div className="flex items-center space-x-2">
@@ -427,7 +427,7 @@ export const DatacenterConfig: React.FC<DatacenterConfigProps> = ({ config, onCh
           </div>
         </div>
       )}
-      
+
       <div className="flex justify-end">
         <button
           onClick={handleSubmit}

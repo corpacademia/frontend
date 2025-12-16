@@ -12,6 +12,10 @@ export const CloudProviderSelector: React.FC<CloudProviderSelectorProps> = ({ on
     const storedData = JSON.parse(localStorage.getItem('formData') || '{}');
     const updatedData = { ...storedData, provider };
     localStorage.setItem('formData', JSON.stringify(updatedData));
+    
+    if ((window as any).resetCloudSelection) {
+      (window as any).resetCloudSelection();
+    }
   };
 
   const providers = [

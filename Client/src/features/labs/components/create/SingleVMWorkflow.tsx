@@ -23,6 +23,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
   const [user, setUser] = useState<any>({});
   const [selectedCloudType, setSelectedCloudType] = useState<'global' | 'organization'>('global');
   const [organizationClouds, setOrganizationClouds] = useState<any[]>([]);
+  const [selectedCloudId, setSelectedCloudId] = useState<string>('');
+  const [allClouds, setAllClouds] = useState<any[]>([]);
   const [config, setConfig] = useState({
     title: '',
     description: '',
@@ -63,31 +65,57 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       onBoot: false
     }
   });
+
   useEffect(() => {
-    const getUserDetails = async () => {  
+    const fetchClouds = async () => {
+      if (user?.org_id) {
+        try {
+          const orgResponse = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_ms/organization-clouds/${user.org_id}`
+          );
+          if (orgResponse.data.success) {
+            setOrganizationClouds(orgResponse.data.clouds || []);
+          }
+
+          const globalResponse = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_ms/global-clouds`
+          );
+          if (globalResponse.data.success) {
+            setAllClouds([...(orgResponse.data.clouds || []), ...(globalResponse.data.clouds || [])]);
+          }
+        } catch (error) {
+          console.error('Error fetching clouds:', error);
+        }
+      }
+    };
+
+    fetchClouds();
+  }, [user?.org_id]);
+
+  useEffect(() => {
+    const getUserDetails = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
-        
-        // Fetch organization cloud settings if user belongs to an organization
-        if (response.data.user?.org_id) {
-          try {
-            const cloudResponse = await axios.get(
-              `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_ms/organization-clouds/${response.data.user.org_id}`
-            );
-            if (cloudResponse.data.success) {
-              setOrganizationClouds(cloudResponse.data.clouds || []);
-            }
-          } catch (err) {
-            console.error('Error fetching organization clouds:', err);
-          }
-        }
       } catch (err) {
         console.error('Error fetching user profile:', err);
       }
     }
     getUserDetails();
   }, []);
+
+  useEffect(() => {
+    (window as any).getSelectedCloudCredentials = getSelectedCloudCredentials;
+    (window as any).resetCloudSelection = () => {
+      setSelectedCloudId('');
+      setSelectedCloudType('global');
+    };
+    return () => {
+      delete (window as any).getSelectedCloudCredentials;
+      delete (window as any).resetCloudSelection;
+    };
+  }, [selectedCloudType, selectedCloudId, allClouds]);
+
 
   const updateConfig = (updates: Partial<typeof config>) => {
     setConfig(prev => ({ ...prev, ...updates, cloudType: selectedCloudType }));
@@ -96,8 +124,49 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
 
   const handleCloudTypeChange = (type: 'global' | 'organization') => {
     setSelectedCloudType(type);
-    setConfig(prev => ({ ...prev, cloudType: type }));
+    setSelectedCloudId('');
   };
+
+  const getFilteredCloudsByProvider = () => {
+    const providerMap: { [key: string]: string } = {
+      'aws': 'aws',
+      'azure': 'azure',
+      'gcp': 'gcp'
+    };
+
+    const currentProvider = config.cloudProvider ? providerMap[config.cloudProvider.toLowerCase()] : '';
+
+    if (!currentProvider) return [];
+
+    if (selectedCloudType === 'global') {
+      return allClouds.filter(cloud =>
+        !cloud.org_id && cloud.provider?.toLowerCase() === currentProvider
+      );
+    } else {
+      return organizationClouds.filter(cloud =>
+        cloud.provider?.toLowerCase() === currentProvider
+      );
+    }
+  };
+
+  const getSelectedCloudCredentials = () => {
+    if (selectedCloudType === 'global' && !selectedCloudId) {
+      return { type: 'golab', credentials: null };
+    }
+
+    const selectedCloud = allClouds.find(cloud => cloud.id === selectedCloudId);
+    if (selectedCloud) {
+      return {
+        type: 'custom',
+        cloud_id: selectedCloud.id,
+        credentials: selectedCloud.credentials
+      };
+    }
+
+    return { type: 'golab', credentials: null };
+  };
+
+
   const getBreadcrumbs = () => {
     const breadcrumbs = [
       { label: 'Lab Types', step: 0 },
@@ -194,7 +263,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
         // Make API call for datacenter platform
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createSingleVmDatacenterLab`, {
           data:data,
-          user:user.id
+          user:user.id,
+          cloud_credentials: getSelectedCloudCredentials()
         });
 
         if (response.data.success) {
@@ -227,7 +297,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
         // Make API call for Proxmox platform
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createSingleVmProxmoxLab`, {
           data: data,
-          user: user.id
+          user: user.id,
+          cloud_credentials: getSelectedCloudCredentials()
         });
 
         if (response.data.success) {
@@ -257,20 +328,20 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       setStep(prev => prev + 1);
     }
   };
-  
+
   const renderStep = () => {
     switch (step) {
       case 1:
         return (
-          <BasicInfoStep 
-            onNext={(details) => updateConfig(details)} 
+          <BasicInfoStep
+            onNext={(details) => updateConfig(details)}
             type="single-vm"
           />
         );
       case 2:
         return (
-          <PlatformSelector 
-            onSelect={(platform) => updateConfig({ platform })} 
+          <PlatformSelector
+            onSelect={(platform) => updateConfig({ platform })}
           />
         );
       case 3:
@@ -298,23 +369,39 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
                       )}
                     </select>
                   </div>
-                  {selectedCloudType === 'organization' && organizationClouds.length > 0 && (
-                    <div className="mt-4 p-4 bg-gray-900/30 rounded-lg border border-gray-700/30">
-                      <p className="text-sm text-gray-400 mb-2">Available Organization Clouds:</p>
-                      <ul className="space-y-2">
-                        {organizationClouds.map((cloud: any, index: number) => (
-                          <li key={index} className="text-sm text-gray-300 flex items-center gap-2">
-                            <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
-                            {cloud.provider} - {cloud.name || 'Default'}
-                          </li>
+                  {config.cloudProvider && getFilteredCloudsByProvider().length > 0 && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Select Cloud Configuration
+                      </label>
+                      <select
+                        value={selectedCloudId}
+                        onChange={(e) => setSelectedCloudId(e.target.value)}
+                        className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">Use GoLab Cloud (Default)</option>
+                        {getFilteredCloudsByProvider().map((cloud: any) => (
+                          <option key={cloud.id} value={cloud.id}>
+                            {cloud.name} ({cloud.provider.toUpperCase()})
+                          </option>
                         ))}
-                      </ul>
+                      </select>
+                    </div>
+                  )}
+                  {config.cloudProvider && getFilteredCloudsByProvider().length === 0 && selectedCloudType === 'organization' && (
+                    <div className="mt-4 p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/20">
+                      <p className="text-sm text-yellow-200">
+                        No organization clouds configured for {config.cloudProvider?.toUpperCase()}. Using GoLab Cloud.
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
-              <CloudProviderSelector 
-                onSelect={(provider) => updateConfig({ cloudProvider: provider })} 
+              <CloudProviderSelector
+                onSelect={(provider) => {
+                  updateConfig({ cloudProvider: provider });
+                  (window as any).resetCloudSelection();
+                }}
               />
             </div>
           );
@@ -342,17 +429,30 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
                       )}
                     </select>
                   </div>
-                  {selectedCloudType === 'organization' && organizationClouds.length > 0 && (
-                    <div className="mt-4 p-4 bg-gray-900/30 rounded-lg border border-gray-700/30">
-                      <p className="text-sm text-gray-400 mb-2">Available Organization Clouds:</p>
-                      <ul className="space-y-2">
-                        {organizationClouds.map((cloud: any, index: number) => (
-                          <li key={index} className="text-sm text-gray-300 flex items-center gap-2">
-                            <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
-                            {cloud.provider} - {cloud.name || 'Default'}
-                          </li>
+                  {config.cloudProvider && getFilteredCloudsByProvider().length > 0 && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Select Cloud Configuration
+                      </label>
+                      <select
+                        value={selectedCloudId}
+                        onChange={(e) => setSelectedCloudId(e.target.value)}
+                        className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">Use GoLab Cloud (Default)</option>
+                        {getFilteredCloudsByProvider().map((cloud: any) => (
+                          <option key={cloud.id} value={cloud.id}>
+                            {cloud.name} ({cloud.provider.toUpperCase()})
+                          </option>
                         ))}
-                      </ul>
+                      </select>
+                    </div>
+                  )}
+                  {config.cloudProvider && getFilteredCloudsByProvider().length === 0 && selectedCloudType === 'organization' && (
+                    <div className="mt-4 p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/20">
+                      <p className="text-sm text-yellow-200">
+                        No organization clouds configured for {config.cloudProvider?.toUpperCase()}. Using GoLab Cloud.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -387,17 +487,30 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
                       )}
                     </select>
                   </div>
-                  {selectedCloudType === 'organization' && organizationClouds.length > 0 && (
-                    <div className="mt-4 p-4 bg-gray-900/30 rounded-lg border border-gray-700/30">
-                      <p className="text-sm text-gray-400 mb-2">Available Organization Clouds:</p>
-                      <ul className="space-y-2">
-                        {organizationClouds.map((cloud: any, index: number) => (
-                          <li key={index} className="text-sm text-gray-300 flex items-center gap-2">
-                            <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
-                            {cloud.provider} - {cloud.name || 'Default'}
-                          </li>
+                  {config.cloudProvider && getFilteredCloudsByProvider().length > 0 && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Select Cloud Configuration
+                      </label>
+                      <select
+                        value={selectedCloudId}
+                        onChange={(e) => setSelectedCloudId(e.target.value)}
+                        className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">Use GoLab Cloud (Default)</option>
+                        {getFilteredCloudsByProvider().map((cloud: any) => (
+                          <option key={cloud.id} value={cloud.id}>
+                            {cloud.name} ({cloud.provider.toUpperCase()})
+                          </option>
                         ))}
-                      </ul>
+                      </select>
+                    </div>
+                  )}
+                  {config.cloudProvider && getFilteredCloudsByProvider().length === 0 && selectedCloudType === 'organization' && (
+                    <div className="mt-4 p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/20">
+                      <p className="text-sm text-yellow-200">
+                        No organization clouds configured for {config.cloudProvider?.toUpperCase()}. Using GoLab Cloud.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -410,16 +523,16 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
           );
         } else {
           return (
-            <VMSizeSelector 
-              onSelect={(size) => updateConfig({ vmSize: size })} 
+            <VMSizeSelector
+              onSelect={(size) => updateConfig({ vmSize: size })}
             />
           );
         }
       case 4:
         if (config.platform === 'cloud') {
           return (
-            <VMSizeSelector 
-              onSelect={(size) => updateConfig({ vmSize: size })} 
+            <VMSizeSelector
+              onSelect={(size) => updateConfig({ vmSize: size })}
             />
           );
         } else if (config.platform === 'datacenter') {
@@ -458,8 +571,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
           );
         } else if (config.platform === 'datacenter') {
           return (
-            <AIRecommendations 
-              config={config} 
+            <AIRecommendations
+              config={config}
               onConfirm={(region, responseData) => {
                 const lab_id = responseData?.lab_id;
                 updateConfig({ region, lab_id: lab_id });
@@ -468,8 +581,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
           );
         } else if (config.platform === 'proxmox') {
           return (
-            <AIRecommendations 
-              config={config} 
+            <AIRecommendations
+              config={config}
               onConfirm={(region, responseData) => {
                 const lab_id = responseData?.lab_id;
                 updateConfig({ region, lab_id: lab_id });
@@ -478,8 +591,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
           );
         } else {
           return (
-            <AIRecommendations 
-              config={config} 
+            <AIRecommendations
+              config={config}
               onConfirm={(region, responseData) => {
                 const lab_id = responseData?.lab_id;
                 updateConfig({ region, lab_id: lab_id });
@@ -490,8 +603,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       case 6:
         if (config.platform === 'cloud') {
           return (
-            <AIRecommendations 
-              config={config} 
+            <AIRecommendations
+              config={config}
               onConfirm={(region, responseData) => {
                 const lab_id = responseData?.lab_id;
                 updateConfig({ region, lab_id: lab_id });
@@ -513,10 +626,12 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
   };
 
   if (isLoading) {
-    const loadingMessage = config.platform === 'proxmox' 
-      ? 'Processing Proxmox configuration...' 
-      : 'Processing datacenter configuration...';
-    
+    const loadingMessage = config.platform === 'proxmox'
+      ? 'Processing Proxmox configuration...'
+      : config.platform === 'datacenter'
+      ? 'Processing Datacenter configuration...'
+      : 'Creating Lab...';
+
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Loader className="h-12 w-12 text-primary-400 animate-spin mb-4" />
@@ -535,8 +650,8 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
             <button
               onClick={() => handleNavigate(item.step)}
               className={`flex items-center ${
-                item.step < step 
-                  ? 'text-primary-400 hover:text-primary-300' 
+                item.step < step
+                  ? 'text-primary-400 hover:text-primary-300'
                   : 'text-gray-300'
               } transition-colors`}
             >

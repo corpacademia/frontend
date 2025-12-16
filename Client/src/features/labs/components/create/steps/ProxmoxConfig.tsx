@@ -33,7 +33,7 @@ interface ProxmoxConfigData {
 }
 
 interface BackendData {
-  nodes: Array<{ id: string; name: string; cpuCores: number; memory: { free: number } }>;
+  nodes: Array<{ id: string; name: string; cpuCores: number; memory: { free: number }, node: string }>;
   templates: Array<{ vmid: string; name: string; node: string; type: string }>;
   storages: Array<{ id: string; name: string; type: string; storage: string; total: number }>;
   isos: Array<{ content: string; volid: string; size: string; format?: string; version?: string; id?: string; storage?: string }>;
@@ -84,7 +84,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     );
 
     const nodes = nodesRes?.data?.nodes || nodesRes?.data?.data || [];
-    const firstNode = nodes?.[0]?.node || nodes?.[0]; // adjust based on your backend response
+    const firstNode = nodes?.[0]?.node || nodes?.[0]?.name || nodes?.[0]; // adjust based on your backend response
 
     if (!firstNode) {
       throw new Error("No nodes available");
@@ -153,7 +153,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   };
 
   const getFilteredIsos = () => {
-    return backendData.isos.filter(iso => (iso.volid).split(":")[0] === localConfig.storage);
+    return backendData.isos.filter(iso => (iso.storage)?.split(":")[0] === localConfig.storage);
   };
 
   // Function to fetch ISOs from backend
@@ -300,6 +300,15 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     }
   },[localConfig.node])
 
+  // This function needs to be defined to provide the credentials.
+  // It should be called by the parent component or accessible globally.
+  // For demonstration, we'll assume it exists globally or is passed down.
+  // const getSelectedCloudCredentials = () => {
+  //   // Implement logic to get selected cloud credentials
+  //   // This might involve checking a global state, context, or another component
+  //   return { type: 'aws', credentials: { accessKeyId: '...', secretAccessKey: '...' } }; // Example
+  // };
+
   const handleSubmit = () => {
     // Validate required fields
     const requiredFields = ['name', 'node', 'storage', 'iso', 'networkBridge'];
@@ -312,9 +321,19 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
     // Store config and proceed to next step
     const formData = JSON.parse(localStorage.getItem('formData') || '{}');
+    const user = JSON.parse(localStorage.getItem('user') || '{}'); // Assuming user info is stored here
+
+    const payload = {
+        name: localConfig.name,
+        description: localConfig.description,
+        ...localConfig,
+        org_id: user?.org_id,
+        cloud_config: (window as any).getSelectedCloudCredentials?.() || { type: 'golab', credentials: null } // Pass credentials, default to golab if not found
+      };
+
     localStorage.setItem('formData', JSON.stringify({
       ...formData,
-      proxmoxConfig: localConfig
+      proxmoxConfig: payload
     }));
 
     // Trigger next step by calling onChange with the current localConfig
@@ -372,8 +391,8 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               >
                 <option value="">Select node</option>
                 {backendData.nodes.map((node) => (
-                  <option key={node.id} value={node.node}>
-                    {node.node} (CPU: {node.cpuCores}, RAM: {(node.memory.free)/(1024*1024)})
+                  <option key={node.id} value={node.name}>
+                    {node.name} (CPU: {node.cpuCores}, RAM: {(node.memory.free)/(1024*1024)})
                   </option>
                 ))}
               </select>
