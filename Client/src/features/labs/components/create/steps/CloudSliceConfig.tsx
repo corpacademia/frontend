@@ -29,6 +29,11 @@ interface CloudSliceConfigProps {
     cloudProvider: string;
     platform: string;
     isModular?: boolean; // Added for modular lab check
+    learningObjectives?: string;
+    prerequisites?: string;
+    targetAudience?: string;
+    technologies?: string;
+    additionalDetails?: string;
   };
   awsServiceCategories: {
     service: string;
@@ -125,7 +130,7 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
         ...labDetails,
         ...configData
       }));
-      
+
       // Navigate directly to CreateModulesPage
       navigate(`/dashboard/labs/create-modules`,{state:{labConfig:{...labDetails,startDate,endDate,labType,region:selectedRegion}}})
       // window.location.href = `/dashboard/labs/create-modules?labType=cloudslice`;
@@ -188,11 +193,11 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       formData.append('createdBy', user.id); 
       formData.append('accountType',accountType);
       formData.append('platform',labDetails.platform); 
-      formData.append('learningObjectives',labDetails?.learningObjectives);
-      formData.append('prerequisites',labDetails?.prerequisites);
-      formData.append('targetAudience',labDetails?.targetAudience);
-      formData.append('technologies',labDetails?.technologies);
-      formData.append('additionalDetails',labDetails?.additionalDetails);
+      formData.append('learningObjectives',labDetails?.learningObjectives as string);
+      formData.append('prerequisites',labDetails?.prerequisites as string);
+      formData.append('targetAudience',labDetails?.targetAudience as string);
+      formData.append('technologies',labDetails?.technologies as string);
+      formData.append('additionalDetails',labDetails?.additionalDetails as string);
 
       // Add documents
       labDocuments.forEach((file, index) => {
@@ -203,6 +208,10 @@ export const CloudSliceConfig: React.FC<CloudSliceConfigProps> = ({ onBack, labD
       userDocuments.forEach((file, index) => {
         formData.append(`userDocuments`, file);
       });
+
+      // Pass cloud credentials to backend
+      const cloudCredentials = (window as any).getSelectedCloudCredentials?.();
+      formData.append('cloudCredentials', JSON.stringify(cloudCredentials || { type: 'golab', credentials: null }));
 
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/createCloudSliceLab`, formData, {
         headers: {
