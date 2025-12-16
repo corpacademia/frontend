@@ -146,12 +146,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
     setIsLaunchProcessing(true);
     try {
       if( buttonLabel === 'Launch VM'){
-        const fetchIp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getIpOfVm`,{
-          node:vm.node,
-          vmid:100
-        })
-        console.log(fetchIp) 
-        return;
+         
          const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`,{
           node:vm.node,
           labid:vm.labid,
@@ -197,6 +192,10 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         }
       } 
       else {
+        const fetchIp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getIpOfVm`,{
+          node:vm.node,
+          vmid:100
+        })
         // Start the VM
        const resp = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
@@ -308,7 +307,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         labId:vm.labid,
         node:vm.node,
         vmid:vm.vmid,
-        type:currentUser?.role === 'labadmin' ? 'org' : 'sup'
+        type:currentUser?.id === vm.user_id  ? 'sup' : 'org'
       });
 
       if (response.data.success) {

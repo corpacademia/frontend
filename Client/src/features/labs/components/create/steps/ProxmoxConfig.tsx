@@ -28,15 +28,17 @@ interface ProxmoxConfigData {
   firewall: boolean;
   startDate: string;
   endDate: string;
+  username?: string; // Added username
+  password?: string; // Added password
 }
 
 interface BackendData {
-  nodes: Array<{ id: string; name: string; cpu: number; memory: number; storage: number }>;
+  nodes: Array<{ id: string; name: string; cpuCores: number; memory: { free: number } }>;
   templates: Array<{ vmid: string; name: string; node: string; type: string }>;
-  storages: Array<{ id: string; name: string; type: string }>;
-  isos: Array<{ content: string; volid: string; size: string; format?: string; version?: string }>;
+  storages: Array<{ id: string; name: string; type: string; storage: string; total: number }>;
+  isos: Array<{ content: string; volid: string; size: string; format?: string; version?: string; id?: string; storage?: string }>;
   cpuModels: Array<{ id: string; name: string; features: string[] }>;
-  networkBridges: Array<{ id: string; name: string; type: string }>;
+  networkBridges: Array<{ id: string; name: string; type: string; iface: string }>;
 }
 
 export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }) => {
@@ -53,6 +55,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     cpuModels:[],
     networkBridges: []
   });
+  console.log(backendData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,6 +82,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     const nodesRes = await axios.get(
       `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/nodes`
     );
+
     const nodes = nodesRes?.data?.nodes || nodesRes?.data?.data || [];
     const firstNode = nodes?.[0]?.node || nodes?.[0]; // adjust based on your backend response
 
@@ -160,9 +164,9 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         storage: localConfig.storage,
         NODE: localConfig.node
       });
-      setBackendData(prev => ({ 
-        ...prev, 
-        isos: response.data.isos || [] 
+      setBackendData(prev => ({
+        ...prev,
+        isos: response.data.isos || []
       }));
     } catch (error) {
       console.error('Error fetching ISOs:', error);
@@ -175,8 +179,8 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/templates`, {
         NODE: localConfig.node
       });
-      setBackendData(prev => ({ 
-        ...prev, 
+      setBackendData(prev => ({
+        ...prev,
         templates: response?.data?.data || [],
       }));
     } catch (error) {
@@ -190,8 +194,8 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/storages`, {
         NODE: localConfig.node
       });
-      setBackendData(prev => ({ 
-        ...prev, 
+      setBackendData(prev => ({
+        ...prev,
         storages: response?.data?.data || [],
       }));
     } catch (error) {
@@ -223,7 +227,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       const storageType = backendData.storages.find((storage)=>storage.storage === localConfig.storage)?.type
       formData.append('storageType',storageType)
 
-        // Simulate upload progress 
+        // Simulate upload progress
          const response = await axios.post(
     `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/upload-iso`,
     formData,
@@ -298,7 +302,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
   const handleSubmit = () => {
     // Validate required fields
-    const requiredFields = ['name', 'node', 'storage', 'networkBridge'];
+    const requiredFields = ['name', 'node', 'storage', 'iso', 'networkBridge'];
     const missingFields = requiredFields.filter(field => !localConfig[field as keyof ProxmoxConfigData]);
 
     if (missingFields.length > 0) {
@@ -368,7 +372,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               >
                 <option value="">Select node</option>
                 {backendData.nodes.map((node) => (
-                  <option key={node} value={node.node}>
+                  <option key={node.id} value={node.node}>
                     {node.node} (CPU: {node.cpuCores}, RAM: {(node.memory.free)/(1024*1024)})
                   </option>
                 ))}
@@ -460,6 +464,38 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                 rows={3}
               />
             </div>
+
+            {/* Username and Password - Added here */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={localConfig.username || ''}
+                  onChange={(e) => updateConfig('username', e.target.value)}
+                  placeholder="Enter username"
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                             text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={localConfig.password || ''}
+                  onChange={(e) => updateConfig('password', e.target.value)}
+                  placeholder="Enter password"
+                  className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                             text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                />
+              </div>
+            </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -563,7 +599,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               </label>
 
                {/* ISO Dropdown */}
-              {/* <div className="mb-3">
+              <div className="mb-3">
                 <label className="block text-xs font-medium text-gray-400 mb-1">ISO Image</label>
                 <div className="relative">
                   <select
@@ -583,7 +619,10 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                   </select>
                   <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
                 </div>
-              </div> */}
+              </div>
+
+
+
 
 
               {(!localConfig.node || !localConfig.storage) && (
@@ -728,10 +767,10 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                     onChange={(e) => updateConfig('onBoot', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-dark-400 peer-focus:outline-none rounded-full peer 
-                                peer-checked:after:translate-x-full peer-checked:after:border-white 
-                                after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-                                after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
+                  <div className="w-11 h-6 bg-dark-400 peer-focus:outline-none rounded-full peer
+                                peer-checked:after:translate-x-full peer-checked:after:border-white
+                                after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all
                                 peer-checked:bg-primary-500"></div>
                 </label>
               </div>
@@ -750,10 +789,10 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                     onChange={(e) => updateConfig('firewall', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-dark-400 peer-focus:outline-none rounded-full peer 
-                                peer-checked:after:translate-x-full peer-checked:after:border-white 
-                                after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-                                after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
+                  <div className="w-11 h-6 bg-dark-400 peer-focus:outline-none rounded-full peer
+                                peer-checked:after:translate-x-full peer-checked:after:border-white
+                                after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                                after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all
                                 peer-checked:bg-primary-500"></div>
                 </label>
               </div>
@@ -767,7 +806,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         <button
           onClick={handleSubmit}
           className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg
-                   font-medium transition-colors focus:outline-none focus:ring-2 
+                   font-medium transition-colors focus:outline-none focus:ring-2
                    focus:ring-primary-500/20"
         >
           Continue to Documents
