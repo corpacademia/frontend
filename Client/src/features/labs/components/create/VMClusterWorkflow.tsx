@@ -20,6 +20,9 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<any>({});
+  const [selectedCloudType, setSelectedCloudType] = useState<'global' | 'organization'>('global');
+  const [selectedCloudId, setSelectedCloudId] = useState<string>('');
+  const [organizationClouds, setOrganizationClouds] = useState<any[]>([]);
   const [config, setConfig] = useState({
     title: '',
     description: '',
@@ -58,12 +61,37 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
       try {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
+        
+        if (response.data.user?.org_id) {
+          try {
+            const cloudsResponse = await axios.get(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_credentials/organization/${response.data.user.org_id}`
+            );
+            if (cloudsResponse.data.success) {
+              setOrganizationClouds(cloudsResponse.data.credentials || []);
+            }
+          } catch (err) {
+            console.error('Error fetching organization clouds:', err);
+          }
+        }
       } catch (err) {
         console.error('Error fetching user profile:', err);
       }
     }
     getUserDetails();
   }, []);
+
+  const handleCloudTypeChange = (type: 'global' | 'organization') => {
+    setSelectedCloudType(type);
+    setSelectedCloudId('');
+  };
+
+  const getFilteredCloudsByProvider = () => {
+    if (!config.cloudProvider) return [];
+    return organizationClouds.filter(
+      (cloud: any) => cloud.provider.toLowerCase() === config.cloudProvider.toLowerCase()
+    );
+  };
 
   const updateConfig = (updates: Partial<typeof config>) => {
     setConfig(prev => ({ ...prev, ...updates }));
@@ -204,9 +232,65 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
       case 3:
         if (config.platform === 'cloud') {
           return (
-            <CloudProviderSelector 
-              onSelect={(provider) => updateConfig({ cloudProvider: provider })} 
-            />
+            <div className="space-y-6">
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
+                <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
+                  Select Cloud Provider
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Cloud Type
+                    </label>
+                    <select
+                      value={selectedCloudType}
+                      onChange={(e) => handleCloudTypeChange(e.target.value as 'global' | 'organization')}
+                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="global">Global Cloud (GoLab Cloud)</option>
+                      {organizationClouds.length > 0 && (
+                        <option value="organization">Organization Cloud</option>
+                      )}
+                    </select>
+                  </div>
+                  {config.cloudProvider && getFilteredCloudsByProvider().length > 0 && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Select Cloud Configuration
+                      </label>
+                      <select
+                        value={selectedCloudId}
+                        onChange={(e) => setSelectedCloudId(e.target.value)}
+                        className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      >
+                        <option value="">Use GoLab Cloud (Default)</option>
+                        {getFilteredCloudsByProvider().map((cloud: any) => (
+                          <option key={cloud.id} value={cloud.id}>
+                            {cloud.name} ({cloud.provider.toUpperCase()})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {config.cloudProvider && getFilteredCloudsByProvider().length === 0 && selectedCloudType === 'organization' && (
+                    <div className="mt-4 p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/20">
+                      <p className="text-sm text-yellow-200">
+                        No organization clouds configured for {config.cloudProvider?.toUpperCase()}. Using GoLab Cloud.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <CloudProviderSelector 
+                onSelect={(provider) => {
+                  updateConfig({ cloudProvider: provider });
+                  (window as any).resetCloudSelection = () => {
+                    setSelectedCloudId('');
+                    setSelectedCloudType('global');
+                  };
+                }} 
+              />
+            </div>
           );
         } else if (config.platform === 'datacenter') {
           return (

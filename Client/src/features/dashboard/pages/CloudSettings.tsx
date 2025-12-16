@@ -48,11 +48,12 @@ export const CloudSettings: React.FC = () => {
       setIsLoading(true);
       const endpoint = user?.role === 'superadmin' 
         ? `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_ms/global-clouds`
-        : `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_ms/organization-clouds/${user?.org_id}`;
+        : `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/organization-clouds/${user?.org_id}`;
       
       const response = await axios.get(endpoint);
+
       if (response.data.success) {
-        setCredentials(response.data.clouds || []);
+        setCredentials(response.data.data || []);
       }
     } catch (err) {
       console.error('Error fetching credentials:', err);
@@ -72,11 +73,12 @@ export const CloudSettings: React.FC = () => {
         provider: formData.provider,
         name: formData.name,
         credentials: formData.credentials[formData.provider],
-        org_id: user?.role === 'orgsuperadmin' ? user?.org_id : undefined
+        org_id: user?.role === 'orgsuperadmin' ? user?.org_id : undefined,
+        createdBy:user?.id
       };
 
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_ms/add-cloud`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/add-cloud`,
         payload
       );
 
@@ -85,6 +87,9 @@ export const CloudSettings: React.FC = () => {
         setIsAddModalOpen(false);
         fetchCredentials();
         resetForm();
+        setTimeout(()=>{
+          setSuccess(null)
+        },2000)
       }
     } catch (err) {
       setError('Failed to add cloud credentials');
@@ -261,7 +266,7 @@ export const CloudSettings: React.FC = () => {
       </div>
     );
   };
-
+ console.log(credentials)
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
