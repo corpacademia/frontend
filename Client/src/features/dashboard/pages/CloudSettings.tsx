@@ -25,6 +25,7 @@ export const CloudSettings: React.FC = () => {
   const [showPassword, setShowPassword] = useState<{ [key: string]: boolean }>({});
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   const [formData, setFormData] = useState({
     provider: 'aws',
@@ -56,6 +57,9 @@ export const CloudSettings: React.FC = () => {
     } catch (err) {
       console.error('Error fetching credentials:', err);
       setError('Failed to load cloud credentials');
+      setTimeout(()=>{
+        setError(null)
+      },2000)
     } finally {
       setIsLoading(false);
     }
@@ -63,6 +67,7 @@ export const CloudSettings: React.FC = () => {
 
   const handleAddCredential = async () => {
     try {
+      setIsAdding(true);
       const payload = {
         provider: formData.provider,
         name: formData.name,
@@ -83,6 +88,11 @@ export const CloudSettings: React.FC = () => {
       }
     } catch (err) {
       setError('Failed to add cloud credentials');
+      setTimeout(()=>{
+        setError(null)
+      },2000)
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -263,9 +273,9 @@ export const CloudSettings: React.FC = () => {
         </div>
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary flex items-center gap-2 text-gray-400"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-5 w-5 text-gray-400" />
           Add Cloud Credential
         </button>
       </div>
@@ -312,21 +322,34 @@ export const CloudSettings: React.FC = () => {
             </h2>
             {renderCredentialForm()}
             <div className="flex justify-end space-x-4 mt-6">
+              <GradientText>
               <button
                 onClick={() => {
                   setIsAddModalOpen(false);
                   resetForm();
                 }}
                 className="btn-secondary"
+                disabled={isAdding}
               >
                 Cancel
               </button>
+              </GradientText>
+              <GradientText>
               <button
                 onClick={handleAddCredential}
-                className="btn-primary"
+                className="btn-primary flex items-center"
+                disabled={isAdding}
               >
-                Add Credential
+                {isAdding ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  'Add Credential'
+                )}
               </button>
+              </GradientText>
             </div>
           </div>
         </div>
