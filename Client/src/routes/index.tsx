@@ -60,6 +60,7 @@ import { EmulatorPage } from '../features/labs/pages/EmulatorPage';
 import { BatchesPage } from '../features/batches/pages/BatchesPage';
 import { BatchDetailsPage } from '../features/batches/pages/BatchDetailsPage';
 import VmSession from '../features/labs/components/vmsession';
+import { CloudSettings } from '../features/dashboard/pages/CloudSettings';
 // Assume TransactionsPage and CloudUsage are correctly imported from their respective modules
 // import { TransactionsPage } from '../features/dashboard/pages/TransactionsPage';
 
@@ -141,7 +142,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="labs/create-modules" element={<CreateModulesPage />} />
         {/* <Route path="labs/vm-session/:vmId" element={<VmSession />} /> */}
         <Route path="labs/vm-session/:vmId" element={<VMSessionPage />} />
-        <Route path="cloud" element={<CloudResources />} />
+        <Route path="/cloud" element={<CloudResources />} />
+        <Route path="/cloud-settings" element={<CloudSettings />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<Settings />} />
         <Route path="organization" element={<Organizations />} />
@@ -174,7 +176,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="my-labs/:labId/exercise/:exerciseId" element={<LabExercisePage />} />
         <Route path="my-labs/:labId/quiz/:exerciseId" element={<QuizExercisePage />} />
       </Route>
-      
+
       <Route path="/" element={<PublicCataloguePage />} />
     </Routes>
   );

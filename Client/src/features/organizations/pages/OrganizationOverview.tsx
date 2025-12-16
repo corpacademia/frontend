@@ -19,7 +19,8 @@ import {
   Clock,
   Loader,
   Check,
-  X
+  X,
+  Cloud
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -314,6 +315,55 @@ export const OrganizationOverview: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {user?.role === 'superadmin' && (
+        <div className="glass-panel">
+          <h2 className="text-lg font-semibold mb-6">
+            <GradientText>Cloud Configuration</GradientText>
+          </h2>
+          <div className="flex items-center justify-between p-4 bg-dark-300/50 rounded-lg border border-primary-500/20">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-lg bg-primary-500/10">
+                <Cloud className="h-5 w-5 text-primary-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-200">Bring Your Own Cloud</p>
+                <p className="text-xs text-gray-400">Allow organization to use their own cloud credentials</p>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={organization.bring_your_own_cloud || false}
+                onChange={async (e) => {
+                  try {
+                    const response = await axios.post(
+                      `${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/updateBringYourOwnCloud`,
+                      {
+                        org_id: orgId,
+                        bring_your_own_cloud: e.target.checked
+                      }
+                    );
+                    if (response.data.success) {
+                      setOrganization({
+                        ...organization,
+                        bring_your_own_cloud: e.target.checked
+                      });
+                      setSuccess('Cloud configuration updated successfully');
+                      setTimeout(() => setSuccess(null), 3000);
+                    }
+                  } catch (err) {
+                    setError('Failed to update cloud configuration');
+                    setTimeout(() => setError(null), 3000);
+                  }
+                }}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
+            </label>
+          </div>
+        </div>
+      )}
     </div>
   );
   return (
