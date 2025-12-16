@@ -146,6 +146,12 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
     setIsLaunchProcessing(true);
     try {
       if( buttonLabel === 'Launch VM'){
+        const fetchIp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getIpOfVm`,{
+          node:vm.node,
+          vmid:100
+        })
+        console.log(fetchIp) 
+        return;
          const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`,{
           node:vm.node,
           labid:vm.labid,
@@ -196,8 +202,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
         {
           protocol: "rdp",
-          hostname: "27.111.74.28",
-          port: "50136",
+          hostname: "171.172.173.143",
+          port: "3389",
           username: "Admin",
           password: "P@ssw0rd",
         }
