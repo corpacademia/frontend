@@ -34,7 +34,7 @@ export const CloudSettings: React.FC = () => {
       azure: { subscription_id: '', tenant_id: '', client_id: '', client_secret: '' },
       gcp: { project_id: '', credentials_json: '' },
       datacenter: { api_url: '', username: '', password: '' },
-      proxmox: { api_url: '', username: '', password: '', node: '' }
+      proxmox: { api_url: '', token: '', secret_key: '', node: '' }
     }
   });
 
@@ -112,7 +112,7 @@ export const CloudSettings: React.FC = () => {
         azure: { subscription_id: '', tenant_id: '', client_id: '', client_secret: '' },
         gcp: { project_id: '', credentials_json: '' },
         datacenter: { api_url: '', username: '', password: '' },
-        proxmox: { api_url: '', username: '', password: '', node: '' }
+        proxmox: { api_url: '', token: '', secret_key: '', node: '' }
       }
     });
   };
@@ -217,30 +217,30 @@ export const CloudSettings: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Token</label>
               <input
                 type="text"
-                value={formData.credentials.proxmox.username}
+                value={formData.credentials.proxmox.token}
                 onChange={(e) => setFormData({
                   ...formData,
                   credentials: {
                     ...formData.credentials,
-                    proxmox: { ...formData.credentials.proxmox, username: e.target.value }
+                    proxmox: { ...formData.credentials.proxmox, token: e.target.value }
                   }
                 })}
                 className="w-full bg-dark-400/50 border border-primary-500/20 rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Secret Key</label>
               <input
                 type="password"
-                value={formData.credentials.proxmox.password}
+                value={formData.credentials.proxmox.secret_key}
                 onChange={(e) => setFormData({
                   ...formData,
                   credentials: {
                     ...formData.credentials,
-                    proxmox: { ...formData.credentials.proxmox, password: e.target.value }
+                    proxmox: { ...formData.credentials.proxmox, secret_key: e.target.value }
                   }
                 })}
                 className="w-full bg-dark-400/50 border border-primary-500/20 rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"

@@ -37,7 +37,8 @@ const SidebarItem = ({ icon: Icon, label, path, isActive, isCollapsed }) => (
           : 'text-gray-400 hover:bg-dark-100/50 hover:text-primary-300'
       } ${isCollapsed ? 'justify-center' : ''}`
     }
-    title={isCollapsed ? label : undefined}
+    // title={isCollapsed ? label : undefined}
+     title={label}
   >
     <Icon className={`h-5 w-5 flex-shrink-0 ${isCollapsed ? '' : 'mr-3'}`} />
     {!isCollapsed && label}
