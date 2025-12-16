@@ -11,6 +11,26 @@ export const DashboardLayout: React.FC = () => {
   // Check if current route is catalogue page
   const isCataloguePage = location.pathname.includes('/dashboard/labs/catalogue');
 
+  // Auto-collapse sidebar on small screens
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsSidebarCollapsed(true);
+      } else {
+        setIsSidebarCollapsed(false);
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
       {/* Neural Pattern Background */}

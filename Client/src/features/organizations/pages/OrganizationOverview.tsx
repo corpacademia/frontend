@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { GradientText } from '../../../components/ui/GradientText';
+import { useAuthStore } from '../../../store/authStore';
 import { 
   Building2, 
   Mail, 
@@ -93,6 +94,7 @@ const defaultOrganization: OrganizationDetails = {
 
 export const OrganizationOverview: React.FC = () => {
   const { orgId } = useParams();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'billing' | 'workspaces' | 'activity' | 'documents'>('overview');
   const [organization, setOrganization] = useState<OrganizationDetails>(defaultOrganization);
   const [isLoading, setIsLoading] = useState(true);
@@ -230,8 +232,8 @@ export const OrganizationOverview: React.FC = () => {
   };
 
   const renderOverviewTab = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <div className="glass-panel">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm text-gray-400">Total Users</span>
@@ -280,10 +282,10 @@ export const OrganizationOverview: React.FC = () => {
       </div>
 
       <div className="glass-panel">
-        <h2 className="text-lg font-semibold mb-6">
+        <h2 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6">
           <GradientText>Contact Information</GradientText>
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 rounded-lg bg-primary-500/10">
               <Mail className="h-5 w-5 text-primary-400" />
@@ -318,10 +320,10 @@ export const OrganizationOverview: React.FC = () => {
 
       {user?.role === 'superadmin' && (
         <div className="glass-panel">
-          <h2 className="text-lg font-semibold mb-6">
+          <h2 className="text-base sm:text-lg font-semibold mb-4 sm:mb-6">
             <GradientText>Cloud Configuration</GradientText>
           </h2>
-          <div className="flex items-center justify-between p-4 bg-dark-300/50 rounded-lg border border-primary-500/20">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-dark-300/50 rounded-lg border border-primary-500/20">
             <div className="flex items-center space-x-3">
               <div className="p-2 rounded-lg bg-primary-500/10">
                 <Cloud className="h-5 w-5 text-primary-400" />
@@ -367,28 +369,28 @@ export const OrganizationOverview: React.FC = () => {
     </div>
   );
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
       {/* Header */}
       <div className="glass-panel">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 sm:gap-0">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             {organization.logo ? (
               <img 
                 src={`http://localhost:3004/uploads/${getUploadedFilePath(organization.logo)}`} 
                 alt={organization.organization_name} 
-                className="h-16 w-16 rounded-lg object-cover"
+                className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg object-cover flex-shrink-0"
               />
             ) : (
-              <div className="h-16 w-16 rounded-lg bg-gradient-to-br from-primary-500/20 to-secondary-500/20 flex items-center justify-center">
-                <Building2 className="h-8 w-8 text-primary-400" />
+              <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg bg-gradient-to-br from-primary-500/20 to-secondary-500/20 flex items-center justify-center flex-shrink-0">
+                <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary-400" />
               </div>
             )}
-            <div>
-              <h1 className="text-2xl font-display font-bold">
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-display font-bold truncate">
                 <GradientText>{organization.organization_name}</GradientText>
               </h1>
-              <div className="flex items-center mt-2 space-x-4">
-                <span className="text-sm text-gray-400">ID: {organization.org_id}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center mt-1 sm:mt-2 gap-1 sm:gap-4">
+                <span className="text-xs sm:text-sm text-gray-400 truncate">ID: {organization.org_id}</span>
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                   organization.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
                   organization.status === 'suspended' ? 'bg-red-500/20 text-red-300' :
@@ -400,28 +402,28 @@ export const OrganizationOverview: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="flex space-x-3">
+          <div className="flex flex-row sm:flex-row space-x-2 sm:space-x-3 w-full sm:w-auto">
             <button
               onClick={() => setIsEditModalOpen(true)}
-              className="btn-secondary text-gray-200"
+              className="btn-secondary text-gray-200 flex-1 sm:flex-none text-sm"
             >
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit
+              <Pencil className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Edit</span>
             </button>
             <button
               onClick={() => setIsDeleteModalOpen(true)}
-              className="btn-secondary text-red-400 hover:text-red-300"
+              className="btn-secondary text-red-400 hover:text-red-300 flex-1 sm:flex-none text-sm"
             >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+              <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Delete</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-primary-500/10">
-        <nav className="flex space-x-8">
+      <div className="border-b border-primary-500/10 -mx-2 sm:mx-0 overflow-x-auto">
+        <nav className="flex space-x-4 sm:space-x-8 px-2 sm:px-0 min-w-max sm:min-w-0">
           {[
             { id: 'overview', label: 'Overview', icon: Building2 },
             { id: 'users', label: 'Users & Admins', icon: Users },
@@ -433,13 +435,13 @@ export const OrganizationOverview: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center px-1 py-4 border-b-2 font-medium text-sm
+              className={`flex items-center px-1 py-3 sm:py-4 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap
                 ${activeTab === tab.id
                   ? 'border-primary-500 text-primary-400'
                   : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-primary-500/50'
                 }`}
             >
-              <tab.icon className="h-4 w-4 mr-2" />
+              <tab.icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
               {tab.label}
             </button>
           ))}
