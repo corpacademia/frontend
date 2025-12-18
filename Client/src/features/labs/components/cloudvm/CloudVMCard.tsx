@@ -245,19 +245,43 @@ useEffect(() => {
           type: 'success',
           message: 'Software launched successfully',
         });
-
+        //  const resp = await axios.post(
+        //         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+        //         {
+        //           protocol: "rdp",
+        //           hostname:instanceDetails?.public_ip,
+        //           port: "3389",
+        //           username: "Admin",
+        //           password: instanceDetails?.password,
+        //         }
+        //       );
+          
+        //       if (resp.data.success) {
+        //         const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+        //         // Build full ws url for guacamole-common-js
+        //         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        //         const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+        //         const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+        //         navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
+        //         state: {
+        //           guacUrl: wsUrl,
+        //           vmTitle: vm.title,
+        //           doc:vm?.labguide
+        //         }
+        //       });
+        //       }
         // Navigate to Guacamole frame page instead of opening in new tab
-        if (launchResponse.data.response.jwtToken) {
-          const guacUrl = `${vm?.guacamole_url}?token=${launchResponse.data.response.jwtToken}`;
-          navigate(`/dashboard/labs/vm-session/${vm.lab_id}`, {
-            state: { 
-              guacUrl,
-              vmTitle: vm.title,
-              vmId: vm.lab_id,
-              doc:vm.labguide,
-            }
-          });
-        }
+        // if (launchResponse.data.response.jwtToken) {
+        //   const guacUrl = `${vm?.guacamole_url}?token=${launchResponse.data.response.jwtToken}`;
+        //   navigate(`/dashboard/labs/vm-session/${vm.lab_id}`, {
+        //     state: { 
+        //       guacUrl,
+        //       vmTitle: vm.title,
+        //       vmId: vm.lab_id,
+        //       doc:vm.labguide,
+        //     }
+        //   });
+        // }
       } else {
         throw new Error(launchResponse.data.response.message || 'Failed to launch software');
       }

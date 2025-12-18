@@ -70,7 +70,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const isOrgSuperAdmin = (currentUser || user)?.role === 'orgsuperadmin';
   const isOrgLabAdmin =(currentUser || user)?.role === 'labadmin';
   const isAvailable = (course.software || '').toLowerCase() === 'available';
- 
+  
   const canEditDelete = () => {
     if (isSuperAdmin) return true;
     if (

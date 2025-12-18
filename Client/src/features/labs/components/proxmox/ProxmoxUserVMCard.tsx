@@ -78,7 +78,6 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
       console.error('Failed to fetch current user:', error);
     }
   };
-
   const checkVMStatus = async () => {
     try {
       const user = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
@@ -88,16 +87,20 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
         type: 'user',
         purchased:vm.purchased ? true : false
       });
-
       if (response.data.success) {
         const isLaunched = response.data.data.islaunched;
         const isRunning = response.data.data.isrunning;
-
+        const isLoading = response.data.data.isloading;
         if (isRunning) {
           setVmStatus('running');
-        } else if (isLaunched) {
+        } 
+        else if (isLaunched) {
           setVmStatus('stopped');
-        } else {
+        }
+        else if(isLoading){
+          setIsLaunchProcessing(true);
+        }
+        else {
           setVmStatus('pending');
         }
 
@@ -168,21 +171,15 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
         }
       }
       if (buttonLabel === 'Launch VM') {
-        const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`, {
+        console.log(vm)
+        const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchUserVm`, {
           node: vm.node,
           labid:vm.labid,
           name: vm.vmname,
-          cores: vm.cpu,
-          memory: vm.ram,
-          storageType: vm.storagetype,
-          storage: vm.storage,
-          iso: vm.isoimage,
-          nicModel: vm.nicmodel,
-          networkBridge: vm.networkbridge,
-          firewall: vm.firewall,
-          boot: vm.boot,
+          userid:vm.user_id,
           type: 'user',
-          purchased:vm.purchased ? true :false
+          purchased:vm.purchased ? true :false,
+          duration:vm?.duration
         });
         
         if (launchVM.data.success) {
@@ -194,10 +191,11 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
           });
         }
       } else if (buttonLabel === 'Stop') {
-        const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox_ms/stopVM`, {
+        const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/stopVM`, {
           lab_id: vm.labid,
-          vmId: vm.vmid,
-          node: vm.node
+          vmid: vm.vmid,
+          node: vm.node,
+          userid:vm?.user_id,
         });
 
         if (stopResponse.data.success) {
@@ -214,26 +212,28 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
         const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
           lab_id: vm.labid,
           vmid: vm.vmid,
-          node: vm.node
+          node: vm.node,
+          type:'user',
+          userid:vm?.user_id,
+          purchased:vm.purchased ? true :false,
         });
 
         if (startResponse.data.success) {
-          const backData = startResponse.data;
+          const backData = startResponse.data.data;
           setButtonLabel('Stop');
           setVmStatus('running');
           setNotification({
             type: 'success',
             message: 'VM started successfully',
           });
-
           const resp = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
         {
           protocol: backData.protocol,
           hostname: backData.hostname,
           port: backData.port,
-          username:backData.username,
-          password: backData.password,
+          username:vm?.username,
+          password: vm?.password,
         }
       );
   

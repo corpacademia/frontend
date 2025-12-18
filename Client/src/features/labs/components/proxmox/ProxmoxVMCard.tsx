@@ -108,13 +108,18 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       if (response.data.success) {
         const isLaunched = response.data.data.islaunched;
         const isRunning = response.data.data.isrunning;
+        const isLoading = response.data.data.isloading;
 
         // Update VM status
         if (isRunning) {
           setVmStatus('running');
         } else if (isLaunched) {
           setVmStatus('stopped');
-        } else {
+        } 
+        else if(isLoading){
+          setIsLaunchProcessing(true);
+        }
+        else {
           setVmStatus('pending');
         }
 
@@ -160,9 +165,11 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           firewall:vm.firewall,
           boot:vm.boot,
           template:vm?.template_id,
-          type:currentUser.id !== vm?.user_id ? 'org' : 'sup'
+          type:currentUser.id !== vm?.user_id ? 'org' : 'sup',
+          vmdetails_id:vm?.vmdetails_id
          }) 
          if(launchVM.data.success){
+          setIsLaunchProcessing(false)
            setButtonLabel('Start VM');
           setVmStatus('stopped');
           setNotification({
@@ -192,6 +199,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         }
       } 
       else {
+        console.log(vm)
+        return
         const fetchIp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getIpOfVm`,{
           node:vm.node,
           vmid:100

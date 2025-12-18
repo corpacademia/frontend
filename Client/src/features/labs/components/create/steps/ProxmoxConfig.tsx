@@ -105,7 +105,6 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
         NODE: firstNode,
       }),
     ]);
-
     // Step 3: Update state
     setBackendData({
       nodes,
@@ -179,6 +178,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/templates`, {
         NODE: localConfig.node
       });
+
       setBackendData(prev => ({
         ...prev,
         templates: response?.data?.data || [],
@@ -311,7 +311,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
   const handleSubmit = () => {
     // Validate required fields
-    const requiredFields = ['name', 'node', 'storage', 'iso', 'networkBridge'];
+    const requiredFields = ['name', 'node'];
     const missingFields = requiredFields.filter(field => !localConfig[field as keyof ProxmoxConfigData]);
 
     if (missingFields.length > 0) {
@@ -391,8 +391,8 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
               >
                 <option value="">Select node</option>
                 {backendData.nodes.map((node) => (
-                  <option key={node.id} value={node.name}>
-                    {node.name} (CPU: {node.cpuCores}, RAM: {(node.memory.free)/(1024*1024)})
+                  <option key={node.id} value={node.node}>
+                    {node.node} (CPU: {node.cpuCores}, RAM: {(node.memory.free)/(1024*1024)})
                   </option>
                 ))}
               </select>
@@ -613,11 +613,11 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              {/* <label className="block text-sm font-medium text-gray-300 mb-2">
                 ISO Configuration <span className="text-red-400">*</span>
-              </label>
+              </label> */}
 
-               {/* ISO Dropdown */}
+               {/* ISO Dropdown
               <div className="mb-3">
                 <label className="block text-xs font-medium text-gray-400 mb-1">ISO Image</label>
                 <div className="relative">
@@ -638,16 +638,16 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                   </select>
                   <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
                 </div>
-              </div>
+              </div> */}
 
 
 
 
 
-              {(!localConfig.node || !localConfig.storage) && (
+              {/* {(!localConfig.node || !localConfig.storage) && (
                 <p className="text-xs text-gray-500 mt-1">Select node and storage first to view available ISOs</p>
-              )}
-              <div className="mt-2">
+              )} */}
+              {/* <div className="mt-2">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Upload ISO File
                 </label>
@@ -667,7 +667,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
                     <span className="text-xs text-gray-400">{uploadProgress}%</span>
                   </div>
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

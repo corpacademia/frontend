@@ -117,13 +117,13 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
         category: category,
         price: price,
       })
-    
       let credAssignmentPayload ={
               sliceId:sliceId,
               organizationId: organization,
               userId: user_profile.data.user.id,
               startDate:updateCatalogue?.data?.data?.startdate,
-              endDate:updateCatalogue?.data?.data?.enddate
+              endDate:updateCatalogue?.data?.data?.enddate,
+              admin_id:organizations.find((org)=>org.id === organization )?.org_admin || null
       }
       if(currentUser?.role === 'orgsuperadmin'){
         credAssignmentPayload = {

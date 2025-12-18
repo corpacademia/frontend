@@ -405,7 +405,7 @@ const canEditContent = () => {
               </button>
              <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${
-                userRole === 'superadmin' || userRole === 'orgsuperadmin'
+                userRole === 'superadmin' || userRole === 'orgsuperadmin' || userRole === 'labadmin'
                   ? slice.status === 'active'
                     ? 'bg-emerald-500/20 text-emerald-300'
                     : slice.status === 'expired'

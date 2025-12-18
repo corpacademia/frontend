@@ -43,7 +43,6 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
     };
     getUserDetails();
   }, []);
-
   React.useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -53,13 +52,33 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
           response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationAdmins`, {
             org_id: admin.org_id
           });
-        } else {
+        }
+        else if (admin.role === "labadmin") {
+        const usersData = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${admin.org_id}`
+        );
+
+        const users = usersData.data?.data || [];
+
+        const filteredUsers = users.filter(
+          (user) => user.role === "user"
+        );
+
+        response = {
+          success: true,
+          data: {
+            data: filteredUsers
+          }
+        };
+      }
+
+        else {
           // Fetch organization users for other admins
           response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationUsers`, {
             admin_id: admin.id
           });
         }
-        setUsers(response.data.data || []);
+        setUsers(response.data.data  || []);
       } catch (error) {
         console.error('Error fetching users:', error);
       }

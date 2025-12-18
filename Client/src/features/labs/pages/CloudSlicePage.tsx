@@ -46,17 +46,22 @@ export const CloudSlicePage: React.FC = () => {
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [assignSlice, setAssignSlice] = useState<CloudSlice | null>(null);
   const [orgStatus,setOrgStatus] = useState<any>(null);
+  const [organizations,setOrganizations]= useState<any>(null);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(response.data.user);
+        const responseOrg = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
+                if (responseOrg.data.success) {
+                  setOrganizations(responseOrg.data.data);
+                }
         if(response.data.user.role === 'labadmin'){
            const orgLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
             
               orgId: response.data.user.org_id,
-              admin_id: response.data.user.id
+              admin_id: responseOrg.data.data.find((org)=>org.id === response.data.user.org_id)?.org_admin || null
             
            })
         if(orgLabStatus.data.success){
@@ -97,14 +102,12 @@ export const CloudSlicePage: React.FC = () => {
       }
       // First, get the user's own cloud slices
       
-      
       // If user is an labadmin, also fetch organization-assigned slices
-      else if (user.role === 'labadmin') {
-
+       if (user.role === 'labadmin' || user.role === 'orgsuperadmin') {
         try {
           const getOrgAssignedSlices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
             orgId: user.org_id,
-            admin_id: user.id
+            admin_id:organizations.find((org)=>org.id === user.org_id)?.org_admin || null 
           });
 
           if (getOrgAssignedSlices.data.success) {

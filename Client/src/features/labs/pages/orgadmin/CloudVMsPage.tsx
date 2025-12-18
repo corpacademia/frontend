@@ -219,7 +219,6 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
       ...(orgResponse.data.success ? orgResponse.data.data : []),
       ...(proxmoxResponse.data.success ? proxmoxResponse.data.data : []),
     ];
-
     //  Fetch detailed lab info for all assignments
     const vmDetails = await Promise.all(
       allAssignments.map(async (assignment: any) => {
@@ -258,7 +257,6 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     setTimeout(() => setError(null), 2000);
   }
 };
-
 
   const fetchAllVMs = async () => {
     try {

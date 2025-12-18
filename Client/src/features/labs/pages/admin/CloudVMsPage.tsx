@@ -142,23 +142,149 @@ export const AdminCloudVMsPage: React.FC = () => {
     }
   };
 
-  const fetchProxmoxVMs = async () => {
-    try {
-      const proxmoxResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxLabsOnAdminId`, {
-        adminId: admin?.id,
-      });
-      if (proxmoxResponse.data.success) {
-        setProxmoxVMs(proxmoxResponse.data.data);
-      }
-    } catch (proxmoxErr) {
-      console.error('Error fetching Proxmox VMs:', proxmoxErr);
-    }
-  };
+  // const fetchProxmoxVMs = async () => {
+  //   try {
+  //     const proxmoxResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxLabsOnAdminId`, {
+  //       adminId: admin?.id,
+  //     });
+  //     if (proxmoxResponse.data.success) {
+  //       setProxmoxVMs(proxmoxResponse.data.data);
+  //     }
+  //   } catch (proxmoxErr) {
+  //     console.error('Error fetching Proxmox VMs:', proxmoxErr);
+  //   }
+  // };
+//  const fetchProxmoxVMs = async (orgId: string, userId: string) => {
+//   try {
+//     //  Fetch both sets in parallel
+//     const [orgResponse, proxmoxResponse] = await Promise.all([
+//   admin?.role !== 'superadmin'
+//     ? axios.post(
+//         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedLabs`,
+//         { orgId, userId }
+//       )
+//     : Promise.resolve(null),
+
+//   axios.post(
+//     `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxLabsOnAdminId`,
+//     { adminId: userId }
+//   )
+// ]);
+
+
+//     const allAssignments = [
+//       ...(orgResponse.data.success ? orgResponse.data.data : []),
+//       ...(proxmoxResponse.data.success ? proxmoxResponse.data.data : []),
+//     ];
+//     //  Fetch detailed lab info for all assignments
+//     const vmDetails = await Promise.all(
+//       allAssignments.map(async (assignment: any) => {
+//         try {
+//           const vmResponse = await axios.get(
+//             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${assignment.labid}`
+//           );
+
+//           if (vmResponse.data.success) {
+//             return {
+//               ...vmResponse.data.data,
+//               ...assignment,
+//             };
+//           }
+//           return null;
+//         } catch (err) {
+//           console.error(`Error fetching Proxmox VM details for ${assignment.labid}:`, err);
+//           return null;
+//         }
+//       })
+//     );
+
+//     //  Filter out nulls and duplicates
+//     const mergedVMs = vmDetails
+//       .filter(Boolean)
+//       .reduce((acc: any[], vm: any) => {
+//         if (!acc.find((v) => v.labid === vm.labid)) acc.push(vm);
+//         return acc;
+//       }, []);
+
+//     //  Set final state
+//     setProxmoxVMs(mergedVMs);
+//   } catch (err) {
+//     console.error("Error fetching Proxmox VMs:", err);
+//     setError("Failed to fetch Proxmox VMs");
+//     setTimeout(() => setError(null), 2000);
+//   }
+// };
+const fetchProxmoxVMs = async (orgId: string, userId: string) => {
+  try {
+    const [orgResponse, proxmoxResponse] = await Promise.all([
+      admin?.role !== "superadmin"
+        ? axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedLabs`,
+            { orgId, userId }
+          )
+        : Promise.resolve(null),
+
+      axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxLabsOnAdminId`,
+        { adminId: userId }
+      ),
+    ]);
+
+    // ✅ Safely merge assignments
+    const allAssignments = [
+      ...(orgResponse?.data?.success ? orgResponse.data.data : []),
+      ...(proxmoxResponse?.data?.success ? proxmoxResponse.data.data : []),
+    ];
+
+    // 🔁 Fetch lab details
+    const vmDetails = await Promise.all(
+      allAssignments.map(async (assignment: any) => {
+        try {
+          const vmResponse = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${assignment.labid}`
+          );
+
+          if (vmResponse.data?.success) {
+            return {
+              ...vmResponse.data.data,
+              ...assignment,
+            };
+          }
+
+          return null;
+        } catch (err) {
+          console.error(
+            `Error fetching Proxmox VM details for ${assignment.labid}:`,
+            err
+          );
+          return null;
+        }
+      })
+    );
+
+    // 🧹 Remove nulls + deduplicate
+    const mergedVMs = vmDetails
+      .filter(Boolean)
+      .reduce((acc: any[], vm: any) => {
+        if (!acc.some((v) => v.labid === vm.labid)) {
+          acc.push(vm);
+        }
+        return acc;
+      }, []);
+
+    setProxmoxVMs(mergedVMs);
+  } catch (err) {
+    console.error("Error fetching Proxmox VMs:", err);
+    setError("Failed to fetch Proxmox VMs");
+    setTimeout(() => setError(null), 2000);
+  }
+};
+
 
   if (admin.id) {
     fetchCloudVMs();
     fetchDatacenterVMs();
-    fetchProxmoxVMs();
+    fetchProxmoxVMs(admin?.org_id,admin?.id);
   }
 }, [admin.id]);
 
