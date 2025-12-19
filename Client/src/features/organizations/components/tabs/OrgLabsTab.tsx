@@ -1,18 +1,24 @@
-
 import React, { useState, useEffect } from 'react';
-import { GradientText } from '../../../../components/ui/GradientText';
-import { 
-  Trash2, 
-  Edit, 
+import {
+  Trash2,
+  Edit,
   Loader,
   AlertCircle,
   Check,
   X,
   Box,
   Calendar,
-  Clock
+  Clock,
+  Eye,
+  EyeOff,
+  LinkIcon,
+  Users
 } from 'lucide-react';
 import axios from 'axios';
+import { GradientText } from '../../../../components/ui/GradientText';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { useNavigate } from 'react-router-dom';
 
 interface AssignedLab {
   id: string;
@@ -53,6 +59,13 @@ interface UserLabsModalProps {
   orgId: string;
 }
 
+interface VMClusterUserListModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  lab: any;
+  organizationId: string;
+}
+
 const EditLabModal: React.FC<EditLabModalProps> = ({ isOpen, onClose, lab, onSuccess }) => {
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -66,7 +79,7 @@ const EditLabModal: React.FC<EditLabModalProps> = ({ isOpen, onClose, lab, onSuc
     if (lab) {
       const start = new Date(lab.start_date);
       const end = new Date(lab.end_date);
-      
+
       setStartDate(start.toISOString().split('T')[0]);
       setStartTime(start.toTimeString().slice(0, 5));
       setEndDate(end.toISOString().split('T')[0]);
@@ -90,7 +103,7 @@ const EditLabModal: React.FC<EditLabModalProps> = ({ isOpen, onClose, lab, onSuc
       }
 
       let response;
-      
+
       if (lab.lab_type === 'cloudslice') {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateOrgLabAssignment`, {
           assignmentId: lab.id,
@@ -413,6 +426,259 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
   );
 };
 
+const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen, onClose, lab, organizationId }) => {
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isOpen && lab) {
+      fetchUsers();
+    }
+  }, [isOpen, lab]);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabUsers`,
+        {
+          labId: lab.labid,
+          orgId: organizationId
+        }
+      );
+
+      if (response.data.success) {
+        setUsers(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = (userId: string) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [userId]: !prev[userId]
+    }));
+  };
+
+  const handleConnectToVM = async (user: any) => {
+    try {
+      const resp = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+        {
+          protocol: user.vmData?.protocol || 'RDP',
+          hostname: user.ip,
+          port: user.port,
+          username: user.username,
+          password: user.password,
+        }
+      );
+
+      if (resp.data.success) {
+        const wsPath = resp.data.wsPath;
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const hostPort = `${window.location.hostname}:3002`;
+        const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+
+        navigate(`/dashboard/labs/vm-session/${lab.labid}`, {
+          state: {
+            guacUrl: wsUrl,
+            vmTitle: lab.title,
+            vmId: lab.labid,
+            doc: lab.labguide,
+            credentials: [user]
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error connecting to VM:', error);
+    }
+  };
+
+  const handleConnectGroup = () => {
+    navigate(`/dashboard/labs/vm-session/${lab.labid}`, {
+      state: {
+        guacUrl: null,
+        vmTitle: lab.title,
+        vmId: lab.labid,
+        doc: lab.labguide,
+        credentials: users,
+        isGroupConnection: true
+      }
+    });
+  };
+
+  const groupedUsers = users.reduce((acc, user) => {
+    const groupKey = user.usergroup || 'Unknown Group';
+    if (!acc[groupKey]) {
+      acc[groupKey] = [];
+    }
+    acc[groupKey].push(user);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
+      <div className="bg-dark-200 rounded-lg w-full max-w-6xl p-6 max-h-[90vh] overflow-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">
+            <GradientText>Cluster User List - {lab.title}</GradientText>
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
+          >
+            <X className="h-5 w-5 text-gray-400" />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader className="h-8 w-8 text-primary-400 animate-spin" />
+          </div>
+        ) : Object.keys(groupedUsers).length === 0 ? (
+          <div className="p-6 text-center">
+            <p className="text-gray-400">No users available for this cluster</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(groupedUsers).map(([vmid, usersInGroup]) => (
+              <div key={vmid} className="bg-dark-300/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-primary-300">
+                    {vmid} ({usersInGroup.length} user{usersInGroup.length !== 1 ? 's' : ''})
+                  </h3>
+                  <button
+                    onClick={handleConnectGroup}
+                    className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded-lg text-white font-medium text-sm transition-colors flex items-center space-x-2"
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                    <span>Connect Group</span>
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-left text-sm text-gray-400 border-b border-primary-500/10">
+                        <th className="pb-3">VM Name</th>
+                        <th className="pb-3">Username</th>
+                        <th className="pb-3">Password</th>
+                        <th className="pb-3">IP Address</th>
+                        <th className="pb-3">Port</th>
+                        <th className="pb-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usersInGroup.map((user) => (
+                        <tr key={user.id} className="border-b border-primary-500/10">
+                          <td className="py-3">
+                            <div className="font-medium text-gray-300">{user.vmData?.vmname || 'N/A'}</div>
+                          </td>
+                          <td className="py-3">
+                            <div className="font-medium text-gray-300">{user.username}</div>
+                          </td>
+                          <td className="py-3">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono text-gray-300">
+                                {showPasswords[user.id] ? user.password : '••••••••'}
+                              </span>
+                              <button
+                                onClick={() => togglePasswordVisibility(user.id)}
+                                className="p-1 hover:bg-dark-300/50 rounded-lg transition-colors"
+                              >
+                                {showPasswords[user.id] ? (
+                                  <EyeOff className="h-4 w-4 text-gray-400" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-gray-400" />
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                          <td className="py-3">
+                            <div className="font-mono text-gray-300">{user.ip}</div>
+                          </td>
+                          <td className="py-3">
+                            <div className="font-mono text-gray-300">{user.port}</div>
+                          </td>
+                          <td className="py-3">
+                            <button
+                              onClick={() => handleConnectToVM(user)}
+                              className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                              title="Connect to VM"
+                            >
+                              <LinkIcon className="h-4 w-4 text-primary-400" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Delete Lab Modal Component
+const DeleteLabModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (labId: string) => void;
+  labTitle: string;
+  isDeleting: boolean;
+}> = ({ isOpen, onClose, onConfirm, labTitle, isDeleting }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
+      <div className="bg-dark-200 rounded-lg p-6 w-full max-w-md text-center">
+        <h3 className="text-lg font-semibold text-white mb-4">
+          Confirm Deletion
+        </h3>
+        <p className="text-gray-400 mb-6">
+          Are you sure you want to delete the lab assignment "{labTitle}"?
+          This action cannot be undone.
+        </p>
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className="px-4 py-2 bg-dark-400/50 hover:bg-dark-300 text-gray-300 rounded-lg transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(labTitle)} // Assuming labTitle is actually the lab ID for deletion
+            disabled={isDeleting}
+            className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50"
+          >
+            {isDeleting ? (
+              <Loader className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                <span>Delete</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
   const [assignedLabs, setAssignedLabs] = useState<AssignedLab[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -422,6 +688,9 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
   const [selectedLab, setSelectedLab] = useState<AssignedLab | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUserLabsModalOpen, setIsUserLabsModalOpen] = useState(false);
+  const [podModalLab, setPodModalLab] = useState<any>(null);
+  const [userListModal, setUserListModal] = useState<any>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAssignedLabs();
@@ -453,7 +722,7 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
 
     try {
       let response;
-      
+
       if (lab.lab_type === 'cloudslice') {
         response = await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteOrgLabAssignment/${lab.id}`
@@ -495,6 +764,13 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
   const handleViewUserLabs = (lab: AssignedLab) => {
     setSelectedLab(lab);
     setIsUserLabsModalOpen(true);
+  };
+
+  const handleDeleteLab = (labId: string) => {
+    const labToDelete = assignedLabs.find(l => l.id === labId);
+    if (labToDelete) {
+      handleDelete(labToDelete);
+    }
   };
 
   if (isLoading) {
@@ -589,7 +865,20 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
                           <Edit className="h-4 w-4 text-blue-400" />
                         </button>
                         <button
-                          onClick={() => handleDelete(lab)}
+                          onClick={() => {
+                            if (lab.lab_type === 'vmcluster') {
+                              setUserListModal(lab);
+                            } else {
+                              setPodModalLab(lab);
+                            }
+                          }}
+                          className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                          title={lab.lab_type === 'vmcluster' ? 'View Users' : 'View Pods'}
+                        >
+                          <Users className="h-4 w-4 text-primary-400" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingLab(lab)}
                           disabled={deletingId === lab.id}
                           className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
                           title="Delete Assignment"
@@ -629,6 +918,27 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
         lab={selectedLab}
         orgId={orgId}
       />
+
+      {/* Delete Confirmation Modal */}
+      {deletingLab && (
+        <DeleteLabModal
+          isOpen={!!deletingLab}
+          onClose={() => setDeletingLab(null)}
+          onConfirm={handleDeleteLab}
+          labTitle={deletingLab.lab_name}
+          isDeleting={deletingId === deletingLab.id}
+        />
+      )}
+
+      {/* VMCluster User List Modal */}
+      {userListModal && (
+        <VMClusterUserListModal
+          isOpen={!!userListModal}
+          onClose={() => setUserListModal(null)}
+          lab={userListModal}
+          organizationId={orgId}
+        />
+      )}
     </div>
   );
 };
