@@ -30,6 +30,7 @@ import { OrgBillingTab } from '../components/tabs/OrgBillingTab';
 import { OrgWorkspacesTab } from '../components/tabs/OrgWorkspacesTab';
 import { OrgActivityTab } from '../components/tabs/OrgActivityTab';
 import { OrgDocumentsTab } from '../components/tabs/OrgDocumentsTab';
+import { OrgLabsTab } from '../components/tabs/OrgLabsTab';
 import { EditOrganizationModal } from '../components/EditOrganizationModal';
 import { useAuthStore } from '../../../store/authStore';
 
@@ -95,7 +96,7 @@ const defaultOrganization: OrganizationDetails = {
 export const OrganizationOverview: React.FC = () => {
   const { orgId } = useParams();
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'billing' | 'workspaces' | 'activity' | 'documents'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'billing' | 'workspaces' | 'activity' | 'documents' | 'labs'>('overview');
   const [organization, setOrganization] = useState<OrganizationDetails>(defaultOrganization);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -227,6 +228,8 @@ export const OrganizationOverview: React.FC = () => {
         return <OrgActivityTab orgId={orgId!} />;
       case 'documents':
         return <OrgDocumentsTab orgId={orgId!} />;
+      case 'labs':
+        return <OrgLabsTab orgId={orgId!} />;
       default:
         return renderOverviewTab();
     }
@@ -431,6 +434,7 @@ export const OrganizationOverview: React.FC = () => {
             { id: 'users', label: 'Users & Admins', icon: Users },
             { id: 'billing', label: 'Billing', icon: CreditCard },
             { id: 'workspaces', label: 'Workspaces', icon: Activity },
+            { id: 'labs', label: 'Labs', icon: FolderOpen },
             { id: 'activity', label: 'Activity', icon: Clock },
             { id: 'documents', label: 'Documents', icon: FileText }
           ].map(tab => (
