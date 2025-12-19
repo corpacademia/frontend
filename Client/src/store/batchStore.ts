@@ -105,7 +105,7 @@ interface BatchState {
   deleteBatch: (batchId: string) => Promise<{ success: boolean; message?: string }>;
 
   // Lab assignment operations
-  fetchAvailableLabs: (userId: string) => Promise<void>;
+  fetchAvailableLabs: (userId: string,orgId: string) => Promise<void>;
   fetchAvailableTrainers: (orgId: string) => Promise<void>;
   assignLabToBatch: (data: {
     batch_id: string;
@@ -114,6 +114,7 @@ interface BatchState {
     start_date: string;
     end_date: string;
     assigned_by: string;
+    org_id:string
   }) => Promise<{ success: boolean; message?: string }>;
   updateBatchLab: (data: {
     batch_id: string;
@@ -288,11 +289,12 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     }
   },
 
-  fetchAvailableLabs: async (userId) => {
+  fetchAvailableLabs: async (userId,orgId) => {
     set({ isLoadingLabs: true, error: null });
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabs/${userId}`,
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabs`,
+        {userId,orgId},
         { withCredentials: true }
       );
 

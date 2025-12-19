@@ -8,6 +8,7 @@ import { Plus, Search, Filter, FolderX, Loader, Trash2, Check, AlertCircle } fro
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { get } from 'http';
+import { useAuthStore } from '../../../store/authStore';
 
 interface CloudSlice {
   id: string;
@@ -47,7 +48,6 @@ export const CloudSlicePage: React.FC = () => {
   const [assignSlice, setAssignSlice] = useState<CloudSlice | null>(null);
   const [orgStatus,setOrgStatus] = useState<any>(null);
   const [organizations,setOrganizations]= useState<any>(null);
-
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -84,6 +84,8 @@ export const CloudSlicePage: React.FC = () => {
     setIsLoading(true);
     
     try {
+      const responseOrg = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
+            
       let allSlices: CloudSlice[] = [];
       if(user.role === 'superadmin' || user.role === 'orgsuperadmin' || user.role === 'labadmin') {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlices`, {
@@ -107,7 +109,7 @@ export const CloudSlicePage: React.FC = () => {
         try {
           const getOrgAssignedSlices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
             orgId: user.org_id,
-            admin_id:organizations.find((org)=>org.id === user.org_id)?.org_admin || null 
+            admin_id:responseOrg.data.data.find((org)=>org.id === user.org_id)?.org_admin || null 
           });
 
           if (getOrgAssignedSlices.data.success) {

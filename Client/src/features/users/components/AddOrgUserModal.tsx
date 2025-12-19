@@ -205,6 +205,7 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
               required
               disabled={isSubmitting}
             >
+              <option value="user">User</option>
               <option value="labadmin">Lab Admin</option>
               <option value="orgsuperadmin">Organization Super Admin</option>
             </select>

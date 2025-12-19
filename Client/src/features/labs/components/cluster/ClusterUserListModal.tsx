@@ -250,7 +250,7 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const navigate = useNavigate();
 
-  
+ 
   // Group users by unique vmid
  const groupedUsers = users.reduce((acc, user) => {
   const groupKey = user.usergroup || 'Unknown Group';

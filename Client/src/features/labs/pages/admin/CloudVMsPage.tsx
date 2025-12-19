@@ -71,7 +71,6 @@ export const AdminCloudVMsPage: React.FC = () => {
     type: 'all' // new filter for VM type (cloud, datacenter, or proxmox)
   });
   const [admin,setAdmin] = useState({});
-
   // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
   useEffect(() => {
     const getUserDetails = async () => {
@@ -106,41 +105,41 @@ export const AdminCloudVMsPage: React.FC = () => {
       }
   };
 
-  const fetchDatacenterVMs = async () => {
-    try {
-      const dcResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabOnAdminId`, {
-        adminId: admin?.id,
-      });
+  // const fetchDatacenterVMs = async () => {
+  //   try {
+  //     const dcResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabOnAdminId`, {
+  //       adminId: admin?.id,
+  //     });
 
-      if (dcResponse.data.success) {
-        const vmsWithCreds = await Promise.all(
-          dcResponse.data.data.map(async (vm: DatacenterVM) => {
-            try {
-              const credsResponse = await axios.post(
-                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
-                { labId: vm.lab_id }
-              );
+  //     if (dcResponse.data.success) {
+  //       const vmsWithCreds = await Promise.all(
+  //         dcResponse.data.data.map(async (vm: DatacenterVM) => {
+  //           try {
+  //             const credsResponse = await axios.post(
+  //               `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
+  //               { labId: vm.lab_id }
+  //             );
 
-              return {
-                ...vm,
-                userscredentials: credsResponse.data.data || [],
-              };
-            } catch (err) {
-              console.error(`Error fetching creds for lab_id ${vm.lab_id}:`, err);
-              return { ...vm, userscredentials: [] };
-            }
-            finally {
-        setIsLoading(false);
-      }
-          })
-        );
+  //             return {
+  //               ...vm,
+  //               userscredentials: credsResponse.data.data || [],
+  //             };
+  //           } catch (err) {
+  //             console.error(`Error fetching creds for lab_id ${vm.lab_id}:`, err);
+  //             return { ...vm, userscredentials: [] };
+  //           }
+  //           finally {
+  //       setIsLoading(false);
+  //     }
+  //         })
+  //       );
 
-        setDatacenterVMs(vmsWithCreds);
-      }
-    } catch (dcErr) {
-      console.error('Error fetching datacenter VMs:', dcErr);
-    }
-  };
+  //       setDatacenterVMs(vmsWithCreds);
+  //     }
+  //   } catch (dcErr) {
+  //     console.error('Error fetching datacenter VMs:', dcErr);
+  //   }
+  // };
 
   // const fetchProxmoxVMs = async () => {
   //   try {
@@ -214,6 +213,85 @@ export const AdminCloudVMsPage: React.FC = () => {
 //     setTimeout(() => setError(null), 2000);
 //   }
 // };
+const fetchDatacenterVMs = async () => {
+  if (!admin?.id) return;
+
+  setIsLoading(true);
+
+  try {
+    const orgId = admin?.org_id;
+    const createdBy = admin.id;
+
+    // 1️⃣ Fetch org-assigned + admin-created VMs in parallel
+    const [orgDatacenterResponse, datacenterResponse] = await Promise.all([
+      orgId
+        ? axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgAssignedSingleVMDatacenterLab`,
+            { orgId, created_by: createdBy }
+          )
+        : Promise.resolve({ data: { success: false, data: [] } }),
+
+      axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabOnAdminId`,
+        { adminId: createdBy }
+      ),
+    ]);
+
+    // 2️⃣ Merge both responses safely
+    const mergedAssignments = [
+      ...(orgDatacenterResponse.data?.success
+        ? orgDatacenterResponse.data.data
+        : []),
+      ...(datacenterResponse.data?.success
+        ? datacenterResponse.data.data
+        : []),
+    ];
+
+    // 3️⃣ Fetch VM details + credentials
+    const vmDetails = await Promise.all(
+      mergedAssignments.map(async (assignment: any) => {
+        const labId = assignment?.labid || assignment?.lab_id;
+        if (!labId) return null;
+
+        try {
+          const vmResponse = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`,
+            { labId }
+          );
+
+          if (!vmResponse.data?.success) return null;
+
+          const credsResponse = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
+            { labId }
+          );
+
+          return {
+            ...vmResponse.data.data,
+            ...assignment,
+            userscredentials: credsResponse.data?.success
+              ? credsResponse.data.data
+              : [],
+          };
+        } catch (err) {
+          console.error(`Error fetching datacenter VM ${labId}:`, err);
+          return null;
+        }
+      })
+    );
+
+    // 4️⃣ Remove nulls & set state
+    setDatacenterVMs(vmDetails.filter(Boolean));
+  } catch (dcErr) {
+    console.error("Error fetching datacenter VMs:", dcErr);
+    setError("Failed to fetch datacenter VMs");
+    setTimeout(() => setError(null), 2000);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 const fetchProxmoxVMs = async (orgId: string, userId: string) => {
   try {
     const [orgResponse, proxmoxResponse] = await Promise.all([

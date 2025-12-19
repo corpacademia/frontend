@@ -152,7 +152,7 @@ export const UserListModal: React.FC<UserListModalProps> = ({
       //       }
       //     });
       // } 
-
+      console.log(user)
        const resp = await axios.post(
               `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
               {

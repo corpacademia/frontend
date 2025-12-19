@@ -84,7 +84,7 @@ export const ClusterList: React.FC = () => {
     }
 
     // Org-specific labs → only for labadmin
-    if (user.role === "labadmin") {
+    if (user.role === "orgsuperadmin" || user.role === "labadmin") {
       promises.push(
         axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,
@@ -155,7 +155,7 @@ export const ClusterList: React.FC = () => {
       </div>
     );
   }
-
+  console.log(clusters)
   return (
     <div className="space-y-6">
       {/* Search and Filter Bar */}

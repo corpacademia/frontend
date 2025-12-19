@@ -10,7 +10,11 @@ import {
   Edit,
   Trash2,
   Eye,
-  Loader2
+  Loader2,
+  Building2,
+  X,
+  AlertCircle,
+  Check
 } from 'lucide-react';
 import axios from 'axios';
 import { GradientText } from '../../../../components/ui/GradientText';
@@ -71,6 +75,30 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const isOrgLabAdmin =(currentUser || user)?.role === 'labadmin';
   const isAvailable = (course.software || '').toLowerCase() === 'available';
   
+  const [isOrgAssignModalOpen, setIsOrgAssignModalOpen] = useState(false);
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [assignError, setAssignError] = useState<string | null>(null);
+  const [assignSuccess, setAssignSuccess] = useState<string | null>(null);
+ 
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      if (!isSuperAdmin) return;
+      
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
+        if (response.data.success) {
+          setOrganizations(response.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch organizations:', err);
+      }
+    };
+
+    fetchOrganizations();
+  }, [isSuperAdmin]);
+
   const canEditDelete = () => {
     if (isSuperAdmin) return true;
     if (
@@ -173,6 +201,90 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
     window.dispatchEvent(new CustomEvent('openCartModal'));
   };
 
+  const handleOrgAssignment = async () => {
+    if (!selectedOrg) {
+      setAssignError('Please select an organization');
+      setTimeout(() => setAssignError(null), 2000);
+      return;
+    }
+
+    setIsAssigning(true);
+    setAssignError(null);
+    setAssignSuccess(null);
+
+    try {
+      let org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
+        org_id: selectedOrg
+      });
+
+      if (!org_details.data.success) {
+        throw new Error('Failed to fetch organization details');
+      }
+
+      let response;
+      
+      if (course.type === 'cloudslice') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`, {
+          sliceId: course.id,
+          organizationId: selectedOrg,
+          userId: (currentUser || user)?.id,
+          startDate: new Date().toISOString(),
+          endDate: course.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      } else if (course.type === 'singlevm') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`, {
+          labId: course.id,
+          orgId: selectedOrg,
+          assignedBy: (currentUser || user)?.id,
+          startDate: new Date().toISOString(),
+          endDate: course.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      } else if (course.type === 'vmcluster') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`, {
+          labId: course.id,
+          orgId: selectedOrg,
+          assignedBy: (currentUser || user)?.id,
+          startDate: new Date().toISOString(),
+          endDate: course.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      } else if (course.type === 'singlevm-proxmox') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabToOrg`, {
+          labId: course.id,
+          orgId: selectedOrg,
+          startDate: new Date().toISOString(),
+          endDate: course.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          assigned_by: (currentUser || user)?.id,
+          user_id: org_details.data.data.org_admin,
+          userName: organizations.find(o => o.id === selectedOrg)?.organization_name || ''
+        });
+      } else {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, {
+          lab_id: course.id,
+          admin_id: org_details.data.data.org_admin,
+          org_id: selectedOrg,
+          configured_by: (currentUser || user)?.id,
+          enddate: course.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      }
+
+      if (response?.data?.success) {
+        setAssignSuccess('Successfully assigned to organization');
+        setTimeout(() => {
+          setIsOrgAssignModalOpen(false);
+          setSelectedOrg('');
+          setAssignSuccess(null);
+        }, 2000);
+      } else {
+        throw new Error(response?.data?.message || 'Failed to assign to organization');
+      }
+    } catch (error: any) {
+      setAssignError(error.response?.data?.message || error.message || 'Failed to assign to organization');
+      setTimeout(() => setAssignError(null), 2000);
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
@@ -201,6 +313,18 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
           <div className={`absolute top-4 right-4 flex space-x-2 transition-opacity duration-300 z-10 ${
             isHovered ? 'opacity-100' : 'opacity-0'
           }`}>
+            {isSuperAdmin && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOrgAssignModalOpen(true);
+                }}
+                className="p-2 bg-green-500/20 hover:bg-green-500/30 rounded-lg transition-colors"
+                title="Assign to Organization"
+              >
+                <Building2 className="h-4 w-4 text-green-300" />
+              </button>
+            )}
             <button
               onClick={() => onEdit(course)}
               className="p-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg transition-colors"
@@ -389,6 +513,95 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
         onConfirm={onDelete ? () => onDelete(course.id) : undefined}
         isDeleting={isDeleting}
       />
+
+      {isOrgAssignModalOpen && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsOrgAssignModalOpen(false)}></div>
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="relative bg-dark-200 rounded-lg w-full max-w-md p-6 z-50">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">
+                  <GradientText>Assign to Organization</GradientText>
+                </h2>
+                <button
+                  onClick={() => setIsOrgAssignModalOpen(false)}
+                  className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Organization
+                  </label>
+                  <select
+                    value={selectedOrg}
+                    onChange={(e) => setSelectedOrg(e.target.value)}
+                    className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+                  >
+                    <option value="">Select an organization</option>
+                    {organizations.map(org => (
+                      <option key={org.id} value={org.id}>
+                        {org.organization_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {assignError && (
+                  <div className="p-4 bg-red-900/20 border border-red-500/20 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <AlertCircle className="h-5 w-5 text-red-400" />
+                      <span className="text-red-200">{assignError}</span>
+                    </div>
+                  </div>
+                )}
+
+                {assignSuccess && (
+                  <div className="p-4 bg-emerald-900/20 border border-emerald-500/20 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <Check className="h-5 w-5 text-emerald-400" />
+                      <span className="text-emerald-200">{assignSuccess}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-end space-x-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsOrgAssignModalOpen(false)}
+                    className="btn-secondary"
+                    disabled={isAssigning}
+                  >
+                    <GradientText>
+                      Cancel
+                    </GradientText>
+                  </button>
+                  <button
+                    onClick={handleOrgAssignment}
+                    disabled={isAssigning}
+                    className="btn-primary"
+                  >
+                    <GradientText>
+                      {isAssigning ? (
+                        <span className="flex items-center">
+                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                          Assigning...
+                        </span>
+                      ) : (
+                        'Assign'
+                      )}
+                    </GradientText>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

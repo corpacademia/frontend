@@ -161,20 +161,19 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
                              password:lab.userscredentials[0].password,
                            }
                          );
-                     
                          if (resp.data.success) {
                            const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
                            // Build full ws url for guacamole-common-js
                            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
                            const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
                            const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-                           navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
+                           navigate(`/dashboard/labs/vm-session/${lab.labid}`, {
                            state: {
                              guacUrl:wsUrl,
                             vmTitle: lab.title,
                             vmId: lab.lab_id,
                             doc:lab.userguide,
-                            credentials:lab.userscredentials
+                            credentials:lab.userscredentials[0]
                            }
                          });
                          }
@@ -182,6 +181,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
           throw new Error(response.data.message || 'Failed to start lab');
         }}
       } catch (error: any) {
+        console.log(error)
         setNotification({
           type: 'error',
           message: error.response?.data?.message || 'Failed to start lab'

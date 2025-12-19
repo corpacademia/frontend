@@ -176,7 +176,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
           if (response.data.success) {
             setOrganizations(response.data.data.map((org: org) => ({
               id: org.id,
-              name: org.organization_name
+              name: org.organization_name,
+              org_admin:org.org_admin
             })));
           }
         }
@@ -249,7 +250,6 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
     }
     return true;
   };
-
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setIsLoading(true);
@@ -287,7 +287,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 orgId: admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId, 
                 assignedBy: admin.id,
                 startDate: labUpdate?.data?.data?.startdate,
-                endDate: labUpdate?.data?.data?.enddate
+                endDate: labUpdate?.data?.data?.enddate,
+                admin_id:organizations.find((org)=>org.id === formData.organizationId)?.org_admin || null
               };
 
               // Add admin_id if org admin is selected (organizationId contains the admin ID when orgsuperadmin selects an org admin)
@@ -301,6 +302,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 labId: vmId,
                 orgAssigned: admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId, 
                 assignedBy: admin.id,
+                
               };
 
               // Add admin_id if org admin is selected (organizationId contains the admin ID when orgsuperadmin selects an org admin)
@@ -339,7 +341,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
               orgId: admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId,
               assignedBy: admin?.id,
               startDate: updateCatalogueDetails?.data?.data?.startdate,
-              endDate: updateCatalogueDetails?.data?.data?.enddate
+              endDate: updateCatalogueDetails?.data?.data?.enddate,
+              admin_id:admin?.id
             };
 
             // Add admin_id if org admin is selected (organizationId contains the admin ID when orgsuperadmin selects an org admin)

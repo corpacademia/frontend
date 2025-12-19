@@ -1,171 +1,255 @@
-import { create } from 'zustand';
-import axios from 'axios';
-import { User } from '../types/auth';
+import { create } from "zustand";
+import axios from "axios";
 
-interface AuthState {
-  user: (User & { impersonating?: boolean; originalRole?: string; organization?: string }) | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  showSessionExpiryModal: boolean;
-  login: (user: User) => void;
-  logout: () => void;
-  switchOrganization: (org: { id: string; name: string; role: 'labadmin' }) => void;
-  resetRole: () => void;
-  fetchUser: () => Promise<void>;
-  setSessionExpiryModal: (show: boolean) => void;
-}
+/* =========================
+   Types
+========================= */
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'user' | 'trainer' | 'labadmin' | 'superadmin' | 'orgsuperadmin';
+  role: "user" | "trainer" | "labadmin" | "superadmin" | "orgsuperadmin";
   organization?: string;
   phone?: string;
   location?: string;
   bio?: string;
   jobTitle?: string;
   profileImage?: string;
+  impersonating?: boolean;
+  originalRole?: string;
 }
 
+interface Organization {
+  id: string;
+  name: string;
+  role?: "labadmin";
+}
+
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  showSessionExpiryModal: boolean;
+
+  /* 🌍 Global organizations */
+  organizations: Organization[];
+  isOrgLoading: boolean;
+
+  login: (user: User) => void;
+  logout: () => Promise<void>;
+  switchOrganization: (org: Organization) => void;
+  resetRole: () => void;
+
+  fetchUser: () => Promise<void>;
+  fetchOrganizations: () => Promise<void>;
+
+  setSessionExpiryModal: (show: boolean) => void;
+}
+
+/* =========================
+   Store
+========================= */
+
 export const useAuthStore = create<AuthState>((set, get) => {
-  
-  // This IIFE runs immediately when the module is loaded.
+  /* =========================
+     Initial user fetch (IIFE)
+  ========================= */
   (async () => {
     set({ isLoading: true });
+
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`, {
-        withCredentials: true,
-        timeout: 10000, // 10 second timeout
-      });
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`,
+        {
+          withCredentials: true,
+          timeout: 10000,
+        }
+      );
+
       const user = response.data.user;
-      set({ 
-        user, 
-        isAuthenticated: !!user, 
+
+      set({
+        user,
+        isAuthenticated: !!user,
         isLoading: false,
-        showSessionExpiryModal: false 
+        showSessionExpiryModal: false,
       });
+
+      // ✅ Fetch organizations globally after login
+      // if (user) {
+        await get().fetchOrganizations();
+      // }
     } catch (error: any) {
-      console.error('Failed to fetch user details on initial load', error);
-      // On initial load, don't show session expiry modal
-      // Only set as unauthenticated if it's a clear 401/403 error
+      console.error("Failed to fetch user details on initial load", error);
+
       if (error.response?.status === 401 || error.response?.status === 403) {
-        set({ 
-          user: null, 
-          isAuthenticated: false, 
-          isLoading: false, 
-          showSessionExpiryModal: false 
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          showSessionExpiryModal: false,
         });
       } else {
-        // For network errors or other issues, don't change auth state abruptly
         set({ isLoading: false });
       }
     }
   })();
+
+  /* =========================
+     Store state & actions
+  ========================= */
 
   return {
     user: null,
     isAuthenticated: false,
     isLoading: true,
     showSessionExpiryModal: false,
-    login: (user) => { 
-      set({ user, isAuthenticated: true, isLoading: false, showSessionExpiryModal: false });
+
+    organizations: [],
+    isOrgLoading: false,
+
+    /* ---------- Auth ---------- */
+
+    login: (user) => {
+      set({
+        user,
+        isAuthenticated: true,
+        isLoading: false,
+        showSessionExpiryModal: false,
+      });
+
+      get().fetchOrganizations();
     },
+
     logout: async () => {
       try {
-        let response
-        try {
-           response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`, {
-            withCredentials: true, // include credentials if needed
-          });
-        } catch (error) {
-          console.error('Logout failed', error);
-          // set({ user: null, isAuthenticated: false });
-        }
-        if (response?.data?.user?.email) {
-          await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/logout`, {
-            email: response.data.user.email,
-          }, {
-            withCredentials: true,
-          });
-          set({ user: null, isAuthenticated: false, isLoading:false });
-        } else {
-          console.error("User email not found!");
-        }
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`,
+          { withCredentials: true }
+        );
 
+        if (response?.data?.user?.email) {
+          await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/logout`,
+            { email: response.data.user.email },
+            { withCredentials: true }
+          );
+        }
       } catch (error) {
-        console.error('Logout failed', error);
-        // set({ user: null, isAuthenticated: false }); // Ensure state is reset even if API call fails
+        console.error("Logout failed", error);
+      } finally {
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          organizations: [],
+        });
       }
     },
+
+    /* ---------- Organization Impersonation ---------- */
 
     switchOrganization: (org) => {
       const currentUser = get().user;
       if (!currentUser) return;
-      const impersonatedUser = {
-        ...currentUser,
-        role: org.role,
-        organization: org.name,
-        originalRole: currentUser.role,
-        impersonating: true,
-      };
-      set({ user: impersonatedUser });
+
+      set({
+        user: {
+          ...currentUser,
+          role: org.role || "labadmin",
+          organization: org.name,
+          originalRole: currentUser.role,
+          impersonating: true,
+        },
+      });
     },
+
     resetRole: () => {
       const currentUser = get().user;
       if (!currentUser?.impersonating) return;
-      const originalUser = {
-        ...currentUser,
-        role: currentUser.originalRole,
-        organization: undefined,
-        originalRole: undefined,
-        impersonating: false,
-      };
-      set({ user: originalUser });
+
+      set({
+        user: {
+          ...currentUser,
+          role: currentUser.originalRole!,
+          organization: undefined,
+          originalRole: undefined,
+          impersonating: false,
+        },
+      });
     },
-    // Expose fetchUser so it can be manually invoked later if needed.
+
+    /* ---------- Fetch User ---------- */
+
     fetchUser: async () => {
       try {
         set({ isLoading: true });
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`, {
-          withCredentials: true,
-          timeout: 10000,
-        });
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`,
+          {
+            withCredentials: true,
+            timeout: 10000,
+          }
+        );
+
         const user = response.data.user;
-        set({ 
-          user, 
-          isAuthenticated: !!user, 
+
+        set({
+          user,
+          isAuthenticated: !!user,
           isLoading: false,
-          showSessionExpiryModal: false 
+          showSessionExpiryModal: false,
         });
+
+        if (user) {
+          await get().fetchOrganizations();
+        }
       } catch (error: any) {
-        console.error('Failed to fetch user details', error);
-        const currentState = get();
+        console.error("Failed to fetch user details", error);
+        const state = get();
 
         if (error.response?.status === 401 || error.response?.status === 403) {
-          // Only show modal if user was previously authenticated (session expired)
-          if (currentState.isAuthenticated) {
-            set({ 
-              user: null, 
-              isAuthenticated: false, 
-              isLoading: false, 
-              showSessionExpiryModal: true 
-            });
-          } else {
-            set({ 
-              user: null, 
-              isAuthenticated: false, 
-              isLoading: false 
-            });
-          }
+          set({
+            user: null,
+            isAuthenticated: false,
+            isLoading: false,
+            showSessionExpiryModal: state.isAuthenticated,
+          });
         } else {
-          // For network errors, don't immediately set as unauthenticated
-          // Just stop loading and keep current auth state
           set({ isLoading: false });
         }
       }
     },
-    setSessionExpiryModal: (show: boolean) => {
+
+    /* ---------- Fetch Organizations ---------- */
+
+    fetchOrganizations: async () => {
+      try {
+        set({ isOrgLoading: true });
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/org_ms/getOrganizations`,
+          {
+            withCredentials: true,
+            timeout: 10000,
+          }
+        );
+
+        set({
+          organizations: response.data?.data || [],
+          isOrgLoading: false,
+        });
+      } catch (error) {
+        console.error("Failed to fetch organizations", error);
+        set({ isOrgLoading: false });
+      }
+    },
+
+    /* ---------- UI ---------- */
+
+    setSessionExpiryModal: (show) => {
       set({ showSessionExpiryModal: show });
     },
   };
