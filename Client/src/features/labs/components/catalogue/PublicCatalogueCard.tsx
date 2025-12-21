@@ -229,6 +229,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
           organizationId: selectedOrg,
           userId: (currentUser || user)?.id,
           startDate: new Date().toISOString(),
+          admin_id:org_details.data.data.org_admin,
           endDate: course.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
         });
       } else if (course.type === 'singlevm') {
