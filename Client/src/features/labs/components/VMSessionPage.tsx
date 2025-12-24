@@ -339,7 +339,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       const resp = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
         {
-          protocol: credential.vmData?.protocol || "RDP",
+          protocol: credential.vmData?.protocol || credential?.protocol ||"RDP",
           hostname: credential.ip,
           username: credential.username,
           password: credential.password,
@@ -552,7 +552,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                 )}
 
                 {/* Credentials (non-group) */}
-                {!isGroupConnection && credentialsList && (
+                {(!isGroupConnection || isGroupConnection) && credentialsList && (
                   <div className="relative">
                     <button
                       onClick={() => setShowCredentials((v) => !v)}

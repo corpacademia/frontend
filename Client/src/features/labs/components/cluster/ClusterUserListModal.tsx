@@ -433,7 +433,6 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
       throw error;
     }
   };
-
   if (!isOpen) return null;
 
   return (

@@ -104,7 +104,6 @@ setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' 
     setIsSubmitting(true);
     setError(null);
     setSuccess(null);
-
     try {
       const startDateTime = new Date(`${startDate}T${startTime}`);
       const endDateTime = new Date(`${endDate}T${endTime}`);
@@ -141,7 +140,7 @@ setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' 
           startDate: startDateTime.toISOString(),
           endDate: endDateTime.toISOString()
         });
-      } else if (lab.type === 'vmcluster') {
+      } else if (lab.type === 'vmcluster-datacenter') {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateOrgLabAssignment`, {
           assignmentId: lab.id,
           startDate: startDateTime.toISOString(),
@@ -310,8 +309,8 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
 
     setIsLoading(true);
     setError(null);
-    console.log(lab)
     try {
+      console.log(lab)
       let response;
       if (lab.type === 'cloudslice') {
         response = await axios.get(
@@ -322,6 +321,9 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
          response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgsingleVmDatacenterUserInstances/${orgId}/${lab.lab_id}`
         );
+      }
+      else if(lab.type === 'vmcluster-datacenter'){
+          response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgVMClusterDatacenterLabs/${orgId}/${lab.lab_id}`)
       }
       else if (lab.type === 'singlevm') {
         response = await axios.get(
@@ -370,6 +372,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
     setSuccess(null);
     try {
       let response;
+      console.log(lab)
       if (lab.type === 'cloudslice') {
         if(userLab.role === 'user'){
         response = await axios.post(
@@ -380,8 +383,15 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
           }
         );
       }
-     
-      } else if (lab.type === 'singlevm') {
+ 
+      } 
+      else if (lab.type === 'singlevm-datacenter'){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment`,{
+          labId:lab?.lab_id || lab?.labid,
+          userId:userLab?.user_id || userLab?.userid
+        })
+      }
+      else if (lab.type === 'singlevm') {
         response = await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteUserLabInstance/${userLabId}`
         );
@@ -392,7 +402,8 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
       }
 
       if (response?.data.success) {
-        setUserLabs(prev => prev.filter(ul => ul.labid !== userLab.labid));
+        setUserLabs(prev => prev.filter(ul => ul.user_id  !== userLab?.user_id ));
+        groupedByRole[userLab]
         setSuccess('User lab deleted successfully');
         setTimeout(() => setSuccess(null), 2000);
       } else {
@@ -492,8 +503,8 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
         // For cloudslice, show modal with credentials
         onShowCloudSliceModal(userLabs.find(lab=>lab.id === userLab.id));
       } 
-      
-      else if (lab?.type === 'singlevm' || lab?.type === 'singlevm-proxmox' || lab?.type === 'singlevm-datacenter') {
+       
+      else if (lab?.type === 'singlevm' || lab?.type === 'singlevm-proxmox' ) {
          console.log(userLab)
         // For singlevm, connect to VM
         const resp = await axios.post(
@@ -522,6 +533,54 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
             }
           });
         }
+      }
+      else{
+        const credsResponse = await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
+                    { labId:lab?.lab_id || lab?.labid }
+                  );
+        if(userLab?.role === 'labadmin' || userLab?.role === 'orgsuperadmin'){
+               navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
+                    state: {
+                      guacUrl: null,
+                      vmTitle: lab?.title,
+                      vmId: lab?.lab_id || lab?.labid,
+                      doc: lab?.labguide,
+                      credentials: credsResponse?.data.success ? credsResponse?.data.data : null,
+                      isGroupConnection: true
+                    }
+                  });
+        }
+        else{
+        const creds = credsResponse?.data.success ? credsResponse?.data.data.find((data:any)=>data.assigned_to === userLab.user_id) : null;
+        
+        const resp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+          {
+            protocol: creds.protocol || 'RDP',
+            hostname: creds.ip,
+            port: creds.port,
+            username: creds.username,
+            password: creds.password,
+          }
+        );
+
+        if (resp.data.success) {
+          const wsPath = resp.data.wsPath;
+          const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+          const hostPort = `${window.location.hostname}:3002`;
+          const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+
+          navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
+            state: {
+              guacUrl: wsUrl,
+              vmTitle: lab.title,
+              vmId: lab.lab_id,
+              doc:lab?.userguide,
+              credentials: [creds]
+            }
+          });
+        }
+      }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to launch/connect');
@@ -678,16 +737,10 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabUsers`,
-        {
-          labId: lab.labid,
-          orgId: organizationId
-        }
-      );
-
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgVMClusterDatacenterLabs/${organizationId}/${lab.lab_id}`)
+      
       if (response.data.success) {
-        setUsers(response.data.data || []);
+        setUsers(response.data.data[0] || []);
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -737,8 +790,8 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
     }
   };
 
-  const handleConnectGroup = () => {
-    navigate(`/dashboard/labs/vm-session/${lab.labid}`, {
+  const handleConnectGroup = (vmId:string,users:any) => {
+    navigate(`/dashboard/labs/vm-session/${lab?.labid || lab?.lab_id}`, {
       state: {
         guacUrl: null,
         vmTitle: lab.title,
@@ -750,17 +803,20 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
     });
   };
 
-  const groupedUsers = users.reduce((acc, user) => {
+  const groupedUsers = users?.users?.reduce((acc, user) => {
     const groupKey = user.usergroup || 'Unknown Group';
+     const vmData = users?.vms.find(vmItem => vmItem.vmid === user.vmid);
     if (!acc[groupKey]) {
       acc[groupKey] = [];
     }
-    acc[groupKey].push(user);
+    acc[groupKey].push({
+      ...user,
+      vmData
+    });
     return acc;
   }, {} as Record<string, any[]>);
-
+  console.log(groupedUsers)
   if (!isOpen) return null;
-
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
       <div className="bg-dark-200 rounded-lg w-full max-w-6xl p-6 max-h-[90vh] overflow-auto">
@@ -793,7 +849,7 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
                     {vmid} ({usersInGroup.length} user{usersInGroup.length !== 1 ? 's' : ''})
                   </h3>
                   <button
-                    onClick={handleConnectGroup}
+                    onClick={()=>handleConnectGroup(vmid,usersInGroup)}
                     className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded-lg text-white font-medium text-sm transition-colors flex items-center space-x-2"
                   >
                     <LinkIcon className="h-4 w-4" />
@@ -966,11 +1022,18 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
             orgId
           }
         );
-      } else if (lab.type === 'singlevm') {
+      } 
+      else if (lab.type === 'singlevm-datacenter'){
+          response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteAssignedSingleVMDatacenterLab`,{
+              labId:lab?.lab_id || lab?.labid,
+              orgId
+          })
+      }
+      else if (lab.type === 'singlevm') {
         response = await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteOrgLabAssignment/${lab.id}`
         );
-      } else if (lab.type === 'vmcluster') {
+      } else if (lab.type === 'vmcluster-datacenter') {
         response = await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteOrgLabAssignment/${lab.id}`
         );
@@ -981,7 +1044,7 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
       }
 
       if (response?.data?.success) {
-        setAssignedLabs(prev => prev.filter(l => l.id !== lab.id));
+        setAssignedLabs(prev => prev.filter(l => l.labid||l.lab_id !== lab?.labid || lab?.lab_id));
         setSuccess('Lab assignment deleted successfully');
         setTimeout(() => setSuccess(null), 2000);
       } else {
@@ -1093,7 +1156,7 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
                       <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => {
-                            if (lab.type === 'vmcluster') {
+                            if (lab.type === 'vmcluster-datacenter') {
                               setUserListModal(lab);
                             } else {
                               handleViewUserLabs(lab);

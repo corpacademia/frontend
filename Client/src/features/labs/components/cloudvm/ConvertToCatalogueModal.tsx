@@ -342,7 +342,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
               assignedBy: admin?.id,
               startDate: updateCatalogueDetails?.data?.data?.startdate,
               endDate: updateCatalogueDetails?.data?.data?.enddate,
-              admin_id:admin?.id
+              admin_id:organizations.find((org)=>org.id === formData.organizationId)?.org_admin || null
             };
 
             // Add admin_id if org admin is selected (organizationId contains the admin ID when orgsuperadmin selects an org admin)

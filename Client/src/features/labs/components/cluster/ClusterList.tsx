@@ -98,18 +98,16 @@ export const ClusterList: React.FC = () => {
 
     // Wait for both calls to complete
     const responses = await Promise.allSettled(promises);
-
     for (const res of responses) {
       if (res.status === "fulfilled" && res.value.data.success) {
         const data = res.value.data.data || [];
-        if (res.value.config.url.includes("getClusterLabs")) clusterLabs = data;
+        if (res?.value?.config.url.includes("getClusterLabs")) clusterLabs = data;
         else if (res.value.config.url.includes("getOrglabs")) orgLabs = data;
       }
     }
 
     // Merge both results safely
     const mergedLabs = [...clusterLabs, ...orgLabs];
-
     if (mergedLabs.length > 0) {
       setClusters(mergedLabs);
     } else {
@@ -131,7 +129,6 @@ export const ClusterList: React.FC = () => {
     
     return matchesSearch && matchesStatus && matchesPlatform;
   });
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -155,7 +152,6 @@ export const ClusterList: React.FC = () => {
       </div>
     );
   }
-  console.log(clusters)
   return (
     <div className="space-y-6">
       {/* Search and Filter Bar */}
