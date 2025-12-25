@@ -115,7 +115,7 @@ setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' 
       let response;
       if (lab.type === 'cloudslice') {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateUserCloudSliceTimes`, {
-         
+
           startDate: startDateTime.toISOString(),
           endDate: endDateTime.toISOString(),
           labId:lab?.lab_id,
@@ -125,7 +125,7 @@ setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' 
       }
       else if(lab.type === 'singlevm-datacenter'){
            response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMDatacenterLabTime`, {
-         
+
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
           labId:lab?.lab_id,
@@ -133,7 +133,7 @@ setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' 
           type:"org"
         });
       }
-      
+
       else if (lab.type === 'singlevm') {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateOrgLabAssignment`, {
           assignmentId: lab.id,
@@ -316,7 +316,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
         response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgCloudSliceUserInstances/${orgId}/${lab.lab_id}`
         );
-      } 
+      }
       else if(lab.type === 'singlevm-datacenter'){
          response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgsingleVmDatacenterUserInstances/${orgId}/${lab.lab_id}`
@@ -383,8 +383,8 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
           }
         );
       }
- 
-      } 
+
+      }
       else if (lab.type === 'singlevm-datacenter'){
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment`,{
           labId:lab?.lab_id || lab?.labid,
@@ -420,7 +420,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
   const handleLaunchConnect = async (userLab: UserLab) => {
     setLaunchingId(userLab?.id);
     setError(null);
-  
+
     try {
       if (lab?.type === 'cloudslice') {
         if(userLab?.role === 'user'){
@@ -471,22 +471,22 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
                  orgid:userLab?.orgid||userLab?.org_id,
                  purchased:userLab?.purchased || false
                });
-     
+
                if (!createIamAccount.data.success) {
                  throw new Error(createIamAccount.data.message || 'Failed to create IAM user');
                }
-     
+
                const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
                   labId: userLab?.labid||userLab?.lab_id,
                  orgId:userLab?.orgid,
                  status: 'active',
                  launched: true,
                });
-     
+
                if (!updateLabStatus.data.success) {
                  throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
                }
-     
+
              } else {
                const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
                  labId: userLab?.labid||userLab?.lab_id,
@@ -494,7 +494,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
                  status: 'active',
                  launched: true,
                });
-     
+
                if (!updateLabStatus.data.success) {
                  throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
                }
@@ -502,8 +502,8 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
       fetchUserLabs();
         // For cloudslice, show modal with credentials
         onShowCloudSliceModal(userLabs.find(lab=>lab.id === userLab.id));
-      } 
-       
+      }
+
       else if (lab?.type === 'singlevm' || lab?.type === 'singlevm-proxmox' ) {
          console.log(userLab)
         // For singlevm, connect to VM
@@ -553,7 +553,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
         }
         else{
         const creds = credsResponse?.data.success ? credsResponse?.data.data.find((data:any)=>data.assigned_to === userLab.user_id) : null;
-        
+
         const resp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
           {
             protocol: creds.protocol || 'RDP',
@@ -687,7 +687,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
                               </button>
                               <button
                                 onClick={() => handleDeleteUserLab(userLab)}
-                                disabled={deletingId === userLab?.lab_id}
+                                disabled={deletingId === userLab.id}
                                 className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
                                 title="Delete User Lab"
                               >
@@ -738,9 +738,10 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
     try {
       setLoading(true);
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgVMClusterDatacenterLabs/${organizationId}/${lab.lab_id}`)
-      
+
       if (response.data.success) {
-        setUsers(response.data.data[0] || []);
+        // Assuming response.data.data contains an object with vms, grpCreds, userCredGrps, and users
+        setUsers(response.data.data[0] || { vms: [], grpCreds: [], userCredGrps: [], users: [] });
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
@@ -790,32 +791,40 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
     }
   };
 
-  const handleConnectGroup = (vmId:string,users:any) => {
+  const handleConnectGroup = (vmid:string,usersInGroup:any) => {
     navigate(`/dashboard/labs/vm-session/${lab?.labid || lab?.lab_id}`, {
       state: {
         guacUrl: null,
         vmTitle: lab.title,
         vmId: lab.labid,
         doc: lab.labguide,
-        credentials: users,
+        credentials: usersInGroup,
         isGroupConnection: true
       }
     });
   };
-
   const groupedUsers = users?.users?.reduce((acc, user) => {
     const groupKey = user.usergroup || 'Unknown Group';
-     const vmData = users?.vms.find(vmItem => vmItem.vmid === user.vmid);
+     const vmData = users?.vms?.find(vmItem => vmItem.vmid === user.vmid);
+    // Find group_id from grpCreds where cred_id matches vmid
+    const grpCred = users?.grpCreds?.find((gc: any) => gc.cred_id === user.id);
+    const groupId = grpCred?.group_id;
+    // Find assigned user from userCredGrps where id matches group_id
+    const assignedUserCredGrp = users?.userCredGrps?.find((ucg: any) => ucg.id === groupId);
+    const assignedUserId = assignedUserCredGrp?.userassigned || 'Unknown User';
+    const assignedUserName = users?.userData?.find((user)=> user?.user_id === assignedUserId)?.name;
     if (!acc[groupKey]) {
       acc[groupKey] = [];
     }
+
     acc[groupKey].push({
       ...user,
-      vmData
+      vmData,
+      assignedUserName,
     });
+
     return acc;
-  }, {} as Record<string, any[]>);
-  console.log(groupedUsers)
+  }, {} as Record<string, Array<any>>);
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
@@ -836,20 +845,20 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
           <div className="flex justify-center items-center py-12">
             <Loader className="h-8 w-8 text-primary-400 animate-spin" />
           </div>
-        ) : Object.keys(groupedUsers).length === 0 ? (
+        ) : Object.keys(groupedUsers || {}).length === 0 ? (
           <div className="p-6 text-center">
             <p className="text-gray-400">No users available for this cluster</p>
           </div>
         ) : (
           <div className="space-y-6">
-            {Object.entries(groupedUsers).map(([vmid, usersInGroup]) => (
-              <div key={vmid} className="bg-dark-300/30 rounded-lg p-4">
+            {Object.entries(groupedUsers).map(([groupKey, usersInGroup]) => (
+              <div key={groupKey} className="bg-dark-300/30 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-primary-300">
-                    {vmid} ({usersInGroup.length} user{usersInGroup.length !== 1 ? 's' : ''})
+                    {groupKey} ({usersInGroup.length} user{usersInGroup.length !== 1 ? 's' : ''})
                   </h3>
                   <button
-                    onClick={()=>handleConnectGroup(vmid,usersInGroup)}
+                    onClick={()=>handleConnectGroup(groupKey,usersInGroup)}
                     className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded-lg text-white font-medium text-sm transition-colors flex items-center space-x-2"
                   >
                     <LinkIcon className="h-4 w-4" />
@@ -862,6 +871,7 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
                     <thead>
                       <tr className="text-left text-sm text-gray-400 border-b border-primary-500/10">
                         <th className="pb-3">VM Name</th>
+                        <th className="pb-3">Assigned User</th>
                         <th className="pb-3">Username</th>
                         <th className="pb-3">Password</th>
                         <th className="pb-3">IP Address</th>
@@ -874,6 +884,9 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
                         <tr key={user.id} className="border-b border-primary-500/10">
                           <td className="py-3">
                             <div className="font-medium text-gray-300">{user.vmData?.vmname || 'N/A'}</div>
+                          </td>
+                          <td className="py-3">
+                            <div className="font-medium text-gray-300">{user.assignedUserName}</div>
                           </td>
                           <td className="py-3">
                             <div className="font-medium text-gray-300">{user.username}</div>
@@ -1022,7 +1035,7 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
             orgId
           }
         );
-      } 
+      }
       else if (lab.type === 'singlevm-datacenter'){
           response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteAssignedSingleVMDatacenterLab`,{
               labId:lab?.lab_id || lab?.labid,
