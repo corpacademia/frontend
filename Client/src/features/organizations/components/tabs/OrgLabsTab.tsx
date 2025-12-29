@@ -76,6 +76,8 @@ interface VMClusterUserListModalProps {
   organizationId: string;
 }
 
+
+
 const EditLabModal: React.FC<EditLabModalProps> = ({ isOpen, onClose, lab,orgId, onSuccess }) => {
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -141,16 +143,20 @@ setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' 
           endDate: endDateTime.toISOString()
         });
       } else if (lab.type === 'vmcluster-datacenter') {
-        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateOrgLabAssignment`, {
-          assignmentId: lab.id,
-          startDate: startDateTime.toISOString(),
-          endDate: endDateTime.toISOString()
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserLabTimingsOfVMClusterDatacenter`, {
+          labId: lab?.lab_id || lab?.labid,
+          startTime: startDateTime.toISOString(),
+          endTime: endDateTime.toISOString(),
+          identifier:orgId,
+          type:"org"
         });
       } else if (lab.type === 'singlevm-proxmox') {
-        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateProxmoxOrgLabAssignment`, {
-          assignmentId: lab.id,
-          startDate: startDateTime.toISOString(),
-          endDate: endDateTime.toISOString()
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMOrgLabTime`, {
+          labId:lab?.lab_id || lab?.labid,
+          startTime: startDateTime.toISOString(),
+          endTime: endDateTime.toISOString(),
+          identifier:orgId,
+          type:"org"
         });
       }
 
@@ -310,7 +316,6 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
     setIsLoading(true);
     setError(null);
     try {
-      console.log(lab)
       let response;
       if (lab.type === 'cloudslice') {
         response = await axios.get(
@@ -372,7 +377,6 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
     setSuccess(null);
     try {
       let response;
-      console.log(lab)
       if (lab.type === 'cloudslice') {
         if(userLab.role === 'user'){
         response = await axios.post(
@@ -391,18 +395,39 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
           userId:userLab?.user_id || userLab?.userid
         })
       }
+      
+      else if (lab.type === 'vmcluster-datacenter'){
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`,{
+          labId:lab?.lab_id || lab?.labid,
+          orgId:orgId,
+          userId:userLab?.user_id || userLab?.userid
+        })
+      }
       else if (lab.type === 'singlevm') {
         response = await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteUserLabInstance/${userLabId}`
         );
       } else if (lab.type === 'singlevm-proxmox') {
-        response = await axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteUserProxmoxInstance/${userLabId}`
+        response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVMProxmoxUser`,{
+            labId:lab?.lab_id || lab?.labid,
+            userId:userLab?.user_id || userLab?.userid,
+            purchased:userLab?.purchased ? true : false,
+            node:userLab?.node,
+            vmid:userLab?.vmid
+          }
         );
       }
 
       if (response?.data.success) {
-        setUserLabs(prev => prev.filter(ul => ul.user_id  !== userLab?.user_id ));
+        setUserLabs(prev =>
+          prev.filter(ul => {
+            const ulUserId = ul.user_id ?? ul.userid;
+            const targetUserId = userLab?.user_id ?? userLab?.userid;
+            return ulUserId !== targetUserId;
+          })
+        );
+
         groupedByRole[userLab]
         setSuccess('User lab deleted successfully');
         setTimeout(() => setSuccess(null), 2000);
@@ -418,7 +443,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
   };
 
   const handleLaunchConnect = async (userLab: UserLab) => {
-    setLaunchingId(userLab?.id);
+    setLaunchingId(userLab?.lab_id || userLab?.labid);
     setError(null);
 
     try {
@@ -504,35 +529,126 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
         onShowCloudSliceModal(userLabs.find(lab=>lab.id === userLab.id));
       }
 
-      else if (lab?.type === 'singlevm' || lab?.type === 'singlevm-proxmox' ) {
+      else if ( lab?.type === 'singlevm-proxmox' ) {
          console.log(userLab)
-        // For singlevm, connect to VM
-        const resp = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-          {
-            protocol: userLab.protocol || 'RDP',
-            hostname: userLab.ip,
-            port: userLab.port,
-            username: userLab.username,
-            password: userLab.password,
+         if(!userLab?.islaunched){
+          setIsLoading(true);
+          if(userLab?.role === 'user'){
+             const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchUserVm`, {
+                      node: userLab?.node,
+                      labid:userLab?.labid,
+                      name: userLab?.vmname,
+                      userid:userLab?.user_id,
+                      type: 'user',
+                      purchased:userLab?.purchased ? true :false,
+                    });
           }
-        );
-
-        if (resp.data.success) {
-          const wsPath = resp.data.wsPath;
-          const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-          const hostPort = `${window.location.hostname}:3002`;
-          const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-
-          navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
-            state: {
-              guacUrl: wsUrl,
-              vmTitle: lab.title,
-              vmId: lab.lab_id,
-              credentials: [userLab]
-            }
-          });
-        }
+          else{
+            const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`,{
+                      node:userLab.node,
+                      labid:userLab.labid,
+                      name:userLab.vmname, 
+                      cores:userLab.cpu,
+                      memory:userLab.ram,
+                      storageType:userLab.storagetype,
+                      storage:userLab.storage,
+                      nicModel:userLab.nicmodel,
+                      networkBridge:userLab.networkbridge,
+                      firewall:userLab.firewall,
+                      boot:userLab.boot,
+                      template:userLab?.template_id,
+                      type:'org',
+                      userid:userLab?.user_id,
+                      vmdetails_id:userLab?.vmdetails_id
+                     }) 
+          }
+            fetchUserLabs();
+         }
+         else{
+          if(userLab?.role === 'user'){
+            const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+                      lab_id: userLab?.labid,
+                      vmid: userLab?.vmid,
+                      node: userLab?.node,
+                      type:'user',
+                      userid:userLab?.user_id,
+                      purchased:userLab?.purchased ? true :false,
+                    });
+            
+                    if (startResponse.data.success) {
+                      const backData = startResponse.data.data;
+                      const resp = await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                    {
+                      protocol: backData.protocol,
+                      hostname: backData.hostname,
+                      port: backData.port,
+                      username:userLab?.username,
+                      password: userLab?.password,
+                    }
+                  );
+              
+                  if (resp.data.success) {
+                    const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                    // Build full ws url for guacamole-common-js
+                    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                    const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                    const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                    navigate(`/dashboard/labs/vm-session/${userLab?.labid}`, {
+                    state: {
+                      guacUrl: wsUrl,
+                      vmTitle: userLab?.title,
+                      doc:userLab?.userguide
+                    }
+                  });
+                  }
+                    } else {
+                      throw new Error(startResponse.data.message || 'Failed to start VM');
+                    }
+          }
+          else{
+             const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+                      lab_id: userLab?.labid,
+                      vmid: userLab?.vmid,
+                      node: userLab?.node,
+                      type:'org',
+                      userid:userLab?.user_id,
+                      purchased:userLab?.purchased ? true :false,
+                    });
+            
+                    if (startResponse.data.success) {
+                      const backData = startResponse.data.data;
+                      const resp = await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                    {
+                      protocol: backData.protocol,
+                      hostname: backData.hostname,
+                      port: backData.port,
+                      username:userLab?.username,
+                      password: userLab?.password,
+                    }
+                  );
+              
+                  if (resp.data.success) {
+                    const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                    // Build full ws url for guacamole-common-js
+                    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                    const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                    const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                    navigate(`/dashboard/labs/vm-session/${userLab?.labid}`, {
+                    state: {
+                      guacUrl: wsUrl,
+                      vmTitle: userLab?.title,
+                      doc:userLab?.labguide
+                    }
+                  });
+                  }
+                    } else {
+                      throw new Error(startResponse.data.message || 'Failed to start VM');
+                    }
+          }
+         }
+ 
       }
       else{
         const credsResponse = await axios.post(
@@ -587,6 +703,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
       setTimeout(() => setError(null), 2000);
     } finally {
       setLaunchingId(null);
+      setIsLoading(false);
     }
   };
 
@@ -671,27 +788,29 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
                               </span>
                             </div>
                             <div className="flex items-center space-x-2 ml-2">
-                              <button
-                                onClick={() => handleLaunchConnect(userLab)}
-                                disabled={launchingId === userLab.id}
-                                className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
-                                title={userLab.launched ? 'Connect' : 'Launch'}
-                              >
-                                {launchingId === userLab.id ? (
-                                  <Loader className="h-4 w-4 text-primary-400 animate-spin" />
-                                ) : userLab.launched ? (
-                                  <LinkIcon className="h-4 w-4 text-primary-400" />
-                                ) : (
-                                  <Play className="h-4 w-4 text-primary-400" />
-                                )}
-                              </button>
+                              {lab?.type !== 'vmcluster-datacenter' && (
+                                <button
+                                  onClick={() => handleLaunchConnect(userLab)}
+                                  disabled={launchingId === userLab?.id }
+                                  className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                                  title={userLab?.islaunched ? 'Connect' : 'Launch'}
+                                >
+                                  {launchingId === userLab?.id ? (
+                                    <Loader className="h-4 w-4 text-primary-400 animate-spin" />
+                                  ) : userLab?.islaunched ? (
+                                    <LinkIcon className="h-4 w-4 text-primary-400" />
+                                  ) : (
+                                    <Play className="h-4 w-4 text-primary-400" />
+                                  )}
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleDeleteUserLab(userLab)}
-                                disabled={deletingId === userLab.id}
+                                disabled={deletingId === (userLab?.id || userLab?.lab_id)}
                                 className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
                                 title="Delete User Lab"
                               >
-                                {deletingId === userLab.id ? (
+                                {deletingId === (userLab?.id || userLab?.lab_id) ? (
                                   <Loader className="h-4 w-4 text-red-400 animate-spin" />
                                 ) : (
                                   <Trash2 className="h-4 w-4 text-red-400" />
@@ -726,6 +845,8 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -733,7 +854,8 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
       fetchUsers();
     }
   }, [isOpen, lab]);
-
+ 
+   
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -803,6 +925,47 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
       }
     });
   };
+
+  const handleDeleteGroup = async (groupKey: string, usersInGroup: any[]) => {
+    setDeletingUserId(groupKey);
+    setNotification(null);
+    try {
+      
+      // Delete all users in the group
+      const deleteClusterOfUser = 
+        axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`, {
+          labId: lab?.lab_id || lab?.labid,
+          orgId: organizationId,
+          userId: usersInGroup[0].user_id
+        })
+
+      
+      
+      if (deleteClusterOfUser?.data?.success) {
+        setNotification({ 
+          type: 'success', 
+          message: `Group "${groupKey}" deleted successfully` 
+        });
+        setTimeout(() => {
+          setNotification(null);
+          fetchUsers();
+        }, 2000);
+      } else {
+        throw new Error('Failed to delete some users in the group');
+      }
+    } catch (error: any) {
+      setNotification({ 
+        type: 'error', 
+        message: error.message || 'Failed to delete group' 
+      });
+      setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   const groupedUsers = users?.users?.reduce((acc, user) => {
     const groupKey = user.usergroup || 'Unknown Group';
      const vmData = users?.vms?.find(vmItem => vmItem.vmid === user.vmid);
@@ -821,10 +984,12 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
       ...user,
       vmData,
       assignedUserName,
+      user_id:assignedUserId
     });
 
     return acc;
   }, {} as Record<string, Array<any>>);
+
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">
@@ -840,6 +1005,20 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
             <X className="h-5 w-5 text-gray-400" />
           </button>
         </div>
+
+        {notification && (
+          <div className={`mb-4 p-3 rounded-lg border ${
+            notification.type === 'success' 
+              ? 'bg-emerald-900/20 border-emerald-500/20' 
+              : 'bg-red-900/20 border-red-500/20'
+          }`}>
+            <p className={`text-sm ${
+              notification.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+            }`}>
+              {notification.message}
+            </p>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center items-center py-12">
@@ -857,13 +1036,33 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
                   <h3 className="text-lg font-semibold text-primary-300">
                     {groupKey} ({usersInGroup.length} user{usersInGroup.length !== 1 ? 's' : ''})
                   </h3>
-                  <button
-                    onClick={()=>handleConnectGroup(groupKey,usersInGroup)}
-                    className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded-lg text-white font-medium text-sm transition-colors flex items-center space-x-2"
-                  >
-                    <LinkIcon className="h-4 w-4" />
-                    <span>Connect Group</span>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={()=>handleConnectGroup(groupKey,usersInGroup)}
+                      className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded-lg text-white font-medium text-sm transition-colors flex items-center space-x-2"
+                    >
+                      <LinkIcon className="h-4 w-4" />
+                      <span>Connect Group</span>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteGroup(groupKey, usersInGroup)}
+                      disabled={deletingUserId === groupKey}
+                      className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-medium text-sm transition-colors flex items-center space-x-2"
+                      title="Delete Group"
+                    >
+                      {deletingUserId === groupKey ? (
+                        <>
+                          <Loader className="h-4 w-4 animate-spin" />
+                          <span>Deleting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4" />
+                          <span>Delete Group</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -876,7 +1075,7 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
                         <th className="pb-3">Password</th>
                         <th className="pb-3">IP Address</th>
                         <th className="pb-3">Port</th>
-                        <th className="pb-3">Actions</th>
+                        <th className="pb-3 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -915,13 +1114,15 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
                             <div className="font-mono text-gray-300">{user.port}</div>
                           </td>
                           <td className="py-3">
-                            <button
-                              onClick={() => handleConnectToVM(user)}
-                              className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
-                              title="Connect to VM"
-                            >
-                              <LinkIcon className="h-4 w-4 text-primary-400" />
-                            </button>
+                            <div className="flex items-center justify-end space-x-2">
+                              <button
+                                onClick={() => handleConnectToVM(user)}
+                                className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                                title="Connect to VM"
+                              >
+                                <LinkIcon className="h-4 w-4 text-primary-400" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -997,12 +1198,28 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
   const [userListModal, setUserListModal] = useState<any>(null);
   const [deletingLab, setDeletingLab] = useState<AssignedLab | null>(null);
   const [cloudSliceModal, setCloudSliceModal] = useState<any>(null);
+  const [organizations,setOrganizations] = useState<any[]>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchAssignedLabs();
   }, [orgId]);
 
+   useEffect(() => {
+      // Fetch organizations when component mounts
+      const fetchOrganizations = async () => {
+        try {
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
+          if (response.data.success) {
+            setOrganizations(response.data.data);
+          }
+        } catch (err) {
+          console.error('Failed to fetch organizations:', err);
+        }
+      };
+  
+      fetchOrganizations();
+    }, []);
   const fetchAssignedLabs = async () => {
     try {
       const response = await axios.get(
@@ -1047,17 +1264,31 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteOrgLabAssignment/${lab.id}`
         );
       } else if (lab.type === 'vmcluster-datacenter') {
-        response = await axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteOrgLabAssignment/${lab.id}`
+        response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteFromOrganization`,{
+            labId:lab?.lab_id || lab?.labid,
+            orgId,
+            adminId : organizations?.find((org)=>org.id === orgId)?.org_admin
+
+          }
         );
       } else if (lab.type === 'singlevm-proxmox') {
-        response = await axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteProxmoxOrgLabAssignment/${lab.id}`
+        const labData = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgProxmoxUserInstances/${orgId}/${lab.lab_id}`
+        );
+        response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteOrgAssignedLab`,{
+            labId:lab?.lab_id || lab?.labid,
+            orgId,
+            adminId:labData.data.data[0]?.user_id,
+            node:labData.data.data[0]?.node,
+            vmid:labData.data.data[0]?.vmid
+          }
         );
       }
 
       if (response?.data?.success) {
-        setAssignedLabs(prev => prev.filter(l => l.labid||l.lab_id !== lab?.labid || lab?.lab_id));
+        setAssignedLabs(prev => prev.filter(l => l?.labid||l?.lab_id !== lab?.labid || lab?.lab_id));
         setSuccess('Lab assignment deleted successfully');
         setTimeout(() => setSuccess(null), 2000);
       } else {

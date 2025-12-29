@@ -161,7 +161,6 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
   //   window.onunload = () => client.disconnect();
   //   return;
     try {
-      if(currentUser.role === 'labadmin'){
         if(vm.status === 'expired') {
           setNotification({
             type: 'error',
@@ -169,9 +168,7 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
           });
           return;
         }
-      }
       if (buttonLabel === 'Launch VM') {
-        console.log(vm)
         const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchUserVm`, {
           node: vm.node,
           labid:vm.labid,
@@ -179,7 +176,6 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
           userid:vm.user_id,
           type: 'user',
           purchased:vm.purchased ? true :false,
-          duration:vm?.duration
         });
         
         if (launchVM.data.success) {
@@ -196,6 +192,7 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
           vmid: vm.vmid,
           node: vm.node,
           userid:vm?.user_id,
+          purchased:vm?.purchased ? true : false
         });
 
         if (stopResponse.data.success) {

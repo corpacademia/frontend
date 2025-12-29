@@ -199,38 +199,46 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         }
       } 
       else {
-        console.log(vm)
-        return
-        const fetchIp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getIpOfVm`,{
-          node:vm.node,
-          vmid:100
-        })
-        // Start the VM
-       const resp = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-        {
-          protocol: "rdp",
-          hostname: "171.172.173.143",
-          port: "3389",
-          username: "Admin",
-          password: "P@ssw0rd",
-        }
-      );
-  
-      if (resp.data.success) {
-        const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
-        // Build full ws url for guacamole-common-js
-        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
-        const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-        navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
-        state: {
-          guacUrl: wsUrl,
-          vmTitle: vm.title,
-          doc:vm?.labguide
-        }
-      });
-      }
+        const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+                             lab_id: vm?.labid,
+                             vmid: vm?.vmid,
+                             node: vm?.node,
+                             type:currentUser.id !== vm?.user_id ? 'org' : 'sup',
+                             userid:vm?.user_id,
+                             purchased:vm?.purchased ? true :false,
+                             vmDetailsId:vm?.vm_detailsid || null
+                           });
+                   
+                           if (startResponse.data.success) {
+                             const backData = startResponse.data.data;
+                             const resp = await axios.post(
+                           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                           {
+                             protocol: backData.protocol,
+                             hostname: backData.hostname,
+                             port: backData.port,
+                             username:vm?.username,
+                             password: vm?.password,
+                           }
+                         );
+                     
+                         if (resp.data.success) {
+                           const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                           // Build full ws url for guacamole-common-js
+                           const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                           const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                           const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                           navigate(`/dashboard/labs/vm-session/${vm?.labid}`, {
+                           state: {
+                             guacUrl: wsUrl,
+                             vmTitle: vm?.title,
+                             doc:vm?.labguide
+                           }
+                         });
+                         }
+                           } else {
+                             throw new Error(startResponse.data.message || 'Failed to start VM');
+                           }
 
        // const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
         //   lab_id: vm.labid,
