@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../../store/authStore';
 import { 
   BeakerIcon, 
@@ -28,7 +28,8 @@ import {
   EyeOff,
   FileText,
   Upload,
-  Download
+  Download,
+  Play
 } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
@@ -151,6 +152,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
 
 export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
+  const navigate = useNavigate();
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -165,6 +167,11 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
   const [vmUsers, setVmUsers] = useState<Array<any>>(vm.userscredentials || []);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [software, setSoftware] = useState<string[]>(vm.software || []);
+  const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
+  const [userInstances, setUserInstances] = useState<any[]>([]);
+  const [isLoadingInstances, setIsLoadingInstances] = useState(false);
+  const [deletingInstanceId, setDeletingInstanceId] = useState<string | null>(null);
+  const [launchingInstanceId, setLaunchingInstanceId] = useState<string | null>(null);
   // Edit lab modal states
   const [isEditLabModalOpen, setIsEditLabModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -505,8 +512,126 @@ if (userGuideFile) {
     }
   };
 
+  // Fetch user instances for the VM
+  const fetchUserInstances = async () => {
+    setIsLoadingInstances(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgsingleVmDatacenterUserInstances/${currentUser?.org_id !== null ? currentUser?.org_id : 'superadmin'}/${vm.lab_id}`
+      );
+      
+      if (response.data.success) {
+        setUserInstances(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user instances:', error);
+      setNotification({ type: 'error', message: 'Failed to load user instances' });
+      setTimeout(() => setNotification(null), 2000);
+    } finally {
+      setIsLoadingInstances(false);
+    }
+  };
+
+  // Handle opening user instances modal
+  const handleViewUserInstances = () => {
+    setIsUserInstancesModalOpen(true);
+    fetchUserInstances();
+  };
+
+  // Handle delete user instance
+  const handleDeleteUserInstance = async (userInstance: any) => {
+    setDeletingInstanceId(userInstance.id);
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment`,
+        {
+          labId: vm.lab_id,
+          userId: userInstance.user_id || userInstance.userid
+        }
+      );
+
+      if (response.data.success) {
+        setUserInstances(prev => prev.filter(u => u.id !== userInstance.id));
+        setNotification({ type: 'success', message: 'User instance deleted successfully' });
+        setTimeout(() => setNotification(null), 2000);
+      } else {
+        throw new Error(response.data.message || 'Failed to delete user instance');
+      }
+    } catch (error: any) {
+      setNotification({ type: 'error', message: error.message || 'Failed to delete user instance' });
+      setTimeout(() => setNotification(null), 2000);
+    } finally {
+      setDeletingInstanceId(null);
+    }
+  };
+
+  // Handle launch/connect for user instance
+  const handleLaunchConnect = async (userInstance: any) => {
+    setLaunchingInstanceId(userInstance.id);
+    try {
+      const credsResponse = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
+        { labId: vm.lab_id }
+      );
+
+      if (userInstance.role === 'labadmin' || userInstance.role === 'orgsuperadmin') {
+        navigate(`/dashboard/labs/vm-session/${vm.lab_id}`, {
+          state: {
+            guacUrl: null,
+            vmTitle: vm.title,
+            vmId: vm.lab_id,
+            doc: vm.labguide,
+            credentials: credsResponse?.data.success ? credsResponse?.data.data : null,
+            isGroupConnection: true
+          }
+        });
+      } else {
+        const creds = credsResponse?.data.success 
+          ? credsResponse?.data.data.find((data: any) => data.assigned_to === userInstance.user_id) 
+          : null;
+
+        if (!creds) {
+          throw new Error('Credentials not found for this user');
+        }
+
+        const resp = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+          {
+            protocol: creds.protocol || 'RDP',
+            hostname: creds.ip,
+            port: creds.port,
+            username: creds.username,
+            password: creds.password,
+          }
+        );
+
+        if (resp.data.success) {
+          const wsPath = resp.data.wsPath;
+          const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+          const hostPort = `${window.location.hostname}:3002`;
+          const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+
+          navigate(`/dashboard/labs/vm-session/${vm.lab_id}`, {
+            state: {
+              guacUrl: wsUrl,
+              vmTitle: vm.title,
+              vmId: vm.lab_id,
+              doc: vm.userguide,
+              credentials: [creds]
+            }
+          });
+        }
+      }
+    } catch (error: any) {
+      setNotification({ type: 'error', message: error.message || 'Failed to launch/connect' });
+      setTimeout(() => setNotification(null), 2000);
+    } finally {
+      setLaunchingInstanceId(null);
+    }
+  };
+
   // Extract filename from path
-function extractFileName(filePath: string) {
+  function extractFileName(filePath: string) {
     const match = filePath.match(/[^\\\/]+$/);
     return match ? match[0] : null;
   }
@@ -624,17 +749,33 @@ function extractFileName(filePath: string) {
           )}
 
           <div className="mt-auto pt-3 border-t border-secondary-500/10 flex flex-col space-y-2">
-            <button
-              onClick={() => setIsUserListModalOpen(true)}
-              className="w-full h-9 px-4 rounded-lg text-sm font-medium
-                       bg-dark-400/80 hover:bg-dark-300/80
-                       border border-secondary-500/20 hover:border-secondary-500/30
-                       text-secondary-300
-                       flex items-center justify-center"
-            >
-              <Users className="h-4 w-4 mr-2" />
-              User List
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setIsUserListModalOpen(true)}
+                className="flex-1 h-9 px-4 rounded-lg text-sm font-medium
+                         bg-dark-400/80 hover:bg-dark-300/80
+                         border border-secondary-500/20 hover:border-secondary-500/30
+                         text-secondary-300
+                         flex items-center justify-center"
+              >
+                <Users className="h-4 w-4 mr-2" />
+                User List
+              </button>
+
+              {(currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin') && (
+                <button
+                  onClick={handleViewUserInstances}
+                  className="flex-1 h-9 px-4 rounded-lg text-sm font-medium
+                           bg-dark-400/80 hover:bg-dark-300/80
+                           border border-secondary-500/20 hover:border-secondary-500/30
+                           text-secondary-300
+                           flex items-center justify-center"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Pods
+                </button>
+              )}
+            </div>
 
             {canEditContent() ? (
               <button
