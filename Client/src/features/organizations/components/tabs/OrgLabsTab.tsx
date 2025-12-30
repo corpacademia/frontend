@@ -741,8 +741,8 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
     }
   };
 
-  const handleLaunchConnect = async (userLab: UserLab) => {
-    setLaunchingId(userLab?.id);
+   const handleLaunchConnect = async (userLab: UserLab) => {
+    setLaunchingId(userLab?.lab_id || userLab?.labid);
     setError(null);
 
     try {
@@ -828,35 +828,126 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
         onShowCloudSliceModal(userLabs.find(lab=>lab.id === userLab.id));
       }
 
-      else if (lab?.type === 'singlevm' || lab?.type === 'singlevm-proxmox' ) {
+      else if ( lab?.type === 'singlevm-proxmox' ) {
          console.log(userLab)
-        // For singlevm, connect to VM
-        const resp = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-          {
-            protocol: userLab.protocol || 'RDP',
-            hostname: userLab.ip,
-            port: userLab.port,
-            username: userLab.username,
-            password: userLab.password,
+         if(!userLab?.islaunched){
+          setIsLoading(true);
+          if(userLab?.role === 'user'){
+             const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchUserVm`, {
+                      node: userLab?.node,
+                      labid:userLab?.labid,
+                      name: userLab?.vmname,
+                      userid:userLab?.user_id,
+                      type: 'user',
+                      purchased:userLab?.purchased ? true :false,
+                    });
           }
-        );
-
-        if (resp.data.success) {
-          const wsPath = resp.data.wsPath;
-          const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-          const hostPort = `${window.location.hostname}:3002`;
-          const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-
-          navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
-            state: {
-              guacUrl: wsUrl,
-              vmTitle: lab.title,
-              vmId: lab.lab_id,
-              credentials: [userLab]
-            }
-          });
-        }
+          else{
+            const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`,{
+                      node:userLab.node,
+                      labid:userLab.labid,
+                      name:userLab.vmname, 
+                      cores:userLab.cpu,
+                      memory:userLab.ram,
+                      storageType:userLab.storagetype,
+                      storage:userLab.storage,
+                      nicModel:userLab.nicmodel,
+                      networkBridge:userLab.networkbridge,
+                      firewall:userLab.firewall,
+                      boot:userLab.boot,
+                      template:userLab?.template_id,
+                      type:'org',
+                      userid:userLab?.user_id,
+                      vmdetails_id:userLab?.vmdetails_id
+                     }) 
+          }
+            fetchUserLabs();
+         }
+         else{
+          if(userLab?.role === 'user'){
+            const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+                      lab_id: userLab?.labid,
+                      vmid: userLab?.vmid,
+                      node: userLab?.node,
+                      type:'user',
+                      userid:userLab?.user_id,
+                      purchased:userLab?.purchased ? true :false,
+                    });
+            
+                    if (startResponse.data.success) {
+                      const backData = startResponse.data.data;
+                      const resp = await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                    {
+                      protocol: backData.protocol,
+                      hostname: backData.hostname,
+                      port: backData.port,
+                      username:userLab?.username,
+                      password: userLab?.password,
+                    }
+                  );
+              
+                  if (resp.data.success) {
+                    const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                    // Build full ws url for guacamole-common-js
+                    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                    const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                    const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                    navigate(`/dashboard/labs/vm-session/${userLab?.labid}`, {
+                    state: {
+                      guacUrl: wsUrl,
+                      vmTitle: userLab?.title,
+                      doc:userLab?.userguide
+                    }
+                  });
+                  }
+                    } else {
+                      throw new Error(startResponse.data.message || 'Failed to start VM');
+                    }
+          }
+          else{
+             const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+                      lab_id: userLab?.labid,
+                      vmid: userLab?.vmid,
+                      node: userLab?.node,
+                      type:'org',
+                      userid:userLab?.user_id,
+                      purchased:userLab?.purchased ? true :false,
+                    });
+            
+                    if (startResponse.data.success) {
+                      const backData = startResponse.data.data;
+                      const resp = await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                    {
+                      protocol: backData.protocol,
+                      hostname: backData.hostname,
+                      port: backData.port,
+                      username:userLab?.username,
+                      password: userLab?.password,
+                    }
+                  );
+              
+                  if (resp.data.success) {
+                    const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                    // Build full ws url for guacamole-common-js
+                    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                    const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                    const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                    navigate(`/dashboard/labs/vm-session/${userLab?.labid}`, {
+                    state: {
+                      guacUrl: wsUrl,
+                      vmTitle: userLab?.title,
+                      doc:userLab?.labguide
+                    }
+                  });
+                  }
+                    } else {
+                      throw new Error(startResponse.data.message || 'Failed to start VM');
+                    }
+          }
+         }
+ 
       }
       else{
         const credsResponse = await axios.post(
@@ -911,9 +1002,9 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
       setTimeout(() => setError(null), 2000);
     } finally {
       setLaunchingId(null);
+      setIsLoading(false);
     }
   };
-
   if (!isOpen || !lab) return null;
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -1004,7 +1095,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
                                 >
                                   {launchingId === userLab.id ? (
                                     <Loader className="h-4 w-4 text-primary-400 animate-spin" />
-                                  ) : userLab.launched ? (
+                                  ) : userLab?.launched || userLab?.islaunched ? (
                                     <LinkIcon className="h-4 w-4 text-primary-400" />
                                   ) : (
                                     <Play className="h-4 w-4 text-primary-400" />
