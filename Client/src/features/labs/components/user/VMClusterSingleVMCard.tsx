@@ -81,7 +81,6 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
 
     return `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
   }
-
   const handleStartLab = () => {
    if(vm?.lab?.status === 'expired'){
     setNotification({type:'error',message:"Lab has expired"})
