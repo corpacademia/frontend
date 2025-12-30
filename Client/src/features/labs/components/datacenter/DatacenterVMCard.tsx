@@ -517,7 +517,7 @@ if (userGuideFile) {
     setIsLoadingInstances(true);
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgsingleVmDatacenterUserInstances/${currentUser?.org_id !== null ? currentUser?.org_id : 'superadmin'}/${vm.lab_id}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgsingleVmDatacenterUserInstances/${currentUser?.org_id}/${vm.lab_id}`
       );
       
       if (response.data.success) {
@@ -870,6 +870,138 @@ if (userGuideFile) {
         lab={vm}
         type="datacenter"
       />
+
+      {/* User Instances Modal */}
+      {isUserInstancesModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-200 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold text-white">
+                  User Instances - {vm.title}
+                </h3>
+                <button 
+                  onClick={() => setIsUserInstancesModalOpen(false)} 
+                  className="p-2 hover:bg-dark-300 rounded-lg"
+                >
+                  <X className="h-5 w-5 text-gray-400" />
+                </button>
+              </div>
+
+              {notification && (
+                <div className={`mb-4 p-3 rounded-lg border ${
+                  notification.type === 'success' 
+                    ? 'bg-emerald-900/20 border-emerald-500/20' 
+                    : 'bg-red-900/20 border-red-500/20'
+                }`}>
+                  <p className={`text-sm ${
+                    notification.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
+                    {notification.message}
+                  </p>
+                </div>
+              )}
+
+              <div className="overflow-y-auto max-h-[70vh]">
+                {isLoadingInstances ? (
+                  <div className="flex justify-center items-center py-12">
+                    <Loader className="h-8 w-8 text-primary-400 animate-spin" />
+                  </div>
+                ) : userInstances.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    No user instances found
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {(() => {
+                      // Group instances by role
+                      const groupedByRole = userInstances.reduce((acc, userLab) => {
+                        const role = userLab.role || 'user';
+                        if (!acc[role]) {
+                          acc[role] = [];
+                        }
+                        acc[role].push(userLab);
+                        return acc;
+                      }, {} as Record<string, any[]>);
+
+                      return Object.entries(groupedByRole).map(([role, instances]) => (
+                        <div key={role} className="bg-dark-300/30 rounded-lg p-4">
+                          <h3 className="text-lg font-semibold text-primary-300 mb-4">
+                            {role === 'user' ? 'Users' : role === 'labadmin' ? 'Lab Admins' : role === 'orgsuperadmin' ? 'Org Super Admins' : role} ({instances.length})
+                          </h3>
+                          <div className="space-y-3">
+                            {instances.map((userLab) => (
+                              <div
+                                key={userLab.id}
+                                className="bg-dark-400/50 rounded-lg p-3 sm:p-4 border border-primary-500/20 hover:border-primary-500/40 transition-colors"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-gray-200 font-medium text-sm truncate">
+                                      {userLab.name || 'Unknown User'}
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                      User ID: {userLab.user_id || userLab.userid}
+                                    </p>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                      Launched: {new Date(userLab.startdate).toLocaleString()}
+                                    </p>
+                                    <span className={`inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full ${
+                                      userLab.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
+                                      'bg-gray-500/20 text-gray-300'
+                                    }`}>
+                                      {userLab.status}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center space-x-2 ml-2">
+                                    <button
+                                      onClick={() => handleLaunchConnect(userLab)}
+                                      disabled={launchingInstanceId === userLab.id}
+                                      className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
+                                      title="Launch/Connect"
+                                    >
+                                      {launchingInstanceId === userLab.id ? (
+                                        <Loader className="h-4 w-4 text-primary-400 animate-spin" />
+                                      ) : (
+                                        <LinkIcon className="h-4 w-4 text-primary-400" />
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteUserInstance(userLab)}
+                                      disabled={deletingInstanceId === userLab.id}
+                                      className="p-2 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                      title="Delete Instance"
+                                    >
+                                      {deletingInstanceId === userLab.id ? (
+                                        <Loader className="h-4 w-4 text-red-400 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4 text-red-400" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end mt-4 pt-4 border-t border-primary-500/10">
+                <button
+                  onClick={() => setIsUserInstancesModalOpen(false)}
+                  className="px-4 py-2 bg-dark-400/50 hover:bg-dark-300 text-gray-300 rounded-lg transition-colors text-sm"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Edit Lab Modal */}
       {isEditLabModalOpen && (
