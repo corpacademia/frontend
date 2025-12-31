@@ -33,11 +33,13 @@ import {
 import { GradientText } from "../../../../components/ui/GradientText";
 import axios from "axios";
 import { ClusterUserListModal } from "./ClusterUserListModal";
+import { UserInstancesModal } from "../common/UserInstancesModal"; // Import UserInstancesModal
 import { ConvertToCatalogueModal } from "../cloudvm/ConvertToCatalogueModal";
 import { AssignUsersModal } from "../catalogue/AssignUsersModal";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { v4 as uuidv4 } from "uuid";
+
 
 interface ClusterVM {
   id: string;
@@ -167,6 +169,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
 export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
+  const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false); // State for UserInstancesModal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [notification, setNotification] = useState<{
@@ -177,10 +180,10 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   const [showFullEndDate, setShowFullEndDate] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
-  const [isConverting, setIsConverting] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   // Edit lab modal states
   const [isEditLabModalOpen, setIsEditLabModalOpen] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const [editFormData, setEditFormData] = useState({
     title: vm.lab.title,
     description: vm.lab.description || "",
@@ -260,7 +263,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       } else {
         throw new Error(response.data.message || "Failed to delete cluster VM");
       }
-    } 
+    }
     catch (error: any) {
       setNotification({
         type: "error",
@@ -291,7 +294,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
       } else {
         throw new Error(response.data.message || "Failed to delete cluster VM");
       }
-    } 
+    }
     catch (error: any) {
       setNotification({
         type: "error",
@@ -660,10 +663,10 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   return (
     <>
       <div
-        className="flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px] 
-                  max-h-fit overflow-hidden rounded-xl border border-secondary-500/10 
+        className="flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px]
+                  max-h-fit overflow-hidden rounded-xl border border-secondary-500/10
                   hover:border-secondary-500/30 bg-dark-200/80 backdrop-blur-sm
-                  transition-all duration-300 hover:shadow-lg hover:shadow-secondary-500/10 
+                  transition-all duration-300 hover:shadow-lg hover:shadow-secondary-500/10
                   hover:translate-y-[-2px] group relative"
       >
         {notification && (
@@ -791,6 +794,19 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
               User List
             </button>
 
+            {/* Pods Button - Calls UserInstancesModal */}
+            <button
+              onClick={() => setIsUserInstancesModalOpen(true)}
+              className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                       bg-dark-400/80 hover:bg-dark-300/80
+                       border border-secondary-500/20 hover:border-secondary-500/30
+                       text-secondary-300
+                       flex items-center justify-center"
+            >
+              <UserIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              Pods
+            </button>
+
             {!canEditContent() && currentUser?.role === "labadmin" ? (
               <button
                 onClick={() => setIsAssignModalOpen(true)}
@@ -839,6 +855,17 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
           vmId={vm.lab.labid}
           vmTitle={vm.lab.title}
           vm={vm}
+        />
+      )}
+
+      {/* Render UserInstancesModal */}
+      {isUserInstancesModalOpen && (
+        <UserInstancesModal
+          isOpen={isUserInstancesModalOpen}
+          onClose={() => setIsUserInstancesModalOpen(false)}
+          vmId={vm?.lab?.labid}
+          labTitle={vm.lab.title}
+          users={vm.users}
         />
       )}
 
@@ -1170,8 +1197,9 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                   </label>
                   <div className="flex flex-col space-y-2">
                     {vm.lab.labguide &&
-                      editFormData.labGuide.map((labguide) => (
-                        <div className="flex items-center justify-between p-2 bg-dark-300/50 rounded-lg">
+                      Array.isArray(editFormData.labGuide) && // Ensure labGuide is an array
+                      editFormData.labGuide.map((labguide, idx) => ( // Added idx for key
+                        <div key={idx} className="flex items-center justify-between p-2 bg-dark-300/50 rounded-lg">
                           <span className="text-sm text-gray-300 truncate">
                             {extractFileName(labguide)}
                           </span>
@@ -1228,8 +1256,9 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                   </label>
                   <div className="flex flex-col space-y-2">
                     {vm.lab.userguide &&
-                      editFormData.userGuide.map((userguide) => (
-                        <div className="flex items-center justify-between p-2 bg-dark-300/50 rounded-lg">
+                      Array.isArray(editFormData.userGuide) && // Ensure userGuide is an array
+                      editFormData.userGuide.map((userguide, idx) => ( // Added idx for key
+                        <div key={idx} className="flex items-center justify-between p-2 bg-dark-300/50 rounded-lg">
                           <span className="text-sm text-gray-300 truncate">
                             {extractFileName(userguide)}
                           </span>
@@ -1247,7 +1276,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                               onClick={() =>
                                 setEditFormData({
                                   ...editFormData,
-                                  userGuide: "",
+                                  userGuide: "", // Changed to "" as it was previously a string
                                 })
                               }
                               className="p-1 hover:bg-red-500/10 rounded-lg"
@@ -1468,7 +1497,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
                 className="btn-primary"
               >
                 {isEditing ? (
-                  
+
                   <span className="flex items-center">
                     <Loader className="animate-spin h-4 w-4 mr-2" />
                     Saving...

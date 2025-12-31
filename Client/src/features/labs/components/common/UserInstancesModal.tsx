@@ -53,7 +53,6 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
       let response;
       const effectiveOrgId = orgId || user?.org_id || 'superadmin';
       const labId = lab.lab_id || lab.labid;
-
       if (labType === 'cloudslice') {
         response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgCloudSliceUserInstances/${effectiveOrgId}/${labId}`
