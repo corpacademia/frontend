@@ -860,15 +860,14 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
 
       {/* Render UserInstancesModal */}
       {isUserInstancesModalOpen && (
-        <UserInstancesModal
+          <UserInstancesModal
           isOpen={isUserInstancesModalOpen}
           onClose={() => setIsUserInstancesModalOpen(false)}
-          vmId={vm?.lab?.labid}
-          labTitle={vm.lab.title}
-          users={vm.users}
+          lab={vm?.lab}
+          labType="vmcluster-datacenter"
+          orgId={currentUser?.org_id}
         />
       )}
-
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
