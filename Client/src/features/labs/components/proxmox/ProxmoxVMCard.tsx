@@ -1,4 +1,4 @@
- import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   HardDrive, 
   Plus, 
@@ -19,7 +19,8 @@ import {
   Calendar,
   Clock,
   MemoryStick,
-  Users
+  Users,
+  UserIcon // Import UserIcon
 } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
@@ -54,6 +55,9 @@ interface ProxmoxVM {
   firewall?: boolean;
   boot?: string;
   vmname?: string;
+  user_id?: string; // Added user_id
+  purchased?: boolean; // Added purchased
+  vm_detailsid?: string; // Added vm_detailsid
 }
 
 interface ProxmoxVMProps {
@@ -78,6 +82,9 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
   const [hasTemplate,setHasTemplate] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isConverting, setIsConverting] = useState(false); // Added isConverting state
+  // const [isUserListModalOpen, setIsUserListModalOpen] = useState(false); // Assuming this is for a different context and not needed here based on the provided changes.
+
   useEffect(() => {
     checkVMStatus();
     checkTemplateCreated();
@@ -153,7 +160,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
     setIsLaunchProcessing(true);
     try {
       if( buttonLabel === 'Launch VM'){
-         
+
          const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`,{
           node:vm.node,
           labid:vm.labid,
@@ -167,7 +174,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           firewall:vm.firewall,
           boot:vm.boot,
           template:vm?.template_id,
-          type:currentUser.id !== vm?.user_id ? 'org' : 'sup',
+          type:currentUser.id !== vm?.user_id ? 'org' :'sup',
           vmdetails_id:vm?.vmdetails_id
          }) 
          if(launchVM.data.success){
@@ -210,7 +217,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                              purchased:vm?.purchased ? true :false,
                              vmDetailsId:vm?.vm_detailsid || null
                            });
-                   
+
                            if (startResponse.data.success) {
                              const backData = startResponse.data.data;
                              const resp = await axios.post(
@@ -223,7 +230,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                              password: vm?.password,
                            }
                          );
-                     
+
                          if (resp.data.success) {
                            const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
                            // Build full ws url for guacamole-common-js
@@ -242,33 +249,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                              throw new Error(startResponse.data.message || 'Failed to start VM');
                            }
 
-       // const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
-        //   lab_id: vm.labid,
-        //   vmId: vm.vmid,
-        //   node: vm.node
-        // });
-
-        // if (startResponse.data.success) {
-        //   setButtonLabel('Stop');
-        //   setVmStatus('running');
-        //   setNotification({
-        //     type: 'success',
-        //     message: 'VM started successfully',
-        //   });
-
-        //   // Navigate to VM session if available
-        //   if (startResponse.data.guacamoleUrl) {
-        //     navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
-        //       state: { 
-        //         guacUrl: startResponse.data.guacamoleUrl,
-        //         vmTitle: vm.title,
-        //         vmId: vm.labid,
-        //       }
-        //     });
-        //   }
-        // } else {
-        //   throw new Error(startResponse.data.message || 'Failed to start VM');
-        // }
+       
       }
     } catch (error:any) {
       console.log(error)
@@ -353,6 +334,29 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
     setTimeout(() => {
       window.location.reload();
     }, 1500);
+  };
+
+  const handleConvertToCatalogue = async () => { // Added this function
+    setIsConverting(true);
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/convert-to-catalogue`, {
+        labId: vm.labid,
+      });
+      if (response.data.success) {
+        setNotification({ type: 'success', message: 'Successfully converted to catalogue' });
+        setIsConvertModalOpen(true); // Assuming this should open the modal after success
+      } else {
+        throw new Error(response.data.message || 'Failed to convert to catalogue');
+      }
+    } catch (error: any) {
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Failed to convert to catalogue',
+      });
+    } finally {
+      setIsConverting(false);
+      setTimeout(() => setNotification(null), 3000);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -452,8 +456,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                   >
                     <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
                   </button>
-                
-             
+
+
             </div>
           </div>
 
@@ -512,19 +516,19 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
           <div className="mt-auto pt-2 sm:pt-3 border-t border-orange-500/10">
             <div className="flex flex-col space-y-2">
-              {(currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin') && (
-                <button
-                  onClick={() => setIsUserInstancesModalOpen(true)}
-                  className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
-                           bg-dark-400/80 hover:bg-dark-300/80
-                           border border-orange-500/20 hover:border-orange-500/30
-                           text-orange-300
-                           flex items-center justify-center"
-                >
-                  <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  Pods
-                </button>
-              )}
+              {/* This button is likely for a different context (User List) and not directly related to the Pods button move */}
+              {/* <button
+                onClick={() => setIsUserListModalOpen(true)}
+                className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                         bg-dark-400/80 hover:bg-dark-300/80
+                         border border-orange-500/20 hover:border-orange-500/30
+                         text-orange-300
+                         flex items-center justify-center"
+              >
+                <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                User List
+              </button> */}
+
               <div className="flex gap-1 sm:gap-2">
                 <button 
                   onClick={handleLaunchVM}
@@ -577,35 +581,65 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
               </div>
 
               {canEditContent() ? (
-                <button
-                  className={`h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium w-full
-                           ${hasTemplate 
-                             ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 transform hover:scale-105 shadow-lg shadow-orange-500/20' 
-                             : 'bg-gray-500/20 cursor-not-allowed opacity-50'
-                           }
-                           transition-all duration-300
-                           text-white
-                           flex items-center justify-center`}
-                  disabled = {!hasTemplate}
-                  onClick={() => setIsConvertModalOpen(true)}
-                  title={!hasTemplate ? 'Create template first to enable this option' : ''}
-                >
-                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  Convert to Catalogue
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleConvertToCatalogue}
+                    disabled={isConverting}
+                    className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                             bg-gradient-to-r from-orange-500 to-red-500
+                             hover:from-orange-400 hover:to-red-400
+                             transform hover:scale-105 transition-all duration-300
+                             text-white shadow-lg shadow-orange-500/20
+                             flex items-center justify-center"
+                    title={isConverting ? 'Converting...' : ''}
+                  >
+                    {isConverting ? (
+                      <Loader className="animate-spin h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    ) : (
+                      <>
+                        <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        Convert to Catalogue
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setIsUserInstancesModalOpen(true)}
+                    className="h-8 sm:h-9 w-8 sm:w-9 rounded-lg
+                             bg-dark-400/80 hover:bg-dark-300/80
+                             border border-orange-500/20 hover:border-orange-500/30
+                             text-orange-300
+                             flex items-center justify-center flex-shrink-0"
+                    title="Pods"
+                  >
+                    <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </button>
+                </div>
               ) : (
-                <button
-                  onClick={() => setIsAssignModalOpen(true)}
-                  className="h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium w-full
-                           bg-gradient-to-r from-orange-500 to-red-500
-                           hover:from-orange-400 hover:to-red-400
-                           transform hover:scale-105 transition-all duration-300
-                           text-white shadow-lg shadow-orange-500/20
-                           flex items-center justify-center"
-                >
-                  <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  Assign Users
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsAssignModalOpen(true)}
+                    className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                             bg-gradient-to-r from-orange-500 to-red-500
+                             hover:from-orange-400 hover:to-red-400
+                             transform hover:scale-105 transition-all duration-300
+                             text-white shadow-lg shadow-orange-500/20
+                             flex items-center justify-center"
+                  >
+                    <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    Assign Users
+                  </button>
+                  <button
+                    onClick={() => setIsUserInstancesModalOpen(true)}
+                    className="h-8 sm:h-9 w-8 sm:w-9 rounded-lg
+                             bg-dark-400/80 hover:bg-dark-300/80
+                             border border-orange-500/20 hover:border-orange-500/30
+                             text-orange-300
+                             flex items-center justify-center flex-shrink-0"
+                    title="Pods"
+                  >
+                    <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -636,7 +670,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         vm={vm}
         onSuccess={handleEditSuccess}
       />
-      
+
       <ProxmoxConvertToCatalogueModal
         isOpen={isConvertModalOpen}
         onClose={() => setIsConvertModalOpen(false)}

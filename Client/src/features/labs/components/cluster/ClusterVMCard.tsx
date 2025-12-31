@@ -783,7 +783,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
             </div>
           )}
 
-          <div className="mt-auto pt-2 sm:pt-3 border-t border-secondary-500/10 flex flex-col space-y-2">
+          <div className="mt-auto pt-2 sm:pt-3 border-t border-secondary-500/10 space-y-2">
             <button
               onClick={() => setIsUserListModalOpen(true)}
               className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
@@ -796,53 +796,66 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
               User List
             </button>
 
-            {/* Pods Button - Calls VMClusterUserListModal */}
-            <button
-              onClick={() => setIsVMClusterUserListModalOpen(true)}
-              className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
-                       bg-dark-400/80 hover:bg-dark-300/80
-                       border border-secondary-500/20 hover:border-secondary-500/30
-                       text-secondary-300
-                       flex items-center justify-center"
-            >
-              <UserIcon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-              Pods
-            </button>
-
             {!canEditContent() && currentUser?.role === "labadmin" ? (
-              <button
-                onClick={() => setIsAssignModalOpen(true)}
-                className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
-                         bg-gradient-to-r from-secondary-500 to-accent-500
-                         hover:from-secondary-400 hover:to-accent-400
-                         transform hover:scale-105 transition-all duration-300
-                         text-white shadow-lg shadow-secondary-500/20
-                         flex items-center justify-center"
-              >
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                Assign Lab
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsAssignModalOpen(true)}
+                  className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                           bg-gradient-to-r from-secondary-500 to-accent-500
+                           hover:from-secondary-400 hover:to-accent-400
+                           transform hover:scale-105 transition-all duration-300
+                           text-white shadow-lg shadow-secondary-500/20
+                           flex items-center justify-center"
+                >
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  Assign Lab
+                </button>
+                <button
+                  onClick={() => setIsVMClusterUserListModalOpen(true)}
+                  className="h-8 sm:h-9 w-8 sm:w-9 rounded-lg
+                           bg-dark-400/80 hover:bg-dark-300/80
+                           border border-secondary-500/20 hover:border-secondary-500/30
+                           text-secondary-300
+                           flex items-center justify-center flex-shrink-0"
+                  title="Pods"
+                >
+                  <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                </button>
+              </div>
             ) : (
               canEditContent() && (
-                <button
-                  onClick={handleConvertToCatalogue}
-                  disabled={isConverting}
-                  className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
-                         bg-gradient-to-r from-secondary-500 to-accent-500
-                         hover:from-secondary-400 hover:to-accent-400
-                         transform hover:scale-105 transition-all duration-300
-                         text-white shadow-lg shadow-secondary-500/20
-                         flex items-center justify-center"
-                >
-                  {isConverting ? (
-                    <Loader className="animate-spin h-3 w-3 sm:h-4 sm:w-4" />
-                  ) : (
-                    <>
-                      <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      Convert to Catalogue
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleConvertToCatalogue}
+                    disabled={isConverting}
+                    className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                             bg-gradient-to-r from-secondary-500 to-accent-500
+                             hover:from-secondary-400 hover:to-accent-400
+                             transform hover:scale-105 transition-all duration-300
+                             text-white shadow-lg shadow-secondary-500/20
+                             flex items-center justify-center"
+                  >
+                    {isConverting ? (
+                      <Loader className="animate-spin h-3 w-3 sm:h-4 sm:w-4" />
+                    ) : (
+                      <>
+                        <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        Convert to Catalogue
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setIsVMClusterUserListModalOpen(true)}
+                    className="h-8 sm:h-9 w-8 sm:w-9 rounded-lg
+                             bg-dark-400/80 hover:bg-dark-300/80
+                             border border-secondary-500/20 hover:border-secondary-500/30
+                             text-secondary-300
+                             flex items-center justify-center flex-shrink-0"
+                    title="Pods"
+                  >
+                    <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </button>
+                </div>
               )
             )}
           </div>
