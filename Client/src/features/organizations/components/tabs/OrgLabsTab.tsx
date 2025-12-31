@@ -709,6 +709,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
         })
       }
       else if (lab.type === 'vmcluster-datacenter'){
+        
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`,{
           labId:lab?.lab_id || lab?.labid,
           orgId:orgId,
@@ -1266,18 +1267,16 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
     }
   };
 
-  const groupedUsers = users?.users?.reduce((acc, user) => {
+ const groupedUsers = users?.users?.reduce((acc, user) => {
     const groupKey = user.usergroup || 'Unknown Group';
      const vmData = users?.vms?.find(vmItem => vmItem.vmid === user.vmid);
-
     // Find group_id from grpCreds where cred_id matches vmid
-    const grpCred = users?.grpCreds?.find((gc: any) => gc.cred_id === user.vmid);
+    const grpCred = users?.grpCreds?.find((gc: any) => gc.cred_id === user.id);
     const groupId = grpCred?.group_id;
-
     // Find assigned user from userCredGrps where id matches group_id
     const assignedUserCredGrp = users?.userCredGrps?.find((ucg: any) => ucg.id === groupId);
-    const assignedUserName = assignedUserCredGrp?.user_name || 'Unknown User';
-
+    const assignedUserId = assignedUserCredGrp?.userassigned ;
+    const assignedUserName = users?.userData?.find((user)=> user?.user_id === assignedUserId)?.name || 'Not Assigned';
     if (!acc[groupKey]) {
       acc[groupKey] = [];
     }
@@ -1286,11 +1285,11 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
       ...user,
       vmData,
       assignedUserName,
+      user_id:assignedUserId
     });
 
     return acc;
   }, {} as Record<string, Array<any>>);
-
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999]">

@@ -34,6 +34,7 @@ import { GradientText } from "../../../../components/ui/GradientText";
 import axios from "axios";
 import { ClusterUserListModal } from "./ClusterUserListModal";
 import { UserInstancesModal } from "../common/UserInstancesModal"; // Import UserInstancesModal
+import { VMClusterUserListModal } from "./VMClusterUserListModal"; // Import VMClusterUserListModal
 import { ConvertToCatalogueModal } from "../cloudvm/ConvertToCatalogueModal";
 import { AssignUsersModal } from "../catalogue/AssignUsersModal";
 import DatePicker from "react-datepicker";
@@ -170,6 +171,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false); // State for UserInstancesModal
+  const [isVMClusterUserListModalOpen, setIsVMClusterUserListModalOpen] = useState(false); // State for VMClusterUserListModal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [notification, setNotification] = useState<{
@@ -794,9 +796,9 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
               User List
             </button>
 
-            {/* Pods Button - Calls UserInstancesModal */}
+            {/* Pods Button - Calls VMClusterUserListModal */}
             <button
-              onClick={() => setIsUserInstancesModalOpen(true)}
+              onClick={() => setIsVMClusterUserListModalOpen(true)}
               className="w-full h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                        bg-dark-400/80 hover:bg-dark-300/80
                        border border-secondary-500/20 hover:border-secondary-500/30
@@ -858,14 +860,13 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
         />
       )}
 
-      {/* Render UserInstancesModal */}
-      {isUserInstancesModalOpen && (
-          <UserInstancesModal
-          isOpen={isUserInstancesModalOpen}
-          onClose={() => setIsUserInstancesModalOpen(false)}
+      {/* Render VMClusterUserListModal */}
+      {isVMClusterUserListModalOpen && (
+        <VMClusterUserListModal
+          isOpen={isVMClusterUserListModalOpen}
+          onClose={() => setIsVMClusterUserListModalOpen(false)}
           lab={vm?.lab}
-          labType="vmcluster-datacenter"
-          orgId={currentUser?.org_id}
+          organizationId={currentUser?.org_id === null ? 'superadmin' : currentUser?.org_id}
         />
       )}
       <DeleteConfirmationModal
