@@ -62,6 +62,15 @@ export const LoginForm: React.FC = () => {
               </div>
             )}
 
+            <div className="flex items-center justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={loading}

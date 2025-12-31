@@ -4,6 +4,8 @@ import { LoginForm } from '../features/auth/components/LoginForm';
 import { SignupEmailForm } from '../features/auth/components/SignupEmailForm';
 import { SignupForm } from '../features/auth/components/SignupForm';
 import { EmailVerificationPage } from '../features/auth/components/EmailVerificationPage';
+import { ForgotPasswordPage } from '../features/auth/components/ForgotPasswordPage';
+import { ResetPasswordPage } from '../features/auth/components/ResetPasswordPage';
 import { ProtectedRoute } from '../components/auth/ProtectedRoute';
 import { DashboardLayout } from '../features/dashboard/components/DashboardLayout';
 import { SuperAdminDashboard } from '../features/dashboard/pages/SuperAdminDashboard';
@@ -74,6 +76,8 @@ export const AppRoutes: React.FC = () => {
       <Route path="/signup" element={<SignupEmailForm />} />
       <Route path="/signupprofile" element={<SignupForm />} />
       <Route path="/verify-email" element={<EmailVerificationPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/profile" element={<ProfilePage />} />
       <Route path="/purchase-history" element={
         <PrivateRoute allowedRoles={['user']}>
