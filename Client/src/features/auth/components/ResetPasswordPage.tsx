@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Shield, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
@@ -12,19 +11,16 @@ export const ResetPasswordPage: React.FC = () => {
   const { email, resetToken } = location.state || {};
 
   const [formData, setFormData] = useState({
-    oldPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
 
   const [showPasswords, setShowPasswords] = useState({
-    oldPassword: false,
     newPassword: false,
     confirmPassword: false,
   });
 
   const [errors, setErrors] = useState({
-    oldPassword: '',
     newPassword: '',
     confirmPassword: '',
     submit: '',
@@ -70,28 +66,15 @@ export const ResetPasswordPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({
-      oldPassword: '',
       newPassword: '',
       confirmPassword: '',
       submit: '',
     });
 
-    // Validate old password
-    if (!formData.oldPassword) {
-      setErrors((prev) => ({ ...prev, oldPassword: 'Old password is required' }));
-      return;
-    }
-
     // Validate new password
     const passwordErrors = validatePassword(formData.newPassword);
     if (passwordErrors.length > 0) {
       setErrors((prev) => ({ ...prev, newPassword: passwordErrors[0] }));
-      return;
-    }
-
-    // Check if new password is same as old password
-    if (formData.oldPassword === formData.newPassword) {
-      setErrors((prev) => ({ ...prev, newPassword: 'New password must be different from old password' }));
       return;
     }
 
@@ -105,11 +88,10 @@ export const ResetPasswordPage: React.FC = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/reset-password`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/reset-password`,
         {
           email,
           resetToken,
-          oldPassword: formData.oldPassword,
           newPassword: formData.newPassword,
         }
       );
@@ -124,11 +106,7 @@ export const ResetPasswordPage: React.FC = () => {
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'An error occurred. Please try again.';
-      if (errorMessage.toLowerCase().includes('old password')) {
-        setErrors((prev) => ({ ...prev, oldPassword: errorMessage }));
-      } else {
-        setErrors((prev) => ({ ...prev, submit: errorMessage }));
-      }
+      setErrors((prev) => ({ ...prev, submit: errorMessage }));
     } finally {
       setLoading(false);
     }
@@ -187,37 +165,6 @@ export const ResetPasswordPage: React.FC = () => {
         <GlowingBorder>
           <form onSubmit={handleSubmit} className="glass-panel p-8 space-y-6">
             <div className="space-y-4">
-              {/* Old Password */}
-              <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  Old Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type={showPasswords.oldPassword ? 'text' : 'password'}
-                    name="oldPassword"
-                    value={formData.oldPassword}
-                    onChange={handleChange}
-                    className={`w-full pl-10 pr-12 py-3 bg-dark-400/70 border ${
-                      errors.oldPassword ? 'border-red-500/50' : 'border-primary-500/30'
-                    } rounded-lg text-white placeholder-gray-400 focus:border-primary-500/60 focus:outline-none focus:ring-2 focus:ring-primary-500/30 transition-colors`}
-                    placeholder="Enter your old password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility('oldPassword')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
-                  >
-                    {showPasswords.oldPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-                {errors.oldPassword && (
-                  <p className="mt-1 text-sm text-red-400">{errors.oldPassword}</p>
-                )}
-              </div>
-
               {/* New Password */}
               <div>
                 <label className="block text-sm font-medium text-white mb-2">

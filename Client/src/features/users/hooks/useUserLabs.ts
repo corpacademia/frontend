@@ -36,7 +36,7 @@ export const useUserLabs = (userId: string,user:any) => {
         setIsLoading(true);
 
         const getSingleVMAws = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssessments`,{
-        admin_id:user?.user?.id
+        orgId:user?.user?.org_id
       })
       let singleVMAws = [];
       if(getSingleVMAws.data.success){

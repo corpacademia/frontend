@@ -53,8 +53,10 @@ export const ForgotPasswordPage: React.FC = () => {
   const sendPasswordResetCode = async (emailAddress: string) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/send-password-reset-code`,
-        { email: emailAddress }
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/send-verification-code`,
+        { email: emailAddress,
+          type:'reset'
+         }
       );
       return response.data;
     } catch (error: any) {
@@ -65,12 +67,13 @@ export const ForgotPasswordPage: React.FC = () => {
   const verifyResetCode = async (emailAddress: string, code: string) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/auth/verify-reset-code`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/verify-code`,
         { email: emailAddress, code }
       );
+     
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Invalid verification code');
+      throw new Error(error.response?.data?.error || 'Invalid verification code');
     }
   };
 

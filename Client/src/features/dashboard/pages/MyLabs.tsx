@@ -233,65 +233,88 @@ export const MyLabs: React.FC = () => {
     setIsLoading(true);
 
     try {
-      let cats: any[] = [];
-      let labss: any[] = [];
-      let softwareData: any[] = [];
+     let cats: any[] = [];
+let assignedLabs: any[] = [];
+let purchasedLabs: any[] = [];
+let softwareData: any[] = [];
 
-      // Fetch catalogues, assigned labs, and software - isolated per call
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCatalogues`);
-        cats = res.data.data;
-      } catch (err) {
-        console.error('Failed to fetch catalogues:', err);
-      }
+try {
+  const res = await axios.get(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCatalogues`
+  );
+  cats = res.data.data || [];
+} catch (err) {
+  console.error('Failed to fetch catalogues:', err);
+}
 
-      try {
-        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssignedLabs`, { userId: user.id });
-        labss = res.data.data;
-        setLabStatus(labss); // safe to set even if others fail
-      } catch (err) {
-        console.error('Failed to fetch assigned labs:', err);
-      }
-      //user purchased single vm
-      try {
-        
-        const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVMUserPurchsedLabs`,
-           { userId: user?.id }
-          );
-        labss = res.data.data.map((lab: any) => ({
+try {
+  const res = await axios.post(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssignedLabs`,
+    { userId: user.id }
+  );
+  assignedLabs = res.data.data || [];
+} catch (err) {
+  console.error('Failed to fetch assigned labs:', err);
+}
+
+try {
+  const res = await axios.post(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVMUserPurchsedLabs`,
+    { userId: user?.id }
+  );
+
+  purchasedLabs = (res.data.data || []).map((lab: any) => ({
+    ...lab,
+    purchased: true
+  }));
+} catch (err) {
+  console.error('Failed to fetch purchased labs:', err);
+}
+
+try {
+  const res = await axios.get(
+    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSoftwareDetails`
+  );
+  softwareData = res.data.data || [];
+} catch (err) {
+  console.error('Failed to fetch software details:', err);
+}
+
+    /* Merge assigned + purchased labs */
+    const allLabs = [...assignedLabs, ...purchasedLabs];
+
+    /* Optional: remove duplicates by lab_id */
+    const uniqueLabsMap = new Map();
+    allLabs.forEach(lab => {
+      const id = lab.lab_id ?? lab.labid;
+      uniqueLabsMap.set(id, { ...uniqueLabsMap.get(id), ...lab });
+    });
+    const uniqueLabs = Array.from(uniqueLabsMap.values());
+
+    setLabStatus(uniqueLabs);
+
+    /* Match catalogues */
+    const filteredCatalogues = cats
+      .map(cat => {
+        const matchingLab = uniqueLabs.find(
+          lab => (lab.lab_id ?? lab.labid) === cat.lab_id
+        );
+        return matchingLab ? { ...cat, ...matchingLab } : null;
+      })
+      .filter(Boolean);
+
+    /* Attach software */
+    const updatedLabs = filteredCatalogues.map(lab => {
+      const software = softwareData.find(s => s.lab_id === lab.lab_id);
+      return {
         ...lab,
-        purchased: true
-       }));
-        setLabStatus(labss,); // safe to set even if others fail
-      } catch (error) {
-        console.error("Failed to fetch the singlevm labs")
-      }
+        software: software?.software || []
+      };
+    });
 
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSoftwareDetails`);
-        softwareData = res.data.data;
-      } catch (err) {
-        console.error('Failed to fetch software details:', err);
-      }
-      // Safely process lab data if available
-      const filteredCatalogues = cats
-        .map(cat => {
-          const matchingLab = labss.find(
-            lab => (lab?.lab_id ?? lab?.labid) === cat.lab_id
-          );
-          return matchingLab ? { ...cat, ...matchingLab } : null;
-        })
-        .filter(Boolean); // remove nulls (non-matching)
+setLabs(updatedLabs);
+setFilteredLabs(updatedLabs);
 
-      const updatedLabs = filteredCatalogues.map((lab) => {
-        const software = softwareData.find((s) => s.lab_id === lab.lab_id);
-        return {
-          ...lab,
-          software: software ? software.software : []
-        };
-      });
-      setLabs(updatedLabs);
-      setFilteredLabs(updatedLabs);
 
       // Fetch cloud slice labs
       try {
@@ -736,9 +759,8 @@ export const MyLabs: React.FC = () => {
       throw new Error('Failed to retrieve instance details');
     }
     setCloudInstanceDetails(cloudinstanceDetails.data.data);
-
     try {
-      const instanceId = cloudInstanceDetails?.instance_id;
+      const instanceId = cloudinstanceDetails?.data?.data?.instance_id;
       if (isStop) {
         const stop =await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
           instance_id: instanceId
@@ -793,24 +815,44 @@ export const MyLabs: React.FC = () => {
             buttonState: 'Start Lab'
           });
           
-        if (response.data.response.success && response.data.response.jwtToken) {
+        if (response.data.response.success && response.data.response.result) {
           await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
             lab_id:lab?.lab_id || lab?.labid,
             user_id:user.id,
             state:true,
             isStarted:false
           })
+          const Data = JSON.parse(response.data.response.result);
+                       console.log(response.data.response)
+                       const userName = Data.username;
+                       const protocol = Data.protocol;
+                       const port = Data.port;
+                        const resp = await axios.post(
+                             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                             {
+                               protocol: protocol,
+                               hostname:cloudInstanceDetails?.data?.data.public_ip,
+                               port: port,
+                               username: userName,
+                               password: cloudinstanceDetails?.data.data.password,
+                             }
+                           );
+                       
+                           if (resp.data.success) {
+                             const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                             // Build full ws url for guacamole-common-js
+                             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                             const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                             const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                             navigate(`/dashboard/labs/vm-session/${lab?.labid || lab?.lab_id}`, {
+                             state: {
+                               guacUrl: wsUrl,
+                               vmTitle: lab?.title,
+                               doc:lab?.labguide
+                             }
+                           });
+                           }
           
-           const guacUrl = `${lab.guacamole_url}?token=${response.data.response.jwtToken}`;
-           console.log(guacUrl)
-          navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
-            state: { 
-              guacUrl,
-              vmTitle: lab.title,
-              vmId: lab?.lab_id || lab?.labid,
-              doc:lab.userguide
-            }
-          });
         }
       }
       else{
@@ -844,18 +886,39 @@ export const MyLabs: React.FC = () => {
                 state:true,
                 isStarted:true
               })
-              const guacUrl = `${lab.guacamole_url}?token=${response.data.response.jwtToken}`;
-              
-          navigate(`/dashboard/labs/vm-session/${lab?.lab_id || lab?.labid}`, {
-            state: { 
-              guacUrl,
-              vmTitle: lab.title,
-              vmId: lab?.lab_id || lab?.labid,
-              doc:lab.userguide
+                       const Data = JSON.parse(response.data.response.result);
+                       const userName = Data.username;
+                       const protocol = Data.protocol;
+                       const port = Data.port;
+                        const resp = await axios.post(
+                             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                             {
+                               protocol: protocol,
+                               hostname:cloudInstanceDetails?.data.data.public_ip,
+                               port: port,
+                               username: userName,
+                               password: cloudinstanceDetails?.data.data.password,
+                             }
+                           );
+                       
+                           if (resp.data.success) {
+                             const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                             // Build full ws url for guacamole-common-js
+                             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                             const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                             const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                             navigate(`/dashboard/labs/vm-session/${lab?.labid || lab?.lab_id}`, {
+                             state: {
+                               guacUrl: wsUrl,
+                               vmTitle: lab?.title,
+                               doc:lab?.labguide
+                             }
+                           });
+                           }
+                      
+                     }
             }
-          });
-            }
-          }
+          
         }
       }
       
@@ -882,7 +945,8 @@ export const MyLabs: React.FC = () => {
         }));
       }, 3000);
 
-    } catch (error) {
+    } 
+    catch (error) {
       setLabControls(prev => ({
         ...prev,
         [lab?.lab_id || lab?.labid]: {

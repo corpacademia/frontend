@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
+import { useBatchStore } from "./batchStore";
 
 /* =========================
    Types
@@ -145,6 +146,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           isLoading: false,
           organizations: [],
         });
+        useBatchStore.getState().resetBatchStore();
       }
     },
 

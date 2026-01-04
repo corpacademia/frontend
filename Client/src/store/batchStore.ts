@@ -137,6 +137,7 @@ interface BatchState {
   deleteSelectedBatches: () => Promise<{ success: boolean; message?: string }>;
 
   // Utility functions
+  resetBatchStore: () => void;
   clearCurrentBatch: () => void;
   clearError: () => void;
 }
@@ -540,5 +541,23 @@ export const useBatchStore = create<BatchState>((set, get) => ({
 
   clearError: () => {
     set({ error: null });
-  }
+  },
+  resetBatchStore: () =>
+  set({
+    batches: [],
+    currentBatch: null,
+    batchUsers: [],
+    batchLabs: [],
+    availableLabs: [],
+    availableTrainers: [],
+    availableUsers: [],
+    selectedBatchIds: [],
+    isLoading: false,
+    isLoadingDetails: false,
+    isLoadingLabs: false,
+    isLoadingTrainers: false,
+    isLoadingUsers: false,
+    error: null
+  }),
+
 }));

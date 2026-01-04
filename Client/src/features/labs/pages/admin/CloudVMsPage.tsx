@@ -83,6 +83,41 @@ export const AdminCloudVMsPage: React.FC = () => {
   useEffect(() => {
   const fetchCloudVMs = async () => {
     try {
+      if(admin?.role === 'orgsuperadmin'){
+         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssessments`, {
+                 orgId: admin?.org_id,
+               });
+         
+               if (response.data.success) {
+                 const updatedData = await Promise.all(
+                response.data.data.map(async (lab: any) => {
+             try {
+               const data = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`, {
+                 labId: lab.lab_id,
+               });
+         
+               if (data.data.success) {
+                 return {
+                   ...data.data.data,
+                   ...lab,
+                   assessment:true
+                 };
+               } else {
+                 return lab;
+               }
+             } catch (err) {
+               console.error('Failed to fetch lab details for', lab.lab_id, err);
+               return lab; 
+             }
+           })
+         );
+         
+                 setVMs(updatedData);
+               } else {
+                 setError('Failed to fetch assessment VMs');
+               }
+      }
+      else if(admin?.role === 'superadmin'){
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
         admin_id: admin.id,
       });
@@ -91,6 +126,7 @@ export const AdminCloudVMsPage: React.FC = () => {
       } else {
         setError('Failed to fetch cloud VMs');
       }
+    }
     } catch (err) {
       console.error('Error fetching cloud VMs:', err);
       setError('Failed to fetch cloud VMs');

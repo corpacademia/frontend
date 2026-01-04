@@ -97,7 +97,6 @@ export const NotificationPreferences: React.FC = () => {
       [category]: updatedCategory
     }));
   };
-  console.log(localPreferences)
   return (
     <div className="space-y-8">
       {/* Header */}

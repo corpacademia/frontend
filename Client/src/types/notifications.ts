@@ -16,7 +16,10 @@ export type NotificationType =
   | 'vm_status'
   | 'course_update'
   | 'deadline_reminder'
-    'software_expiry';
+    'software_expiry'
+    'password_reset',
+    'batch_deletion'
+    ;
 
 export type NotificationPriority = 'low' | 'medium' | 'high' | 'urgent';
 
@@ -85,6 +88,8 @@ export const NotificationTypeLabels: Record<NotificationType, string> = {
   course_update: 'Course Updates',
   deadline_reminder: 'Deadline Reminders',
   software_expiry:'Software Expires',
+  password_reset:'Password Reset',
+  batch_deletion:"Batch Deletion"
 };
 
 export const RoleNotificationTypes: Record<string, NotificationType[]> = {
@@ -96,7 +101,9 @@ export const RoleNotificationTypes: Record<string, NotificationType[]> = {
     'maintenance',
     'security_alert',
     'resource_usage',
-    'vm_status'
+    'vm_status',
+    'password_reset',
+    'batch_deletion'
   ],
   orgsuperadmin: [
     'user_registered',
@@ -111,6 +118,8 @@ export const RoleNotificationTypes: Record<string, NotificationType[]> = {
     'vm_status',
     'course_update',
     'software_expiry',
+    'password_reset',
+    'batch_deletion'
   ],
   labadmin: [
     'user_registered',
@@ -122,7 +131,9 @@ export const RoleNotificationTypes: Record<string, NotificationType[]> = {
     'batch_completed',
     'resource_usage',
     'course_update',
-    'deadline_reminder'
+    'deadline_reminder',
+    'password_reset',
+    'batch_deletion'
   ],
   trainer: [
     'lab_assigned',
@@ -132,7 +143,9 @@ export const RoleNotificationTypes: Record<string, NotificationType[]> = {
     'batch_started',
     'batch_completed',
     'course_update',
-    'deadline_reminder'
+    'deadline_reminder',
+    'password_reset',
+    'batch_deletion'
   ],
   user: [
     'lab_assigned',
@@ -140,6 +153,8 @@ export const RoleNotificationTypes: Record<string, NotificationType[]> = {
     'assessment_assigned',
     'assessment_completed',
     'course_update',
-    'deadline_reminder'
+    'deadline_reminder',
+    'password_reset',
+    'batch_deletion'
   ]
 };

@@ -369,6 +369,54 @@
                     <span class="metadata-value">{{metadata.email}}</span>
                 </div>
                 {{/if}}
+                {{#if metadata.batchName}}
+                <div class="metadata-item">
+                <span class="metadata-label">Batch:</span>
+                <span class="metadata-value">{{metadata.batchName}}</span>
+                </div>
+                {{/if}}
+
+                {{#if metadata.startDate}}
+                <div class="metadata-item">
+                <span class="metadata-label">Start Date:</span>
+                <span class="metadata-value">{{metadata.startDate}}</span>
+                </div>
+                {{/if}}
+
+                {{#if metadata.endDate}}
+                <div class="metadata-item">
+                <span class="metadata-label">End Date:</span>
+                <span class="metadata-value">{{metadata.endDate}}</span>
+                </div>
+                {{/if}}
+                {{#if metadata.users}}
+            <div class="metadata-section">
+            <div class="metadata-title">👥 Batch Users</div>
+
+            {{#each metadata.users}}
+            <div class="metadata-item">
+                <span class="metadata-label">{{this.name}}</span>
+                <span class="metadata-value">{{this.email}}</span>
+            </div>
+            {{/each}}
+            </div>
+            {{/if}}
+      {{#if metadata.labs}}
+            <div class="metadata-section">
+            <div class="metadata-title">🧪 Batch Labs</div>
+
+            {{#each metadata.labs}}
+            <div class="metadata-item">
+                <span class="metadata-label">{{this.labName}}</span>
+                <span class="metadata-value">
+                {{this.startDate}} → {{this.endDate}}
+                </span>
+            </div>
+            {{/each}}
+            </div>
+            {{/if}}
+
+
             </div>
             {{/if}}
             

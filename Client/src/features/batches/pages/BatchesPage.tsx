@@ -123,7 +123,7 @@ export const BatchesPage: React.FC = () => {
     filterBatches();
   }, [searchTerm, filterStatus, batches]);
 
- 
+  console.log(batches) 
 
   const filterBatches = () => {
     let filtered = [...batches];

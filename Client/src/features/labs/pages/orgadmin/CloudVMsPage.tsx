@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { CloudVMAssessmentCard } from '../../components/cloudvm/assessment/CloudVMAssessmentCard';
+import { CloudVMCard } from '../../components/cloudvm/CloudVMCard';
 import { DatacenterVMCard } from '../../components/datacenter/DatacenterVMCard';
 import { ProxmoxVMCard } from '../../components/proxmox/ProxmoxVMCard';
 import { Plus, Search, Filter, AlertCircle, FolderX, Server, HardDrive } from 'lucide-react';
@@ -95,7 +96,6 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     status: '',
     type: 'all' // Filter for VM type (assessment, datacenter, proxmox, or all)
   });
-  
   useEffect(() => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
@@ -104,10 +104,10 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     getUserDetails();
   }, []);
  useEffect(() => {
-  const fetchAssessmentVMs = async (adminId: string) => {
+  const fetchAssessmentVMs = async (orgId: string) => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssessments`, {
-        admin_id: adminId,
+        orgId: orgId,
       });
 
       if (response.data.success) {
@@ -264,7 +264,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
       const user = admin.data?.user;
 
       if (user?.id && user?.org_id) {
-        fetchAssessmentVMs(user.id);
+        fetchAssessmentVMs(user?.org_id);
         fetchDatacenterVMs(user.org_id, user?.id);
         fetchProxmoxVMs(user.org_id, user?.id);
       }
