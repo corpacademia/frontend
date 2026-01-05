@@ -104,15 +104,20 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     getUserDetails();
   }, []);
  useEffect(() => {
-  const fetchAssessmentVMs = async (orgId: string) => {
+  const fetchAssessmentVMs = async (orgId: string,admin: string) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssessments`, {
+      const [orgAssigned,Created] = await Promise.all([
+        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssessments`, {
         orgId: orgId,
-      });
+       }),
+        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
+                admin_id: admin,
+        })
+      ])
+      
 
-      if (response.data.success) {
         const updatedData = await Promise.all(
-  response.data.data.map(async (lab: any) => {
+     orgAssigned.data.data.map(async (lab: any) => {
     try {
       const data = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`, {
         labId: lab.lab_id,
@@ -132,11 +137,11 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     }
   })
 );
-
-        setVMs(updatedData);
-      } else {
-        setError('Failed to fetch assessment VMs');
-      }
+       const singleVMResponse = [
+        ...updatedData,
+        ...(Created.data.success ? Created.data.data : [])
+      ]
+        setVMs(singleVMResponse);
     } catch (err) {
       console.error('Error fetching assessment VMs:', err);
       setError('Failed to fetch assessment VMs');
@@ -264,7 +269,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
       const user = admin.data?.user;
 
       if (user?.id && user?.org_id) {
-        fetchAssessmentVMs(user?.org_id);
+        fetchAssessmentVMs(user?.org_id,user?.id);
         fetchDatacenterVMs(user.org_id, user?.id);
         fetchProxmoxVMs(user.org_id, user?.id);
       }
@@ -281,7 +286,10 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
 
   fetchAllVMs();
 }, []);
-
+   // Check if current user can edit content
+  const canEditContent = (vm) => {
+    return admin?.role === 'superadmin' || admin?.role === 'orgsuperadmin' || admin?.id === vm?.user_id ;
+  };
 
   const filteredVMs = vms.filter(vm => {
     const matchesSearch = !filters.search || 
@@ -434,6 +442,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
                     {filteredVMs.map((vm) => (
+                      canEditContent(vm) ? <CloudVMCard  key={vm.lab_id || vm.assessment_id} vm={vm} /> :
                       <CloudVMAssessmentCard key={vm.lab_id || vm.assessment_id} assessment={vm} />
                     ))}
                   </div>

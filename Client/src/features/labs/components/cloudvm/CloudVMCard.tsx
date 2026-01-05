@@ -80,7 +80,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
   const [isInstance, setIsInstance] = useState(false);
   const [isAmi, setIsAmi] = useState(false);
   const [labDetails, setLabDetails] = useState<LabDetails | null>(null);
-  const [buttonLabel, setButtonLabel] = useState<'Launch Software' | 'Stop'>('Launch Software');
+  const [buttonLabel, setButtonLabel] = useState<'Launch Software' | 'Stop' | "Start">('Launch Software');
   const [showFullAmiId, setShowFullAmiId] = useState(false);
   const [showFullTitle, setShowFullTitle] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -113,14 +113,29 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
 
  const checkLabLaunched= async ()=>{
       try {
-        const check = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/checkIsLabInstanceLaunched`,{
-          lab_id:vm.lab_id
+        let check;
+
+        if(vm?.assessment){
+          check = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`,{
+            lab_id:vm?.lab_id,
+            user_id:vm?.admin_id
+          })
+        }
+        else{
+          check = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/checkIsLabInstanceLaunched`,{
+          lab_id:vm.lab_id,
         })
+        }
         if(check.data.success){
           // Set button label based on instance state
-        if (check.data.data.isrunning) {
+        if (check?.data?.data.isrunning) {
           setButtonLabel('Stop'); // If running, set to "Stop Instance"
-        } else {
+        }
+        else if (check?.data?.data?.isstarted){
+          setButtonLabel("Start")
+        }
+
+         else {
           setButtonLabel('Launch Software'); // If not running, set to "Launch Instance"
         }
         }
@@ -128,6 +143,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
         console.error('Error checking lab status:', error);
       }
  }
+ console.log(buttonLabel)
 
   useEffect(() => {
     const fetchInstanceDetails = async () => {
@@ -186,20 +202,48 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
     };
     fetchLabDetails();
   }
- 
+   function formatDate(inputDate: Date) {
+    const date = new Date(inputDate);
+    return date.toISOString().slice(0, 19).replace('T', ' ');
+  }
   const handleLaunchSoftware = async () => {
     setIsLaunchProcessing(true);
     try {
-      if(assessment){
+      if(vm?.assessment){
         const isStop = buttonLabel === 'Stop';
           const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
-              user_id: user.id,
+              user_id: admin?.id,
               lab_id: vm?.lab_id || vm?.labid,
             })
             if (!cloudinstanceDetails.data.success) {
-              throw new Error('Failed to retrieve instance details');
+               const ami = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: vm?.lab_id || vm?.labid })
+                    
+                    if (!ami.data.success) {
+                      throw new Error('Failed to retrieve instance details');
+                    }
+                
+                    // First API: Launch instance (Keep loading active)
+                    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`, {
+                      name: admin.name,
+                      ami_id: ami.data.result.ami_id,
+                      user_id: admin.id,
+                      lab_id: vm?.lab_id || vm?.labid,
+                      instance_type: vm.instance,
+                      start_date: formatDate(vm?.startdate),
+                      end_date:formatDate(vm?.enddate)
+                    });
+                     setButtonLabel('Start VM');
+                     setNotification({
+                        type: 'success',
+                        message: 'Software launched successfully',
+                     });
+                     return;
             }
             try {
+              const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+              user_id: admin?.id,
+              lab_id: vm?.lab_id || vm?.labid,
+            })
               const instanceId = cloudinstanceDetails?.data?.data?.instance_id;
               if (isStop) {
                 const stop =await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
@@ -208,9 +252,10 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                 if(stop.data.success){
                   await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
                     lab_id:vm?.lab_id || vm?.labid,
-                    user_id:user.id,
+                    user_id:admin?.id,
                     state:false,
-                    isStarted:true
+                    isStarted:true,
+                    type:'org'
                   })
                 }
         
@@ -235,12 +280,17 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                 if (response.data.response.success && response.data.response.result) {
                   await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
                     lab_id:vm?.lab_id || vm?.labid,
-                    user_id:user.id,
+                    user_id:admin?.id,
                     state:true,
-                    isStarted:false
+                    isStarted:false,
+                    type:'org'
                   })
+                  setButtonLabel('Stop');
+                  setNotification({
+                    type: 'success',
+                    message: 'Software launched successfully',
+                  });
                   const Data = JSON.parse(response.data.response.result);
-                               console.log(response.data.response)
                                const userName = Data.username;
                                const protocol = Data.protocol;
                                const port = Data.port;
@@ -284,25 +334,30 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
           
                 if (restart.data.success ) {
                   const cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
-                    user_id: user.id,
+                    user_id: admin?.id,
                     lab_id: vm?.lab_id || vm?.labid,
                   })
                   if(cloudInstanceDetails.data.success){
                     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
                       os_name: vm.os,
-                      instance_id: cloudinstanceDetails?.data.data.instance_id,
+                      instance_id: cloudInstanceDetails?.data.data.instance_id,
                       hostname: cloudInstanceDetails?.data.data.public_ip,
-                      password: cloudinstanceDetails?.data.data.password,
+                      password: cloudInstanceDetails?.data.data.password,
                       buttonState: 'Start Lab'
                     });
                     if(response.data.success){
                       //update database that the instance is started
                       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
                         lab_id:vm?.lab_id || vm?.labid,
-                        user_id:user.id,
+                        user_id:admin?.id,
                         state:true,
                         isStarted:true
                       })
+                      setButtonLabel('Stop');
+                      setNotification({
+                        type: 'success',
+                        message: 'Software launched successfully',
+                      });
                                const Data = JSON.parse(response.data.response.result);
                                const userName = Data.username;
                                const protocol = Data.protocol;
@@ -314,7 +369,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                                        hostname:cloudInstanceDetails?.data.data.public_ip,
                                        port: port,
                                        username: userName,
-                                       password: cloudinstanceDetails?.data.data.password,
+                                       password: cloudInstanceDetails?.data.data.password,
                                      }
                                    );
                                
@@ -324,11 +379,11 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                                      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
                                      const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
                                      const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-                                     navigate(`/dashboard/labs/vm-session/${lab?.labid || lab?.lab_id}`, {
+                                     navigate(`/dashboard/labs/vm-session/${vm?.labid || vm?.lab_id}`, {
                                      state: {
                                        guacUrl: wsUrl,
-                                       vmTitle: lab?.title,
-                                       doc:lab?.labguide
+                                       vmTitle: vm?.title,
+                                       doc:vm?.labguide
                                      }
                                    });
                                    }
@@ -338,55 +393,14 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                   
                 }
               }
-              
-              setLabControls(prev => ({
-                ...prev,
-                [lab?.lab_id || lab?.labid]: {
-                  ...prev[lab?.lab_id || lab?.labid],
-                  isProcessing: false,
-                  buttonLabel: 'Stop Lab',
-                  notification: {
-                    type: 'success',
-                    message: 'Lab started successfully'
-                  }
-                }
-              }));
-        
-              setTimeout(() => {
-                setLabControls(prev => ({
-                  ...prev,
-                  [lab?.lab_id || lab?.labid]: {
-                    ...prev[lab?.lab_id || lab?.labid],
-                    notification: null
-                  }
-                }));
-              }, 3000);
         
             } 
             catch (error) {
-              setLabControls(prev => ({
-                ...prev,
-                [lab?.lab_id || lab?.labid]: {
-                  ...prev[lab?.lab_id || lab?.labid],
-                  isProcessing: false,
-                  notification: {
-                    type: 'error',
-                    message: error.response?.data?.message || `Failed to ${isStop ? 'stop' : 'start'} lab`
-                  }
-                }
-              }));
-        
-              setTimeout(()=>{
-                setLabControls(prev => ({
-                  ...prev,
-                  [lab?.lab_id || lab?.labid]: {
-                    ...prev[lab?.lab_id || lab?.labid],
-                    notification: null
-                  }
-                }));
-              },3000)
+              console.log(error)
+               throw new Error( error?.response?.data?.message || 'Failed to launch software');
             }
       }
+      else{
       if (buttonLabel === 'Stop') {
         // Stop the Instance
         const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
@@ -439,43 +453,38 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
           type: 'success',
           message: 'Software launched successfully',
         });
-        //  const resp = await axios.post(
-        //         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-        //         {
-        //           protocol: "rdp",
-        //           hostname:instanceDetails?.public_ip,
-        //           port: "3389",
-        //           username: "Admin",
-        //           password: instanceDetails?.password,
-        //         }
-        //       );
+        if (launchResponse.data.response.result) {
+          const Data = JSON.parse(launchResponse.data.response.result);
+          const userName = Data.username;
+          const protocol = Data.protocol;
+          const port = Data.port;
+           const resp = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                {
+                  protocol: protocol,
+                  hostname:instanceDetails?.public_ip,
+                  port: port,
+                  username: userName,
+                  password: instanceDetails?.password,
+                }
+              );
           
-        //       if (resp.data.success) {
-        //         const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
-        //         // Build full ws url for guacamole-common-js
-        //         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        //         const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
-        //         const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-        //         navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
-        //         state: {
-        //           guacUrl: wsUrl,
-        //           vmTitle: vm.title,
-        //           doc:vm?.labguide
-        //         }
-        //       });
-        //       }
-        // Navigate to Guacamole frame page instead of opening in new tab
-        // if (launchResponse.data.response.jwtToken) {
-        //   const guacUrl = `${vm?.guacamole_url}?token=${launchResponse.data.response.jwtToken}`;
-        //   navigate(`/dashboard/labs/vm-session/${vm.lab_id}`, {
-        //     state: { 
-        //       guacUrl,
-        //       vmTitle: vm.title,
-        //       vmId: vm.lab_id,
-        //       doc:vm.labguide,
-        //     }
-        //   });
-        // }
+              if (resp.data.success) {
+                const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                // Build full ws url for guacamole-common-js
+                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
+                state: {
+                  guacUrl: wsUrl,
+                  vmTitle: vm.title,
+                  doc:vm?.labguide
+                }
+              });
+              }
+         
+        }
       } else {
         throw new Error(launchResponse.data.response.message || 'Failed to launch software');
       }
@@ -552,7 +561,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
         }
 
       }
-
+    }
     } catch (error) {
       console.log(error)
       setNotification({

@@ -98,10 +98,14 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
       try {
         const user_cred = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(user_cred.data.user);
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationUsers`, {
-          admin_id: user_cred.data.user.id
-        });
-        setUsers(response.data.data);
+      console.log(user_cred)
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user_cred?.data?.user?.org_id}`);
+         const users = response.data?.data || [];
+
+        const filteredUsers = users.filter(
+          (user) => user.role === "user"
+        );
+        setUsers(filteredUsers);
       } catch (error) {
         console.error('Error fetching users:', error);
       }
@@ -187,10 +191,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
       return;
     }
 
-    if (!paymentSuccess) {
-      setNotification({ type: 'error', message: 'Please complete payment first' });
-      return;
-    }
+   
 
     setIsLoading(true);
     setNotification(null);
@@ -428,24 +429,6 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
                 />
               </div>
 
-              <button
-                onClick={handlePayment}
-                disabled={isPaying || (!selectedUsers.length && !email) || paymentSuccess}
-                className="w-full btn-primary bg-emerald-500 hover:bg-emerald-600"
-              >
-                {isPaying ? (
-                  <span className="flex items-center justify-center">
-                    <Loader className="animate-spin h-4 w-4 mr-2" />
-                    Processing Payment...
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center">
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    {paymentSuccess ? 'Payment Completed' : 'Pay Now'}
-                  </span>
-                )}
-              </button>
-
               {notification && (
                 <div className={`p-4 rounded-lg flex items-center space-x-2 ${
                   notification.type === 'success' 
@@ -467,7 +450,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
 
               <button
                 onClick={handleAssignLab}
-                disabled={isLoading || !paymentSuccess}
+                disabled={isLoading }
                 className="w-full btn-primary"
               >
                 {isLoading ? (
