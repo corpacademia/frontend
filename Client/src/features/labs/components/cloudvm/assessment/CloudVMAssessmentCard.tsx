@@ -15,10 +15,13 @@ import {
   Pencil, 
   Trash2,
   CreditCard,
-  Loader
+  Loader,
+  Play,
+  Square
 } from 'lucide-react';
 import { GradientText } from '../../../../../components/ui/GradientText';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 interface CloudVMAssessmentProps {
   assessment: {
@@ -47,6 +50,15 @@ interface org {
   org_type: string;
 }
 
+interface Instance {
+  id: string;
+  lab_id: string;
+  instance_id: string;
+  instance_name: string;
+  public_ip: string;
+  password: string;
+}
+
 interface LabDetails {
   cpu: string;
   ram: string;
@@ -56,6 +68,7 @@ interface LabDetails {
 }
 
 export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assessment }) => {
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [email, setEmail] = useState('');
@@ -70,6 +83,9 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   const [load, setLoad] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(true);
+  const [isLaunchProcessing, setIsLaunchProcessing] = useState(false);
+  const [instanceDetails, setInstanceDetails] = useState<Instance | undefined>(undefined);
+  const [buttonLabel, setButtonLabel] = useState<'Launch Software' | 'Stop' | 'Start'>('Launch Software');
 
   const [admin,setAdmin] = useState({});
   // useEffect(() => {
@@ -147,6 +163,240 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
       fetch();
     }
   }, [assessment.lab_id]);
+
+  const checkLabLaunched = async () => {
+    try {
+      const check = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+        lab_id: assessment.lab_id,
+        user_id: admin?.id
+      });
+      if (check.data.success) {
+        if (check?.data?.data.isrunning) {
+          setButtonLabel('Stop');
+        } else if (check?.data?.data?.isstarted) {
+          setButtonLabel('Start');
+        } else {
+          setButtonLabel('Launch Software');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking lab status:', error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchInstanceDetails = async () => {
+      try {
+        const instance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
+          lab_id: assessment.lab_id,
+        });
+
+        if (instance.data.success) {
+          checkLabLaunched();
+          setInstanceDetails(instance.data.result);
+        }
+      } catch (error) {
+        console.error('Failed to fetch instance details:', error);
+      }
+    };
+
+    if (assessment.lab_id && admin?.id) {
+      fetchInstanceDetails();
+    }
+  }, [assessment.lab_id, isLaunchProcessing, admin?.id]);
+
+  function formatDate(inputDate: Date) {
+    const date = new Date(inputDate);
+    return date.toISOString().slice(0, 19).replace('T', ' ');
+  }
+
+  const handleLaunchSoftware = async () => {
+    setIsLaunchProcessing(true);
+    try {
+      const isStop = buttonLabel === 'Stop';
+      const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+        user_id: admin?.id,
+        lab_id: assessment.lab_id,
+      });
+      if (!cloudinstanceDetails.data.success) {
+        const ami = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: assessment.lab_id });
+
+        if (!ami.data.success) {
+          throw new Error('Failed to retrieve instance details');
+        }
+
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`, {
+          name: admin.name,
+          ami_id: ami.data.result.ami_id,
+          user_id: admin.id,
+          lab_id: assessment.lab_id,
+          instance_type: assessment.instance,
+          start_date: formatDate(assessment.config_details?.startDate),
+          end_date: formatDate(assessment.config_details?.endDate)
+        });
+        setButtonLabel('Start');
+        setNotification({
+          type: 'success',
+          message: 'Software launched successfully',
+        });
+        return;
+      }
+      try {
+        const cloudinstanceDetailsRefresh = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+          user_id: admin?.id,
+          lab_id: assessment.lab_id,
+        });
+        const instanceId = cloudinstanceDetailsRefresh?.data?.data?.instance_id;
+        if (isStop) {
+          const stop = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
+            instance_id: instanceId
+          });
+          if (stop.data.success) {
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`, {
+              lab_id: assessment.lab_id,
+              user_id: admin?.id,
+              state: false,
+              isStarted: true,
+              type: 'org'
+            });
+            setButtonLabel('Start');
+          }
+          return;
+        }
+
+        const checkInstanceAlreadyStarted = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkisstarted`, {
+          type: 'user',
+          id: cloudinstanceDetailsRefresh?.data.data.instance_id,
+        });
+        if (checkInstanceAlreadyStarted.data.isStarted === false) {
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+            os_name: assessment.os,
+            instance_id: cloudinstanceDetailsRefresh?.data.data.instance_id,
+            hostname: cloudinstanceDetailsRefresh?.data.data.public_ip,
+            password: cloudinstanceDetailsRefresh?.data.data.password,
+            buttonState: 'Start Lab'
+          });
+
+          if (response.data.response.success && response.data.response.result) {
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`, {
+              lab_id: assessment.lab_id,
+              user_id: admin?.id,
+              state: true,
+              isStarted: false,
+              type: 'org'
+            });
+            setButtonLabel('Stop');
+            setNotification({
+              type: 'success',
+              message: 'Software launched successfully',
+            });
+            const Data = JSON.parse(response.data.response.result);
+            const userName = Data.username;
+            const protocol = Data.protocol;
+            const port = Data.port;
+            const resp = await axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+              {
+                protocol: protocol,
+                hostname: cloudinstanceDetailsRefresh?.data?.data.public_ip,
+                port: port,
+                username: userName,
+                password: cloudinstanceDetailsRefresh?.data.data.password,
+              }
+            );
+
+            if (resp.data.success) {
+              const wsPath = resp.data.wsPath;
+              const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+              const hostPort = `${window.location.hostname}:${3002}`;
+              const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+              navigate(`/dashboard/labs/vm-session/${assessment.lab_id}`, {
+                state: {
+                  guacUrl: wsUrl,
+                  vmTitle: assessment.title,
+                  doc: assessment.config_details?.labguide
+                }
+              });
+            }
+          }
+        } else {
+          const restart = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`, {
+            instance_id: cloudinstanceDetailsRefresh?.data.data.instance_id,
+            user_type: 'user'
+          });
+
+          if (restart.data.success) {
+            const cloudInstanceDetailsNew = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+              user_id: admin?.id,
+              lab_id: assessment.lab_id,
+            });
+            if (cloudInstanceDetailsNew.data.success) {
+              const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+                os_name: assessment.os,
+                instance_id: cloudInstanceDetailsNew?.data.data.instance_id,
+                hostname: cloudInstanceDetailsNew?.data.data.public_ip,
+                password: cloudInstanceDetailsNew?.data.data.password,
+                buttonState: 'Start Lab'
+              });
+              if (response.data.success) {
+                await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`, {
+                  lab_id: assessment.lab_id,
+                  user_id: admin?.id,
+                  state: true,
+                  isStarted: true
+                });
+                setButtonLabel('Stop');
+                setNotification({
+                  type: 'success',
+                  message: 'Software launched successfully',
+                });
+                const Data = JSON.parse(response.data.response.result);
+                const userName = Data.username;
+                const protocol = Data.protocol;
+                const port = Data.port;
+                const resp = await axios.post(
+                  `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                  {
+                    protocol: protocol,
+                    hostname: cloudInstanceDetailsNew?.data.data.public_ip,
+                    port: port,
+                    username: userName,
+                    password: cloudInstanceDetailsNew?.data.data.password,
+                  }
+                );
+
+                if (resp.data.success) {
+                  const wsPath = resp.data.wsPath;
+                  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                  const hostPort = `${window.location.hostname}:${3002}`;
+                  const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                  navigate(`/dashboard/labs/vm-session/${assessment.lab_id}`, {
+                    state: {
+                      guacUrl: wsUrl,
+                      vmTitle: assessment.title,
+                      doc: assessment.config_details?.labguide
+                    }
+                  });
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.log(error);
+        throw new Error(error?.response?.data?.message || 'Failed to launch software');
+      }
+    } catch (error) {
+      console.log(error);
+      setNotification({
+        type: 'error',
+        message: error.response?.data?.message || 'Operation failed',
+      });
+    } finally {
+      setIsLaunchProcessing(false);
+      setTimeout(() => setNotification(null), 3000);
+    }
+  };
 
   const handlePayment = async () => {
     if (!selectedUsers.length && !email) {
@@ -331,6 +581,31 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
           
 
           <div className="mt-auto pt-3 border-t border-primary-500/10">
+           <button 
+                            onClick={handleLaunchSoftware}
+                            disabled={isLaunchProcessing}
+                            className={`flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                                     ${buttonLabel === 'Stop' 
+                                       ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                                       : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                                     }
+                                     transition-colors flex items-center justify-center
+                                     disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {isLaunchProcessing ? (
+                              <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                            ) : buttonLabel === 'Stop' ? (
+                              <>
+                                <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Stop</span>
+                              </>
+                            ) : (
+                              <>
+                                <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                                <span className="hidden sm:inline">Launch VM</span>
+                              </>
+                            )}
+                          </button>
             <button
               onClick={() => setIsModalOpen(true)}
               className="w-full h-9 px-4 rounded-lg text-sm font-medium
