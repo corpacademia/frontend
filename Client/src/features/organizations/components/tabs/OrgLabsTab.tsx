@@ -1560,9 +1560,9 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
           })
       }
      
-      else if (lab.type === 'singlevm') {
+      else if (lab.type === 'singlevm-aws') {
         response = await axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/delete/${lab.id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/delete/${lab.lab_id}`
         );
       } else if (lab.type === 'vmcluster-datacenter') {
         response = await axios.post(

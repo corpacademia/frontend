@@ -16,7 +16,8 @@ import {
   Trash2,
   Tag,
   Play,
-  Square
+  Square,
+  UserIcon
 } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { ConvertToCatalogueModal } from './ConvertToCatalogueModal';
@@ -25,6 +26,7 @@ import { EditModal } from './EditModal';
 import { DeleteModal } from './DeleteModal';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { UserInstancesModal } from '../common/UserInstancesModal';
 
 interface CloudVM {
   id: string;
@@ -84,12 +86,15 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
   const [showFullAmiId, setShowFullAmiId] = useState(false);
   const [showFullTitle, setShowFullTitle] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [admin,setAdmin] = useState({});
 
   useEffect(() => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(response.data.user);
+      setCurrentUser(response.data.user);
     };
     getUserDetails();
   }, []);
@@ -808,20 +813,33 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                 </button>
               </div>
 
-              <button
-                onClick={() => setIsModalOpen(true)}
-                disabled={!isConvertEnabled}
-                className="h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium w-full
-                         bg-gradient-to-r from-primary-500 to-secondary-500
-                         hover:from-primary-400 hover:to-secondary-400
-                         transform hover:scale-105 transition-all duration-300
-                         text-white shadow-lg shadow-primary-500/20
-                         disabled:opacity-50 disabled:cursor-not-allowed
-                         flex items-center justify-center"
-              >
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                Convert to Catalogue
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  disabled={!isConvertEnabled}
+                  className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                           bg-gradient-to-r from-primary-500 to-secondary-500
+                           hover:from-primary-400 hover:to-secondary-400
+                           transform hover:scale-105 transition-all duration-300
+                           text-white shadow-lg shadow-primary-500/20
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           flex items-center justify-center"
+                >
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  Convert to Catalogue
+                </button>
+                <button
+                  onClick={() => setIsUserInstancesModalOpen(true)}
+                  className="h-8 sm:h-9 w-8 sm:w-9 rounded-lg
+                           bg-dark-400/80 hover:bg-dark-300/80
+                           border border-primary-500/20 hover:border-primary-500/30
+                           text-primary-300
+                           flex items-center justify-center flex-shrink-0"
+                  title="Pods"
+                >
+                  <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -850,6 +868,16 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
         onConfirm={handleDelete}
         isDeleting={isDeleting}
       />
+
+      {isUserInstancesModalOpen && (
+        <UserInstancesModal
+          isOpen={isUserInstancesModalOpen}
+          onClose={() => setIsUserInstancesModalOpen(false)}
+          lab={vm}
+          orgId={currentUser?.org_id}
+          labType="cloudvm"
+        />
+      )}
     </>
   );
 };
