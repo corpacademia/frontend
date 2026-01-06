@@ -206,6 +206,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   }, [assessment.lab_id, isLaunchProcessing, admin?.id]);
 
   function formatDate(inputDate: Date) {
+    console.log(inputDate)
     const date = new Date(inputDate);
     return date.toISOString().slice(0, 19).replace('T', ' ');
   }
@@ -224,15 +225,14 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
         if (!ami.data.success) {
           throw new Error('Failed to retrieve instance details');
         }
-
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`, {
           name: admin.name,
           ami_id: ami.data.result.ami_id,
           user_id: admin.id,
           lab_id: assessment.lab_id,
           instance_type: assessment.instance,
-          start_date: formatDate(assessment.config_details?.startDate),
-          end_date: formatDate(assessment.config_details?.endDate)
+          start_date: formatDate(assessment?.startdate),
+          end_date: formatDate(assessment?.enddate)
         });
         setButtonLabel('Start');
         setNotification({
@@ -354,14 +354,15 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
                 const userName = Data.username;
                 const protocol = Data.protocol;
                 const port = Data.port;
+                console.log(userName,protocol,port,cloudInstanceDetailsNew.data.data)
                 const resp = await axios.post(
                   `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
                   {
                     protocol: protocol,
-                    hostname: cloudInstanceDetailsNew?.data.data.public_ip,
+                    hostname: cloudInstanceDetailsNew?.data?.data?.public_ip,
                     port: port,
                     username: userName,
-                    password: cloudInstanceDetailsNew?.data.data.password,
+                    password: cloudInstanceDetailsNew?.data?.data?.password,
                   }
                 );
 
@@ -374,7 +375,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
                     state: {
                       guacUrl: wsUrl,
                       vmTitle: assessment.title,
-                      doc: assessment.config_details?.labguide
+                      doc: assessment?.labguide
                     }
                   });
                 }
@@ -580,11 +581,11 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
           )}
           
 
-          <div className="mt-auto pt-3 border-t border-primary-500/10">
+          <div className="mt-auto pt-3 border-t border-primary-500/10 flex flex-col gap-2">
            <button 
                             onClick={handleLaunchSoftware}
                             disabled={isLaunchProcessing}
-                            className={`flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                            className={`w-full h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                                      ${buttonLabel === 'Stop' 
                                        ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
                                        : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
