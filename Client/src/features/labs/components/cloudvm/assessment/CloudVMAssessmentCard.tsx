@@ -451,7 +451,9 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignlab`, {
         lab: assessment.lab_id,
         userId: selectedUsers,
-        assign_admin_id: admin.id
+        assign_admin_id: admin?.id,
+        startDate:assessment?.startdate,
+        endDate:assessment?.enddate
       });
 
       if (response.data.success) {

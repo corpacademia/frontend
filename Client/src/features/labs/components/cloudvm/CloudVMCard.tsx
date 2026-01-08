@@ -528,7 +528,6 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
         });
         // Navigate to Guacamole frame page instead of opening in new tab
         if (launchResponse.data.response.result) {
-          const Data = JSON.parse(launchResponse.data.response.result);
           const userName = Data.username;
           const protocol = Data.protocol;
           const port = Data.port;
@@ -553,7 +552,10 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                 state: {
                   guacUrl: wsUrl,
                   vmTitle: vm.title,
-                  doc:vm?.labguide
+                  doc: [
+                    ...(vm?.labguide ?? []),
+                    ...(vm?.userguide ?? [])
+                  ]
                 }
               });
               }
@@ -875,7 +877,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
           onClose={() => setIsUserInstancesModalOpen(false)}
           lab={vm}
           orgId={currentUser?.org_id}
-          labType="cloudvm"
+          labType="singlevm-aws"
         />
       )}
     </>

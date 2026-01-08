@@ -80,7 +80,7 @@ export const CloudSliceLabPage: React.FC = () => {
             admin_id: response.data.user.id
           })
           if(orgLabDetails.data.success){
-
+            console.log(orgLabDetails.data.data)
             setOrgLabStatus(orgLabDetails.data.data.find((lab)=>lab.labid === sliceId));
           }
         }
@@ -641,7 +641,7 @@ export const CloudSliceLabPage: React.FC = () => {
                   <User className="h-4 w-4 text-primary-400" />
                 </div>
                 <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                  {currentUser.role === 'superadmin' || currentUser.role === 'orgsuperadmin'? sliceDetails?.username : orgLabStatus.username || 'Not available'}
+                  {currentUser.role === 'superadmin' || currentUser.role === 'orgsuperadmin' || currentUser?.id === sliceDetails?.createdby ? sliceDetails?.username : orgLabStatus.username || 'Not available'}
                 </p>
               </div>
               
@@ -651,7 +651,7 @@ export const CloudSliceLabPage: React.FC = () => {
                   <Key className="h-4 w-4 text-primary-400" />
                 </div>
                 <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                {currentUser.role === 'superadmin' || currentUser.role === 'orgsuperadmin' ? sliceDetails?.password : orgLabStatus.password || 'Not available'}
+                {currentUser.role === 'superadmin' || currentUser.role === 'orgsuperadmin' || currentUser?.id === sliceDetails?.createdby  ? sliceDetails?.password : orgLabStatus.password || 'Not available'}
                 </p>
               </div>
               

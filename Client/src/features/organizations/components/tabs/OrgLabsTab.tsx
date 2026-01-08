@@ -60,7 +60,7 @@ interface EditLabModalProps {
   onClose: () => void;
   lab: AssignedLab | null;
   onSuccess: () => void;
-  orgId:string | null
+  orgId: string | null
 }
 
 interface UserLabsModalProps {
@@ -96,7 +96,7 @@ const AddLabToOrgModal: React.FC<AddLabToOrgModalProps> = ({ isOpen, onClose, or
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     if (isOpen) {
@@ -104,7 +104,7 @@ const AddLabToOrgModal: React.FC<AddLabToOrgModalProps> = ({ isOpen, onClose, or
       // Set default dates
       const now = new Date();
       const endDateTime = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
-      
+
       setStartDate(now.toLocaleDateString('en-CA'));
       setStartTime(now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
       setEndDate(endDateTime.toLocaleDateString('en-CA'));
@@ -145,66 +145,66 @@ const AddLabToOrgModal: React.FC<AddLabToOrgModalProps> = ({ isOpen, onClose, or
       }
 
       const lab = availableLabs.find(l => l.lab_id === selectedLab || l.labid === selectedLab);
-      
+
       if (!lab) {
         throw new Error('Selected lab not found');
       }
       let org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
-              org_id:orgId
-            });
-      
-            if (!org_details.data.success) {
-              throw new Error('Failed to fetch organization details');
-            }
+        org_id: orgId
+      });
+
+      if (!org_details.data.success) {
+        throw new Error('Failed to fetch organization details');
+      }
 
       let response;
 
-       if (lab?.type === 'cloudslice') {
-              response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`, {
-                sliceId:lab?.labid,
-                organizationId: orgId,
-                userId: user?.id,
-                startDate: startDateTime.toISOString(),
-                admin_id:org_details.data.data.org_admin,
-                endDate:endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-              });
-            } else if (lab?.type === 'singlevm-datacenter') {
-              response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`, {
-                labId:lab?.labid,
-                orgId: orgId,
-                assignedBy:user?.id,
-                startDate:startDateTime.toISOString(),
-                endDate:endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-              });
-            } else if (lab?.type === 'vm-cluster') {
-              response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`, {
-                labId:lab?.labid,
-                orgId: orgId,
-                assignedBy:user?.id,
-                startDate:startDateTime.toISOString(),
-                admin_id:org_details.data.data.org_admin,
-                endDate:endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-              });
-            } else if (lab?.type === 'singlevm-proxmox') {
+      if (lab?.type === 'cloudslice') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`, {
+          sliceId: lab?.labid,
+          organizationId: orgId,
+          userId: user?.id,
+          startDate: startDateTime.toISOString(),
+          admin_id: org_details.data.data.org_admin,
+          endDate: endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      } else if (lab?.type === 'singlevm-datacenter') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/singleVMDatacenterLabOrgAssignment`, {
+          labId: lab?.labid,
+          orgId: orgId,
+          assignedBy: user?.id,
+          startDate: startDateTime.toISOString(),
+          endDate: endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      } else if (lab?.type === 'vm-cluster') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/assignToOrganization`, {
+          labId: lab?.labid,
+          orgId: orgId,
+          assignedBy: user?.id,
+          startDate: startDateTime.toISOString(),
+          admin_id: org_details.data.data.org_admin,
+          endDate: endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      } else if (lab?.type === 'singlevm-proxmox') {
 
-              response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabToOrg`, {
-                labId:lab?.labid,
-                orgId: orgId,
-                startDate:startDateTime.toISOString(),
-                endDate:endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-                assigned_by:user?.id,
-                user_id: org_details.data.data.org_admin,
-                userName: org_details?.data?.data?.organization_name || ''
-              });
-            } else {
-              response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, {
-                lab_id:lab?.labid,
-                admin_id: org_details.data.data.org_admin,
-                org_id: orgId,
-                configured_by:user?.id,
-                enddate:endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-              });
-            }
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignLabToOrg`, {
+          labId: lab?.labid,
+          orgId: orgId,
+          startDate: startDateTime.toISOString(),
+          endDate: endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          assigned_by: user?.id,
+          user_id: org_details.data.data.org_admin,
+          userName: org_details?.data?.data?.organization_name || ''
+        });
+      } else {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/batchAssignment`, {
+          lab_id: lab?.labid,
+          admin_id: org_details.data.data.org_admin,
+          org_id: orgId,
+          configured_by: user?.id,
+          enddate: endDateTime || lab?.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+      }
 
       if (response?.data?.success) {
         setSuccess('Lab assigned to organization successfully');
@@ -389,7 +389,7 @@ const AddLabToOrgModal: React.FC<AddLabToOrgModalProps> = ({ isOpen, onClose, or
   );
 };
 
-const EditLabModal: React.FC<EditLabModalProps> = ({ isOpen, onClose, lab,orgId, onSuccess }) => {
+const EditLabModal: React.FC<EditLabModalProps> = ({ isOpen, onClose, lab, orgId, onSuccess }) => {
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -401,13 +401,13 @@ const EditLabModal: React.FC<EditLabModalProps> = ({ isOpen, onClose, lab,orgId,
   useEffect(() => {
     if (lab) {
       const start = new Date(lab.startdate);
-const end = new Date(lab.enddate);
+      const end = new Date(lab.enddate);
 
-setStartDate(start.toLocaleDateString('en-CA')); // YYYY-MM-DD
-setStartTime(start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+      setStartDate(start.toLocaleDateString('en-CA')); // YYYY-MM-DD
+      setStartTime(start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
 
-setEndDate(end.toLocaleDateString('en-CA'));
-setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
+      setEndDate(end.toLocaleDateString('en-CA'));
+      setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }));
     }
   }, [lab]);
 
@@ -431,19 +431,19 @@ setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' 
 
           startDate: startDateTime.toISOString(),
           endDate: endDateTime.toISOString(),
-          labId:lab?.lab_id,
-          identifier:orgId,
-          type:"org"
+          labId: lab?.lab_id,
+          identifier: orgId,
+          type: "org"
         });
       }
-      else if(lab.type === 'singlevm-datacenter'){
-           response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMDatacenterLabTime`, {
+      else if (lab.type === 'singlevm-datacenter') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMDatacenterLabTime`, {
 
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
-          labId:lab?.lab_id,
-          identifier:orgId,
-          type:"org"
+          labId: lab?.lab_id,
+          identifier: orgId,
+          type: "org"
         });
       }
 
@@ -458,16 +458,16 @@ setEndTime(end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' 
           labId: lab?.lab_id || lab?.labid,
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
-          identifier:orgId,
-          type:"org"
+          identifier: orgId,
+          type: "org"
         });
       } else if (lab.type === 'singlevm-proxmox') {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVMOrgLabTime`, {
-          labId:lab?.lab_id || lab?.labid,
+          labId: lab?.lab_id || lab?.labid,
           startTime: startDateTime.toISOString(),
           endTime: endDateTime.toISOString(),
-          identifier:orgId,
-          type:"org"
+          identifier: orgId,
+          type: "org"
         });
       }
 
@@ -634,17 +634,17 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgCloudSliceUserInstances/${orgId}/${lab.lab_id}`
         );
       }
-      else if(lab.type === 'singlevm-datacenter'){
-         response = await axios.get(
+      else if (lab.type === 'singlevm-datacenter') {
+        response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgsingleVmDatacenterUserInstances/${orgId}/${lab.lab_id}`
         );
       }
-      else if(lab.type === 'vmcluster-datacenter'){
-          response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgVMClusterDatacenterLabs/${orgId}/${lab.lab_id}`)
+      else if (lab.type === 'vmcluster-datacenter') {
+        response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgVMClusterDatacenterLabs/${orgId}/${lab.lab_id}`)
       }
-      else if (lab.type === 'singlevm') {
+      else if (lab.type === 'singlevm-aws') {
         response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgLabUserInstances/${orgId}/${lab.lab_id}`
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgSingleVmUserInstances/${orgId}/${lab.lab_id}`
         );
       } else if (lab.type === 'singlevm-proxmox') {
         response = await axios.get(
@@ -691,29 +691,29 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
       let response;
       console.log(lab)
       if (lab.type === 'cloudslice') {
-        if(userLab.role === 'user'){
-        response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`,{
-            labId:userLab?.labid || userLab?.lab_id,
-            userId:userLab.user_id,
-            purchased:false
+        if (userLab.role === 'user') {
+          response = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
+            labId: userLab?.labid || userLab?.lab_id,
+            userId: userLab.user_id,
+            purchased: false
           }
-        );
-      }
+          );
+        }
 
       }
-      else if (lab.type === 'singlevm-datacenter'){
-        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment`,{
-          labId:lab?.lab_id || lab?.labid,
-          userId:userLab?.user_id || userLab?.userid
+      else if (lab.type === 'singlevm-datacenter') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment`, {
+          labId: lab?.lab_id || lab?.labid,
+          userId: userLab?.user_id || userLab?.userid
         })
       }
-      else if (lab.type === 'vmcluster-datacenter'){
-        
-        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`,{
-          labId:lab?.lab_id || lab?.labid,
-          orgId:orgId,
-          userId:userLab?.user_id || userLab?.userid
+      else if (lab.type === 'vmcluster-datacenter') {
+
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`, {
+          labId: lab?.lab_id || lab?.labid,
+          orgId: orgId,
+          userId: userLab?.user_id || userLab?.userid
         })
       }
       else if (lab.type === 'singlevm') {
@@ -727,7 +727,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
       }
 
       if (response?.data.success) {
-        setUserLabs(prev => prev.filter(ul => ul.user_id  !== userLab?.user_id ));
+        setUserLabs(prev => prev.filter(ul => ul.user_id !== userLab?.user_id));
         groupedByRole[userLab]
         setSuccess('User lab deleted successfully');
         setTimeout(() => setSuccess(null), 2000);
@@ -742,261 +742,464 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
     }
   };
 
-   const handleLaunchConnect = async (userLab: UserLab) => {
-    setLaunchingId(userLab?.lab_id || userLab?.labid);
+  const handleLaunchConnect = async (userLab: UserLab) => {
+    setLaunchingId(userLab?.id || userLab?.user_id);
     setError(null);
 
     try {
       if (lab?.type === 'cloudslice') {
-        if(userLab?.role === 'user'){
-         if (userLab?.modules === 'without-modules') {
-        // Call createIamUser only if the lab is not already launched
-        if (!userLab.launched) {
-          const createIamUser = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
-            userName: userLab.name,
-            services: userLab.services,
-            role:userLab.role,
-            labid:userLab.labid,
-            user_id:userLab.user_id,
-            purchased:userLab?.purchased || false
-          });
+        if (userLab?.role === 'user') {
+          if (userLab?.modules === 'without-modules') {
+            // Call createIamUser only if the lab is not already launched
+            if (!userLab.launched) {
+              const createIamUser = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
+                userName: userLab.name,
+                services: userLab.services,
+                role: userLab.role,
+                labid: userLab.labid,
+                user_id: userLab.user_id,
+                purchased: userLab?.purchased || false
+              });
 
-          if(createIamUser.data.success){
-            const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
-              status:'active',
-              launched:true,
-              labId:userLab.labid,
-              userId:userLab.user_id,
-              purchased:userLab?.purchased || false
-            })
+              if (createIamUser.data.success) {
+                const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`, {
+                  status: 'active',
+                  launched: true,
+                  labId: userLab.labid,
+                  userId: userLab.user_id,
+                  purchased: userLab?.purchased || false
+                })
+
+              }
+            }
+
+          } else { // It's a module-based lab
+            if (!userLab.launched) {
+              const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`, {
+                status: 'active',
+                launched: true,
+                labId: userLab.labid,
+                userId: userLab.user_id,
+                purchased: userLab?.purchased || false
+              })
+            }
 
           }
         }
+        else {
+          if (!userLab.launched) {
+            if (userLab?.modules === 'without-modules') {
+              const createIamAccount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
+                userName: userLab?.name,
+                services: userLab?.services,
+                role: userLab?.role,
+                labid: userLab?.labid || userLab?.lab_id,
+                orgid: userLab?.orgid || userLab?.org_id,
+                purchased: userLab?.purchased || false
+              });
 
-      } else { // It's a module-based lab
-        if(!userLab.launched){
-          const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
-            status:'active',
-            launched:true,
-            labId:userLab.labid,
-            userId:userLab.user_id,
-            purchased:userLab?.purchased || false
-          })
+              if (!createIamAccount.data.success) {
+                throw new Error(createIamAccount.data.message || 'Failed to create IAM user');
+              }
+
+              const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
+                labId: userLab?.labid || userLab?.lab_id,
+                orgId: userLab?.orgid,
+                status: 'active',
+                launched: true,
+              });
+
+              if (!updateLabStatus.data.success) {
+                throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
+              }
+
+            } else {
+              const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
+                labId: userLab?.labid || userLab?.lab_id,
+                orgId: userLab?.orgid,
+                status: 'active',
+                launched: true,
+              });
+
+              if (!updateLabStatus.data.success) {
+                throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
+              }
+            }
+          }
         }
-
-      }}
-      else{
-        if (!userLab.launched) {
-      if (userLab?.modules === 'without-modules') {
-               const createIamAccount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
-                 userName: userLab?.name,
-                 services: userLab?.services,
-                 role:userLab?.role,
-                 labid:userLab?.labid || userLab?.lab_id,
-                 orgid:userLab?.orgid||userLab?.org_id,
-                 purchased:userLab?.purchased || false
-               });
-
-               if (!createIamAccount.data.success) {
-                 throw new Error(createIamAccount.data.message || 'Failed to create IAM user');
-               }
-
-               const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
-                  labId: userLab?.labid||userLab?.lab_id,
-                 orgId:userLab?.orgid,
-                 status: 'active',
-                 launched: true,
-               });
-
-               if (!updateLabStatus.data.success) {
-                 throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
-               }
-
-             } else {
-               const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
-                 labId: userLab?.labid||userLab?.lab_id,
-                 orgId:userLab?.orgid,
-                 status: 'active',
-                 launched: true,
-               });
-
-               if (!updateLabStatus.data.success) {
-                 throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
-               }
-             }}}
-      fetchUserLabs();
+        fetchUserLabs();
         // For cloudslice, show modal with credentials
-        onShowCloudSliceModal(userLabs.find(lab=>lab.id === userLab.id));
+        onShowCloudSliceModal(userLabs.find(lab => lab.id === userLab.id));
       }
 
-      else if ( lab?.type === 'singlevm-proxmox' ) {
-         console.log(userLab)
-         if(!userLab?.islaunched){
-          setIsLoading(true);
-          if(userLab?.role === 'user'){
-             const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchUserVm`, {
-                      node: userLab?.node,
-                      labid:userLab?.labid,
-                      name: userLab?.vmname,
-                      userid:userLab?.user_id,
-                      type: 'user',
-                      purchased:userLab?.purchased ? true :false,
-                    });
+      else if (lab?.type === 'singlevm-aws') {
+        // AWS Single VM handling - same logic as CloudVMCard and CloudVMAssessmentCard
+        try {
+          // Check if instance is assigned to this user
+          const cloudinstanceDetails = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`,
+            {
+              user_id: userLab?.user_id,
+              lab_id: userLab?.labid || userLab?.lab_id,
+            }
+          );
+
+          // If no instance assigned, launch a new one
+          if (!cloudinstanceDetails.data.success) {
+            const ami = await axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`,
+              { lab_id: userLab?.labid || userLab?.lab_id }
+            );
+
+            if (!ami.data.success) {
+              throw new Error('Failed to retrieve AMI details');
+            }
+
+            // Launch new instance
+            const response = await axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`,
+              {
+                name: userLab?.name,
+                ami_id: ami.data.result.ami_id,
+                user_id: userLab?.user_id,
+                lab_id: userLab?.labid || userLab?.lab_id,
+                instance_type: userLab?.instance || lab?.instance,
+                start_date: userLab?.startdate ? new Date(userLab.startdate).toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
+                end_date: userLab?.enddate ? new Date(userLab.enddate).toISOString().slice(0, 19).replace('T', ' ') : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ')
+              }
+            );
+
+            if (response.data.success) {
+              setSuccess('Instance launched successfully. Please wait for it to start...');
+              fetchUserLabs();
+            }
+            return;
           }
-          else{
-            const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`,{
-                      node:userLab.node,
-                      labid:userLab.labid,
-                      name:userLab.vmname, 
-                      cores:userLab.cpu,
-                      memory:userLab.ram,
-                      storageType:userLab.storagetype,
-                      storage:userLab.storage,
-                      nicModel:userLab.nicmodel,
-                      networkBridge:userLab.networkbridge,
-                      firewall:userLab.firewall,
-                      boot:userLab.boot,
-                      template:userLab?.template_id,
-                      type:'org',
-                      userid:userLab?.user_id,
-                      vmdetails_id:userLab?.vmdetails_id
-                     }) 
-          }
-            fetchUserLabs();
-         }
-         else{
-          if(userLab?.role === 'user'){
-            const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
-                      lab_id: userLab?.labid,
-                      vmid: userLab?.vmid,
-                      node: userLab?.node,
-                      type:'user',
-                      userid:userLab?.user_id,
-                      purchased:userLab?.purchased ? true :false,
-                    });
-            
-                    if (startResponse.data.success) {
-                      const backData = startResponse.data.data;
-                      const resp = await axios.post(
+
+          // Instance exists, check if it's already started
+          const checkInstanceAlreadyStarted = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkisstarted`,
+            {
+              type: 'user',
+              id: cloudinstanceDetails?.data.data.instance_id,
+            }
+          );
+
+          // If instance hasn't been started before
+          if (checkInstanceAlreadyStarted.data.isStarted === false) {
+            const response = await axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`,
+              {
+                os_name: userLab?.os || lab?.os,
+                instance_id: cloudinstanceDetails?.data.data.instance_id,
+                hostname: cloudinstanceDetails?.data.data.public_ip,
+                password: cloudinstanceDetails?.data.data.password,
+                buttonState: 'Start Lab'
+              }
+            );
+
+            if (response.data.response.success && response.data.response.result) {
+              // Update instance state in database
+              await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,
+                {
+                  lab_id: userLab?.labid || userLab?.lab_id,
+                  user_id: userLab?.user_id,
+                  state: true,
+                  isStarted: false,
+                  type: 'org'
+                }
+              );
+
+              // Parse connection details
+              const Data = JSON.parse(response.data.response.result);
+              const userName = Data.username;
+              const protocol = Data.protocol;
+              const port = Data.port;
+
+              // Get Guacamole URL
+              const resp = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                {
+                  protocol: protocol,
+                  hostname: cloudinstanceDetails?.data?.data.public_ip,
+                  port: port,
+                  username: userName,
+                  password: cloudinstanceDetails?.data.data.password,
+                }
+              );
+
+              if (resp.data.success) {
+                const wsPath = resp.data.wsPath;
+                const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+                const hostPort = `${window.location.hostname}:${3002}`;
+                const wsUrl = `${wsProtocol}://${hostPort}${wsPath}`;
+
+                navigate(`/dashboard/labs/vm-session/${userLab?.labid || userLab?.lab_id}`, {
+                  state: {
+                    guacUrl: wsUrl,
+                    vmTitle: userLab?.title || lab?.title,
+                    doc: userLab?.labguide || lab?.labguide
+                  }
+                });
+              }
+            }
+          } 
+          else {
+            // Instance has been started before, need to restart it
+            const restart = await axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`,
+              {
+                instance_id: cloudinstanceDetails?.data.data.instance_id,
+                user_type: 'user'
+              }
+            );
+
+            if (restart.data.success) {
+              // Get updated instance details after restart
+              const cloudInstanceDetailsNew = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`,
+                {
+                  user_id: userLab?.user_id,
+                  lab_id: userLab?.labid || userLab?.lab_id,
+                }
+              );
+
+              if (cloudInstanceDetailsNew.data.success) {
+                const response = await axios.post(
+                  `${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`,
+                  {
+                    os_name: userLab?.os || lab?.os,
+                    instance_id: cloudInstanceDetailsNew?.data.data.instance_id,
+                    hostname: cloudInstanceDetailsNew?.data.data.public_ip,
+                    password: cloudInstanceDetailsNew?.data.data.password,
+                    buttonState: 'Start Lab'
+                  }
+                );
+
+                if (response.data.success) {
+                  // Update database that the instance is started
+                  await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,
+                    {
+                      lab_id: userLab?.labid || userLab?.lab_id,
+                      user_id: userLab?.user_id,
+                      state: true,
+                      isStarted: true,
+                      type: 'org'
+                    }
+                  );
+
+                  // Parse connection details
+                  const Data = JSON.parse(response.data.response.result);
+                  const userName = Data.username;
+                  const protocol = Data.protocol;
+                  const port = Data.port;
+
+                  // Get Guacamole URL
+                  const resp = await axios.post(
                     `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
                     {
-                      protocol: backData.protocol,
-                      hostname: backData.hostname,
-                      port: backData.port,
-                      username:userLab?.username,
-                      password: userLab?.password,
+                      protocol: protocol,
+                      hostname: cloudInstanceDetailsNew?.data?.data?.public_ip,
+                      port: port,
+                      username: userName,
+                      password: cloudInstanceDetailsNew?.data?.data?.password,
                     }
                   );
-              
+
                   if (resp.data.success) {
-                    const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
-                    // Build full ws url for guacamole-common-js
-                    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-                    const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
-                    const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-                    navigate(`/dashboard/labs/vm-session/${userLab?.labid}`, {
-                    state: {
-                      guacUrl: wsUrl,
-                      vmTitle: userLab?.title,
-                      doc:userLab?.userguide
-                    }
-                  });
-                  }
-                    } else {
-                      throw new Error(startResponse.data.message || 'Failed to start VM');
-                    }
-          }
-          else{
-             const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
-                      lab_id: userLab?.labid,
-                      vmid: userLab?.vmid,
-                      node: userLab?.node,
-                      type:'org',
-                      userid:userLab?.user_id,
-                      purchased:userLab?.purchased ? true :false,
+                    const wsPath = resp.data.wsPath;
+                    const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+                    const hostPort = `${window.location.hostname}:${3002}`;
+                    const wsUrl = `${wsProtocol}://${hostPort}${wsPath}`;
+
+                    navigate(`/dashboard/labs/vm-session/${userLab?.labid || userLab?.lab_id}`, {
+                      state: {
+                        guacUrl: wsUrl,
+                        vmTitle: userLab?.title || lab?.title,
+                        doc: userLab?.labguide || lab?.labguide
+                      }
                     });
-            
-                    if (startResponse.data.success) {
-                      const backData = startResponse.data.data;
-                      const resp = await axios.post(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-                    {
-                      protocol: backData.protocol,
-                      hostname: backData.hostname,
-                      port: backData.port,
-                      username:userLab?.username,
-                      password: userLab?.password,
-                    }
-                  );
-              
-                  if (resp.data.success) {
-                    const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
-                    // Build full ws url for guacamole-common-js
-                    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-                    const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
-                    const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-                    navigate(`/dashboard/labs/vm-session/${userLab?.labid}`, {
-                    state: {
-                      guacUrl: wsUrl,
-                      vmTitle: userLab?.title,
-                      doc:userLab?.labguide
-                    }
-                  });
                   }
-                    } else {
-                      throw new Error(startResponse.data.message || 'Failed to start VM');
-                    }
+                }
+              }
+            }
           }
-         }
- 
-      }
-      else{
-        const credsResponse = await axios.post(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
-                    { labId:lab?.lab_id || lab?.labid }
-                  );
-        if(userLab?.role === 'labadmin' || userLab?.role === 'orgsuperadmin'){
-               navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
-                    state: {
-                      guacUrl: null,
-                      vmTitle: lab?.title,
-                      vmId: lab?.lab_id || lab?.labid,
-                      doc: lab?.labguide,
-                      credentials: credsResponse?.data.success ? credsResponse?.data.data : null,
-                      isGroupConnection: true
-                    }
-                  });
+        } catch (error) {
+          console.error('AWS VM launch error:', error);
+          throw new Error(error?.response?.data?.message || 'Failed to launch AWS VM');
         }
-        else{
-        const creds = credsResponse?.data.success ? credsResponse?.data.data.find((data:any)=>data.assigned_to === userLab.user_id) : null;
+      }
 
-        const resp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-          {
-            protocol: creds.protocol || 'RDP',
-            hostname: creds.ip,
-            port: creds.port,
-            username: creds.username,
-            password: creds.password,
+      else if (lab?.type === 'singlevm-proxmox') {
+        console.log(userLab)
+        if (!userLab?.islaunched) {
+          setIsLoading(true);
+          if (userLab?.role === 'user') {
+            const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchUserVm`, {
+              node: userLab?.node,
+              labid: userLab?.labid,
+              name: userLab?.vmname,
+              userid: userLab?.user_id,
+              type: 'user',
+              purchased: userLab?.purchased ? true : false,
+            });
           }
+          else {
+            const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`, {
+              node: userLab.node,
+              labid: userLab.labid,
+              name: userLab.vmname,
+              cores: userLab.cpu,
+              memory: userLab.ram,
+              storageType: userLab.storagetype,
+              storage: userLab.storage,
+              nicModel: userLab.nicmodel,
+              networkBridge: userLab.networkbridge,
+              firewall: userLab.firewall,
+              boot: userLab.boot,
+              template: userLab?.template_id,
+              type: 'org',
+              userid: userLab?.user_id,
+              vmdetails_id: userLab?.vmdetails_id
+            })
+          }
+          fetchUserLabs();
+        }
+        else {
+          if (userLab?.role === 'user') {
+            const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+              lab_id: userLab?.labid,
+              vmid: userLab?.vmid,
+              node: userLab?.node,
+              type: 'user',
+              userid: userLab?.user_id,
+              purchased: userLab?.purchased ? true : false,
+            });
+
+            if (startResponse.data.success) {
+              const backData = startResponse.data.data;
+              const resp = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                {
+                  protocol: backData.protocol,
+                  hostname: backData.hostname,
+                  port: backData.port,
+                  username: userLab?.username,
+                  password: userLab?.password,
+                }
+              );
+
+              if (resp.data.success) {
+                const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                // Build full ws url for guacamole-common-js
+                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                const hostPort = `${window.location.hostname}:${3002}`; // adapt if backend on different port
+                const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                navigate(`/dashboard/labs/vm-session/${userLab?.labid}`, {
+                  state: {
+                    guacUrl: wsUrl,
+                    vmTitle: userLab?.title,
+                    doc: userLab?.userguide
+                  }
+                });
+              }
+            } else {
+              throw new Error(startResponse.data.message || 'Failed to start VM');
+            }
+          }
+          else {
+            const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+              lab_id: userLab?.labid,
+              vmid: userLab?.vmid,
+              node: userLab?.node,
+              type: 'org',
+              userid: userLab?.user_id,
+              purchased: userLab?.purchased ? true : false,
+            });
+
+            if (startResponse.data.success) {
+              const backData = startResponse.data.data;
+              const resp = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                {
+                  protocol: backData.protocol,
+                  hostname: backData.hostname,
+                  port: backData.port,
+                  username: userLab?.username,
+                  password: userLab?.password,
+                }
+              );
+
+              if (resp.data.success) {
+                const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                // Build full ws url for guacamole-common-js
+                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                const hostPort = `${window.location.hostname}:${3002}`; // adapt if backend on different port
+                const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                navigate(`/dashboard/labs/vm-session/${userLab?.labid}`, {
+                  state: {
+                    guacUrl: wsUrl,
+                    vmTitle: userLab?.title,
+                    doc: userLab?.labguide
+                  }
+                });
+              }
+            } else {
+              throw new Error(startResponse.data.message || 'Failed to start VM');
+            }
+          }
+        }
+
+      }
+      else {
+        const credsResponse = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`,
+          { labId: lab?.lab_id || lab?.labid }
         );
-
-        if (resp.data.success) {
-          const wsPath = resp.data.wsPath;
-          const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-          const hostPort = `${window.location.hostname}:3002`;
-          const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-
+        if (userLab?.role === 'labadmin' || userLab?.role === 'orgsuperadmin') {
           navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
             state: {
-              guacUrl: wsUrl,
-              vmTitle: lab.title,
-              vmId: lab.lab_id,
-              doc:lab?.userguide,
-              credentials: [creds]
+              guacUrl: null,
+              vmTitle: lab?.title,
+              vmId: lab?.lab_id || lab?.labid,
+              doc: lab?.labguide,
+              credentials: credsResponse?.data.success ? credsResponse?.data.data : null,
+              isGroupConnection: true
             }
           });
         }
-      }
+        else {
+          const creds = credsResponse?.data.success ? credsResponse?.data.data.find((data: any) => data.assigned_to === userLab.user_id) : null;
+
+          const resp = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+            {
+              protocol: creds.protocol || 'RDP',
+              hostname: creds.ip,
+              port: creds.port,
+              username: creds.username,
+              password: creds.password,
+            }
+          );
+
+          if (resp.data.success) {
+            const wsPath = resp.data.wsPath;
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const hostPort = `${window.location.hostname}:3002`;
+            const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+
+            navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
+              state: {
+                guacUrl: wsUrl,
+                vmTitle: lab.title,
+                vmId: lab.lab_id,
+                doc: lab?.userguide,
+                credentials: [creds]
+              }
+            });
+          }
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Failed to launch/connect');
@@ -1007,6 +1210,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
     }
   };
   if (!isOpen || !lab) return null;
+  console.log(groupedByRole)
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-dark-200 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">
@@ -1074,15 +1278,14 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
                                 {userLab.name || 'Unknown User'}
                               </p>
                               <p className="text-xs text-gray-400 mt-1">
-                                User ID: {userLab.user_id || userLab.userid || userLab.admin_id }
+                                User ID: {userLab.user_id || userLab.userid || userLab.admin_id}
                               </p>
                               <p className="text-xs text-gray-400 mt-1">
                                 Launched: {new Date(userLab.startdate).toLocaleString()}
                               </p>
-                              <span className={`inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full ${
-                                userLab.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
-                                'bg-gray-500/20 text-gray-300'
-                              }`}>
+                              <span className={`inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full ${userLab.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
+                                  'bg-gray-500/20 text-gray-300'
+                                }`}>
                                 {userLab.status}
                               </span>
                             </div>
@@ -1096,7 +1299,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
                                 >
                                   {launchingId === userLab.id ? (
                                     <Loader className="h-4 w-4 text-primary-400 animate-spin" />
-                                  ) : userLab?.launched || userLab?.islaunched ? (
+                                  ) : userLab?.isstarted || userLab?.launched || userLab?.islaunched  ? (
                                     <LinkIcon className="h-4 w-4 text-primary-400" />
                                   ) : (
                                     <Play className="h-4 w-4 text-primary-400" />
@@ -1211,7 +1414,7 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
     }
   };
 
-  const handleConnectGroup = (vmid:string,usersInGroup:any) => {
+  const handleConnectGroup = (vmid: string, usersInGroup: any) => {
     navigate(`/dashboard/labs/vm-session/${lab?.labid || lab?.lab_id}`, {
       state: {
         guacUrl: null,
@@ -1227,10 +1430,10 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
   const handleDeleteGroup = async (groupKey: string, usersInGroup: any[]) => {
     setDeletingUserId(groupKey);
     setNotification(null);
-    
+
     try {
       // Delete all users in the group
-      const deletePromises = usersInGroup.map(user => 
+      const deletePromises = usersInGroup.map(user =>
         axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`, {
           labId: lab?.lab_id || lab?.labid,
           orgId: organizationId,
@@ -1239,13 +1442,13 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
       );
 
       const results = await Promise.all(deletePromises);
-      
+
       const allSuccessful = results.every(response => response.data.success);
-      
+
       if (allSuccessful) {
-        setNotification({ 
-          type: 'success', 
-          message: `Group "${groupKey}" deleted successfully` 
+        setNotification({
+          type: 'success',
+          message: `Group "${groupKey}" deleted successfully`
         });
         setTimeout(() => {
           setNotification(null);
@@ -1255,9 +1458,9 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
         throw new Error('Failed to delete some users in the group');
       }
     } catch (error: any) {
-      setNotification({ 
-        type: 'error', 
-        message: error.message || 'Failed to delete group' 
+      setNotification({
+        type: 'error',
+        message: error.message || 'Failed to delete group'
       });
       setTimeout(() => {
         setNotification(null);
@@ -1267,16 +1470,16 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
     }
   };
 
- const groupedUsers = users?.users?.reduce((acc, user) => {
+  const groupedUsers = users?.users?.reduce((acc, user) => {
     const groupKey = user.usergroup || 'Unknown Group';
-     const vmData = users?.vms?.find(vmItem => vmItem.vmid === user.vmid);
+    const vmData = users?.vms?.find(vmItem => vmItem.vmid === user.vmid);
     // Find group_id from grpCreds where cred_id matches vmid
     const grpCred = users?.grpCreds?.find((gc: any) => gc.cred_id === user.id);
     const groupId = grpCred?.group_id;
     // Find assigned user from userCredGrps where id matches group_id
     const assignedUserCredGrp = users?.userCredGrps?.find((ucg: any) => ucg.id === groupId);
-    const assignedUserId = assignedUserCredGrp?.userassigned ;
-    const assignedUserName = users?.userData?.find((user)=> user?.user_id === assignedUserId)?.name || 'Not Assigned';
+    const assignedUserId = assignedUserCredGrp?.userassigned;
+    const assignedUserName = users?.userData?.find((user) => user?.user_id === assignedUserId)?.name || 'Not Assigned';
     if (!acc[groupKey]) {
       acc[groupKey] = [];
     }
@@ -1285,7 +1488,7 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
       ...user,
       vmData,
       assignedUserName,
-      user_id:assignedUserId
+      user_id: assignedUserId
     });
 
     return acc;
@@ -1307,14 +1510,12 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
         </div>
 
         {notification && (
-          <div className={`mb-4 p-3 rounded-lg border ${
-            notification.type === 'success' 
-              ? 'bg-emerald-900/20 border-emerald-500/20' 
+          <div className={`mb-4 p-3 rounded-lg border ${notification.type === 'success'
+              ? 'bg-emerald-900/20 border-emerald-500/20'
               : 'bg-red-900/20 border-red-500/20'
-          }`}>
-            <p className={`text-sm ${
-              notification.type === 'success' ? 'text-emerald-400' : 'text-red-400'
             }`}>
+            <p className={`text-sm ${notification.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+              }`}>
               {notification.message}
             </p>
           </div>
@@ -1338,7 +1539,7 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
                   </h3>
                   <div className="flex items-center space-x-2">
                     <button
-                      onClick={()=>handleConnectGroup(groupKey,usersInGroup)}
+                      onClick={() => handleConnectGroup(groupKey, usersInGroup)}
                       className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded-lg text-white font-medium text-sm transition-colors flex items-center space-x-2"
                     >
                       <LinkIcon className="h-4 w-4" />
@@ -1500,27 +1701,27 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
   const [deletingLab, setDeletingLab] = useState<AssignedLab | null>(null);
   const [cloudSliceModal, setCloudSliceModal] = useState<any>(null);
   const [isAddLabModalOpen, setIsAddLabModalOpen] = useState(false);
-  const [organizations,setOrganizations] = useState<any[]>(null);
+  const [organizations, setOrganizations] = useState<any[]>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchAssignedLabs();
   }, [orgId]);
-   useEffect(() => {
-      // Fetch organizations when component mounts
-      const fetchOrganizations = async () => {
-        try {
-          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
-          if (response.data.success) {
-            setOrganizations(response.data.data);
-          }
-        } catch (err) {
-          console.error('Failed to fetch organizations:', err);
+  useEffect(() => {
+    // Fetch organizations when component mounts
+    const fetchOrganizations = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
+        if (response.data.success) {
+          setOrganizations(response.data.data);
         }
-      };
-  
-      fetchOrganizations();
-    }, []);
+      } catch (err) {
+        console.error('Failed to fetch organizations:', err);
+      }
+    };
+
+    fetchOrganizations();
+  }, []);
   const fetchAssignedLabs = async () => {
     try {
       const response = await axios.get(
@@ -1548,47 +1749,47 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
       let response;
       if (lab.type === 'cloudslice') {
         response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/orgAdminDeleteCloudSlice/${lab.lab_id}`,{
-            orgId
-          }
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/orgAdminDeleteCloudSlice/${lab.lab_id}`, {
+          orgId
+        }
         );
       }
-      else if (lab.type === 'singlevm-datacenter'){
-          response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteAssignedSingleVMDatacenterLab`,{
-              labId:lab?.lab_id || lab?.labid,
-              orgId
-          })
+      else if (lab.type === 'singlevm-datacenter') {
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteAssignedSingleVMDatacenterLab`, {
+          labId: lab?.lab_id || lab?.labid,
+          orgId
+        })
       }
-     
+
       else if (lab.type === 'singlevm-aws') {
         response = await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/delete/${lab.lab_id}`
         );
       } else if (lab.type === 'vmcluster-datacenter') {
         response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteFromOrganization`,{
-            labId:lab?.lab_id || lab?.labid,
-            orgId,
-            adminId : organizations?.find((org)=>org.id === orgId)?.org_admin
-          }
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteFromOrganization`, {
+          labId: lab?.lab_id || lab?.labid,
+          orgId,
+          adminId: organizations?.find((org) => org.id === orgId)?.org_admin
+        }
         );
       } else if (lab.type === 'singlevm-proxmox') {
-         const labData = await axios.get(
+        const labData = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgProxmoxUserInstances/${orgId}/${lab.lab_id}`
         );
         response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteOrgAssignedLab`,{
-            labId:lab?.lab_id || lab?.labid,
-            orgId,
-            adminId:labData.data.data[0]?.user_id,
-            node:labData.data.data[0]?.node,
-            vmid:labData.data.data[0]?.vmid
-          }
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteOrgAssignedLab`, {
+          labId: lab?.lab_id || lab?.labid,
+          orgId,
+          adminId: labData.data.data[0]?.user_id,
+          node: labData.data.data[0]?.node,
+          vmid: labData.data.data[0]?.vmid
+        }
         );
       }
 
       if (response?.data?.success) {
-        setAssignedLabs(prev => prev.filter(l => l.labid||l.lab_id !== lab?.labid || lab?.lab_id));
+        setAssignedLabs(prev => prev.filter(l => l.labid || l.lab_id !== lab?.labid || lab?.lab_id));
         setSuccess('Lab assignment deleted successfully');
         setTimeout(() => setSuccess(null), 2000);
       } else {
@@ -1775,7 +1976,7 @@ export const OrgLabsTab: React.FC<OrgLabsTabProps> = ({ orgId }) => {
       <DeleteLabModal
         isOpen={!!deletingLab}
         onClose={() => setDeletingLab(null)}
-        onConfirm={() => deletingLab && handleDeleteLab(deletingLab.lab_id||deletingLab?.labid)}
+        onConfirm={() => deletingLab && handleDeleteLab(deletingLab.lab_id || deletingLab?.labid)}
         labTitle={deletingLab?.title || ''}
         isDeleting={deletingId === deletingLab?.id}
       />

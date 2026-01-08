@@ -19,7 +19,7 @@ interface UserInstancesModalProps {
   onClose: () => void;
   lab: any;
   orgId?: string;
-  labType: 'cloudslice' | 'singlevm-datacenter' | 'vmcluster-datacenter' | 'singlevm-proxmox' | 'cloudvm';
+  labType: 'cloudslice' | 'singlevm-datacenter' | 'vmcluster-datacenter' | 'singlevm-proxmox' | 'singlevm-aws';
 }
 
 export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
@@ -50,6 +50,7 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
     setIsLoading(true);
     setError(null);
     try {
+      console.log(labType)
       let response;
       const effectiveOrgId = orgId || user?.org_id || 'superadmin';
       const labId = lab.lab_id || lab.labid;
@@ -57,7 +58,14 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
         response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgCloudSliceUserInstances/${effectiveOrgId}/${labId}`
         );
-      } else if (labType === 'singlevm-datacenter') {
+        
+      }
+      else if(labType === 'singlevm-aws'){
+        response = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgSingleVmUserInstances/${effectiveOrgId}/${labId}`
+       );
+        }
+       else if (labType === 'singlevm-datacenter') {
         response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgsingleVmDatacenterUserInstances/${effectiveOrgId}/${labId}`
         );

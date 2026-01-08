@@ -111,16 +111,14 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   const getOrgLabStatus = (labId) => {
     return orgStatus.find(org => org.labid === labId);
   }
-
 const canEditContent = () => {
-    return user?.role === 'superadmin' || user?.role === 'orgsuperadmin';
+    return user?.role === 'superadmin' || user?.role === 'orgsuperadmin' || user?.id === slice?.createdby ;
   };
-
   const handleLaunch = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsLaunching(true);
     setNotification(null);
-    if(user.role === 'superadmin' || user.role === 'orgsuperadmin') {
+    if(user.role === 'superadmin' || user.role === 'orgsuperadmin' || user?.id === slice?.createdby) {
       try {
         // Always fetch lab details first
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
@@ -143,7 +141,7 @@ const canEditContent = () => {
           const createIamAccount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
             userName: user.name,
             services: slice.services,
-            role:user.role,
+            role:user.id === slice?.createdby ? 'superadmin' : user?.role,
             labid:slice.labid,
             purchased:slice?.purchased || false
           });
@@ -226,7 +224,7 @@ const canEditContent = () => {
 
           const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
             labId: slice.labid,
-            orgId:getOrgLabStatus(slice.labid).orgid,
+            orgId:user?.org_id,
             status: 'active',
             launched: true,
           });
@@ -725,7 +723,7 @@ const canEditContent = () => {
                 </button>
               </div>
 
-              {(userRole === 'superadmin' || userRole === 'orgsuperadmin') && (
+              {(userRole === 'superadmin' || userRole === 'orgsuperadmin' || userRole === 'labadmin') && (
                 <button
                   onClick={handlePodsClick}
                   disabled={isLoadingInstances}

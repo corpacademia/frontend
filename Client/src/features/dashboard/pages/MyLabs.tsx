@@ -823,15 +823,15 @@ setFilteredLabs(updatedLabs);
             isStarted:false
           })
           const Data = JSON.parse(response.data.response.result);
-                       console.log(response.data.response)
                        const userName = Data.username;
                        const protocol = Data.protocol;
                        const port = Data.port;
+                       console.log(protocol,cloudinstanceDetails?.data?.data.public_ip,port,userName,cloudinstanceDetails?.data.data.password)
                         const resp = await axios.post(
                              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
                              {
                                protocol: protocol,
-                               hostname:cloudInstanceDetails?.data?.data.public_ip,
+                               hostname:cloudinstanceDetails?.data?.data.public_ip,
                                port: port,
                                username: userName,
                                password: cloudinstanceDetails?.data.data.password,
@@ -863,14 +863,13 @@ setFilteredLabs(updatedLabs);
           user_type:'user'
         });
 
-
-  
-        if (restart.data.success ) {
+         if (restart.data.success ) {
           const cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
             user_id: user.id,
             lab_id: lab?.lab_id || lab?.labid,
           })
           if(cloudInstanceDetails.data.success){
+          
             const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
               os_name: lab.os,
               instance_id: cloudinstanceDetails?.data.data.instance_id,
@@ -890,16 +889,16 @@ setFilteredLabs(updatedLabs);
                        const userName = Data.username;
                        const protocol = Data.protocol;
                        const port = Data.port;
-                        const resp = await axios.post(
-                             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-                             {
+                       const resp = await axios.post(
+                       `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                        {
                                protocol: protocol,
                                hostname:cloudInstanceDetails?.data.data.public_ip,
                                port: port,
                                username: userName,
                                password: cloudinstanceDetails?.data.data.password,
-                             }
-                           );
+                        }
+                       );
                        
                            if (resp.data.success) {
                              const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
