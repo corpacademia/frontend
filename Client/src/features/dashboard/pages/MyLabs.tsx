@@ -889,6 +889,7 @@ setFilteredLabs(updatedLabs);
                        const userName = Data.username;
                        const protocol = Data.protocol;
                        const port = Data.port;
+                       console.log(userName,protocol,port,cloudInstanceDetails?.data.data.public_ip,cloudinstanceDetails?.data.data.password)
                        const resp = await axios.post(
                        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
                         {
@@ -1218,9 +1219,10 @@ setFilteredLabs(updatedLabs);
                         {!labControls[lab.lab_id]?.isLaunched ? (
                           <button
                             onClick={() => handleLaunchLab(lab)}
+                            title='Launch'
                             disabled={labControls[lab.lab_id]?.isLaunching}
                             className="w-12 h-12 rounded-full flex items-center justify-center
-                                     bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30
+                                     bg-orange-500/20 text-orange-300 hover:bg-orange-500/30
                                      transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {labControls[lab.lab_id]?.isLaunching ? (
@@ -1233,12 +1235,17 @@ setFilteredLabs(updatedLabs);
                           <button
                             onClick={() => handleStartStopLab(lab)}
                             disabled={labControls[lab.lab_id]?.isProcessing}
-                            className={`w-12 h-12 rounded-full flex items-center justify-center
-                                     transition-colors disabled:opacity-50 disabled:cursor-not-allowed
-                                     ${labControls[lab.lab_id]?.buttonLabel === 'Stop Lab'
-                                       ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
-                                       : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                                     }`}
+                            title={labControls[lab.lab_id]?.buttonLabel === 'Stop Lab' ? 'Stop' : "Connect"} 
+                           className={`w-12 h-12 rounded-full flex items-center justify-center
+                            transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                            ${
+                              labControls[lab.lab_id]?.buttonLabel === 'Stop Lab'
+                                ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                                : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                                 
+                            }
+                          `}
+
                           >
                             {labControls[lab.lab_id]?.isProcessing ? (
                               <Loader className="animate-spin h-5 w-5" />

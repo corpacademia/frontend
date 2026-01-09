@@ -89,7 +89,6 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [admin,setAdmin] = useState({});
-
   useEffect(() => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
@@ -148,18 +147,26 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
         console.error('Error checking lab status:', error);
       }
  }
- console.log(buttonLabel)
 
   useEffect(() => {
     const fetchInstanceDetails = async () => {
       try {
-        const instance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
+        let instance;
+        if(vm?.assessment){
+          instance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`,{
+            lab_id:vm?.lab_id,
+            user_id:vm?.admin_id
+          })
+        }
+        else{
+         instance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
           lab_id: vm.lab_id,
         });
-
-        if (instance.data.success) {
+      }
+       
+        if (instance?.data.success) {
           checkLabLaunched();
-        setInstance(instance.data.result);
+        setInstance(instance?.data?.result || instance?.data?.data);
           setIsInstance(true);
         }
       } catch (error) {
@@ -528,6 +535,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
         });
         // Navigate to Guacamole frame page instead of opening in new tab
         if (launchResponse.data.response.result) {
+           const Data = JSON.parse(launchResponse.data.response.result);
           const userName = Data.username;
           const protocol = Data.protocol;
           const port = Data.port;
@@ -670,7 +678,6 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
       </div>
     );
   }
-
   return (
     <>
       <div className="flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px] 
@@ -761,7 +768,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
               <Hash className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary-400" />
               <span className="truncate">ID: {instanceDetails?.instance_id || 'N/A'}</span>
             </div>
-            {amiId && (
+            {(amiId && !vm?.assessment) && (
               <div className="flex items-center text-xs sm:text-sm text-gray-400 col-span-1 sm:col-span-2">
                 <FileCode className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-primary-400" />
                 <span 
@@ -799,7 +806,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                   ) : (
                     <>
                       <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">Launch VM</span>
+                      <span className="hidden sm:inline"> {instanceDetails?.isstarted ? "Connect VM" : "Launch VM"}</span>
                     </>
                   )}
                 </button>

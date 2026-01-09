@@ -6,6 +6,7 @@ import { DatacenterVMCard } from '../../components/datacenter/DatacenterVMCard';
 import { ProxmoxVMCard } from '../../components/proxmox/ProxmoxVMCard';
 import { Plus, Search, Filter, AlertCircle, FolderX, Server, HardDrive } from 'lucide-react';
 import axios from 'axios';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface CloudVM {
   id: string;
@@ -59,6 +60,8 @@ interface ProxmoxVM {
 
 export const AdminCloudVMsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { orgUsers, user } = useAuthStore();
+  const admin = user;
   const [vms, setVMs] = useState<CloudVM[]>([]);
   const [datacenterVMs, setDatacenterVMs] = useState<DatacenterVM[]>([]);
   const [proxmoxVMs, setProxmoxVMs] = useState<ProxmoxVM[]>([]);
@@ -70,76 +73,87 @@ export const AdminCloudVMsPage: React.FC = () => {
     status: '',
     type: 'all' // new filter for VM type (cloud, datacenter, or proxmox)
   });
-  const [admin,setAdmin] = useState({});
-  // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
-  useEffect(() => {
-    const getUserDetails = async () => {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      setAdmin(response.data.user);
-    };
-    getUserDetails();
-  }, []);
 
   useEffect(() => {
   const fetchCloudVMs = async () => {
-    try {
-      if(admin?.role === 'orgsuperadmin'){
-         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssessments`, {
-                 orgId: admin?.org_id,
-               });
-         
-               if (response.data.success) {
-                 const updatedData = await Promise.all(
-                response.data.data.map(async (lab: any) => {
-             try {
-               const data = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`, {
-                 labId: lab.lab_id,
-               });
-         
-               if (data.data.success) {
-                 return {
-                   ...data.data.data,
-                   ...lab,
-                   assessment:true
-                 };
-               } else {
-                 return lab;
-               }
-             } catch (err) {
-               console.error('Failed to fetch lab details for', lab.lab_id, err);
-               return lab; 
-             }
-           })
-         );
-         
-                 setVMs(updatedData);
-               } else {
-                 setError('Failed to fetch assessment VMs');
-               }
+  try {
+    setIsLoading(true);
+    let combinedVMs: any[] = [];
+    if (admin?.role === 'orgsuperadmin') {
+
+      // 1️⃣ Assessment Labs
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssessments`,
+        { orgId: admin?.org_id }
+      );
+
+      if (response.data.success) {
+        const assessmentVMs = await Promise.all(
+          response.data.data.map(async (lab: any) => {
+            try {
+              const data = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`,
+                { labId: lab.lab_id }
+              );
+
+              if (data.data.success) {
+                return {
+                  ...data.data.data,
+                  ...lab,
+                  assessment: true,
+                };
+              }
+              return lab;
+            } catch (err) {
+              console.error('Failed to fetch lab details for', lab.lab_id, err);
+              return lab;
+            }
+          })
+        );
+
+        combinedVMs.push(...assessmentVMs);
       }
-      else if(admin?.role === 'superadmin'){
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
-        admin_id: admin.id,
-      });
+       const ids = orgUsers
+        .filter(u => u.role === "labadmin")
+        .map(u => u.id);
+      //  Lab Admin Labs
+      if (ids?.length) {
+        const labAdminsLab = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabadminsLabs`,
+          { userIds: ids }
+        );
+
+        if (labAdminsLab.data.success) {
+          combinedVMs.push(...labAdminsLab.data.data);
+        }
+      }
+
+      setVMs(combinedVMs);
+    }
+
+    // SUPERADMIN
+    else if (admin?.role === 'superadmin') {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`,
+        { admin_id: 'superadmin' }
+      );
+
       if (response.data.success) {
         setVMs(response.data.data);
       } else {
         setError('Failed to fetch cloud VMs');
       }
     }
-    } catch (err) {
-      console.error('Error fetching cloud VMs:', err);
-      setError('Failed to fetch cloud VMs');
-      setTimeout(()=>
-      {
-        setError(null)
-      },3000
-      )
-    }
-    finally {
-        setIsLoading(false);
-      }
-  };
+
+  } catch (err) {
+    console.error('Error fetching cloud VMs:', err);
+    setError('Failed to fetch cloud VMs');
+    setTimeout(() => setError(null), 3000);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   // const fetchDatacenterVMs = async () => {
   //   try {

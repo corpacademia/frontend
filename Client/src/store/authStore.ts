@@ -32,6 +32,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   showSessionExpiryModal: boolean;
+  orgusers: User | null;
 
   /* 🌍 Global organizations */
   organizations: Organization[];
@@ -44,6 +45,7 @@ interface AuthState {
 
   fetchUser: () => Promise<void>;
   fetchOrganizations: () => Promise<void>;
+  fetchOrganizationsUsers:(orgId:string)=>Promise<void>;
 
   setSessionExpiryModal: (show: boolean) => void;
 }
@@ -78,9 +80,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
       });
 
       // ✅ Fetch organizations globally after login
-      // if (user) {
-        await get().fetchOrganizations();
-      // }
+      if (user) {
+        await get().fetchOrganizationsUsers(user?.org_id);
+      }
     } catch (error: any) {
       console.error("Failed to fetch user details on initial load", error);
 
@@ -109,6 +111,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     organizations: [],
     isOrgLoading: false,
+    orgUsers:[],
 
     /* ---------- Auth ---------- */
 
@@ -120,7 +123,6 @@ export const useAuthStore = create<AuthState>((set, get) => {
         showSessionExpiryModal: false,
       });
 
-      get().fetchOrganizations();
     },
 
     logout: async () => {
@@ -207,6 +209,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
         if (user) {
           await get().fetchOrganizations();
+          await get().fetchOrganizationsUsers(user?.org_id);
         }
       } catch (error: any) {
         console.error("Failed to fetch user details", error);
@@ -246,6 +249,22 @@ export const useAuthStore = create<AuthState>((set, get) => {
       } catch (error) {
         console.error("Failed to fetch organizations", error);
         set({ isOrgLoading: false });
+      }
+    },
+
+    fetchOrganizationsUsers: async (orgId:string) => {
+      try {
+        set({ isLoading: true });
+
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${orgId}`)
+        
+        set({
+          orgUsers: response.data?.data || [],
+          isLoading: false,
+        });
+      } catch (error) {
+        console.error("Failed to fetch organizations", error);
+        set({ isLoading: false });
       }
     },
 

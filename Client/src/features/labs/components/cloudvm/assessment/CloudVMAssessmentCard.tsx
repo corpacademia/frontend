@@ -187,13 +187,14 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   useEffect(() => {
     const fetchInstanceDetails = async () => {
       try {
-        const instance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
-          lab_id: assessment.lab_id,
-        });
+        const instance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+        user_id: admin?.id,
+        lab_id: assessment.lab_id,
+      });
 
         if (instance.data.success) {
           checkLabLaunched();
-          setInstanceDetails(instance.data.result);
+          setInstanceDetails(instance.data.data);
         }
       } catch (error) {
         console.error('Failed to fetch instance details:', error);
@@ -503,7 +504,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   if (load) {
     return <div className="animate-pulse h-[320px] bg-dark-300/50 rounded-lg"></div>;
   }
-
+  console.log(instanceDetails)
   return (
     <>
       <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
@@ -605,7 +606,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
                             ) : (
                               <>
                                 <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">Launch VM</span>
+                                <span className="hidden sm:inline"> {instanceDetails?.isstarted ? "Connect VM" : "Launch VM"}</span>
                               </>
                             )}
                           </button>

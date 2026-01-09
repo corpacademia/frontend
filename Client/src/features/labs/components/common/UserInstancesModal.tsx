@@ -50,7 +50,6 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
     setIsLoading(true);
     setError(null);
     try {
-      console.log(labType)
       let response;
       const effectiveOrgId = orgId || user?.org_id || 'superadmin';
       const labId = lab.lab_id || lab.labid;
@@ -91,6 +90,11 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
       setIsLoading(false);
     }
   };
+
+   function formatDate(inputDate: Date) {
+    const date = new Date(inputDate);
+    return date.toISOString().slice(0, 19).replace('T', ' ');
+  }
 
   const handleDeleteUserInstance = async (userInstance: any) => {
     setDeletingId(userInstance.id);
@@ -156,7 +160,6 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
 
     try {
       const labId = lab.lab_id || lab.labid;
-
       if (labType === 'cloudslice') {
         if (userInstance?.role === 'user') {
           if (userInstance?.modules === 'without-modules') {
@@ -378,6 +381,344 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
           }
         }
       }
+      else if (labType === 'singlevm-aws'){
+          if(userInstance?.role === 'labadmin' || userInstance?.role === 'orgsuperadmin' || userInstance?.role === 'user'){
+                  if(userInstance?.configured_by || userInstance?.role === 'user'){ 
+                    const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+                        user_id: userInstance?.user_id,
+                        lab_id: userInstance?.lab_id || userInstance?.labid,
+                      })
+                      const isStop = cloudinstanceDetails?.data?.data?.isrunning && 'Stop';
+                      if (!cloudinstanceDetails.data.success) {
+                         const ami = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: userInstance?.lab_id || userInstance?.labid })
+                              
+                              if (!ami.data.success) {
+                                throw new Error('Failed to retrieve instance details');
+                              }
+                          
+                              // First API: Launch instance (Keep loading active)
+                              const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`, {
+                                name: userInstance?.name,
+                                ami_id: ami.data.result.ami_id,
+                                user_id: userInstance?.user_id,
+                                lab_id: userInstance?.lab_id || userInstance?.labid,
+                                instance_type: userInstance.instance,
+                                start_date: formatDate(userInstance?.startdate || userInstance?.start_date || new Date()),
+                                end_date:formatDate(userInstance?.enddate || userInstance?.completion_date)
+                              });
+                              //  setButtonLabel('Start VM');
+                              //  setNotification({
+                              //     type: 'success',
+                              //     message: 'Software launched successfully',
+                              //  });
+                              await fetchUserInstances();
+                      }
+                      try {
+                        const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+                        user_id: userInstance?.user_id,
+                        lab_id: userInstance?.lab_id || userInstance?.labid,
+                      })
+                        const instanceId = cloudinstanceDetails?.data?.data?.instance_id;
+                        if (isStop) {
+                          const stop =await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
+                            instance_id: instanceId
+                          });
+                          if(stop.data.success){
+                            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+                              lab_id:userInstance?.lab_id || userInstance?.labid,
+                              user_id:userInstance?.user_id,
+                              state:false,
+                              isStarted:true,
+                              type:'org'
+                            })
+                          }
+                          await fetchUserInstances();
+                          return;
+                        }
+                        
+                        const checkInstanceAlreadyStarted = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkisstarted`,{
+                          type:'user',
+                          id:cloudinstanceDetails?.data.data.instance_id,
+                        })
+                        if(checkInstanceAlreadyStarted.data.isStarted === false){
+                         
+                            console.log('stop')
+                            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+                              os_name: userInstance?.os,
+                              instance_id: cloudinstanceDetails?.data.data.instance_id,
+                              hostname: cloudinstanceDetails?.data.data.public_ip,
+                              password: cloudinstanceDetails?.data.data.password,
+                              buttonState: 'Start Lab'
+                            });
+                            
+                          if (response.data.response.success && response.data.response.result) {
+                            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+                              lab_id:userInstance?.lab_id || userInstance?.labid,
+                              user_id:userInstance?.user_id,
+                              state:true,
+                              isStarted:false,
+                              type:'org'
+                            })
+                            const Data = JSON.parse(response.data.response.result);
+                                         const userName = Data.username;
+                                         const protocol = Data.protocol;
+                                         const port = Data.port;
+                                          const resp = await axios.post(
+                                               `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                                               {
+                                                 protocol: protocol,
+                                                 hostname:cloudinstanceDetails?.data?.data.public_ip,
+                                                 port: port,
+                                                 username: userName,
+                                                 password: cloudinstanceDetails?.data.data.password,
+                                               }
+                                             );
+                                         
+                                             if (resp.data.success) {
+                                               const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                                               // Build full ws url for guacamole-common-js
+                                               const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                                               const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                                               const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                                               navigate(`/dashboard/labs/vm-session/${userInstance?.labid || userInstance?.lab_id}`, {
+                                               state: {
+                                                 guacUrl: wsUrl,
+                                                 vmTitle: userInstance?.title,
+                                                 doc:userInstance?.labguide
+                                               }
+                                             });
+                                             }
+                            
+                          }
+                        }
+                        else{
+                          console.log('run')
+                          
+                          const restart = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`, {
+                            instance_id: cloudinstanceDetails?.data.data.instance_id,
+                            user_type:'user'
+                          });
+                          if (restart.data.success ) {
+                            const cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+                              user_id: userInstance?.user_id,
+                              lab_id: userInstance?.lab_id || userInstance?.labid,
+                            })
+                            if(cloudInstanceDetails.data.success){
+                              const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+                                os_name: userInstance?.os,
+                                instance_id: cloudInstanceDetails?.data.data.instance_id,
+                                hostname: cloudInstanceDetails?.data.data.public_ip,
+                                password: cloudInstanceDetails?.data.data.password,
+                                buttonState: 'Start Lab'
+                              });
+                              if(response.data.success){
+                                //update database that the instance is started
+                                await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+                                  lab_id:userInstance?.lab_id || userInstance?.labid,
+                                  user_id:userInstance?.user_id,
+                                  state:true,
+                                  isStarted:true
+                                })
+                                         const Data = JSON.parse(response.data.response.result);
+                                         const userName = Data.username;
+                                         const protocol = Data.protocol;
+                                         const port = Data.port;
+                                          const resp = await axios.post(
+                                               `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                                               {
+                                                 protocol: protocol,
+                                                 hostname:cloudInstanceDetails?.data.data.public_ip,
+                                                 port: port,
+                                                 username: userName,
+                                                 password: cloudInstanceDetails?.data.data.password,
+                                               }
+                                             );
+                                         
+                                             if (resp.data.success) {
+                                               const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                                               // Build full ws url for guacamole-common-js
+                                               const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                                               const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                                               const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                                               navigate(`/dashboard/labs/vm-session/${userInstance?.labid || userInstance?.lab_id}`, {
+                                               state: {
+                                                 guacUrl: wsUrl,
+                                                 vmTitle: userInstance?.title,
+                                                 doc:userInstance?.labguide
+                                               }
+                                             });
+                                             }
+                                        
+                                       }
+                              }
+                            
+                          }
+                        }
+                  
+                      } 
+                      catch (error) {
+                        console.log(error)
+                         throw new Error( error?.response?.data?.message || 'Failed to launch software');
+                      }
+                   }
+                   else {
+                    const instance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
+                        lab_id: userInstance?.lab_id,
+                      });
+                      const instanceDetails = instance?.data?.result
+                     if (instanceDetails?.isrunning) {
+                      
+                      // Stop the Instance
+                      const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
+                        instance_id: instanceDetails?.instance_id,
+                      });
+              
+                      if (stopResponse.data.success) {
+                        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
+                          lab_id: userInstance?.lab_id,
+                          state: false,
+                          isStarted:true
+                        });
+              
+                        await fetchUserInstances();
+                        return; // Exit early since we don't need to continue
+                      } else {
+                        throw new Error(stopResponse.data.message || 'Failed to stop Instance');
+                      }
+                    }
+                    //check the instance is already started once
+                    const checkInstanceAlreadyStarted = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkisstarted`,{
+                      type:'lab',
+                      id:instanceDetails?.instance_id,
+                    })
+                    if(checkInstanceAlreadyStarted.data.isStarted === false){
+                      // Launch the Instance
+                    const launchResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+                      os_name: userInstance?.os,
+                      instance_id: instanceDetails?.instance_id,
+                      hostname: instanceDetails?.public_ip,
+                      password: instanceDetails?.password,
+                    });
+              
+                    if (launchResponse.data.response.success) {
+                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
+                        lab_id: userInstance?.lab_id,
+                        state: true,
+                        isStarted:false
+                      });
+              
+                      if (launchResponse.data.response.result) {
+                        const Data = JSON.parse(launchResponse.data.response.result);
+                        const userName = Data.username;
+                        const protocol = Data.protocol;
+                        const port = Data.port;
+                         const resp = await axios.post(
+                              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                              {
+                                protocol: protocol,
+                                hostname:instanceDetails?.public_ip,
+                                port: port,
+                                username: userName,
+                                password: instanceDetails?.password,
+                              }
+                            );
+                        
+                            if (resp.data.success) {
+                              const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                              // Build full ws url for guacamole-common-js
+                              const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                              const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                              const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                              navigate(`/dashboard/labs/vm-session/${userInstance?.labid }`, {
+                              state: {
+                                guacUrl: wsUrl,
+                                vmTitle: userInstance.title,
+                                doc: [
+                                  ...(userInstance?.labguide ?? []),
+                                  ...(userInstance?.userguide ?? [])
+                                ]
+                              }
+                            });
+                            }
+                       
+                      }
+                    } else {
+                      throw new Error(launchResponse.data.response.message || 'Failed to launch software');
+                    }
+                    }
+                    else{
+                      const restart = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`, {
+                        instance_id:  instanceDetails?.instance_id,
+                        user_type:'lab'
+                      });
+              
+                      //get the public from the database which is updated public_ip after stop
+                      const instance = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
+                        lab_id: userInstance?.lab_id,
+                      });
+              
+                      if(instance.data.success){
+                            // Launch the Instance
+                    const launchResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+                      os_name: userInstance?.os,
+                      instance_id: instanceDetails?.instance_id,
+                      hostname: instance?.data.result.public_ip,
+                      password: instanceDetails?.password,
+                    });
+                    if (launchResponse.data.response.success) {
+                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
+                        lab_id: userInstance?.lab_id,
+                        state: true,
+                        isStarted:true
+                      });
+              
+                      // Navigate to Guacamole frame page instead of opening in new tab
+                      if (launchResponse.data.response.result) {
+                         const Data = JSON.parse(launchResponse.data.response.result);
+                        const userName = Data.username;
+                        const protocol = Data.protocol;
+                        const port = Data.port;
+                         const resp = await axios.post(
+                              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                              {
+                                protocol: protocol,
+                                hostname:instance?.data.result.public_ip,
+                                port: port,
+                                username: userName,
+                                password: instanceDetails?.password,
+                              }
+                            );
+                        
+                            if (resp.data.success) {
+                              const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                              // Build full ws url for guacamole-common-js
+                              const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                              const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                              const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                              navigate(`/dashboard/labs/vm-session/${userInstance?.labid}`, {
+                              state: {
+                                guacUrl: wsUrl,
+                                vmTitle: userInstance?.title,
+                                doc: [
+                                  ...(userInstance?.labguide ?? []),
+                                  ...(userInstance?.userguide ?? [])
+                                ]
+                              }
+                            });
+                            }
+                       
+                      }
+                    } 
+                    else {
+                      throw new Error(launchResponse.data.response.message || 'Failed to launch software');
+                    }
+                      }
+              
+                    }
+                   }
+              }
+              
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to launch/connect');
       setTimeout(() => setError(null), 2000);
@@ -490,12 +831,12 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
                                   onClick={() => handleLaunchConnect(userLab)}
                                   disabled={launchingId === userLab.id}
                                   className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
-                                  title={userLab.launched ? 'Connect' : 'Launch'}
+                                  title={userLab?.isrunning ? 'stop' : userLab?.isstarted || userLab?.launched || userLab?.islaunched  ? 'Connect'   : 'Launch'}
                                 >
                                   {launchingId === userLab.id ? (
                                     <Loader className="h-4 w-4 text-primary-400 animate-spin" />
-                                  ) : userLab?.launched || userLab?.islaunched ? (
-                                    <LinkIcon className="h-4 w-4 text-primary-400" />
+                                  ) : userLab?.isstarted || userLab?.launched || userLab?.islaunched ? (
+                                    <LinkIcon className={`h-4 w-4 ${userLab?.isrunning ? 'text-red-400' : 'text-primary-400'}`} />
                                   ) : (
                                     <Play className="h-4 w-4 text-primary-400" />
                                   )}
