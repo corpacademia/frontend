@@ -94,7 +94,6 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   const [deletingInstanceId, setDeletingInstanceId] = useState<string | null>(null);
   const [launchingId,setLaunchingId] = useState<string | null>(null);
   const navigate = useNavigate();
-
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -108,17 +107,19 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
     fetchUserProfile();
   }, []);
 
+
   const getOrgLabStatus = (labId) => {
     return orgStatus.find(org => org.labid === labId);
   }
 const canEditContent = () => {
-    return user?.role === 'superadmin' || user?.role === 'orgsuperadmin' || user?.id === slice?.createdby ;
+    return user?.role === 'superadmin' || user.role === 'orgsuperadmin' && !slice?.assessment  || user?.id === slice?.createdby ;
   };
   const handleLaunch = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsLaunching(true);
     setNotification(null);
-    if(user.role === 'superadmin' || user.role === 'orgsuperadmin' || user?.id === slice?.createdby) {
+    if(user.role === 'superadmin' || user.role === 'orgsuperadmin' && !slice?.assessment || user?.id === slice?.createdby) {
+      console.log('if')
       try {
         // Always fetch lab details first
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
@@ -141,7 +142,7 @@ const canEditContent = () => {
           const createIamAccount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
             userName: user.name,
             services: slice.services,
-            role:user.id === slice?.createdby ? 'superadmin' : user?.role,
+            role:user.id === slice?.createdby || getOrgLabStatus(slice?.labid)?.orgid === user?.org_id ? 'superadmin' : user?.role,
             labid:slice.labid,
             purchased:slice?.purchased || false
           });
@@ -190,6 +191,7 @@ const canEditContent = () => {
     }
 
     else{
+      console.log('else')
       try {
         // Always fetch lab details first
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${slice.labid}`);
@@ -214,7 +216,7 @@ const canEditContent = () => {
             services: slice.services,
             role:user.role,
             labid:slice.labid,
-            orgid:user.org_id,
+            orgid:user?.org_id,
             purchased:slice?.purchased || false
           });
 
@@ -571,7 +573,7 @@ const canEditContent = () => {
               </button>
              <span
               className={`px-2 py-1 text-xs font-medium rounded-full ${
-                userRole === 'superadmin' || userRole === 'orgsuperadmin' || userRole === 'labadmin'
+                userRole === 'superadmin' || ((userRole === 'orgsuperadmin' || userRole === 'labadmin') && !slice?.assessment )
                   ? slice.status === 'active'
                     ? 'bg-emerald-500/20 text-emerald-300'
                     : slice.status === 'expired'
@@ -588,7 +590,7 @@ const canEditContent = () => {
                   : 'bg-amber-500/20 text-amber-300'
               }`}
             >
-              {userRole === 'superadmin' || userRole === 'orgsuperadmin'
+              {userRole === 'superadmin' || ((userRole === 'orgsuperadmin' || userRole === 'labadmin') && !slice?.assessment )
                 ? slice.status
                 : getOrgLabStatus(slice.labid).status}
             </span>
@@ -666,7 +668,7 @@ const canEditContent = () => {
                   <Loader className="animate-spin h-3.5 w-3.5" />
                 ) : (
                   <>
-                    {userRole === 'superadmin' || userRole === 'orgsuperadmin' ? (
+                    {userRole === 'superadmin' || ((userRole === 'orgsuperadmin' || userRole === 'labadmin') && !slice?.assessment )? (
                       slice.launched ? (
                         <>
                           <Square className="h-3.5 w-3.5 mr-1.5" />

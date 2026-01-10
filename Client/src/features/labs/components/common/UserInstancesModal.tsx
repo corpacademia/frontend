@@ -138,6 +138,16 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteUserProxmoxInstance/${userInstance.id}`
         );
       }
+      else if(labType === 'singlevm-aws'){
+        const ami = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: userInstance?.lab_id || userInstance?.labid })
+         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deletevm`,{
+          id:userInstance?.lab_id || userInstance?.labid, 
+          instance_id:userInstance?.instance_id, 
+          ami_id:ami.data.result.ami_id, 
+          user_id:userInstance?.user_id,
+          purchased:userInstance?.purchased ? true : false
+         })
+      }
 
       if (response?.data.success) {
         setUserInstances(prev => prev.filter(u => u.id !== userInstance.id));
@@ -155,9 +165,8 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
   };
 
   const handleLaunchConnect = async (userInstance: any) => {
-    setLaunchingId(userInstance.id);
+    setLaunchingId(userInstance?.id || userInstance?.user_id);
     setError(null);
-
     try {
       const labId = lab.lab_id || lab.labid;
       if (labType === 'cloudslice') {
@@ -813,7 +822,7 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
                                 User ID: {userLab.user_id || userLab.userid}
                               </p>
                               <p className="text-xs text-gray-400 mt-1">
-                                Launched: {new Date(userLab.startdate).toLocaleString()}
+                                Launched: {new Date(userLab?.startdate || userLab?.created_at).toLocaleString()}
                               </p>
                               <span
                                 className={`inline-block mt-2 px-2 py-0.5 text-xs font-medium rounded-full ${
@@ -829,11 +838,11 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
                               {labType !== 'vmcluster-datacenter' && (
                                 <button
                                   onClick={() => handleLaunchConnect(userLab)}
-                                  disabled={launchingId === userLab.id}
+                                  disabled={launchingId === userLab?.id}
                                   className="p-2 hover:bg-primary-500/10 rounded-lg transition-colors"
                                   title={userLab?.isrunning ? 'stop' : userLab?.isstarted || userLab?.launched || userLab?.islaunched  ? 'Connect'   : 'Launch'}
                                 >
-                                  {launchingId === userLab.id ? (
+                                  {launchingId === userLab?.id ? (
                                     <Loader className="h-4 w-4 text-primary-400 animate-spin" />
                                   ) : userLab?.isstarted || userLab?.launched || userLab?.islaunched ? (
                                     <LinkIcon className={`h-4 w-4 ${userLab?.isrunning ? 'text-red-400' : 'text-primary-400'}`} />

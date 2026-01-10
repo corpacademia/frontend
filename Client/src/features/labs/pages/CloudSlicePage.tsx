@@ -29,6 +29,7 @@ interface CloudSlice {
 
 export const CloudSlicePage: React.FC = () => {
   const navigate = useNavigate();
+  const {orgUsers} = useAuthStore();
   const [isCreating, setIsCreating] = useState(false);
   const [cloudSlices, setCloudSlices] = useState<CloudSlice[]>([]);
   const [filteredSlices, setFilteredSlices] = useState<CloudSlice[]>([]);
@@ -57,7 +58,7 @@ export const CloudSlicePage: React.FC = () => {
                 if (responseOrg.data.success) {
                   setOrganizations(responseOrg.data.data);
                 }
-        if(response.data.user.role === 'labadmin'){
+        if(response.data.user.role === 'labadmin' || response.data.user.role === 'orgsuperadmin'){
            const orgLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
             
               orgId: response.data.user.org_id,
@@ -87,9 +88,12 @@ export const CloudSlicePage: React.FC = () => {
       const responseOrg = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
             
       let allSlices: CloudSlice[] = [];
+      const ids = orgUsers
+        .filter(u => u.role === "labadmin")
+        .map(u => u.id);
       if(user.role === 'superadmin' || user.role === 'orgsuperadmin' || user.role === 'labadmin') {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlices`, {
-          params: { userId: user.id }
+          params: { userId:user.role === 'superadmin' ? 'superadmin' : user?.role === 'orgsuperadmin' ? ids : user.id }
         });
        if (response.data.success) {
           const userSlices = response.data.data || [];
@@ -105,7 +109,7 @@ export const CloudSlicePage: React.FC = () => {
       // First, get the user's own cloud slices
       
       // If user is an labadmin, also fetch organization-assigned slices
-       if (user.role === 'labadmin' || user.role === 'orgsuperadmin') {
+       if (user?.role === 'labadmin' || user?.role === 'orgsuperadmin') {
         try {
           const getOrgAssignedSlices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
             orgId: user.org_id,
@@ -134,7 +138,8 @@ export const CloudSlicePage: React.FC = () => {
             // Process org slices and add them to allSlices
             const processedOrgSlices = orgSlices.map(slice => ({
               ...slice,
-              id: slice.id || slice.labid // Use existing id or fallback to labid
+              id: slice.id || slice.labid,// Use existing id or fallback to labid
+              assessment:true
             }));
             
             allSlices = [...allSlices, ...processedOrgSlices];

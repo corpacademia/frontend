@@ -74,14 +74,14 @@ export const CloudSliceLabPage: React.FC = () => {
         setFetching(true);
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setCurrentUser(response.data.user);
-        if(response.data.user.role === 'labadmin'){
+        if(response?.data?.user?.role === 'labadmin' || response?.data?.user?.role === 'orgsuperadmin'){
           const orgLabDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
             orgId: response.data.user.org_id,
             admin_id: response.data.user.id
           })
           if(orgLabDetails.data.success){
             console.log(orgLabDetails.data.data)
-            setOrgLabStatus(orgLabDetails.data.data.find((lab)=>lab.labid === sliceId));
+            setOrgLabStatus(orgLabDetails?.data?.data?.find((lab)=>lab.labid === sliceId) || []);
           }
         }
       } catch (error) {
@@ -340,6 +340,7 @@ export const CloudSliceLabPage: React.FC = () => {
       </div>
     );
   }
+  console.log(orgLabStatus)
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -641,7 +642,10 @@ export const CloudSliceLabPage: React.FC = () => {
                   <User className="h-4 w-4 text-primary-400" />
                 </div>
                 <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                  {currentUser.role === 'superadmin' || currentUser.role === 'orgsuperadmin' || currentUser?.id === sliceDetails?.createdby ? sliceDetails?.username : orgLabStatus.username || 'Not available'}
+                  {currentUser?.role === 'superadmin' || (currentUser?.role === 'orgsuperadmin' && (
+                !orgLabStatus?.admin_id ||
+                currentUser?.id === orgLabStatus?.admin_id
+                )) || currentUser?.id === sliceDetails?.createdby ? sliceDetails?.username : orgLabStatus?.username || 'Not available'}
                 </p>
               </div>
               
@@ -651,7 +655,10 @@ export const CloudSliceLabPage: React.FC = () => {
                   <Key className="h-4 w-4 text-primary-400" />
                 </div>
                 <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
-                {currentUser.role === 'superadmin' || currentUser.role === 'orgsuperadmin' || currentUser?.id === sliceDetails?.createdby  ? sliceDetails?.password : orgLabStatus.password || 'Not available'}
+                {currentUser.role === 'superadmin' ||(currentUser.role === 'orgsuperadmin' && (
+                    !orgLabStatus?.admin_id ||
+                    currentUser?.id === orgLabStatus?.admin_id
+                  )) || currentUser?.id === sliceDetails?.createdby  ? sliceDetails?.password : orgLabStatus?.password || 'Not available'}
                 </p>
               </div>
               
