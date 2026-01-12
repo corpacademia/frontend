@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { GradientText } from '../../../components/ui/GradientText';
 import { 
   Layers, 
@@ -40,10 +40,13 @@ import {
   QuizExercise, 
   CleanupPolicy 
 } from '../types/modules';
+import { useAuthStore } from '../../../store/authStore';
 
 export const CloudSliceModulesPage: React.FC = () => {
   const { sliceId } = useParams<{ sliceId: string }>();
   const navigate = useNavigate();
+  const {orgUsers} = useAuthStore();
+  const location = useLocation()
   const [activeModule, setActiveModule] = useState<string | null>(null);
   const [activeExercise, setActiveExercise] = useState<string | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
@@ -72,13 +75,17 @@ export const CloudSliceModulesPage: React.FC = () => {
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [sliceDetails, setSliceDetails] = useState<any>(null);
-
+  const {user} = location?.state || [];
   // Fetch current user
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
+        if(user){
+          setCurrentUser(user)
+        }
+        else{
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setCurrentUser(response.data.user);
+        setCurrentUser(response.data.user);}
       } catch (err) {
         console.error('Failed to fetch current user:', err);
       }
@@ -90,7 +97,6 @@ export const CloudSliceModulesPage: React.FC = () => {
   useEffect(() => {
     const fetchSliceDetails = async () => {
       if (!sliceId) return;
-      
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${sliceId}`);
         if (response.data.success) {
@@ -211,15 +217,19 @@ export const CloudSliceModulesPage: React.FC = () => {
     if (!module || !activeExercise || !module.exercises) return null;
     return module.exercises.find(e => e.id === activeExercise) || null;
   };
-
   // Check if current user can edit content
   const canEditContent = () => {
     if (!currentUser || !sliceDetails) return false;
     // Super admin can edit anything
     if (currentUser.role === 'superadmin') return true;
     // Org admin can only edit content they created
-    if (currentUser.role === 'orgsuperadmin' || currentUser.role === 'labadmin') {
-      return sliceDetails.createdby === currentUser.id;
+    if (currentUser.role === 'orgsuperadmin') {
+    return orgUsers
+      .filter(user => user?.role === 'labadmin')
+      .some(user => user?.id === sliceDetails?.createdby);
+  }
+    if (currentUser.role === 'labadmin') {
+      return sliceDetails?.createdby === currentUser?.id || currentUser?.user_id;
     }
     return false;
   };
@@ -476,7 +486,7 @@ export const CloudSliceModulesPage: React.FC = () => {
           extractFileName={extractFile_Name}
           canEdit={canEditContent()}
           user={currentUser}
-          labId={sliceId}
+          labId={sliceId || user?.labid}
         />
       );
     } 

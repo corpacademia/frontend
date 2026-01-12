@@ -46,17 +46,16 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [checked,setChecking]= useState(false);
   const [credentials,setCredentials]= useState<any>();
-
 //check account is created
   useEffect(()=>{
     const checkAccountStatus = async()=>{
       try {
         setChecking(true);
-        if(user.role === 'superadmin' || user.role === 'orgsuperadmin'){
+        if(user?.role === 'superadmin' || user?.role === 'orgsuperadmin' && canEdit || user?.role === 'labadmin' && canEdit ){
           const createdByAccountStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSliceDetails/${labId}`);
           const status = createdByAccountStatus.data.data
           if(createdByAccountStatus.data.success){
-             if(status.username != null && status.password !=null && status.console_url){
+             if(status?.username != null && status?.password !=null && status?.console_url){
               setCredentials(status);
               setAccountCreated(true);
               const editAwsServices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/editAwsServices`,{
@@ -69,14 +68,14 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
           }
         }
         else{
-          const orgAccountStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/`,{
-            orgId:user.org_id,
-            admin_id:user.id,
+          const orgAccountStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
+            orgId:user?.org_id || user?.orgid,
+            admin_id: user?.user_id||user?.id,
           
           })
           const status = orgAccountStatus.data.data.find((lab)=>lab.labid === labId);
           if(orgAccountStatus.data.success){
-            if(status.username != null && status.password !=null && status.console_url){
+            if(status?.username != null && status?.password !=null && status?.console_url){
               setCredentials(status)
               setAccountCreated(true);
               const editAwsServices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/editAwsServices`,{
@@ -98,7 +97,7 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
         
     }
     checkAccountStatus();
-  },[])
+  },[accountCreated])
 
   const handleCreateAccount = async () => {
     setIsCreatingAccount(true);
@@ -106,22 +105,22 @@ export const LabExerciseContent: React.FC<LabExerciseContentProps> = ({
     
     try {
       let response;
-      if(user.role === 'superadmin' || user.role === 'orgsuperadmin'){
+      if(user?.role === 'superadmin' || user?.role === 'orgsuperadmin' && canEdit || user?.role === 'labadmin' && canEdit ){
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
-          userName: user.name, 
+          userName: user?.name, 
           services: labExercise?.services || [],
-          role: user.role,
+          role: 'superadmin',
           labid:labId,
           purchased:labExercise?.purchased || false
         });
       }
-      else if(user.role === 'labadmin'){
+      else if(user?.role === 'labadmin' ||user?.role === 'orgsuperadmin' ){
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
-          userName: user.name, 
+          userName: user?.name, 
           services: labExercise?.services || [],
-          role: user.role,
+          role: user?.role,
           labid:labId,
-          orgid:user.org_id,
+          orgid:user?.orgid || user?.org_id,
           purchased:labExercise?.purchased || false
         });
       }

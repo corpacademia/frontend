@@ -173,7 +173,6 @@ export const CloudSliceLabPage: React.FC = () => {
 
   return servicess;
 };
-
   // Fetch service categories
   useEffect(() => {
     const fetchServiceCategories = async () => {
@@ -201,7 +200,7 @@ export const CloudSliceLabPage: React.FC = () => {
     if (currentUser.role === 'superadmin') return true;
     
     // Org admin can only edit content they created
-    if (currentUser.role === 'labadmin') {
+    if (currentUser?.role === 'labadmin' || currentUser?.role === 'superadmin' && !sliceDetails?.assessment) {
       return sliceDetails.createdby === currentUser.id;
     }
     

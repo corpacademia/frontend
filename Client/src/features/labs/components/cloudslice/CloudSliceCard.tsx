@@ -428,34 +428,94 @@ const canEditContent = () => {
         setLaunchingId(null)
         handlePodsClick({ stopPropagation: () => {} } as React.MouseEvent);
         setCloudSliceModal(userInstances.find(lab => lab.id === userLab.id));
-      } else {
+      } 
+      else {
         if (!userLab.launched) {
           setLaunchingId(userLab?.id)
           if (userLab?.modules === 'without-modules') {
-            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
+            if(userLab?.created_by === userLab?.user_id || userLab?.role === 'orgsuperadmin' &&  getOrgLabStatus(slice?.labid)?.orgid === userLab?.orgid){
+              await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
               userName: userLab?.name,
               services: userLab?.services,
-              role: userLab?.role,
+              role: 'superadmin',
               labid: userLab?.labid || userLab?.lab_id,
               orgid: userLab?.orgid || userLab?.org_id,
               purchased: userLab?.purchased || false
             });
+            
+            const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatus`, {
+            labId:  userLab?.labid || userLab?.lab_id,
+            createdBy: userLab?.createdby,
+            status: 'active',
+            launched: true
+          });
 
-            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
+          if (!updateLabStatus.data.success) {
+            throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
+          }
+            }
+            else{
+                    await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
+                  userName: userLab?.name,
+                  services: userLab?.services,
+                  role:userLab?.role,
+                  labid: userLab?.labid || userLab?.lab_id,
+                  orgid: userLab?.orgid || userLab?.org_id,
+                  purchased: userLab?.purchased || false
+                });
+
+                await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
+                labId: userLab?.labid || userLab?.lab_id,
+                orgId: userLab?.orgid,
+                status: 'active',
+                launched: true,
+              });
+
+            }
+            
+          } 
+          else {
+            if(userLab?.created_by === userLab?.user_id || userLab?.role === 'orgsuperadmin' &&  getOrgLabStatus(slice?.labid)?.orgid === userLab?.orgid){
+               const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatus`, {
+                labId:  userLab?.labid || userLab?.lab_id,
+                createdBy: userLab?.createdby,
+                status: 'active',
+                launched: true
+              });
+              if(!updateLabStatus?.data?.success){
+                 throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
+              }
+                  navigate(`/dashboard/labs/cloud-slices/${userLab?.labid}/modules`,{
+                    state:{
+                      user:userLab
+                    }}
+                  ); 
+            }
+            else{
+              const updateOrg =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
               labId: userLab?.labid || userLab?.lab_id,
               orgId: userLab?.orgid,
               status: 'active',
               launched: true,
             });
-          } else {
-            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
-              labId: userLab?.labid || userLab?.lab_id,
-              orgId: userLab?.orgid,
-              status: 'active',
-              launched: true,
-            });
+               if(!updateOrg?.data?.success){
+                throw new Error(updateOrg?.data?.message || 'Failed to update the lab status')
+               }
+               navigate(`/dashboard/labs/cloud-slices/${userLab?.labid}/modules`,{
+                state:{
+                  user:userLab
+                }}
+              ); 
+                }
+            
           }
         }
+        if(userLab?.modules === 'with-modules'){
+        navigate(`/dashboard/labs/cloud-slices/${userLab?.labid}/modules`,{
+                    state:{
+                      user:userLab
+                    }}
+                  ); }
         // Refresh instances
         setLaunchingId(null)
         handlePodsClick({ stopPropagation: () => {} } as React.MouseEvent);
@@ -964,11 +1024,10 @@ const canEditContent = () => {
                   </button>
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">AWS Console</label>
                 <a
-                  href="https://console.aws.amazon.com"
+                  href={cloudSliceModal?.modules === 'with-modules' ?  window.location.href = `/dashboard/labs/cloud-slices/${cloudSliceModal.labid}/modules` :"https://console.aws.amazon.com"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block px-4 py-2 bg-primary-500/20 hover:bg-primary-500/30 border border-primary-500/20 rounded-lg text-primary-300 transition-colors text-center"

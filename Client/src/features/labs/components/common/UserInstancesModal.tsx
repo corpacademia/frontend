@@ -240,7 +240,9 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
                   launched: true
                 }
               );
-            } else {
+            } 
+            else {
+
               await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`,
                 {

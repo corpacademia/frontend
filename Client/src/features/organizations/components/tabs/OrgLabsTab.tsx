@@ -627,7 +627,6 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
     setIsLoading(true);
     setError(null);
     try {
-      console.log(lab)
       let response;
       if (lab.type === 'cloudslice') {
         response = await axios.get(
@@ -689,9 +688,12 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
     setSuccess(null);
     try {
       let response;
-      console.log(lab)
-      if (lab.type === 'cloudslice') {
-        if (userLab.role === 'user') {
+      if (lab?.type === 'cloudslice') {
+        if (userLab?.role === 'user') {
+          if(userLab?.username){
+          const deleteIam = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deleteIamAccount`,{
+                    userName:userLab?.username
+                  })}
           response = await axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
             labId: userLab?.labid || userLab?.lab_id,
@@ -702,7 +704,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
         }
 
       }
-      else if (lab.type === 'singlevm-datacenter') {
+      else if (lab?.type === 'singlevm-datacenter') {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment`, {
           labId: lab?.lab_id || lab?.labid,
           userId: userLab?.user_id || userLab?.userid
@@ -755,7 +757,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
               const createIamUser = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
                 userName: userLab.name,
                 services: userLab.services,
-                role: userLab.role,
+                role: userLab?.role,
                 labid: userLab.labid,
                 user_id: userLab.user_id,
                 purchased: userLab?.purchased || false
@@ -813,20 +815,31 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
                 throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
               }
 
-            } else {
-              const updateLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
-                labId: userLab?.labid || userLab?.lab_id,
-                orgId: userLab?.orgid,
-                status: 'active',
-                launched: true,
-              });
-
-              if (!updateLabStatus.data.success) {
-                throw new Error(updateLabStatus.data.message || 'Failed to update lab status');
-              }
-            }
+            } 
+            else {
+              const updateOrg =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfOrg`, {
+              labId: userLab?.labid || userLab?.lab_id,
+              orgId: userLab?.orgid,
+              status: 'active',
+              launched: true,
+            });
+               if(!updateOrg?.data?.success){
+                throw new Error(updateOrg?.data?.message || 'Failed to update the lab status')
+               }
+               navigate(`/dashboard/labs/cloud-slices/${userLab?.labid}/modules`,{
+                state:{
+                  user:userLab
+                }}
+              ); 
+             
           }
-        }
+          }
+           navigate(`/dashboard/labs/cloud-slices/${userLab?.labid}/modules`,{
+            state:{
+              user:userLab
+            }}
+           );     
+         }
         fetchUserLabs();
         // For cloudslice, show modal with credentials
         onShowCloudSliceModal(userLabs.find(lab => lab.id === userLab.id));

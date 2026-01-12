@@ -132,7 +132,9 @@ export const BatchDetailsPage: React.FC = () => {
       const result = await removeLabFromBatch(batchId, deleteLabModal.labId);
       
       if (result.success) {
+        fetchBatchDetails(batchId)
         setDeleteLabModal({ isOpen: false, labId: '', labName: '' });
+
       } else {
         console.error('Failed to remove lab:', result.message);
         alert(result.message || 'Failed to remove lab');
