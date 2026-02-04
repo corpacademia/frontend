@@ -12,6 +12,8 @@ Client/node_modules copy
 
 
 node_modules
+package-lock.json
+package.json
 dist
 dist-ssr
 *.local
