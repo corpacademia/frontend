@@ -64,25 +64,25 @@ export const QuizExerciseContent: React.FC<QuizExerciseContentProps> = ({
         </div>
       </div>
 
-      {quizExercise.questions?.map((question, qIndex) => (
-        <div key={question.id} className="p-6 bg-dark-300/50 rounded-lg">
+      {quizExercise?.questions?.map((question, qIndex) => (
+        <div key={question?.id} className="p-6 bg-dark-300/50 rounded-lg">
           <h3 className="text-lg font-semibold mb-4">Question {qIndex + 1}</h3>
-          <p className="text-gray-300 mb-4">{question.text}</p>
+          <p className="text-gray-300 mb-4">{question?.text}</p>
           
           <div className="space-y-3">
-            {question.options?.map((option) => (
-              <div key={option.id} className="flex items-start space-x-3">
+            {question?.options?.map((option) => (
+              <div key={option?.id} className="flex items-start space-x-3">
                 <div className="mt-0.5">
                   <input
                     type="radio"
-                    name={`question-${question.id}`}
+                    name={`question-${question?.id}`}
                     className="h-5 w-5 border-gray-500 text-primary-500 focus:ring-primary-500"
-                    defaultChecked={option.is_correct}
+                    defaultChecked={option?.is_correct}
                   />
                 </div>
-                <p className={`text-gray-300 ${option.is_correct ? 'font-medium' : ''}`}>
-                  {option.text}
-                  {option.is_correct && (
+                <p className={`text-gray-300 ${option?.is_correct ? 'font-medium' : ''}`}>
+                  {option?.text}
+                  {option?.is_correct && (
                     <span className="ml-2 text-xs text-emerald-400">(Correct Answer)</span>
                   )}
                 </p>

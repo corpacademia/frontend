@@ -32,7 +32,7 @@ export const ApproveRejectUserModal: React.FC<ApproveRejectUserModalProps> = ({
     setIsProcessing(true);
     setError(null);
     try {
-      await onApprove(user.id);
+      await onApprove(user?.id);
     } catch (err: any) {
       setError(err.message || 'Failed to approve user');
     } finally {

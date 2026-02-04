@@ -89,6 +89,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [admin,setAdmin] = useState({});
+
   useEffect(() => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
@@ -242,7 +243,10 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                       lab_id: vm?.lab_id || vm?.labid,
                       instance_type: vm.instance,
                       start_date: formatDate(vm?.startdate),
-                      end_date:formatDate(vm?.enddate)
+                      end_date:formatDate(vm?.enddate),
+                      batch:vm?.assignment_type,
+                      batch_id:vm?.batch_id
+
                     });
                      setButtonLabel('Start VM');
                      setNotification({
@@ -781,7 +785,6 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
               </div>
             )}
           </div>
-
           <div className="mt-auto pt-2 sm:pt-3 border-t border-primary-500/10">
             <div className="flex flex-col space-y-2">
               <div className="flex gap-1 sm:gap-2">
@@ -812,7 +815,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                 </button>
                 <button 
                   onClick={handleVMGoldenImage}
-                  disabled={isProcessing}
+                  disabled={amiId || isProcessing}
                   className="flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                            bg-primary-500/20 text-primary-300 hover:bg-primary-500/30
                            transition-colors flex items-center justify-center

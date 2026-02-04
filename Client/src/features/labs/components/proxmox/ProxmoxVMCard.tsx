@@ -62,9 +62,10 @@ interface ProxmoxVM {
 
 interface ProxmoxVMProps {
   vm: ProxmoxVM;
+  canEdit: boolean;
 }
 
-export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
+export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLaunchProcessing, setIsLaunchProcessing] = useState(false);
@@ -102,8 +103,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
 
   // Check if current user can edit content
   const canEditContent = () => {
-    // return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin';
-    return currentUser?.id === vm?.user_id
+    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin' && !vm?.assessment  || currentUser?.id === vm?.user_id
   };
   const checkVMStatus = async () => {
     try {
@@ -111,7 +111,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkVMStatus`, {
         labId: vm.labid,
         vmId: vm.vmid,
-        type:user?.data?.user?.role === vm?.user_id ? 'org' :'sup'
+        type:vm?.assigned_by ? 'org' :'sup',
       });
 
       if (response.data.success) {
@@ -122,6 +122,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
         // Update VM status
         if (isRunning) {
           setVmStatus('running');
+          setButtonLabel('Stop')
         } else if (isLaunched) {
           setVmStatus('stopped');
         } 
@@ -174,8 +175,9 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
           firewall:vm.firewall,
           boot:vm.boot,
           template:vm?.template_id,
-          type:currentUser.id !== vm?.user_id ? 'org' :'sup',
-          vmdetails_id:vm?.vmdetails_id
+          type:vm?.assigned_by ? 'org' :'sup',
+          vmdetails_id:vm?.vmdetails_id,
+          userid:currentUser?.id
          }) 
          if(launchVM.data.success){
           setIsLaunchProcessing(false)
@@ -190,14 +192,18 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
       }
       else if (buttonLabel === 'Stop') {
         // Stop the VM
-        const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/proxmox_ms/stopVM`, {
+        const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/stopVM`, {
           lab_id: vm.labid,
-          vmId: vm.vmid,
-          node: vm.node
+          vmid: vm.vmid,
+          node: vm.node,
+          userid:vm?.user_id,
+          purchased:vm?.purchased ? true : false,
+          type:vm?.assigned_by ? 'org' :'sup',
+          vmdetails_id:vm?.vmdetails_id
         });
 
         if (stopResponse.data.success) {
-          setButtonLabel('Launch VM');
+          setButtonLabel('Start VM');
           setVmStatus('stopped');
           setNotification({
             type: 'success',
@@ -212,13 +218,14 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                              lab_id: vm?.labid,
                              vmid: vm?.vmid,
                              node: vm?.node,
-                             type:currentUser.id !== vm?.user_id ? 'org' : 'sup',
+                             type:vm?.assigned_by ? 'org' : 'sup',
                              userid:vm?.user_id,
                              purchased:vm?.purchased ? true :false,
-                             vmDetailsId:vm?.vm_detailsid || null
+                             vmDetailsId:vm?.vmdetails_id || null
                            });
 
                            if (startResponse.data.success) {
+                             setButtonLabel('Stop');
                              const backData = startResponse.data.data;
                              const resp = await axios.post(
                            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
@@ -241,7 +248,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                            state: {
                              guacUrl: wsUrl,
                              vmTitle: vm?.title,
-                             doc:vm?.labguide
+                             doc:vm?.assessment ? vm?.userguide : [...vm?.labguide,...vm?.userguide]
                            }
                          });
                          }
@@ -440,7 +447,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                   {vmStatus}
                 </span>
               </div>
-              {canEditContent() && (
+              {canEdit && (
                 <>
                   <button
                     onClick={() => setIsEditModalOpen(true)}
@@ -555,10 +562,10 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                     </>
                   )}
                 </button>
-                {canEditContent() && (
+                {canEdit && (
                   <button 
                     onClick={handleCreateTemplate}
-                    disabled={isProcessing || vmStatus !== 'stopped'}
+                    disabled={isProcessing || vmStatus !== 'stopped' || hasTemplate}
                     className="flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                              bg-orange-500/20 text-orange-300 hover:bg-orange-500/30
                              transition-colors flex items-center justify-center
@@ -580,7 +587,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm }) => {
                 )}
               </div>
 
-              {canEditContent() ? (
+              {canEdit ? (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleConvertToCatalogue}

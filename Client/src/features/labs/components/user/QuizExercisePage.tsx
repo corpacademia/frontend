@@ -33,8 +33,7 @@ export const QuizExercisePage: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const[isQuizResult,setIsQuizResult] = useState(false);
 
-
-    // Fetch user details
+  // Fetch user details
     useEffect(() => {
       const fetchUserProfile = async () => {
         try {
@@ -44,11 +43,8 @@ export const QuizExercisePage: React.FC = () => {
           console.error('Failed to fetch user profile:', error);
         }
       };
-  
       fetchUserProfile();
     }, []);
-  
-    
 
   // Fetch quiz exercise if not provided in location state
   useEffect(() => {
@@ -80,14 +76,13 @@ useEffect(() => {
   const fetchQuizResult = async () => {
     setIsQuizResult(true);
     try {
-      
       const user_profile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
         setUser(user_profile.data.user);
-    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserQuizData`,{
-      moduleId,
-      exerciseId,
-      userId:user_profile.data.user.id
-    });
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserQuizData`,{
+          moduleId,
+          exerciseId,
+          userId:user_profile.data.user.id
+        });
     if(response.data.success){
       setQuizResult(response.data.data[0])
     }
@@ -101,8 +96,6 @@ useEffect(() => {
   }
     fetchQuizResult();
   },[]);
-  
-
 
   // Set countdown when quiz exercise is loaded
   useEffect(() => {
@@ -130,6 +123,7 @@ useEffect(() => {
 
   // Submit quiz
   const handleSubmit = async () => {
+  
     // Check if all questions are answered
     if (!quizExercise || !quizExercise.questions) return;
     
@@ -181,7 +175,7 @@ useEffect(() => {
       
       if (response.data.success) {
           
-        setQuizResult(result);
+        setQuizResult(response?.data?.data);
         setNotification({ type: 'success', message: 'Quiz submitted successfully' });
       } else {
         throw new Error(response.data.message || 'Failed to submit quiz');
@@ -218,8 +212,6 @@ useEffect(() => {
     return () => clearInterval(timer);
   }, [countdown, quizResult, answers]);
 
-  
-
   if (isLoading ) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -227,8 +219,6 @@ useEffect(() => {
       </div>
     );
   }
-  
-
   if (error) {
     return (
       <div className="glass-panel p-6 text-center">
@@ -245,7 +235,6 @@ useEffect(() => {
       </div>
     );
   }
-
   if(isQuizResult){
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -335,20 +324,20 @@ useEffect(() => {
                     <span className="text-xs font-medium">{qIndex + 1}</span>
                   </div>
                   <div>
-                    <h3 className="font-medium text-gray-200">{question.text}</h3>
-                    {question.description && (
-                      <p className="text-sm text-gray-400 mt-1">{question.description}</p>
+                    <h3 className="font-medium text-gray-200">{question?.text}</h3>
+                    {question?.description && (
+                      <p className="text-sm text-gray-400 mt-1">{question?.description}</p>
                     )}
                     
                     <div className="mt-4 space-y-2">
-                      {question.options.map(option => (
+                      {question?.options?.map(option => (
                         <label 
-                          key={option.option_id}
+                          key={option?.option_id}
                           className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
                             quizResult ? (
-                              option.is_correct
+                              option?.is_correct
                                 ? 'bg-emerald-500/20 border border-emerald-500/20'
-                                : answers[question.id] === option.option_id && !option.is_correct
+                                : answers[question.id] === option?.option_id && !option?.is_correct
                                   ? 'bg-red-500/20 border border-red-500/20'
                                   : 'bg-dark-300/50 hover:bg-dark-300'
                             ) : (
@@ -365,7 +354,7 @@ useEffect(() => {
                             checked={answers[question.id] === option.option_id}
                             onChange={() => !quizResult && handleAnswerSelect(question.id, option.option_id)}
                             className="form-radio h-4 w-4 text-primary-500 border-gray-500/20 focus:ring-primary-500"
-                            disabled={quizResult !== null}
+                            // disabled={quizResult !== null}
                           />
                           <span className="ml-3 text-gray-300">{option.text}</span>
                           

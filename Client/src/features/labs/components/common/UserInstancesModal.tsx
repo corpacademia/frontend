@@ -260,6 +260,7 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
         setSuccess('CloudSlice instance launched successfully');
         setTimeout(() => setSuccess(null), 2000);
       } else if (labType === 'singlevm-proxmox') {
+        console.log(userInstance)
         if (!userInstance?.islaunched) {
           if (userInstance?.role === 'user') {
             await axios.post(
@@ -270,7 +271,8 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
                 name: userInstance?.vmname,
                 userid: userInstance?.user_id,
                 type: 'user',
-                purchased: userInstance?.purchased ? true : false
+                purchased: userInstance?.purchased ? true : false,
+                vmdetailsId:userInstance?.vmdetails_id
               }
             );
           } else {
@@ -415,7 +417,9 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
                                 lab_id: userInstance?.lab_id || userInstance?.labid,
                                 instance_type: userInstance.instance,
                                 start_date: formatDate(userInstance?.startdate || userInstance?.start_date || new Date()),
-                                end_date:formatDate(userInstance?.enddate || userInstance?.completion_date)
+                                end_date:formatDate(userInstance?.enddate || userInstance?.completion_date),
+                                batch:userInstance?.assignment_type,
+                                batch_id:userInstance?.batch_id 
                               });
                               //  setButtonLabel('Start VM');
                               //  setNotification({

@@ -119,47 +119,7 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
 
   const handleLaunchVM = async () => {
     setIsLaunchProcessing(true);
-  //    const res = await axios.post(
-  //     `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-  //     {
-  //       protocol: "rdp",
-  //       hostname: "20.0.28.27",
-  //       port: 20027,
-  //       username: "parveez",
-  //       password: "C0rp@123",
-  //     },
-  //     {
-  //       withCredentials: true, // ✅ send cookies to maintain express-session
-  //     }
-  //   );
-
-  //   const { wsUrl } = res.data;
-  //   console.log("Connecting to:", wsUrl);
-
-  //   // ✅ Extract session token from URL
-  //   const token = new URL(wsUrl).searchParams.get("session");
-  //   if (token) {
-  //     sessionStorage.setItem("guacSessionToken", token);
-  //     console.log("Saved session token:", token);
-  //   }
-
-  //   // Step 2: Create Guacamole tunnel
-  //  const tunnel = new Guacamole.WebSocketTunnel("ws://localhost:3002/?token=" + token);
-
-  //   const client = new Guacamole.Client(tunnel);
-
-  //   // Step 3: Attach display to DOM
-  //   if (displayRef.current) {
-  //     displayRef.current.innerHTML = "";
-  //     displayRef.current.appendChild(client.getDisplay().getElement());
-  //   }
-
-  //   // Step 4: Connect
-  //   client.connect();
-
-  //   // Cleanup
-  //   window.onunload = () => client.disconnect();
-  //   return;
+ 
     try {
         if(vm.status === 'expired') {
           setNotification({
@@ -170,12 +130,13 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
         }
       if (buttonLabel === 'Launch VM') {
         const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchUserVm`, {
-          node: vm.node,
-          labid:vm.labid,
-          name: vm.vmname,
-          userid:vm.user_id,
+          node: vm?.node,
+          labid:vm?.labid,
+          name: vm?.vmname,
+          userid:vm?.user_id,
           type: 'user',
-          purchased:vm.purchased ? true :false,
+          purchased:vm?.purchased ? true :false,
+          vmdetailsId:vm?.vmdetails_id
         });
         
         if (launchVM.data.success) {

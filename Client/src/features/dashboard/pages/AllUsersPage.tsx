@@ -17,10 +17,10 @@ const ApproveRejectUserModal = ({ isOpen, onClose, user, onApprove, onReject }) 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
         <h2 className="text-xl font-bold text-gray-200 mb-4">Approve/Reject User</h2>
-        <p className="text-gray-300 mb-4">User: {user.name} ({user.email})</p>
+        <p className="text-gray-300 mb-4">User: {user?.name} ({user?.email})</p>
         <div className="flex justify-end space-x-4">
-          <button onClick={() => onReject(user.id)} className="btn-secondary"><GradientText>Reject</GradientText></button>
-          <button onClick={() => onApprove(user.id)} className="btn-primary"><GradientText>Approve</GradientText></button>
+          <button onClick={() => onReject(user?.id)} className="btn-secondary"><GradientText>Reject</GradientText></button>
+          <button onClick={() => onApprove(user?.id)} className="btn-primary"><GradientText>Approve</GradientText></button>
         </div>
       </div>
     </div>

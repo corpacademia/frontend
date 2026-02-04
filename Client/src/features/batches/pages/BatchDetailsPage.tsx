@@ -126,7 +126,6 @@ export const BatchDetailsPage: React.FC = () => {
 
   const handleRemoveLab = async () => {
     if (!batchId) return;
-    
     setIsDeletingLab(true);
     try {
       const result = await removeLabFromBatch(batchId, deleteLabModal.labId);
@@ -201,7 +200,6 @@ export const BatchDetailsPage: React.FC = () => {
       </div>
     );
   }
-
   return (
     <div className="space-y-6">
       {/* Header */}

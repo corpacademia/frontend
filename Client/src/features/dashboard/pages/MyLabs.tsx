@@ -633,7 +633,7 @@ setFilteredLabs(updatedLabs);
     }
   };
 
-  const handleLaunchLab = async (lab) => {
+  const handleLaunchLab = async (lab:any) => {
     if(lab?.status === 'expired'){
        setLabControls(prev => ({
       ...prev,
@@ -683,7 +683,9 @@ setFilteredLabs(updatedLabs);
         end_date: formatDate(
         labConfig?.data?.data?.completion_date ||
           new Date(Date.now() + (labConfig?.data?.data?.duration) * 24 * 60 * 60 * 1000) 
-      )
+      ),
+      batch:lab?.assignment_type,
+      batch_id:lab?.batch_id 
       });
       // Only proceed if launchInstance is successful
       if (response.data.success) {

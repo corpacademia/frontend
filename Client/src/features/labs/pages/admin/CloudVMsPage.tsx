@@ -263,6 +263,7 @@ export const AdminCloudVMsPage: React.FC = () => {
 //     setTimeout(() => setError(null), 2000);
 //   }
 // };
+
 const fetchDatacenterVMs = async () => {
   if (!admin?.id) return;
 
@@ -351,19 +352,43 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
             { orgId, userId }
           )
         : Promise.resolve(null),
-
+      
       axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxLabsOnAdminId`,
-        { adminId: userId }
+        { adminId:admin?.role === "superadmin" ? "superadmin" : userId }
       ),
     ]);
 
-    // ✅ Safely merge assignments
-    const allAssignments = [
-      ...(orgResponse?.data?.success ? orgResponse.data.data : []),
-      ...(proxmoxResponse?.data?.success ? proxmoxResponse.data.data : []),
-    ];
+    const labAdminsResponse :any[] = []
+    const ids = orgUsers
+        .filter(u => u.role === "labadmin")
+        .map(u => u.id);
+      //  Lab Admin Labs
+      if (ids?.length) {
+        const labAdminsLab = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxLabAdminsLab`,
+          { userIds: ids }
+        );
 
+        if (labAdminsLab.data.success) {
+          labAdminsResponse.push(...labAdminsLab?.data?.data.map((lab:any)=>({...lab,assessment:false})));
+        }
+      }
+        //  Safely merge assignments
+    const allAssignments = [
+      ...(orgResponse?.data?.success
+    ? orgResponse.data.data.map((orgLab: any) => ({
+        ...orgLab,
+        assessment: true,
+      }))
+    : []),
+      ...(proxmoxResponse?.data?.success ? proxmoxResponse.data.data.map((lab: any)=>({
+        ...lab,
+        assessment: false,
+      })) : []),
+      ...labAdminsResponse
+    ];
+    console.log(allAssignments);
     // 🔁 Fetch lab details
     const vmDetails = await Promise.all(
       allAssignments.map(async (assignment: any) => {
@@ -389,8 +414,7 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
         }
       })
     );
-
-    // 🧹 Remove nulls + deduplicate
+    // Remove nulls + deduplicate
     const mergedVMs = vmDetails
       .filter(Boolean)
       .reduce((acc: any[], vm: any) => {
@@ -399,7 +423,7 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
         }
         return acc;
       }, []);
-
+    
     setProxmoxVMs(mergedVMs);
   } catch (err) {
     console.error("Error fetching Proxmox VMs:", err);
@@ -415,7 +439,6 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
     fetchProxmoxVMs(admin?.org_id,admin?.id);
   }
 }, [admin.id]);
-
  
   const filteredVMs = vms.filter(vm => {
     const matchesSearch = !filters.search || 
@@ -444,9 +467,24 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
     const matchesType = filters.type === 'all' || filters.type === 'proxmox';
     return matchesSearch && matchesStatus && matchesType;
   });
+  
+  const canEditContent = (vm: any) => {
+  if (user?.role === 'superadmin') return true;
 
-  const allFilteredVMs = [...filteredVMs, ...filteredDatacenterVMs, ...filteredProxmoxVMs];
+  if (user?.role === 'orgsuperadmin') {
+    return vm?.assessment === false;
+  }
 
+  if (user?.role === 'user' || user?.role === 'labadmin') {
+    return user?.id === vm?.user_id;
+  }
+
+  return false;
+};
+
+
+ const allFilteredVMs = [...filteredVMs, ...filteredDatacenterVMs, ...filteredProxmoxVMs];
+ console.log(proxmoxVMs)
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -613,7 +651,7 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredProxmoxVMs.map((vm) => (
-                      <ProxmoxVMCard key={vm.id} vm={vm} />
+                      <ProxmoxVMCard key={vm.id} vm={vm} canEdit = {canEditContent(vm)}/>
                     ))}
                   </div>
                 </div>

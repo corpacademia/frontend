@@ -211,7 +211,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
         setIsLoading(false);
       }
   };
-
+  
   const fetchProxmoxVMs = async (orgId: string, userId: string) => {
   try {
     //  Fetch both sets in parallel
@@ -288,7 +288,8 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
 }, []);
    // Check if current user can edit content
   const canEditContent = (vm) => {
-    return admin?.role === 'superadmin' || admin?.role === 'orgsuperadmin' || admin?.id === vm?.user_id ;
+    
+    return admin?.role === 'superadmin' || admin?.role === 'orgsuperadmin' && !vm?.assessment || admin?.id === vm?.user_id ;
   };
 
   const filteredVMs = vms.filter(vm => {
@@ -479,7 +480,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
                     {filteredProxmoxVMs.map((vm) => (
-                      <ProxmoxVMCard key={vm.id} vm={vm} />
+                      <ProxmoxVMCard key={vm.id} vm={vm} canEdit = {canEditContent(vm)} />
                     ))}
                   </div>
                 </div>

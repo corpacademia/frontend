@@ -672,7 +672,10 @@ export const LabDetailsPage: React.FC = () => {
                 instance_type: labConfig?.data?.data?.instance,
                 start_date: formatDateAndTime(new Date()),
                 end_date: formatDateAndTime(new Date(Date.now() + (userLabStatus.duration) * 24 * 60 * 60 * 1000) 
-              )
+              ),
+              batch:labConfig?.data?.data?.assignment_type,
+              batch_id:labConfig?.data?.data?.batch_id
+             
               });
               
               if (response.data.success) {

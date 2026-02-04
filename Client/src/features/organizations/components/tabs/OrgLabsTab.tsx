@@ -718,11 +718,17 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
           userId: userLab?.user_id || userLab?.userid
         })
       }
-      else if (lab.type === 'singlevm') {
-        response = await axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteUserLabInstance/${userLabId}`
-        );
-      } else if (lab.type === 'singlevm-proxmox') {
+      else if (lab.type === 'singlevm-aws') {
+        const ami = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: lab?.lab_id || lab?.labid })
+                 response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deletevm`,{
+                  id:lab?.lab_id || lab?.labid, 
+                  instance_id:lab?.instance_id, 
+                  ami_id:ami.data.result.ami_id, 
+                  user_id:lab?.user_id,
+                  purchased:lab?.purchased ? true : false
+                 })
+      } 
+      else if (lab.type === 'singlevm-proxmox') {
         response = await axios.delete(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteUserProxmoxInstance/${userLabId}`
         );
@@ -878,7 +884,9 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
                 lab_id: userLab?.labid || userLab?.lab_id,
                 instance_type: userLab?.instance || lab?.instance,
                 start_date: userLab?.startdate ? new Date(userLab.startdate).toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' '),
-                end_date: userLab?.enddate ? new Date(userLab.enddate).toISOString().slice(0, 19).replace('T', ' ') : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ')
+                end_date: userLab?.enddate ? new Date(userLab.enddate).toISOString().slice(0, 19).replace('T', ' ') : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' '),
+                batch:userLab?.assignment_type,
+                batch_id:userLab?.batch_id 
               }
             );
 
@@ -1057,6 +1065,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
               userid: userLab?.user_id,
               type: 'user',
               purchased: userLab?.purchased ? true : false,
+              vmdetailsId:userLab?.vmdetails_id
             });
           }
           else {
@@ -1223,7 +1232,6 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
     }
   };
   if (!isOpen || !lab) return null;
-  console.log(groupedByRole)
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-dark-200 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden">

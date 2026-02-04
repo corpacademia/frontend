@@ -17,11 +17,13 @@ import {
   CreditCard,
   Loader,
   Play,
-  Square
+  Square,
+  UserIcon
 } from 'lucide-react';
 import { GradientText } from '../../../../../components/ui/GradientText';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { UserInstancesModal } from '../../common/UserInstancesModal';
 
 interface CloudVMAssessmentProps {
   assessment: {
@@ -71,6 +73,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isUserInstancesModalOpen,setIsUserInstancesModalOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -114,7 +117,6 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
       try {
         const user_cred = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(user_cred.data.user);
-      console.log(user_cred)
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user_cred?.data?.user?.org_id}`);
          const users = response.data?.data || [];
 
@@ -233,7 +235,9 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
           lab_id: assessment.lab_id,
           instance_type: assessment.instance,
           start_date: formatDate(assessment?.startdate),
-          end_date: formatDate(assessment?.enddate)
+          end_date: formatDate(assessment?.enddate),
+          batch:assessment?.assignment_type,
+          batch_id:assessment?.batch_id
         });
         setButtonLabel('Start');
         setNotification({
@@ -504,7 +508,6 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   if (load) {
     return <div className="animate-pulse h-[320px] bg-dark-300/50 rounded-lg"></div>;
   }
-  console.log(instanceDetails)
   return (
     <>
       <div className="flex flex-col h-[320px] overflow-hidden rounded-xl border border-primary-500/10 
@@ -582,47 +585,67 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
             </div>
           </div>
           )}
-          
+   <div className="mt-auto pt-3 border-t border-primary-500/10 flex flex-col gap-2">
 
-          <div className="mt-auto pt-3 border-t border-primary-500/10 flex flex-col gap-2">
-           <button 
-                            onClick={handleLaunchSoftware}
-                            disabled={isLaunchProcessing}
-                            className={`w-full h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
-                                     ${buttonLabel === 'Stop' 
-                                       ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
-                                       : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                                     }
-                                     transition-colors flex items-center justify-center
-                                     disabled:opacity-50 disabled:cursor-not-allowed`}
-                          >
-                            {isLaunchProcessing ? (
-                              <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
-                            ) : buttonLabel === 'Stop' ? (
-                              <>
-                                <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">Stop</span>
-                              </>
-                            ) : (
-                              <>
-                                <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline"> {instanceDetails?.isstarted ? "Connect VM" : "Launch VM"}</span>
-                              </>
-                            )}
-                          </button>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="w-full h-9 px-4 rounded-lg text-sm font-medium
-                       bg-gradient-to-r from-primary-500 to-secondary-500
-                       hover:from-primary-400 hover:to-secondary-400
-                       transform hover:scale-105 transition-all duration-300
-                       text-white shadow-lg shadow-primary-500/20
-                       flex items-center justify-center"
-            >
-              <Users className="h-4 w-4 mr-2" />
-              Assign Lab
-            </button>
-          </div>
+  {/* Launch / Stop / Connect */}
+  <button 
+    onClick={handleLaunchSoftware}
+    disabled={isLaunchProcessing}
+    className={`w-full h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+      ${buttonLabel === 'Stop' 
+        ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+        : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+      }
+      transition-colors flex items-center justify-center
+      disabled:opacity-50 disabled:cursor-not-allowed`}
+  >
+    {isLaunchProcessing ? (
+      <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+    ) : buttonLabel === 'Stop' ? (
+      <>
+        <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+        <span className="hidden sm:inline">Stop</span>
+      </>
+    ) : (
+      <>
+        <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+        <span className="hidden sm:inline">
+          {instanceDetails?.isstarted ? 'Connect VM' : 'Launch VM'}
+        </span>
+      </>
+    )}
+  </button>
+
+  {/* Assign Lab + Pods (same visual as Convert to Catalogue) */}
+  <div className="flex items-center gap-2">
+    <button
+      onClick={() => setIsModalOpen(true)}
+      className="flex-1 h-9 px-4 rounded-lg text-sm font-medium
+        bg-gradient-to-r from-primary-500 to-secondary-500
+        hover:from-primary-400 hover:to-secondary-400
+        transform hover:scale-105 transition-all duration-300
+        text-white shadow-lg shadow-primary-500/20
+        flex items-center justify-center"
+    >
+      <Users className="h-4 w-4 mr-2" />
+      Assign Lab
+    </button>
+
+    <button
+      onClick={() => setIsUserInstancesModalOpen(true)}
+      className="h-8 sm:h-9 w-8 sm:w-9 rounded-lg
+        bg-dark-400/80 hover:bg-dark-300/80
+        border border-primary-500/20 hover:border-primary-500/30
+        text-primary-300
+        flex items-center justify-center flex-shrink-0"
+      title="Pods"
+    >
+      <UserIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+    </button>
+  </div>
+
+</div>
+
         </div>
       </div>
 
@@ -783,6 +806,16 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
           </div>
         </div>
       )}
+
+       {isUserInstancesModalOpen && (
+              <UserInstancesModal
+                isOpen={isUserInstancesModalOpen}
+                onClose={() => setIsUserInstancesModalOpen(false)}
+                lab={assessment}
+                orgId={admin?.org_id}
+                labType="singlevm-aws"
+              />
+            )}
     </>
   );
 };
