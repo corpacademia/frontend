@@ -1,0 +1,53 @@
+name: Frontend CI/CD – S3 + CloudFront
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build & Deploy Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1️⃣ Checkout code
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2️⃣ Setup Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+
+    # 3️⃣ Install dependencies
+    - name: Install dependencies
+      run: npm install
+      working-directory: frontend/Client
+
+    # 4️⃣ Build frontend
+    - name: Build frontend
+      run: npm run build
+      working-directory: frontend/Client
+
+    # 5️⃣ Configure AWS credentials
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # 6️⃣ Upload build to S3
+    - name: Upload to S3
+      run: |
+        aws s3 sync dist/ s3://${{ secrets.S3_BUCKET }} --delete
+      working-directory: frontend/Client
+
+    # 7️⃣ Invalidate CloudFront cache
+    - name: Invalidate CloudFront
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+          --paths "/*"
