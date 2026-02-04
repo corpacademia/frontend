@@ -13,22 +13,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    # 🔍 DEBUG – DO NOT REMOVE FOR FIRST RUN
+    - name: Show directory structure
+      run: ls -R
+
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: 18
 
     - name: Install dependencies
-      run: |
-       cd frontend/Client
-       npm install
-
+      run: npm install
+      working-directory: Client
 
     - name: Build frontend
-      run: |
-        cd frontend/Client
-        npm run build
-      
+      run: npm run build
+      working-directory: Client
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -38,10 +38,8 @@ jobs:
         aws-region: ${{ secrets.AWS_REGION }}
 
     - name: Upload to S3
-      run: |
-        cd frontend/Client
-        aws s3 sync dist/ s3://${{ secrets.S3_BUCKET }} --delete
-      
+      run: aws s3 sync dist/ s3://${{ secrets.S3_BUCKET }} --delete
+      working-directory: Client
 
     - name: Invalidate CloudFront
       run: |
