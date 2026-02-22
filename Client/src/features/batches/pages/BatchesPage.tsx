@@ -88,7 +88,7 @@ const mockBatches: Batch[] = [
 
 export const BatchesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user,orgUsers } = useAuthStore();
   const { 
     deleteBatch, 
     fetchBatches, 
@@ -112,10 +112,14 @@ export const BatchesPage: React.FC = () => {
   });
   const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  let ids = orgUsers
+        .filter(u => u.role === "labadmin")
+        .map(u => u.id);
+      ids = [...ids,user?.id];
 
   useEffect(() => {
     if (user?.id) {
-      fetchBatches(user.id);
+      fetchBatches(user?.role === 'orgsuperadmin'  && ids.length ? ids : user?.id,user?.role );
     }
   }, [user?.id]);
 
@@ -123,7 +127,6 @@ export const BatchesPage: React.FC = () => {
     filterBatches();
   }, [searchTerm, filterStatus, batches]);
 
-  console.log(batches) 
 
   const filterBatches = () => {
     let filtered = [...batches];
@@ -155,7 +158,7 @@ export const BatchesPage: React.FC = () => {
 
   const handleBatchCreated = () => {
     if (user?.id) {
-      fetchBatches(user.id);
+      fetchBatches(user?.role === 'orgsuperadmin'  && ids.length ? ids : user?.id,user?.role);
     }
     setIsCreateModalOpen(false);
   };

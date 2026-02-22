@@ -12,6 +12,7 @@ import {
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { GradientText } from '../../../../components/ui/GradientText';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface VMClusterUserListModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({
   organizationId 
 }) => {
   const [users, setUsers] = useState<any[]>([]);
+  const {user} = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -87,8 +89,9 @@ export const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({
             guacUrl: wsUrl,
             vmTitle: lab.title,
             vmId: lab.labid || lab.lab_id,
-            doc: lab.labguide,
-            credentials: [user]
+            doc:user?.role === 'user' ? lab.userguide : [lab?.labguide,lab?.userguide],
+            credentials: [user],
+            labDetails:lab
           }
         });
       }
@@ -103,9 +106,10 @@ export const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({
         guacUrl: null,
         vmTitle: lab.title,
         vmId: lab.labid || lab.lab_id,
-        doc: lab.labguide,
+        doc:user?.role === 'user' ? lab.userguide : [lab?.labguide,lab?.userguide],
         credentials: usersInGroup,
-        isGroupConnection: true
+        isGroupConnection: true,
+        labDetails:lab
       }
     });
   };

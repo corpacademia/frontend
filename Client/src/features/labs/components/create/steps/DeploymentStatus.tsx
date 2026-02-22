@@ -46,6 +46,9 @@ export const DeploymentStatus: React.FC<DeploymentStatusProps> = ({ config }) =>
       }
     } catch (err) {
       setError('Failed to fetch deployment progress.');
+      setTimeout(()=>{
+        setError(null);
+      },2000)
     }
   };
 

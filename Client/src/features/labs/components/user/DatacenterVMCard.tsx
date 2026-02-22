@@ -112,6 +112,16 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
       setNotification(null);
 
       try {
+          try {
+                          if(lab?.batch_id &&  lab?.status !== 'started'){
+                          const updateLabStartCount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserBatchLabs`,{
+                            batchId:lab?.batch_id,
+                            userId:lab?.user_id,
+                            labId:lab?.lab_id
+                          })}
+                        } catch (error) {
+                          console.log('Error updating lab status')
+                        }
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
 
           isrunning: true,
@@ -173,7 +183,8 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
                             vmTitle: lab.title,
                             vmId: lab.lab_id,
                             doc:lab.userguide,
-                            credentials:lab.userscredentials[0]
+                            credentials:lab.userscredentials[0],
+                            labDetails:lab
                            }
                          });
                          }

@@ -22,10 +22,13 @@ import {
   Power,
   RefreshCw,
   PowerOff,
+  CheckCircle,
 } from "lucide-react";
 import axios from "axios";
 import Split from "react-split";
 import Guacamole from "guacamole-common-js";
+import { useAuthStore } from "../../../store/authStore";
+import { th } from "date-fns/locale";
 
 interface VMSessionPageProps {}
 
@@ -33,7 +36,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   const { vmId } = useParams<{ vmId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-
+  const {user} = useAuthStore();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [documents, setDocuments] = useState<string[]>([]);
   const [currentDocIndex, setCurrentDocIndex] = useState(0);
@@ -43,8 +46,12 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   const [isControlsOpen, setIsControlsOpen] = useState(false);
   const [isPowerMenuOpen, setIsPowerMenuOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isStopping,setIsStopping] = useState(false);
   const [vmDropdownOpen, setVmDropdownOpen] = useState(false);
   const [splitRatio, setSplitRatio] = useState(70);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [completeSuccess, setCompleteSuccess] = useState(false);
+
 
   const displayContainerRef = useRef<HTMLDivElement>(null);
   const displayCanvasRef = useRef<HTMLDivElement>(null);
@@ -53,23 +60,22 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   const keyboardRef = useRef<any>(null);
   const mouseRef = useRef<any>(null);
 
-  // 🔥 store CSS scales so mouse mapping can use them
+  //  store CSS scales so mouse mapping can use them
   const scaleXRef = useRef(1);
   const scaleYRef = useRef(1);
 
-  const { guacUrl, vmTitle, credentials, isGroupConnection } = location.state || {};
+
+  const { guacUrl, vmTitle, credentials, isGroupConnection ,labDetails} = location.state || {};
   const [selectedCredential, setSelectedCredential] = useState<any>(null);
   const [activeGuacUrl, setActiveGuacUrl] = useState<string>(guacUrl || "");
 
   const credentialsList = credentials;
-
   const resolutions = ["800x600", "1024x768", "1280x720", "1366x768", "1600x900", "1920x1080"];
 
   const extractFileName = (filePath: string) => {
     const match = filePath.match(/[^\\\/]+$/);
     return match ? match[0] : "";
   };
-
   // Load documents from location
   useEffect(() => {
     const docs = location.state?.doc || location.state?.document || [];
@@ -92,7 +98,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
     return () => document.removeEventListener("keydown", handleEscKey);
   }, [activeGuacUrl, navigate, isFullscreen, isGroupConnection]);
 
-  // 🔥 Central size/scale update – used for fullscreen + window resize + split drag
+  //  Central size/scale update – used for fullscreen + window resize + split drag
   // Uses auto-detected framebuffer size from the Guac canvas
   const updateDisplaySize = useCallback(() => {
     if (!clientRef.current || !displayCanvasRef.current) return;
@@ -309,7 +315,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
     }
   };
 
-  // 🔥 This does NOT reconnect. It sends a size instruction inside the same session.
+  //  This does NOT reconnect. It sends a size instruction inside the same session.
   const handleResolutionChange = (resolution: string) => {
     setSelectedResolution(resolution);
     setIsControlsOpen(false);
@@ -363,13 +369,243 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       setIsConnecting(false);
     }
   };
+  const handleCompletelab = async()=>{
+    try {
+      setIsCompleting(true);
+      setCompleteSuccess(false);
+      const update = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserLabCompletedStatus`,{
+        userLab:labDetails
+      })
+      setCompleteSuccess(true);
+    } catch (error) {
+      console.error("Error in updating the status:",error)
+    }
+    finally{
+      setIsCompleting(false);
+    }
+  }
+  const reconnectWithGuacUrl = useCallback((wsUrl: string) => {
+  console.log("🔁 Reconnecting with new Guac URL:", wsUrl);
 
-  const handlePowerAction = (action: "restart" | "shutdown") => {
-    console.log("⚡ Power action:", action);
+  // Force cleanup first
+  if (clientRef.current) {
+    clientRef.current.disconnect();
+    clientRef.current = null;
+  }
+
+  setIsConnecting(true);
+  setActiveGuacUrl(wsUrl); // THIS triggers Guacamole useEffect
+}, []);
+
+
+  const handlePowerAction = async (action: "restart" | "shutdown") => {
     setIsPowerMenuOpen(false);
     // TODO: backend call for restart/shutdown if you have it
-  };
+    
+    if (labDetails?.type === 'single-vm'){
+        let cloudinstanceDetails ;
+        let instanceId;
+        if(user?.role === 'user' || labDetails?.assessment){
+        cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+            user_id:user?.id || labDetails?.user_id,
+            lab_id: labDetails?.lab_id || labDetails?.labid,
+          })
+          instanceId = cloudinstanceDetails?.data?.data?.instance_id;
+        }
+        else{
+          cloudinstanceDetails =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
+              lab_id: labDetails?.lab_id || labDetails?.labid,
+          });
+          instanceId = cloudinstanceDetails?.data?.result?.instance_id;
+        }
+          if (!cloudinstanceDetails?.data?.success) {
+            throw new Error('Failed to retrieve instance details');
+          }
+          
+                if( action === "shutdown"){
+                  setIsStopping(true);
+                  const stop =await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
+                    instance_id: instanceId
+                  });
+                  if(stop.data.success){
+                     if(user?.role === 'user' || labDetails?.assessment){
+                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+                      lab_id:labDetails?.lab_id || labDetails?.labid,
+                      user_id:labDetails?.user_id,
+                      state:false,
+                      isStarted:true,
+                      type:user?.role === 'user' ? 'user' : 'org'
+                    })
+                     }
+                    
+                    else{
+                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
+                        lab_id: labDetails?.lab_id || labDetails?.labid,
+                        state: false,
+                        isStarted:true
+                      });
+                    }
+                  }
+                  setIsStopping(false);
+                }
+                else if(action === "restart"){
+                   const restart = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`, {
+                            instance_id: instanceId,
+                            user_type:user?.role === 'user' || labDetails?.assessment ? 'user' : 'lab'
+                          });
+                          let cloudInstanceDetails;
+                          
+                           if (restart.data.success ) {
+                            if(user?.role === 'user' || labDetails?.assessment){
+                               cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+                              user_id: labDetails?.user_id,
+                              lab_id: labDetails?.lab_id || labDetails?.labid,
+                            })
+                            }
+                            else{
+                               cloudInstanceDetails =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
+                                  lab_id: labDetails?.lab_id || labDetails?.labid,
+                              });
+                            }
+                            if(cloudInstanceDetails?.data?.success){
+                              const ip =
+                              cloudInstanceDetails?.data?.data?.public_ip ??
+                              cloudInstanceDetails?.data?.result?.public_ip;
+                              const password = 
+                               cloudInstanceDetails?.data?.data?.password ??
+                              cloudInstanceDetails?.data?.result?.password;
 
+                            if (!ip || !password) {
+                              throw new Error("VM public_ip not available yet");
+                              
+                            }
+                              const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+                                os_name: labDetails?.os,
+                                instance_id: instanceId,
+                                hostname: ip,
+                                password: password,
+                                buttonState: 'Start Lab'
+                              });
+                              if(response.data.success){
+                                //update database that the instance is started
+                                // await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+                                //   lab_id:labDetails?.lab_id || labDetails?.labid,
+                                //   user_id:labDetails?.user_id,
+                                //   state:true,
+                                //   isStarted:true,
+                                //   type:'org'
+                                // })
+                                if(user?.role === 'user' || labDetails?.assessment){
+                                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+                                      lab_id:labDetails?.lab_id || labDetails?.labid,
+                                      user_id:labDetails?.user_id,
+                                      state:true,
+                                      isStarted:true,
+                                      type:user?.role === 'user' ? 'user' : 'org'
+                                    })
+                                    }
+                                    
+                                    else{
+                                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
+                                        lab_id: labDetails?.lab_id || labDetails?.labid,
+                                        state: true,
+                                        isStarted:true
+                                      });
+                                    }
+                                         const Data = JSON.parse(response.data.response.result);
+                                         const userName = Data.username;
+                                         const protocol = Data.protocol;
+                                         const port = Data.port;
+                                         const resp = await axios.post(
+                                         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                                          {
+                                                 protocol: protocol,
+                                                 hostname:ip,
+                                                 port: port,
+                                                 username: userName,
+                                                 password:password,
+                                          }
+                                         );
+                                        if (resp.data.success) {
+                                    const wsPath = resp.data.wsPath;
+                                    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                                    const hostPort = `${window.location.hostname}:3002`;
+                                    const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+
+                                    reconnectWithGuacUrl(wsUrl); //  THIS is the fix
+                                  }
+
+                                       }
+                              }
+                            
+                          }
+                }
+                  
+         }
+    else if(labDetails?.type === 'singlevm-proxmox'){
+          if(action === "restart"){
+             setIsConnecting(true);
+            const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+              lab_id: labDetails?.labid,
+              vmid: labDetails?.vmid,
+              node: labDetails?.node,
+              type:user?.role === 'user' ? 'user' : labDetails?.assessment ? 'org' : 'sup',
+              userid:user?.id,
+              purchased:labDetails?.purchased ? true :false,
+            });
+
+            if (startResponse.data.success) {
+               setIsConnecting(false);
+              const backData = startResponse.data.data;
+            
+              const resp = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+            {
+              protocol: backData.protocol,
+              hostname: backData.hostname,
+              port: backData.port,
+              username:labDetails?.username,
+              password: labDetails?.password,
+            }
+          );
+      
+          if (resp.data.success) {
+            const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+            // Build full ws url for guacamole-common-js
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+            const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                  reconnectWithGuacUrl(wsUrl);
+
+          }
+            } else {
+              throw new Error(startResponse.data.message || 'Failed to start VM');
+            }
+          
+          }
+          else if(action === "shutdown"){
+            setIsStopping(true);
+            const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/stopVM`, {
+              lab_id: labDetails?.labid,
+              vmid: labDetails?.vmid,
+              node: labDetails?.node,
+              type: user?.role === 'user' ? 'user' : labDetails?.assessment ? 'org' : 'sup',
+              userid:user?.id,
+              purchased:labDetails?.purchased ? true : false,
+              vmDetailsId:labDetails?.vmdetails_id || null
+            });
+
+            if (stopResponse.data.success) {
+                setIsStopping(false);
+            } 
+            else{
+              throw new Error(stopResponse.data.message || 'Failed to stop VM');
+            }
+            
+          }
+       }
+  };
+  const port = labDetails?.type === "vm-cluster" ? 3007 : 3002;
   // ---------------------------------------
   // Render
   // ---------------------------------------
@@ -486,6 +722,37 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                     </div>
                   )}
                 </div>
+                 {/* Completed */}
+                  {/* Completed Button */}
+                <div className="relative flex items-center space-x-2">
+                    <button
+                      onClick={handleCompletelab}
+                      disabled={isCompleting || labDetails?.status === 'completed' || completeSuccess}
+                      className={`p-2 rounded-lg transition-colors ${
+                        isCompleting ||  labDetails?.status === 'completed' || completeSuccess
+                          ? "text-gray-500 cursor-not-allowed"
+                          // : completeSuccess
+                          // ? "text-green-500"
+                          : "text-green-400 hover:bg-dark-300"
+                      }`}
+                     title={labDetails?.status === 'completed' || completeSuccess
+                    ? "Completed"
+                    : "Mark as Completed"}
+
+                    >
+                      {isCompleting ? (
+                        <Loader className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-5 w-5" />
+                      )}
+                    </button>
+
+                  {completeSuccess && (
+                    <span className="text-sm text-green-400 animate-fade-in">
+                      Lab Completed Successfully!
+                    </span>
+                  )}
+                      </div>
 
                 {/* Resolution */}
                 <div className="relative">
@@ -631,10 +898,10 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
               />
             </div>
 
-            {isConnecting && (
+            {isConnecting || isStopping && (
               <div className="absolute inset-0 flex justify-center items-center bg-dark-400/90 z-50">
                 <Loader className="h-8 w-8 text-primary-400 animate-spin mr-3" />
-                <span className="text-gray-300">Connecting to VM...</span>
+                <span className="text-gray-300"> {isConnecting ? "Connecting to VM..." : "Stopping"}</span>
               </div>
             )}
           </div>
@@ -677,7 +944,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                   <button
                     onClick={() =>
                       window.open(
-                        `http://localhost:3002/uploads/${extractFileName(
+                        `http://localhost:${port}/uploads/${extractFileName(
                           documents[currentDocIndex]
                         )}`,
                         "_blank"
@@ -699,7 +966,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
 
               <div className="flex-grow overflow-auto">
                 <iframe
-                  src={`http://localhost:3002/uploads/${extractFileName(
+                  src={`http://localhost:${port}/uploads/${extractFileName(
                     documents[currentDocIndex]
                   )}`}
                   className="w-full h-full border-0"
@@ -729,7 +996,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
-                            `http://localhost:3002/uploads/${extractFileName(doc)}`,
+                            `http://localhost:${port}/uploads/${extractFileName(doc)}`,
                             "_blank"
                           );
                         }}

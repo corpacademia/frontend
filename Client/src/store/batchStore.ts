@@ -86,7 +86,7 @@ interface BatchState {
   error: string | null;
 
   // Batch CRUD operations
-  fetchBatches: (orgId: string) => Promise<void>;
+  fetchBatches: (userIds: string,role:string) => Promise<void>;
   fetchBatchDetails: (batchId: string) => Promise<void>;
   createBatch: (data: {
     batchName: string;
@@ -94,6 +94,7 @@ interface BatchState {
     start_date?: string;
     end_date?: string;
     org_id: string;
+    role:string;
     created_by: string;
   }) => Promise<{ success: boolean; message?: string }>;
   updateBatch: (batchId: string, data: {
@@ -105,7 +106,7 @@ interface BatchState {
   deleteBatch: (batchId: string) => Promise<{ success: boolean; message?: string }>;
 
   // Lab assignment operations
-  fetchAvailableLabs: (userId: string,orgId: string) => Promise<void>;
+  fetchAvailableLabs: (userId: string,orgId: string,role: boolean) => Promise<void>;
   fetchAvailableTrainers: (orgId: string) => Promise<void>;
   assignLabToBatch: (data: {
     batch_id: string;
@@ -126,7 +127,7 @@ interface BatchState {
   removeLabFromBatch: (batchId: string, labId: string) => Promise<{ success: boolean; message?: string }>;
 
   // User management operations
-  fetchAvailableUsers: (batchId: string, orgId: string) => Promise<void>;
+  fetchAvailableUsers: (batchId: string, orgId: string,role: string) => Promise<void>;
   addUsersToBatch: (batchId: string, userIds: string[],assignedBy: string) => Promise<{ success: boolean; message?: string }>;
   removeUserFromBatch: (batchId: string,labId:string[], userId: string) => Promise<{ success: boolean; message?: string }>;
 
@@ -158,12 +159,18 @@ export const useBatchStore = create<BatchState>((set, get) => ({
   isLoadingUsers: false,
   error: null,
 
-  fetchBatches: async (userId: string) => {
+  fetchBatches: async (userIds: string,role:string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getBatches/${userId}`,
-        { withCredentials: true }
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getBatches`,
+        { 
+          userIds:userIds,
+          role:role 
+        },
+        {
+          withCredentials:true
+        }
       );
 
       if (response.data.success) {
@@ -230,7 +237,7 @@ export const useBatchStore = create<BatchState>((set, get) => ({
       if (response.data.success) {
         // Refresh batches list
         if (data.org_id) {
-          get().fetchBatches(data.org_id);
+          get().fetchBatches(data.created_by,data?.role);
         }
         return { success: true };
       } else {
@@ -290,12 +297,12 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     }
   },
 
-  fetchAvailableLabs: async (userId,orgId) => {
+  fetchAvailableLabs: async (userId,orgId,role) => {
     set({ isLoadingLabs: true, error: null });
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabs`,
-        {userId,orgId},
+        {userId,orgId,role},
         { withCredentials: true }
       );
 
@@ -403,27 +410,82 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     }
   },
 
-  fetchAvailableUsers: async (batchId: string, orgId: string) => {
-    set({ isLoadingUsers: true, error: null });
-    try {
+  // fetchAvailableUsers: async (batchId: string, orgId: string,role: string) => {
+  //   set({ isLoadingUsers: true, error: null });
+  //   try {
+  //     let response;
+  //     if(role === 'superadmin'){
+  //        response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/allUsers`,
+  //         { withCredentials: true }
+  //        );
+  //        response = response.data.data.fiter((user:any)=>user?.role === 'user')
+  //     }
+  //     else{
+  //       response = await axios.get(
+  //       `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${orgId}`,
+  //       { withCredentials: true }
+  //     );
+  //     }
+       
+
+  //     if (response.data.success) {
+  //       set({ availableUsers: response.data.data, isLoadingUsers: false });
+  //     } else {
+  //       throw new Error(response.data.message || 'Failed to fetch users');
+  //     }
+  //   } catch (error: any) {
+  //     console.error('Error fetching users:', error);
+  //     set({
+  //       isLoadingUsers: false,
+  //       error: error.response?.data?.message || 'Failed to fetch users'
+  //     });
+  //   }
+  // },
+fetchAvailableUsers: async (batchId: string, orgId: string, role: string) => {
+  set({ isLoadingUsers: true, error: null });
+
+  try {
+    let usersData;
+    if (role === 'superadmin') {
+      const response = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/allUsers`,
+        { withCredentials: true }
+      );
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to fetch users');
+      }
+
+      // Filter only role = user
+      usersData = response.data.data.filter(
+        (user: any) => user?.role === 'user'
+      );
+    } else {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${orgId}`,
         { withCredentials: true }
       );
 
-      if (response.data.success) {
-        set({ availableUsers: response.data.data, isLoadingUsers: false });
-      } else {
+      if (!response.data.success) {
         throw new Error(response.data.message || 'Failed to fetch users');
       }
-    } catch (error: any) {
-      console.error('Error fetching users:', error);
-      set({
-        isLoadingUsers: false,
-        error: error.response?.data?.message || 'Failed to fetch users'
-      });
+
+      usersData = response.data.data;
     }
-  },
+
+    set({
+      availableUsers: usersData,
+      isLoadingUsers: false
+    });
+
+  } catch (error: any) {
+    console.error('Error fetching users:', error);
+    set({
+      isLoadingUsers: false,
+      error: error.response?.data?.message || 'Failed to fetch users'
+    });
+  }
+},
 
   addUsersToBatch: async (batchId, userIds,assignedBy) => {
     set({ error: null });

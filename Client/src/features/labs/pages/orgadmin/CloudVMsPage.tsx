@@ -236,6 +236,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
             return {
               ...vmResponse.data.data,
               ...assignment,
+              type:"singlevm-proxmox"
             };
           }
           return null;

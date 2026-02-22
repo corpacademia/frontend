@@ -129,6 +129,16 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
           return;
         }
       if (buttonLabel === 'Launch VM') {
+          try {
+                          if(vm?.batch_id && vm?.status !== 'started'){
+                          const updateLabStartCount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserBatchLabs`,{
+                            batchId:vm?.batch_id,
+                            userId:vm?.user_id,
+                            labId:vm?.labid
+                          })}
+                        } catch (error) {
+                          console.log('Error updating lab status')
+                        }
         const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchUserVm`, {
           node: vm?.node,
           labid:vm?.labid,
@@ -147,7 +157,8 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
             message: 'VM Launched successfully',
           });
         }
-      } else if (buttonLabel === 'Stop') {
+      } 
+      else if (buttonLabel === 'Stop') {
         const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/stopVM`, {
           lab_id: vm.labid,
           vmid: vm.vmid,
@@ -166,7 +177,8 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
         } else {
           throw new Error(stopResponse.data.message || 'Failed to stop VM');
         }
-      } else {
+      } 
+      else {
         const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
           lab_id: vm.labid,
           vmid: vm.vmid,
@@ -205,7 +217,8 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
         state: {
           guacUrl: wsUrl,
           vmTitle: vm.title,
-          doc:vm?.userguide
+          doc:vm?.userguide,
+          labDetails:vm
         }
       });
       }

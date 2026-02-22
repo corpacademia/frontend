@@ -101,7 +101,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
     useEffect(() => {
       const checkVmCreated = async () => {
         try {
-          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/checkvmcreated`, {
+          const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkvmcreated`, {
             lab_id: vm.lab_id,
           });
           if (response.data.success) {
@@ -237,11 +237,11 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                 
                     // First API: Launch instance (Keep loading active)
                     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`, {
-                      name: admin.name,
-                      ami_id: ami.data.result.ami_id,
-                      user_id: admin.id,
+                      name: admin?.name,
+                      ami_id: ami?.data?.result?.ami_id,
+                      user_id: admin?.id,
                       lab_id: vm?.lab_id || vm?.labid,
-                      instance_type: vm.instance,
+                      instance_type: vm?.instance,
                       start_date: formatDate(vm?.startdate),
                       end_date:formatDate(vm?.enddate),
                       batch:vm?.assignment_type,
@@ -331,7 +331,8 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                                      state: {
                                        guacUrl: wsUrl,
                                        vmTitle: vm?.title,
-                                       doc:vm?.labguide
+                                       doc:vm?.labguide,
+                                       labDetails:vm
                                      }
                                    });
                                    }
@@ -495,7 +496,8 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                 state: {
                   guacUrl: wsUrl,
                   vmTitle: vm.title,
-                  doc:vm?.labguide
+                  doc:vm?.labguide,
+                  labDetails:vm
                 }
               });
               }
@@ -567,7 +569,8 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                   doc: [
                     ...(vm?.labguide ?? []),
                     ...(vm?.userguide ?? [])
-                  ]
+                  ],
+                  labDetails:vm
                 }
               });
               }

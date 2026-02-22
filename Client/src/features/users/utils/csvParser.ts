@@ -19,7 +19,7 @@ export const parseCsvFile = async (file: File): Promise<any[]> => {
             ? ';'
             : ',';
 
-        // ✅ CSV line parser that supports quotes
+        //  CSV line parser that supports quotes
         const parseCSVLine = (line: string): string[] => {
           const result: string[] = [];
           let current = '';

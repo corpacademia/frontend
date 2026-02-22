@@ -31,6 +31,7 @@ import { ProxmoxConvertToCatalogueModal } from './ProxmoxConvertToCatalogueModal
 import { AssignUsersModal } from '../catalogue/AssignUsersModal';
 import { UserInstancesModal } from '../common/UserInstancesModal';
 import Guacamole from "guacamole-common-js";
+import { LabDetails } from '../LabDetails';
 
 interface ProxmoxVM {
   id: string;
@@ -248,7 +249,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
                            state: {
                              guacUrl: wsUrl,
                              vmTitle: vm?.title,
-                             doc:vm?.assessment ? vm?.userguide : [...vm?.labguide,...vm?.userguide]
+                             doc:vm?.assessment ? vm?.userguide : [...vm?.labguide,...vm?.userguide],
+                             labDetails:vm
                            }
                          });
                          }

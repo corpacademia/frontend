@@ -106,8 +106,8 @@ export const BulkUploadModal: React.FC<BulkUploadModalProps> = ({
 
           <div className="flex justify-between items-center pt-4 border-t border-primary-500/10">
             <a
-              href="/templates/users-template.csv"
-              download
+              href="/users-template.csv"
+              download="users-template.csv"
               className="flex items-center text-sm text-primary-400 hover:text-primary-300"
             >
               <FileText className="h-4 w-4 mr-2" />

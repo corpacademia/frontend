@@ -164,14 +164,12 @@ export const AppRoutes: React.FC = () => {
         <Route path="cloud-usage" element={<CloudUsage />} />
         <Route path="notifications" element={<NotificationPage />} />
         <Route path="batches" element={
-          <PrivateRoute allowedRoles={['labadmin']}>
             <BatchesPage />
-          </PrivateRoute>
         } />
         <Route path="batches/:batchId" element={
-          <PrivateRoute allowedRoles={['labadmin']}>
+          // <PrivateRoute allowedRoles={['labadmin']}>
             <BatchDetailsPage />
-          </PrivateRoute>
+          // </PrivateRoute>
         } />
 
         {/* User Lab Routes */}

@@ -382,6 +382,7 @@ setFilteredLabs(updatedLabs);
                     ...vmRes.data.data,
                     ...assignment,
                     userscredentials: credsRes.data.success ? credsRes.data.data : [],
+                    type:'singlevm-datacenter'
                   };
                 }
               } catch (err) {
@@ -405,7 +406,10 @@ setFilteredLabs(updatedLabs);
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserSingleVMProxmoxLab/${user.id}`
         );
         if (res.data.success) {
-          const proxmoxVMList = res.data.data || [];
+          const proxmoxVMList = res?.data?.data.map((data:any)=>({
+            ...data,
+            type:'singlevm-proxmox'}
+          )) || [];
           setProxmoxVMs(proxmoxVMList);
           setFilteredProxmoxVMs(proxmoxVMList);
         }
@@ -635,6 +639,7 @@ setFilteredLabs(updatedLabs);
 
   const handleLaunchLab = async (lab:any) => {
     if(lab?.status === 'expired'){
+      
        setLabControls(prev => ({
       ...prev,
       [lab.lab_id]: {
@@ -671,7 +676,16 @@ setFilteredLabs(updatedLabs);
       if (!ami.data.success) {
         throw new Error('Failed to retrieve instance details');
       }
-  
+      try {
+        if(lab?.batch_id && lab?.status !== 'started'){
+        const updateLabStartCount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserBatchLabs`,{
+          batchId:lab?.batch_id,
+          userId:lab?.user_id,
+          labId:lab?.lab_id
+        })}
+      } catch (error) {
+        console.log('Error updating lab status')
+      }
       // First API: Launch instance (Keep loading active)
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`, {
         name: user.name,
@@ -850,7 +864,8 @@ setFilteredLabs(updatedLabs);
                              state: {
                                guacUrl: wsUrl,
                                vmTitle: lab?.title,
-                               doc:lab?.labguide
+                               doc:lab?.labguide,
+                               labDetails:lab
                              }
                            });
                            }
@@ -913,7 +928,8 @@ setFilteredLabs(updatedLabs);
                              state: {
                                guacUrl: wsUrl,
                                vmTitle: lab?.title,
-                               doc:lab?.labguide
+                               doc:lab?.labguide,
+                               labDetails:lab
                              }
                            });
                            }

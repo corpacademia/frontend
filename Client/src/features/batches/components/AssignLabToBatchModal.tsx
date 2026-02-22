@@ -57,7 +57,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
   useEffect(() => {
     if (isOpen) {
-      fetchAvailableLabs(user?.id,user.org_id);
+      fetchAvailableLabs(user?.id,user?.org_id,user?.role);
       if (user?.org_id) {
         fetchAvailableTrainers(user.org_id);
       }

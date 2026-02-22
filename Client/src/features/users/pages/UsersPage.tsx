@@ -10,7 +10,7 @@ import { Upload, UserPlus } from 'lucide-react';
 import axios from 'axios';
 
 export const UsersPage: React.FC = () => {
-  const [originalUsers, setOriginalUsers] = useState([]);
+  const [originalUsers, setOriginalUsers] = useState<any[]>([]);
   const [users, setUsers] = useState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -114,17 +114,21 @@ export const UsersPage: React.FC = () => {
 
   const handleBulkUpload = async (uploadedUsers: any[]) => {
     try {
-      const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadUsers`, {
+      const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadOrgUsers`, {
         users: uploadedUsers,
-        admin: admin
+        organizationId: admin?.org_id,
+        createdBy: admin?.id,
+        orgName:admin?.organization,
+        orgType:admin?.organization_type,
+        role:'user'
       });
 
       if (result.data.success) {
         setIsUploadModalOpen(false);
         // Refresh the user list
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/allUsers`);
-        setOriginalUsers(response.data.data);
-        setUsers(response.data.data);
+        setOriginalUsers((prevData)=>[...prevData,...response.data.data]);
+        setUsers((prevData)=>[...prevData,...response.data.data]);
       }
     } catch (error) {
       console.error('Error bulk uploading users:', error);
@@ -140,7 +144,7 @@ export const UsersPage: React.FC = () => {
         <div className="flex space-x-4">
           <button 
             onClick={() => setIsUploadModalOpen(true)}
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
           >
             <Upload className="h-4 w-4 mr-2" />
             Bulk Upload
@@ -167,7 +171,16 @@ export const UsersPage: React.FC = () => {
         users={users}
         onViewDetails={handleViewDetails}
         hideOrganization={false}
+       onUsersDeleted={(deletedIds) => {
+          setUsers((prev) =>
+           prev.filter((user) => !deletedIds.includes(user?.id))
+           );
+           setOriginalUsers((prev) =>
+           prev.filter((user) => !deletedIds.includes(user?.id))
+           );
+          }}
       />
+
 
       <BulkUploadModal
         isOpen={isUploadModalOpen}

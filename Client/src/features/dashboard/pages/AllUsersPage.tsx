@@ -5,8 +5,9 @@ import { AddUserModal } from '../../users/components/AddUserModal';
 import { EditUserModal } from '../../users/components/EditUserModal';
 import { UserFilters } from '../../users/components/UserFilters';
 import { UserStats } from '../../users/components/UserStats';
-import { UserPlus, Users, Shield, Building2 } from 'lucide-react';
+import { UserPlus, Users, Shield, Building2, Upload } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
+import { BulkUploadModal } from '../../users/components/BulkUploadModal';
 import axios from 'axios';
 // import { ApproveRejectUserModal } from '../../users/components/ApproveRejectUserModal';
 
@@ -30,12 +31,13 @@ const ApproveRejectUserModal = ({ isOpen, onClose, user, onApprove, onReject }) 
 
 export const AllUsersPage: React.FC = () => {
   const { user } = useAuthStore();
-  const [allUsers, setAllUsers] = useState([]);
-  const [originalUsers, setOriginalUsers] = useState([]);
+ const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [originalUsers, setOriginalUsers] = useState<any[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isApproveRejectModalOpen, setIsApproveRejectModalOpen] = useState(false);
+  const [isUploadModalOpen,setIsUploadModalOpen] = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -146,25 +148,47 @@ export const AllUsersPage: React.FC = () => {
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadOrgUsers`, {
         users: uploadedUsers,
         organizationId: user?.org_id,
-        createdBy: user
+        createdBy: user?.id,
+        orgName:user?.organization,
+        orgType:user?.organization_type,
+        role:'user'
       });
 
       if (result.data.success) {
         setIsUploadModalOpen(false);
         // Refresh the users list
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.organization_id}`
-        );
-        if (response.data.success) {
-          setAllUsers(response.data.data);
-          setOriginalUsers(response.data.data);
-        }
+        // const response = await axios.get(
+        //   `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.organization_id}`
+        // );
+        // if (response.data.success) {
+         setAllUsers((prev:any) => [...prev, ...result.data.data]);
+         setOriginalUsers((prev)=>[...prev,...result.data.data]);
+        // }
       }
     } catch (error) {
       console.error('Error bulk uploading users:', error);
     }
   };
+// const handleBulkUpload = async (uploadedUsers: any[]) => {
+//     try {
+//       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadOrgUsers`, {
+//         users: uploadedUsers,
+//         organizationId: admin.org_id,
+//         createdBy: admin?.id,
+//         orgName:admin?.organization,
+//         orgType:admin?.organization_type,
+//         role:'user'
+//       });
 
+//       if (result.data.success) {
+//         setIsUploadModalOpen(false);
+//         // Refresh the team members list
+//         await fetchTeamMembers();
+//       }
+//     } catch (error) {
+//       console.error('Error bulk uploading users:', error);
+//     }
+//   };
   const handleUserStatusUpdate = async (userId: string, status: 'inactive' | 'rejected') => {
     try {
       await axios.put(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/updateUserStatus/${userId}`, {
@@ -214,13 +238,13 @@ export const AllUsersPage: React.FC = () => {
           </p>
         </div>
         <div className="flex space-x-4">
-          {/* <button 
+          <button 
             onClick={() => setIsUploadModalOpen(true)}
-            className="btn-secondary"
+            className="btn-secondary text-gray-200"
           >
-            <Upload className="h-4 w-4 mr-2" />
+            <Upload className="h-4 w-4 mr-2 text-gray-200" />
             Bulk Upload
-          </button> */}
+          </button>
           <button 
             onClick={() => setIsAddModalOpen(true)}
             className="btn-primary text-gray-200"
@@ -284,6 +308,14 @@ export const AllUsersPage: React.FC = () => {
         onViewDetails={handleEditUser}
         hideOrganization={true}
         onApproveReject={handleApproveReject}
+        onUsersDeleted={(deletedIds) => {
+          setAllUsers((prev) =>
+           prev.filter((user) => !deletedIds.includes(user.id))
+           );
+           setOriginalUsers((prev) =>
+           prev.filter((user) => !deletedIds.includes(user.id))
+           );
+  }}
       />
 
       <AddUserModal
@@ -307,6 +339,11 @@ export const AllUsersPage: React.FC = () => {
         user={pendingUser}
         onApprove={(userId:string) => handleUserStatusUpdate(userId, 'inactive')}
         onReject={(userId:string) => handleUserStatusUpdate(userId, 'rejected')}
+      />
+      <BulkUploadModal
+      isOpen={isUploadModalOpen}
+      onClose={() => setIsUploadModalOpen(false)}
+      onUpload={handleBulkUpload}
       />
     </div>
   );

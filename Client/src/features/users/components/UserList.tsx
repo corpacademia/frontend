@@ -11,13 +11,15 @@ interface UserListProps {
   onViewDetails: (user: User) => void;
   hideOrganization?: boolean;
   onApproveReject?: (user: User) => void;
+  onUsersDeleted: (deletedIds: string[]) => void;
 }
 
 export const UserList: React.FC<UserListProps> = ({ 
   users, 
   onViewDetails,
   hideOrganization = false,
-  onApproveReject
+  onApproveReject,
+  onUsersDeleted
 }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuthStore();
@@ -56,7 +58,8 @@ export const UserList: React.FC<UserListProps> = ({
 
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Users deleted successfully' });
-        setTimeout(() => window.location.reload(), 1500);
+       onUsersDeleted(userIds);
+       setSelectedUsers([]);
       } else {
         throw new Error(response.data.message || 'Failed to delete users');
       }

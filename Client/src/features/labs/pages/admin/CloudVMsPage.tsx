@@ -379,16 +379,15 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
       ...(orgResponse?.data?.success
     ? orgResponse.data.data.map((orgLab: any) => ({
         ...orgLab,
-        assessment: true,
+        assessment: true
       }))
     : []),
       ...(proxmoxResponse?.data?.success ? proxmoxResponse.data.data.map((lab: any)=>({
         ...lab,
-        assessment: false,
+        assessment: false
       })) : []),
       ...labAdminsResponse
     ];
-    console.log(allAssignments);
     // 🔁 Fetch lab details
     const vmDetails = await Promise.all(
       allAssignments.map(async (assignment: any) => {
@@ -401,6 +400,7 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
             return {
               ...vmResponse.data.data,
               ...assignment,
+              type:'singlevm-proxmox'
             };
           }
 
@@ -423,7 +423,6 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
         }
         return acc;
       }, []);
-    
     setProxmoxVMs(mergedVMs);
   } catch (err) {
     console.error("Error fetching Proxmox VMs:", err);

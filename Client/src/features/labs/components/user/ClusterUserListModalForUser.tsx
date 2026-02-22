@@ -136,7 +136,8 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
                       vmTitle: vm.title,
                       vmId: vmId,
                       doc: vm.lab?.userguide,
-                      credentials: [vmData]
+                      credentials: [vmData],
+                      labDetails:vm?.lab
                     }
                   });
                   }
@@ -156,12 +157,23 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
   };
 
   const handleConnectGroup = async (vmid: string, usersInGroup: any[]) => {
-    const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserVMClusterDatacenterStatus`,{
+    if(vm?.lab?.status !== 'started'){
+       const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserVMClusterDatacenterStatus`,{
           labId:vm?.lab?.labid,
           userId:userData.id,
           status:'started'
         });
-    
+    try {
+        if(vm?.lab?.batch_id &&  vm?.lab?.status !== 'started'){
+            const updateLabStartCount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserBatchLabs`,{
+                    batchId:vm?.lab?.batch_id,
+                    userId:vm?.lab?.user_id,
+                    labId:vm?.lab?.labid
+                   })}
+       } catch (error) {
+         console.log('Error updating lab status')
+        }
+    }
     
     // Navigate to VM session page with all credentials from this group
     navigate(`/dashboard/labs/vm-session/${vmId}`, {
@@ -169,9 +181,10 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
         guacUrl: null, // Will be set when user selects a specific VM
         vmTitle: vm.title,
         vmId: vmId,
-        doc: vm.lab?.labguide,
+        doc: vm.lab?.userguide,
         credentials: usersInGroup,
-        isGroupConnection: true
+        isGroupConnection: true,
+        labDetails:vm?.lab
       }
     });
   };

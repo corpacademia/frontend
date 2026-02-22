@@ -720,7 +720,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
       }
       else if (lab.type === 'singlevm-aws') {
         const ami = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/amiinformation`, { lab_id: lab?.lab_id || lab?.labid })
-                 response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deletevm`,{
+                  response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deletevm`,{
                   id:lab?.lab_id || lab?.labid, 
                   instance_id:lab?.instance_id, 
                   ami_id:ami.data.result.ami_id, 

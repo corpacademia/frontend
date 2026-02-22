@@ -44,7 +44,8 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
         description: formData.description,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        org_id: user.org_id,
+        org_id: user?.org_id,
+        role:user?.role,
         createdBy: user.id
       });
 

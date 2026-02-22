@@ -319,7 +319,8 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
                 state: {
                   guacUrl: wsUrl,
                   vmTitle: assessment.title,
-                  doc: assessment.config_details?.labguide
+                  doc: assessment.config_details?.labguide,
+                  labDetails:assessment
                 }
               });
             }
@@ -380,7 +381,8 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
                     state: {
                       guacUrl: wsUrl,
                       vmTitle: assessment.title,
-                      doc: assessment?.labguide
+                      doc: assessment?.labguide,
+                      labDetails:assessment
                     }
                   });
                 }

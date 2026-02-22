@@ -68,7 +68,7 @@ export const useLoginForm = () => {
     
     setLoading(true);
     try {
-      // const response1 = await authApi.login(formData.email, formData.password);
+      // onst response1 = await authApi.login(formData.email, formData.password);
       // console.log(response1)
       // login(response1.user);
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/login`,
@@ -93,7 +93,7 @@ export const useLoginForm = () => {
     } catch (error) {
       setErrors(prev => ({
         ...prev,
-        submit: error.response.data.error || 'Invalid email or password',
+        submit: error?.response?.data?.error || 'Invalid email or password',
       }));
     } finally {
       setLoading(false);

@@ -48,8 +48,8 @@ export const AddUsersToBatchModal: React.FC<AddUsersToBatchModalProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && user?.org_id) {
-      fetchAvailableUsers(batchId, user.org_id);
+    if (isOpen && user) {
+      fetchAvailableUsers(batchId, user?.org_id,user?.role);
     }
   }, [isOpen, batchId, user?.org_id]);
   const filteredUsers = availableUsers.filter(u =>

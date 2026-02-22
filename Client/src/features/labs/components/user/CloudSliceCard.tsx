@@ -110,6 +110,16 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
       if (lab.modules === 'without-modules') {
         // Call createIamUser only if the lab is not already launched
         if (!userLabStatus.launched) {
+           try {
+                  if(lab?.batch_id && lab?.status !== 'started'){
+                  const updateLabStartCount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserBatchLabs`,{
+                    batchId:lab?.batch_id,
+                    userId:lab?.user?.id,
+                    labId:lab?.labid
+                  })}
+                } catch (error) {
+                  console.log('Error updating lab status')
+                }
           const createIamUser = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
             userName: user.name,
             services: lab.services,
@@ -165,6 +175,16 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
 
       } else { // It's a module-based lab
         if(!userLabStatus.launched){
+            try {
+                  if(lab?.batch_id && lab?.status !== 'started'){
+                  const updateLabStartCount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserBatchLabs`,{
+                    batchId:lab?.batch_id,
+                    userId:lab?.user?.id,
+                    labId:lab?.labid
+                  })}
+                } catch (error) {
+                  console.log('Error updating lab status')
+                }
           const updateUserLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateLabStatusOfUser`,{
             status:'active',
             launched:true,
