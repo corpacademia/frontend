@@ -1,4 +1,4 @@
-export type UserRole = 'superadmin' | 'labadmin' | 'trainer' | 'user';
+export type UserRole = 'superadmin' | 'orgsuperadmin' | 'labadmin' | 'trainer' | 'user';
 
 export interface User {
   id: string;
@@ -6,6 +6,7 @@ export interface User {
   name: string;
   role: UserRole;
   organization?: string;
+  org_id?: string;
   createdAt: Date;
   lastLogin?: Date;
   profilePhoto?: string;

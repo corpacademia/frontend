@@ -119,7 +119,6 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
  const checkLabLaunched= async ()=>{
       try {
         let check;
-
         if(vm?.assessment){
           check = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`,{
             lab_id:vm?.lab_id,
@@ -675,7 +674,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
     }
   };
 
-  if (!isInstance) {
+  if (vm?.launched && !isInstance) {
     return (
       <div className="flex justify-center items-center h-full">
         <Loader className="animate-spin h-8 w-8 text-primary-400" />

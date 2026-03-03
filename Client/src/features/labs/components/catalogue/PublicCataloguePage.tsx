@@ -151,7 +151,8 @@ export const PublicCataloguePage: React.FC = () => {
     
     await proceedToCheckout(
       {userId: user?.id,
-       catalogues:courses
+       catalogues:courses,
+      org:user?.role === 'orgsuperadmin' 
       }
     );
   } catch (error) {

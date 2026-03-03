@@ -46,6 +46,8 @@ import { PurchaseHistoryPage } from '../pages/PurchaseHistoryPage';
 import { OrgAdminsPage } from '../features/dashboard/pages/OrgAdminsPage';
 import { AllUsersPage } from '../features/dashboard/pages/AllUsersPage';
 import { OrgSuperAdminCataloguePage } from '../features/labs/pages/OrgSuperAdminCataloguePage';
+import { SuperAdminCataloguePurchasesPage } from '../features/labs/pages/SuperAdminCataloguePurchasesPage';
+import { OrgSuperAdminPurchasesPage } from '../features/labs/pages/OrgSuperAdminPurchasesPage';
 import { PrivateRoute } from '../components/auth/PrivateRoute';
 import NotificationPage from '../pages/NotificationPage';
 import { LabBuilder } from '../features/dashboard/pages/LabBuilder';
@@ -84,7 +86,7 @@ export const AppRoutes: React.FC = () => {
           <PurchaseHistoryPage />
         </PrivateRoute>
       } />
-      <Route path='/notifications' element={<NotificationPage/>} />
+      <Route path='/notifications' element={<NotificationPage />} />
       <Route path="/dashboard/labs/details/:labId" element={<LabDetailsPage />} />
       {/* Super Admin Routes */}
 
@@ -155,6 +157,16 @@ export const AppRoutes: React.FC = () => {
         <Route path="my-organization" element={<Organizations />} />
         <Route path="org-admins" element={<OrgAdminsPage />} />
         <Route path="all-users" element={<AllUsersPage />} />
+        <Route path="catalogue-purchases" element={
+          <PrivateRoute allowedRoles={['superadmin']}>
+            <SuperAdminCataloguePurchasesPage />
+          </PrivateRoute>
+        } />
+        <Route path="my-purchases" element={
+          <PrivateRoute allowedRoles={['orgsuperadmin']}>
+            <OrgSuperAdminPurchasesPage />
+          </PrivateRoute>
+        } />
         <Route path="assessments" element={<Assessments />} />
         <Route path="lab-builder" element={<LabBuilder />} />
         <Route path="learning-path" element={<LearningPath />} />
@@ -164,11 +176,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="cloud-usage" element={<CloudUsage />} />
         <Route path="notifications" element={<NotificationPage />} />
         <Route path="batches" element={
-            <BatchesPage />
+          <BatchesPage />
         } />
         <Route path="batches/:batchId" element={
           // <PrivateRoute allowedRoles={['labadmin']}>
-            <BatchDetailsPage />
+          <BatchDetailsPage />
           // </PrivateRoute>
         } />
 

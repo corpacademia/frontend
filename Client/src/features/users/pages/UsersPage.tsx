@@ -134,7 +134,6 @@ export const UsersPage: React.FC = () => {
       console.error('Error bulk uploading users:', error);
     }
   };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -171,14 +170,14 @@ export const UsersPage: React.FC = () => {
         users={users}
         onViewDetails={handleViewDetails}
         hideOrganization={false}
-       onUsersDeleted={(deletedIds) => {
+        onUsersDeleted={(deletedIds) => {
           setUsers((prev) =>
            prev.filter((user) => !deletedIds.includes(user?.id))
            );
            setOriginalUsers((prev) =>
            prev.filter((user) => !deletedIds.includes(user?.id))
            );
-          }}
+         }}
       />
 
 
@@ -192,6 +191,7 @@ export const UsersPage: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddUser}
+        user={admin}
       />
     </div>
   );

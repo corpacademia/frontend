@@ -16,7 +16,7 @@ interface AssignLabToBatchModalProps {
 interface Lab {
   lab_id: string;
   title: string;
-  is_purchased: boolean;
+  purchased: boolean;
   quantity?: number;
 }
 
@@ -40,6 +40,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
     fetchAvailableTrainers, 
     assignLabToBatch, 
     updateBatchLab,
+    batchUsers,
     availableLabs, 
     availableTrainers,
     isLoadingLabs,
@@ -82,7 +83,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!user?.id) return;
-
+  
   setError(null);
   setSuccess(null);
   setIsSubmitting(true);
@@ -93,8 +94,13 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
     const type = selectedLabData ? selectedLabData?.type : '';
     const selectedTrainerData = availableTrainers.find(t => t.id === formData.trainer_id);
     const trainerName = selectedTrainerData?.name;
-
-    // ✅ Convert datetime-local (which is local) into "YYYY-MM-DD HH:mm:ss"
+    
+    if(selectedLab?.purchased && batchUsers.length > selectedLabData?.quantity) 
+      {
+        setError('The number of users exceed quantity')
+        return;
+      }
+    //  Convert datetime-local (which is local) into "YYYY-MM-DD HH:mm:ss"
     const formatForBackend = (datetime: string) => {
       if (!datetime) return '';
       const localDate = new Date(datetime);
@@ -194,7 +200,7 @@ const formatDate = (dateValue: string | Date | null) => {
               {availableLabs.map((lab) => (
                 <option key={lab.lab_id} value={lab.lab_id}>
                   {lab.title}
-                  {lab.is_purchased ? ` (Purchased - ${lab.quantity} licenses)` : ' (Not Purchased)'}
+                  {lab.purchased ? ` (Purchased - ${lab.quantity} licenses)` : ' (Not Purchased)'}
                 </option>
               ))}
             </select>
@@ -205,15 +211,15 @@ const formatDate = (dateValue: string | Date | null) => {
                   <span className="text-sm text-gray-300">Purchase Status:</span>
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${
-                      selectedLab.is_purchased
+                      selectedLab.purchased
                         ? 'bg-emerald-500/20 text-emerald-300'
                         : 'bg-amber-500/20 text-amber-300'
                     }`}
                   >
-                    {selectedLab.is_purchased ? 'Purchased' : 'Not Purchased'}
+                    {selectedLab.purchased ? 'Purchased' : 'Not Purchased'}
                   </span>
                 </div>
-                {selectedLab.is_purchased && (
+                {selectedLab.purchased && (
                   <div className="mt-2 text-sm text-gray-400">
                     Available Licenses: <span className="text-white font-semibold">{selectedLab.quantity}</span>
                   </div>

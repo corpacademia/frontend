@@ -146,6 +146,14 @@ export const Team: React.FC = () => {
         users={users}
         onViewDetails={handleViewDetails}
         hideOrganization={true}
+        onUsersDeleted={(deletedIds) => {
+          setUsers((prev) =>
+           prev.filter((user) => !deletedIds.includes(user?.id))
+           );
+           setOriginalUsers((prev) =>
+           prev.filter((user) => !deletedIds.includes(user?.id))
+           );
+         }}
       />
 
       <AddTeamMemberModal

@@ -29,7 +29,7 @@ interface CartStore {
   removeFromCart: (cartItemId: string) => Promise<void>;
   clearCart: (userId: string) => Promise<void>;
   updateCartItem: (cartItemId: string, updates: Partial<CartItem>) => Promise<boolean>;
-  proceedToCheckout: (params: { userId: string; catalogues: Catalogue[] }) => Promise<void>;
+  proceedToCheckout: (params: { userId: string; catalogues: Catalogue[];org:boolean }) => Promise<void>;
 }
 
 export const useCartStore = create<CartStore>((set, get) => ({
@@ -102,7 +102,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     return false;
   },
 
-  proceedToCheckout: async ({ userId, catalogues }) => {
+  proceedToCheckout: async ({ userId, catalogues,org }) => {
     const cartItems = get().cartItems;
     if (cartItems.length === 0) return;
     try {
@@ -128,9 +128,9 @@ export const useCartStore = create<CartStore>((set, get) => ({
         {
           userId,
           cartItems: payload,
+          org
         }
       );
-
       const sessionId = response.data.sessionId;
       const stripe = await stripePromise;
       if (stripe) {

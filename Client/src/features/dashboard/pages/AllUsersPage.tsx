@@ -108,10 +108,10 @@ export const AllUsersPage: React.FC = () => {
 
   const handleAddUser = async (userData: any) => {
     try {
-      const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addOrgUser`, {
+      const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addUser`, {
         formData: { ...userData },
         organizationId: user?.org_id,
-        createdBy: user
+        user: user
       });
 
       if (result.data.success) {
@@ -307,7 +307,6 @@ export const AllUsersPage: React.FC = () => {
         users={allUsers}
         onViewDetails={handleEditUser}
         hideOrganization={true}
-        onApproveReject={handleApproveReject}
         onUsersDeleted={(deletedIds) => {
           setAllUsers((prev) =>
            prev.filter((user) => !deletedIds.includes(user.id))
@@ -315,13 +314,15 @@ export const AllUsersPage: React.FC = () => {
            setOriginalUsers((prev) =>
            prev.filter((user) => !deletedIds.includes(user.id))
            );
-  }}
+         }}
+          onApproveReject={handleApproveReject}
       />
 
       <AddUserModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddUser}
+        user={user}
       />
 
       <EditUserModal

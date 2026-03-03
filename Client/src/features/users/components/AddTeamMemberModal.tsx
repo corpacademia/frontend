@@ -210,7 +210,6 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
               >
                 <option value="user">User</option>
                 <option value="trainer">Trainer</option>
-                <option value="admin">Admin</option>
               </select>
             </div>
           </div>
@@ -234,6 +233,7 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
           )}
 
           <div className="flex justify-end space-x-4">
+            <GradientText>
             <button
               type="button"
               onClick={() => {
@@ -245,6 +245,8 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
             >
               Cancel
             </button>
+            </GradientText>
+            <GradientText>
             <button
               type="submit"
               disabled={isSubmitting}
@@ -259,6 +261,7 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
                 'Add Member'
               )}
             </button>
+            </GradientText>
           </div>
         </form>
       </div>

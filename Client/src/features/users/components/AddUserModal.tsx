@@ -7,12 +7,14 @@ interface AddUserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (user: any) => Promise<void>;
+  user:any;
 }
 
 export const AddUserModal: React.FC<AddUserModalProps> = ({
   isOpen,
   onClose,
-  onAdd
+  onAdd,
+  user
 }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -21,7 +23,9 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     confirmPassword: '',
     role: 'user',
     organization: '',
-    status: 'active'
+    status: 'active',
+    org_id:'',
+    organization_type:''
   });
 
   const [organizations, setOrganizations] = useState([]);
@@ -45,6 +49,19 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
       fetchOrganizations();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+  if (user?.role !== "superadmin" && user?.organization) {
+    const value = `${user?.organization},${user?.organization_type},${user?.org_id}`;
+
+    setFormData((prev) => ({
+      ...prev,
+      organization: value,
+      org_id: user.organization.id,
+      organization_type: user.organization.org_type,
+    }));
+  }
+}, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     
@@ -95,7 +112,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
           role: 'user',
           organization: '',
           status: 'active',
-          
+          org_id:'',
+          organization_type:''
         });
       }, 1500);
     } catch (err: any) {
@@ -201,7 +219,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             </select>
           </div>
 
-          <div>
+         { user?.role === 'superadmin' &&  <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Organization
             </label>
@@ -213,13 +231,13 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                        text-gray-300 focus:border-primary-500/40 focus:outline-none"
             >
               <option value="">Select Organization</option>
-              {organizations.map(org => (
+              {user?.role === 'superadmin' && organizations.map(org => (
                 <option key={org.id} value={[org.organization_name,org.org_type,org.id]}>
                   {org.organization_name}
                 </option>
               ))}
             </select>
-          </div>
+          </div>}
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">

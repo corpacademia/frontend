@@ -134,7 +134,7 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
             }}
             className="p-2 hover:bg-dark-300 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-gray-400" />
+            <X className="h-5 w-5 text-gray-200" />
           </button>
         </div>
 

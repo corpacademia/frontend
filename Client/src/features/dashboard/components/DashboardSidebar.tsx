@@ -15,7 +15,8 @@ import {
   FolderOpen,
   ChevronLeft,
   ChevronRight,
-  CreditCard
+  CreditCard,
+  ShoppingBag,
 } from 'lucide-react';
 
 interface DashboardSidebarProps {
@@ -31,10 +32,9 @@ const SidebarItem = ({ icon: Icon, label, path, isActive, isCollapsed }) => (
     to={path}
     end
     className={({ isActive }) =>
-      `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-        isActive
-          ? 'bg-primary-500/10 text-primary-400'
-          : 'text-gray-400 hover:bg-dark-100/50 hover:text-primary-300'
+      `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive
+        ? 'bg-primary-500/10 text-primary-400'
+        : 'text-gray-400 hover:bg-dark-100/50 hover:text-primary-300'
       } ${isCollapsed ? 'justify-center' : ''}`
     }
     title={label}
@@ -59,6 +59,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: BookOpen, label: 'Labs', path: '/dashboard/labs' },
       { icon: FolderOpen, label: 'Workspaces', path: '/dashboard/labs/workspace' },
       { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },
+      { icon: ShoppingBag, label: 'Catalogue Purchases', path: '/dashboard/catalogue-purchases' },
       { icon: Cloud, label: 'Cloud Resources', path: '/dashboard/cloud' },
       { icon: Cloud, label: 'Cloud Settings', path: '/dashboard/cloud-settings' },
       { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
@@ -73,6 +74,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: BookOpen, label: 'Labs', path: '/dashboard/labs' },
       { icon: FolderOpen, label: 'Workspaces', path: '/dashboard/labs/workspace' },
       { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },
+      { icon: ShoppingBag, label: 'My Purchases', path: '/dashboard/my-purchases' },
       { icon: Award, label: 'Assessments', path: '/dashboard/assessments' },
       { icon: Brain, label: 'AI Lab Builder', path: '/dashboard/lab-builder' },
       { icon: Cloud, label: 'Cloud Settings', path: '/dashboard/cloud-settings' },
@@ -115,9 +117,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
   const currentMenuItems = menuItems[user?.role || 'user'] || menuItems.user;
 
   return (
-    <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-dark-200 border-r border-dark-300 transition-all duration-300 z-30 ${
-      isCollapsed ? 'w-16' : 'w-64'
-    }`}>
+    <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-dark-200 border-r border-dark-300 transition-all duration-300 z-30 ${isCollapsed ? 'w-16' : 'w-64'
+      }`}>
       {/* Toggle button - positioned at the top of sidebar */}
       <div className="flex items-center justify-between p-4 border-b border-dark-300">
         {!isCollapsed && (

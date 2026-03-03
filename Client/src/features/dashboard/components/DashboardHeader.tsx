@@ -137,8 +137,10 @@ export const DashboardHeader: React.FC = () => {
 
   try {
     await proceedToCheckout(
-      {userId: user?.id,
-      catalogues
+      {
+      userId: user?.id,
+      catalogues,
+      org:user?.role === 'orgsuperadmin' 
       }
     );
   } catch (error) {

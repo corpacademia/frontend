@@ -12,6 +12,7 @@ export interface User {
   email: string;
   role: "user" | "trainer" | "labadmin" | "superadmin" | "orgsuperadmin";
   organization?: string;
+  org_id?: string;
   phone?: string;
   location?: string;
   bio?: string;
@@ -45,7 +46,7 @@ interface AuthState {
 
   fetchUser: () => Promise<void>;
   fetchOrganizations: () => Promise<void>;
-  fetchOrganizationsUsers:(orgId:string)=>Promise<void>;
+  fetchOrganizationsUsers: (orgId: string) => Promise<void>;
 
   setSessionExpiryModal: (show: boolean) => void;
 }
@@ -111,7 +112,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
     organizations: [],
     isOrgLoading: false,
-    orgUsers:[],
+    orgUsers: [],
 
     /* ---------- Auth ---------- */
 
@@ -252,12 +253,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
     },
 
-    fetchOrganizationsUsers: async (orgId:string) => {
+    fetchOrganizationsUsers: async (orgId: string) => {
       try {
         set({ isLoading: true });
 
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${orgId}`)
-        
+
         set({
           orgUsers: response.data?.data || [],
           isLoading: false,

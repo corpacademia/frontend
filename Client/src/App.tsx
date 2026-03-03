@@ -21,7 +21,7 @@ const AppContent: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-      const socket = initSocket(user.id, user.org_id);
+      const socket = initSocket(user?.id, user?.org_id,user?.role);
 
       socket.on("notification", (data) => {
         addNotification(data);

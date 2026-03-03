@@ -175,6 +175,14 @@ export const OrgAdminsPage: React.FC = () => {
         users={orgAdmins}
         onViewDetails={(user) => {}}
         hideOrganization={true}
+        onUsersDeleted={(deletedIds) => {
+          setOrgAdmins((prev) =>
+           prev.filter((user) => !deletedIds.includes(user?.id))
+           );
+           setOriginalOrgAdmins((prev) =>
+           prev.filter((user) => !deletedIds.includes(user?.id))
+           );
+         }}
       />
 
       <AddOrgUserModal

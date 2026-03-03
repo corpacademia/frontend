@@ -18,8 +18,8 @@ export const UserList: React.FC<UserListProps> = ({
   users, 
   onViewDetails,
   hideOrganization = false,
-  onApproveReject,
-  onUsersDeleted
+  onUsersDeleted,
+  onApproveReject
 }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuthStore();
@@ -55,7 +55,6 @@ export const UserList: React.FC<UserListProps> = ({
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/deleteUsers`,{
         userIds
       });
-
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Users deleted successfully' });
        onUsersDeleted(userIds);
@@ -64,6 +63,7 @@ export const UserList: React.FC<UserListProps> = ({
         throw new Error(response.data.message || 'Failed to delete users');
       }
     } catch (err: any) {
+      console.log(err)
       setNotification({
         type: 'error',
         message: err.response?.data?.message || 'Failed to delete users'
