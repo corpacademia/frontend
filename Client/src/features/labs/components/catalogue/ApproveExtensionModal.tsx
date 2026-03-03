@@ -16,7 +16,7 @@ import axios from 'axios';
 
 export interface ExtensionRequest {
     request_id: string;
-    purchase_id?: string;
+    purchased_id?: string;
     lab_id: string;
     lab_title: string;
     org_id: string;
@@ -30,12 +30,14 @@ export interface ExtensionRequest {
     reason?: string;
     requested_at: string;
     status: 'pending' | 'approved' | 'rejected';
+    type:string
 }
 
 interface ApproveExtensionModalProps {
     isOpen: boolean;
     onClose: () => void;
     request: ExtensionRequest | null;
+    purchase: ExtensionRequest | null;
     onSuccess?: () => void;
 }
 
@@ -43,12 +45,14 @@ export const ApproveExtensionModal: React.FC<ApproveExtensionModalProps> = ({
     isOpen,
     onClose,
     request,
+    purchase,
     onSuccess,
 }) => {
     const [approvedDays, setApprovedDays] = useState<number>(0);
     const [approvedUsers, setApprovedUsers] = useState<number>(0);
     const [adminNote, setAdminNote] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [purchased,setIspurchased] = useState<[]>();
     const [notification, setNotification] = useState<{
         type: 'success' | 'error';
         message: string;
@@ -58,6 +62,7 @@ export const ApproveExtensionModal: React.FC<ApproveExtensionModalProps> = ({
         if (request) {
             setApprovedDays(request.additional_days);
             setApprovedUsers(request.additional_users);
+            setIspurchased(purchase.find((data:any)=>data.purchased_id === request?.purchased_id))
         }
     }, [request]);
 
@@ -77,6 +82,7 @@ export const ApproveExtensionModal: React.FC<ApproveExtensionModalProps> = ({
                     approved_users: approvedUsers,
                     admin_note: adminNote,
                     status: 'approved',
+                    type:purchased?.type
                 }
             );
 
@@ -107,7 +113,7 @@ export const ApproveExtensionModal: React.FC<ApproveExtensionModalProps> = ({
                 `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/approveCatalogueExtension`,
                 {
                     request_id: request?.request_id,
-                    purchase_id: request?.purchase_id,
+                    purchase_id: request?.purchased_id,
                     lab_id: request?.lab_id,
                     org_id: request?.org_id,
                     admin_id: request?.admin_id,
@@ -115,6 +121,7 @@ export const ApproveExtensionModal: React.FC<ApproveExtensionModalProps> = ({
                     approved_users: 0,
                     admin_note: adminNote,
                     status: 'rejected',
+                    type:request?.type
                 }
             );
 

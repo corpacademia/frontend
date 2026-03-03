@@ -889,6 +889,7 @@ export const SuperAdminCataloguePurchasesPage: React.FC = () => {
                 isOpen={isApproveModalOpen}
                 onClose={() => { setIsApproveModalOpen(false); setSelectedRequest(null); }}
                 request={selectedRequest}
+                purchase={purchases}
                 onSuccess={() => { fetchPurchases(); fetchExtensionRequests(); }}
             />
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
   X,
@@ -19,6 +19,7 @@ import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 import { useAuthStore } from '../../../../store/authStore';
 import { stripePromise } from '../../../../utils/stripe';
+import { useCatalogueStore } from '../../../../store/catalogueStore';
 
 interface PurchasedLab {
   purchased_id?: string;
@@ -47,13 +48,21 @@ const PRICE_PER_USER = 50;      // ₹ per additional user
 const GST_RATE = 0.18;          // 18 % GST
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-const calcSubtotal = (days: number, users: number) =>
-  days * PRICE_PER_DAY + users * PRICE_PER_USER;
+const calcSubtotal = (days: number, users: number, catalogue: any,existingUsers:any) => {
+  if (!catalogue) return 0;
 
+  const perDayPrice = catalogue.price / catalogue.duration;
+
+  return (
+   ( existingUsers * days * perDayPrice) +
+    users * perDayPrice +
+    users * catalogue.price
+  );
+};
 const calcGST = (subtotal: number) => subtotal * GST_RATE;
 
-const calcTotal = (days: number, users: number) => {
-  const sub = calcSubtotal(days, users);
+const calcTotal = (days: number, users: number,catalogue:any,existingUsers:any) => {
+  const sub = calcSubtotal(days, users,catalogue,existingUsers);
   return sub + calcGST(sub);
 };
 
@@ -66,6 +75,7 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
   adminId,
   onSuccess,
 }) => {
+  const {catalogues} = useCatalogueStore();
   // ── Step: 'details' | 'payment' ──────────────────────────────────────────
   const [step, setStep] = useState<'details' | 'payment'>('details');
 
@@ -81,9 +91,18 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
     type: 'success' | 'error';
     message: string;
   } | null>(null);
+  const [catalogue, setCatalogue] = useState<any>(null);
 
+ useEffect(() => {
+  if (!catalogues || !purchasedLab) return;
+
+  setCatalogue(
+    catalogues.find((cat: any) => cat.id === purchasedLab.lab_id) || null
+  );
+}, [catalogues, purchasedLab]);
+   
   // ── Derived pricing ───────────────────────────────────────────────────────
-  const subtotal = calcSubtotal(additionalDays, additionalUsers);
+  const subtotal = calcSubtotal(additionalDays, additionalUsers,catalogue,purchasedLab?.number_of_users);
   const gst = calcGST(subtotal);
   const total = subtotal + gst;
 
