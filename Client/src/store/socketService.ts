@@ -4,7 +4,7 @@ let socket: Socket | null = null;
 
 export function initSocket(userId: string, orgId?: string | null,role?:string) {
     if (!socket) {
-        socket = io("http://localhost:3000",{
+        socket = io("https://api.golabing.ai",{
             withCredentials:true
         });
         socket.on("connect", () => {
