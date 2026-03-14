@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Trash2,
@@ -1208,7 +1209,7 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
           if (resp.data.success) {
             const wsPath = resp.data.wsPath;
             const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-            const hostPort = `${window.location.hostname}:3002`;
+            const hostPort = `api.golabing.ai`;
             const wsUrl = `${protocol}://${hostPort}${wsPath}`;
 
             navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
@@ -1417,7 +1418,7 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
       if (resp.data.success) {
         const wsPath = resp.data.wsPath;
         const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const hostPort = `${window.location.hostname}:3002`;
+        const hostPort = `api.golabing.ai`;
         const wsUrl = `${protocol}://${hostPort}${wsPath}`;
 
         navigate(`/dashboard/labs/vm-session/${lab.labid}`, {
