@@ -122,7 +122,8 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
          response =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`,{
           labId:lab.labid,
           orgId:user?.user?.org_id,
-          userId:userId
+          userId:userId,
+          purchased:lab?.purchased
          })
       }
        else if (lab.type === 'singlevm-proxmox'){

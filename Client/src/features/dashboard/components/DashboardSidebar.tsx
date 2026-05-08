@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../../store/authStore';
 import {
@@ -17,22 +17,33 @@ import {
   ChevronRight,
   CreditCard,
   ShoppingBag,
+  LucideIcon,
+  Package,
 } from 'lucide-react';
 
 interface DashboardSidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+  isMobileOpen?: boolean;
+  setIsMobileOpen?: (open: boolean) => void;
+  isMobile?: boolean;
 }
 
-// A placeholder for SidebarItem component, assuming it exists elsewhere
-// and handles the actual rendering of menu items with icons and labels.
-const SidebarItem = ({ icon: Icon, label, path, isActive, isCollapsed }) => (
+interface SidebarItemProps {
+  icon: LucideIcon;
+  label: string;
+  path: string;
+  isActive: boolean;
+  isCollapsed: boolean;
+}
+
+const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, path, isCollapsed }) => (
   <NavLink
     key={path}
     to={path}
     end
     className={({ isActive }) =>
-      `group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isActive
+      `group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive
         ? 'bg-primary-500/10 text-primary-400'
         : 'text-gray-400 hover:bg-dark-100/50 hover:text-primary-300'
       } ${isCollapsed ? 'justify-center' : ''}`
@@ -40,15 +51,20 @@ const SidebarItem = ({ icon: Icon, label, path, isActive, isCollapsed }) => (
     title={label}
   >
     <Icon className={`h-5 w-5 flex-shrink-0 ${isCollapsed ? '' : 'mr-3'}`} />
-    {!isCollapsed && label}
+    {!isCollapsed && <span className="truncate">{label}</span>}
   </NavLink>
 );
 
 
-export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
+export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
+  isCollapsed,
+  setIsCollapsed,
+  isMobileOpen = false,
+  setIsMobileOpen,
+  isMobile = false,
+}) => {
   const { user } = useAuthStore();
   const location = useLocation();
-
 
   const menuItems = {
     superadmin: [
@@ -60,6 +76,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: FolderOpen, label: 'Workspaces', path: '/dashboard/labs/workspace' },
       { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },
       { icon: ShoppingBag, label: 'Catalogue Purchases', path: '/dashboard/catalogue-purchases' },
+      { icon: Package, label: 'Subscriptions', path: '/dashboard/subscriptions' },
       { icon: Cloud, label: 'Cloud Resources', path: '/dashboard/cloud' },
       { icon: Cloud, label: 'Cloud Settings', path: '/dashboard/cloud-settings' },
       { icon: FileText, label: 'Reports', path: '/dashboard/reports' },
@@ -75,6 +92,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
       { icon: FolderOpen, label: 'Workspaces', path: '/dashboard/labs/workspace' },
       { icon: BookOpen, label: 'Lab Catalogue', path: '/dashboard/labs/catalogue' },
       { icon: ShoppingBag, label: 'My Purchases', path: '/dashboard/my-purchases' },
+      { icon: CreditCard, label: 'Billing & Plans', path: '/dashboard/billing' },
       { icon: Award, label: 'Assessments', path: '/dashboard/assessments' },
       { icon: Brain, label: 'AI Lab Builder', path: '/dashboard/lab-builder' },
       { icon: Cloud, label: 'Cloud Settings', path: '/dashboard/cloud-settings' },
@@ -116,36 +134,55 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
 
   const currentMenuItems = menuItems[user?.role || 'user'] || menuItems.user;
 
+  // On mobile the sidebar is always "expanded" (never icon-only)
+  const collapsed = isMobile ? false : isCollapsed;
+
   return (
-    <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-dark-200 border-r border-dark-300 transition-all duration-300 z-30 ${isCollapsed ? 'w-16' : 'w-64'
-      }`}>
-      {/* Toggle button - positioned at the top of sidebar */}
+    <aside
+      className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-dark-200 border-r border-dark-300
+        transition-all duration-300 z-50 flex flex-col
+        ${isMobile
+          ? `w-72 shadow-2xl shadow-black/50 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`
+          : `${collapsed ? 'w-16' : 'w-64'} translate-x-0`
+        }`}
+    >
+      {/* Sidebar header */}
       <div className="flex items-center justify-between p-4 border-b border-dark-300">
-        {!isCollapsed && (
-          <span className="text-lg font-bold bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent">
+        {!collapsed && (
+          <span className="text-lg font-bold bg-gradient-to-r from-primary-400 to-secondary-400 bg-clip-text text-transparent whitespace-nowrap">
             GoLabing.ai
           </span>
         )}
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-2 bg-primary-500/20 border border-primary-400/50 rounded-lg shadow-md hover:bg-primary-500/30 hover:scale-105 transition-all duration-200"
-          title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4 text-primary-400" />
-          ) : (
+        {/* Mobile: close chevron; Desktop: collapse/expand */}
+        {isMobile ? (
+          <button
+            onClick={() => setIsMobileOpen?.(false)}
+            className="p-2 bg-primary-500/20 border border-primary-400/50 rounded-lg hover:bg-primary-500/30 transition-all ml-auto"
+            title="Close menu"
+          >
             <ChevronLeft className="h-4 w-4 text-primary-400" />
-          )}
-        </button>
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-2 bg-primary-500/20 border border-primary-400/50 rounded-lg shadow-md hover:bg-primary-500/30 hover:scale-105 transition-all duration-200"
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4 text-primary-400" />
+            ) : (
+              <ChevronLeft className="h-4 w-4 text-primary-400" />
+            )}
+          </button>
+        )}
       </div>
 
-      <nav className="mt-5 px-2 overflow-y-auto h-full">
+      <nav className="flex-1 overflow-y-auto mt-4 px-2 pb-6 scrollbar-none scroll-fade-bottom">
         <div className="space-y-1">
           {currentMenuItems.map((item) => {
-            // Conditionally render Lab Catalogue based on role and path
             if (item.label === 'Lab Catalogue') {
               const isLabCatalogueRoute = location.pathname.startsWith('/dashboard/labs/catalogue');
-              if (user?.role === 'superadmin' || user?.role === 'orgsuperadmin' || user?.role === 'labadmin' || user?.role === 'trainer' || user?.role === 'user') {
+              if (['superadmin', 'orgsuperadmin', 'labadmin', 'trainer', 'user'].includes(user?.role || '')) {
                 return (
                   <SidebarItem
                     key={item.path}
@@ -153,14 +190,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
                     label={item.label}
                     path={item.path}
                     isActive={isLabCatalogueRoute}
-                    isCollapsed={isCollapsed}
+                    isCollapsed={collapsed}
                   />
                 );
               }
-              return null; // Don't render if role doesn't match
+              return null;
             }
-
-            // For other menu items, use the existing logic
             return (
               <SidebarItem
                 key={item.path}
@@ -168,7 +203,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ isCollapsed,
                 label={item.label}
                 path={item.path}
                 isActive={location.pathname === item.path}
-                isCollapsed={isCollapsed}
+                isCollapsed={collapsed}
               />
             );
           })}

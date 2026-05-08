@@ -100,7 +100,8 @@ export const VMClusterSingleVMCard: React.FC<VMClusterSingleVMCardProps> = ({ vm
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`,{
           labId:vm?.lab?.labid,
           orgId:user?.org_id,
-          userId:user?.id
+          userId:user?.id,
+          purchased:vm?.lab?.purchased
         }
       );
 

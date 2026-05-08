@@ -327,7 +327,6 @@ export const useBatchStore = create<BatchState>((set, get) => ({
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getTrainers/${orgId}`,
         { withCredentials: true }
       );
-
       if (response.data.success) {
         set({ availableTrainers: response.data.data, isLoadingTrainers: false });
       } else {

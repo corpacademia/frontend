@@ -30,13 +30,13 @@ import Guacamole from "guacamole-common-js";
 import { useAuthStore } from "../../../store/authStore";
 import { th } from "date-fns/locale";
 
-interface VMSessionPageProps {}
+interface VMSessionPageProps { }
 
 export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   const { vmId } = useParams<{ vmId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const {user} = useAuthStore();
+  const { user } = useAuthStore();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [documents, setDocuments] = useState<string[]>([]);
   const [currentDocIndex, setCurrentDocIndex] = useState(0);
@@ -46,12 +46,12 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   const [isControlsOpen, setIsControlsOpen] = useState(false);
   const [isPowerMenuOpen, setIsPowerMenuOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isStopping,setIsStopping] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
   const [vmDropdownOpen, setVmDropdownOpen] = useState(false);
   const [splitRatio, setSplitRatio] = useState(70);
   const [isCompleting, setIsCompleting] = useState(false);
   const [completeSuccess, setCompleteSuccess] = useState(false);
-
+  const lastActivityRef = useRef(Date.now());
 
   const displayContainerRef = useRef<HTMLDivElement>(null);
   const displayCanvasRef = useRef<HTMLDivElement>(null);
@@ -65,7 +65,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   const scaleYRef = useRef(1);
 
 
-  const { guacUrl, vmTitle, credentials, isGroupConnection ,labDetails} = location.state || {};
+  const { guacUrl, vmTitle, credentials, isGroupConnection, labDetails } = location.state || {};
   const [selectedCredential, setSelectedCredential] = useState<any>(null);
   const [activeGuacUrl, setActiveGuacUrl] = useState<string>(guacUrl || "");
 
@@ -102,7 +102,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   // Uses auto-detected framebuffer size from the Guac canvas
   const updateDisplaySize = useCallback(() => {
     if (!clientRef.current || !displayCanvasRef.current) return;
-
+    console.log("ActiveGuacurl:", activeGuacUrl);
     const container = displayCanvasRef.current;
 
     const containerWidth = container.offsetWidth || 1280;
@@ -157,6 +157,47 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
     }
   }, []);
 
+useEffect(() => {
+  const IDLE_LIMIT = 1 * 60 * 1000;
+
+  const interval = setInterval(async () => {
+    const now = Date.now();
+    const idleTime = now - lastActivityRef.current;
+
+    if (idleTime > IDLE_LIMIT) {
+      console.log(" User is idle. Stopping VM...");
+
+      try {
+        await handlePowerAction("shutdown");
+      } catch (err) {
+        console.error("Error stopping VM:", err);
+      }
+    }
+  }, 60000);
+
+  return () => clearInterval(interval);
+}, []);
+
+  // const updateDisplaySize = useCallback(() => {
+  //   if (!clientRef.current || !displayCanvasRef.current) return;
+
+  //   const container = displayCanvasRef.current;
+
+  //   const width = container.offsetWidth;
+  //   const height = container.offsetHeight;
+
+  //   if (!width || !height) return;
+
+  //   const isSSH = activeGuacUrl?.toLowerCase().includes("/ssh");
+
+  //   if (!isSSH) {
+  //     // ✅ ONLY resize RDP / VNC
+  //     console.log("📐 RDP resize:", width, height);
+  //     clientRef.current.sendSize(width, height, 96);
+  //   }
+
+  //   // ❌ DO NOTHING FOR SSH
+  // }, [activeGuacUrl]);
   // Window resize → update size
   useEffect(() => {
     const onResize = () => updateDisplaySize();
@@ -186,11 +227,40 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
     }
 
     setIsConnecting(true);
+    let wsUrl = activeGuacUrl.replace("?undefined", "").replace("??", "?");
+    // console.log(" WebSocket URL:", wsUrl);
+    // const [base,token] = wsUrl.split("?")
 
-    const wsUrl = activeGuacUrl.replace("?undefined", "").replace("??", "?");
-    console.log("🌐 WebSocket URL:", wsUrl);
+    // const tunnel = new Guacamole.WebSocketTunnel(base);
 
-    const tunnel = new Guacamole.WebSocketTunnel(wsUrl);
+    // ✅ Safe URL parsing
+    const url = new URL(wsUrl);
+    const base = `${url.protocol}//${url.host}${url.pathname}`;
+    const token = url.searchParams.toString();
+
+    // ✅ Detect protocol (IMPORTANT)
+    const isSSH = base.toLowerCase().includes("/ssh");
+
+    const tunnel = new Guacamole.WebSocketTunnel(base);
+
+    const client = new Guacamole.Client(tunnel);
+    clientRef.current = client;
+
+    // 🔥 Build correct connect params
+    let connectParams = token;
+
+    if (isSSH) {
+      // SSH → cols/rows
+      const cols = Math.floor(window.innerWidth / 10);
+      const rows = Math.floor(window.innerHeight / 20);
+
+      connectParams += `&cols=${cols}&rows=${rows}`;
+    } else {
+      // RDP / VNC → width/height
+      connectParams += `&width=${window.innerWidth}&height=${window.innerHeight}&dpi=96`;
+    }
+
+
 
     tunnel.onerror = (status: any) => {
       console.error("❌ Tunnel error:", status);
@@ -204,9 +274,8 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       }
     };
 
-    const client = new Guacamole.Client(tunnel);
-    clientRef.current = client;
-
+    // const client = new Guacamole.Client(tunnel);
+    // clientRef.current = client;
     client.onstatechange = (state: number) => {
       console.log("🖥️ Client state:", state);
     };
@@ -226,7 +295,10 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       console.log("✅ Display element attached");
     }
 
-    client.connect();
+    // client.connect(token || " ");
+    // client.sendSize(window.innerWidth, window.innerHeight);
+    // ✅ Connect properly
+    client.connect(connectParams);
 
     // Wait until server actually draws canvas
     const checkCanvas = () => {
@@ -234,7 +306,9 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       if (canvas) {
         console.log("✅ Canvas found:", canvas.width, "x", canvas.height);
         setIsConnecting(false);
-        updateDisplaySize();
+        setTimeout(() => {
+          updateDisplaySize();
+        }, 500);
       } else {
         console.log("⏳ Waiting for canvas...");
         setTimeout(checkCanvas, 500);
@@ -245,9 +319,11 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
     // Keyboard
     const keyboard = new Guacamole.Keyboard(document);
     keyboard.onkeydown = (keysym: number) => {
+      lastActivityRef.current = Date.now(); //  activity
       if (clientRef.current) clientRef.current.sendKeyEvent(1, keysym);
     };
     keyboard.onkeyup = (keysym: number) => {
+      lastActivityRef.current = Date.now(); //  activity
       if (clientRef.current) clientRef.current.sendKeyEvent(0, keysym);
     };
     keyboardRef.current = keyboard;
@@ -257,21 +333,22 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
     mouse.onmousedown =
       mouse.onmouseup =
       mouse.onmousemove =
-        (mouseState: any) => {
-          if (!clientRef.current) return;
+      (mouseState: any) => {
+        lastActivityRef.current = Date.now(); //  activity
+        if (!clientRef.current) return;
 
-          const scaledState = new Guacamole.Mouse.State(
-            mouseState.x / scaleXRef.current,
-            mouseState.y / scaleYRef.current,
-            mouseState.left,
-            mouseState.middle,
-            mouseState.right,
-            mouseState.up,
-            mouseState.down
-          );
+        const scaledState = new Guacamole.Mouse.State(
+          mouseState.x / scaleXRef.current,
+          mouseState.y / scaleYRef.current,
+          mouseState.left,
+          mouseState.middle,
+          mouseState.right,
+          mouseState.up,
+          mouseState.down
+        );
 
-          clientRef.current.sendMouseState(scaledState);
-        };
+        clientRef.current.sendMouseState(scaledState);
+      };
     mouseRef.current = mouse;
 
     // Focus to capture keyboard
@@ -316,19 +393,49 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   };
 
   //  This does NOT reconnect. It sends a size instruction inside the same session.
+  // const handleResolutionChange = (resolution: string) => {
+  //   setSelectedResolution(resolution);
+  //   setIsControlsOpen(false);
+  //   console.log("Resolution:", resolution);
+
+  //   if (clientRef.current) {
+  //     const [w, h] = resolution.split("x").map(Number);
+  //     console.log("📨 sendSize from dropdown:", w, "x", h);
+  //     clientRef.current.sendSize(w, h, 96);
+  //   }
+
+  //   // Also adjust local scaling to fill container
+  //   setTimeout(() => updateDisplaySize(), 200);
+  // };
   const handleResolutionChange = (resolution: string) => {
     setSelectedResolution(resolution);
     setIsControlsOpen(false);
+
     console.log("Resolution:", resolution);
 
-    if (clientRef.current) {
-      const [w, h] = resolution.split("x").map(Number);
-      console.log("📨 sendSize from dropdown:", w, "x", h);
-      clientRef.current.sendSize(w, h, 96);
-    }
+    if (!clientRef.current) return;
 
-    // Also adjust local scaling to fill container
-    setTimeout(() => updateDisplaySize(), 200);
+    const isSSH = activeGuacUrl?.toLowerCase().includes("/ssh");
+
+    const [w, h] = resolution.split("x").map(Number);
+
+    if (!isSSH) {
+      // ✅ RDP / VNC → real resize
+      console.log("📨 RDP sendSize:", w, "x", h);
+      clientRef.current.sendSize(w, h, 96);
+
+      setTimeout(() => updateDisplaySize(), 200);
+    } else {
+      // 🔥 SSH → DO NOT use sendSize
+      console.log("⚠️ SSH does not support resolution change");
+
+      // OPTIONAL: simulate zoom instead
+      const displayEl = clientRef.current.getDisplay().getElement();
+
+      const scale = w / 1280; // base resolution reference
+      displayEl.style.transform = `scale(${scale})`;
+      displayEl.style.transformOrigin = "top left";
+    }
   };
 
   const handleConnectToCredential = async (credential: any) => {
@@ -345,7 +452,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       const resp = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
         {
-          protocol: credential.vmData?.protocol || credential?.protocol ||"RDP",
+          protocol: credential.vmData?.protocol || credential?.protocol || "RDP",
           hostname: credential.ip,
           username: credential.username,
           password: credential.password,
@@ -369,241 +476,240 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       setIsConnecting(false);
     }
   };
-  const handleCompletelab = async()=>{
+  const handleCompletelab = async () => {
     try {
       setIsCompleting(true);
       setCompleteSuccess(false);
-      const update = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserLabCompletedStatus`,{
-        userLab:labDetails
+      const update = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserLabCompletedStatus`, {
+        userLab: labDetails
       })
       setCompleteSuccess(true);
     } catch (error) {
-      console.error("Error in updating the status:",error)
+      console.error("Error in updating the status:", error)
     }
-    finally{
+    finally {
       setIsCompleting(false);
     }
   }
   const reconnectWithGuacUrl = useCallback((wsUrl: string) => {
-  console.log("🔁 Reconnecting with new Guac URL:", wsUrl);
+    console.log("🔁 Reconnecting with new Guac URL:", wsUrl);
 
-  // Force cleanup first
-  if (clientRef.current) {
-    clientRef.current.disconnect();
-    clientRef.current = null;
-  }
+    // Force cleanup first
+    if (clientRef.current) {
+      clientRef.current.disconnect();
+      clientRef.current = null;
+    }
 
-  setIsConnecting(true);
-  setActiveGuacUrl(wsUrl); // THIS triggers Guacamole useEffect
-}, []);
+    setIsConnecting(true);
+    setActiveGuacUrl(wsUrl); // THIS triggers Guacamole useEffect
+  }, []);
 
 
   const handlePowerAction = async (action: "restart" | "shutdown") => {
     setIsPowerMenuOpen(false);
     // TODO: backend call for restart/shutdown if you have it
-    
-    if (labDetails?.type === 'single-vm'){
-        let cloudinstanceDetails ;
-        let instanceId;
-        if(user?.role === 'user' || labDetails?.assessment){
+    if (labDetails?.type === 'single-vm') {
+      let cloudinstanceDetails;
+      let instanceId;
+      if (user?.role === 'user' || labDetails?.assessment) {
         cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
-            user_id:user?.id || labDetails?.user_id,
-            lab_id: labDetails?.lab_id || labDetails?.labid,
-          })
-          instanceId = cloudinstanceDetails?.data?.data?.instance_id;
-        }
-        else{
-          cloudinstanceDetails =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
+          user_id: user?.id || labDetails?.user_id,
+          lab_id: labDetails?.lab_id || labDetails?.labid,
+        })
+        instanceId = cloudinstanceDetails?.data?.data?.instance_id;
+      }
+      else {
+        cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
+          lab_id: labDetails?.lab_id || labDetails?.labid,
+        });
+        instanceId = cloudinstanceDetails?.data?.result?.instance_id;
+      }
+      if (!cloudinstanceDetails?.data?.success) {
+        throw new Error('Failed to retrieve instance details');
+      }
+
+      if (action === "shutdown") {
+        setIsStopping(true);
+        const stop = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
+          instance_id: instanceId
+        });
+        if (stop.data.success) {
+          if (user?.role === 'user' || labDetails?.assessment) {
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`, {
               lab_id: labDetails?.lab_id || labDetails?.labid,
-          });
-          instanceId = cloudinstanceDetails?.data?.result?.instance_id;
-        }
-          if (!cloudinstanceDetails?.data?.success) {
-            throw new Error('Failed to retrieve instance details');
+              user_id: labDetails?.user_id,
+              state: false,
+              isStarted: true,
+              type: user?.role === 'user' ? 'user' : 'org'
+            })
           }
-          
-                if( action === "shutdown"){
-                  setIsStopping(true);
-                  const stop =await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/stopInstance`, {
-                    instance_id: instanceId
-                  });
-                  if(stop.data.success){
-                     if(user?.role === 'user' || labDetails?.assessment){
-                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
-                      lab_id:labDetails?.lab_id || labDetails?.labid,
-                      user_id:labDetails?.user_id,
-                      state:false,
-                      isStarted:true,
-                      type:user?.role === 'user' ? 'user' : 'org'
-                    })
-                     }
-                    
-                    else{
-                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
-                        lab_id: labDetails?.lab_id || labDetails?.labid,
-                        state: false,
-                        isStarted:true
-                      });
-                    }
-                  }
-                  setIsStopping(false);
-                }
-                else if(action === "restart"){
-                   const restart = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`, {
-                            instance_id: instanceId,
-                            user_type:user?.role === 'user' || labDetails?.assessment ? 'user' : 'lab'
-                          });
-                          let cloudInstanceDetails;
-                          
-                           if (restart.data.success ) {
-                            if(user?.role === 'user' || labDetails?.assessment){
-                               cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
-                              user_id: labDetails?.user_id,
-                              lab_id: labDetails?.lab_id || labDetails?.labid,
-                            })
-                            }
-                            else{
-                               cloudInstanceDetails =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
-                                  lab_id: labDetails?.lab_id || labDetails?.labid,
-                              });
-                            }
-                            if(cloudInstanceDetails?.data?.success){
-                              const ip =
-                              cloudInstanceDetails?.data?.data?.public_ip ??
-                              cloudInstanceDetails?.data?.result?.public_ip;
-                              const password = 
-                               cloudInstanceDetails?.data?.data?.password ??
-                              cloudInstanceDetails?.data?.result?.password;
 
-                            if (!ip || !password) {
-                              throw new Error("VM public_ip not available yet");
-                              
-                            }
-                              const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
-                                os_name: labDetails?.os,
-                                instance_id: instanceId,
-                                hostname: ip,
-                                password: password,
-                                buttonState: 'Start Lab'
-                              });
-                              if(response.data.success){
-                                //update database that the instance is started
-                                // await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
-                                //   lab_id:labDetails?.lab_id || labDetails?.labid,
-                                //   user_id:labDetails?.user_id,
-                                //   state:true,
-                                //   isStarted:true,
-                                //   type:'org'
-                                // })
-                                if(user?.role === 'user' || labDetails?.assessment){
-                                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
-                                      lab_id:labDetails?.lab_id || labDetails?.labid,
-                                      user_id:labDetails?.user_id,
-                                      state:true,
-                                      isStarted:true,
-                                      type:user?.role === 'user' ? 'user' : 'org'
-                                    })
-                                    }
-                                    
-                                    else{
-                                      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
-                                        lab_id: labDetails?.lab_id || labDetails?.labid,
-                                        state: true,
-                                        isStarted:true
-                                      });
-                                    }
-                                         const Data = JSON.parse(response.data.response.result);
-                                         const userName = Data.username;
-                                         const protocol = Data.protocol;
-                                         const port = Data.port;
-                                         const resp = await axios.post(
-                                         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-                                          {
-                                                 protocol: protocol,
-                                                 hostname:ip,
-                                                 port: port,
-                                                 username: userName,
-                                                 password:password,
-                                          }
-                                         );
-                                        if (resp.data.success) {
-                                    const wsPath = resp.data.wsPath;
-                                    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-                                    const hostPort = `${window.location.hostname}:3002`;
-                                    const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-
-                                    reconnectWithGuacUrl(wsUrl); //  THIS is the fix
-                                  }
-
-                                       }
-                              }
-                            
-                          }
-                }
-                  
-         }
-    else if(labDetails?.type === 'singlevm-proxmox'){
-          if(action === "restart"){
-             setIsConnecting(true);
-            const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
-              lab_id: labDetails?.labid,
-              vmid: labDetails?.vmid,
-              node: labDetails?.node,
-              type:user?.role === 'user' ? 'user' : labDetails?.assessment ? 'org' : 'sup',
-              userid:user?.id,
-              purchased:labDetails?.purchased ? true :false,
+          else {
+            await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
+              lab_id: labDetails?.lab_id || labDetails?.labid,
+              state: false,
+              isStarted: true
             });
+          }
+        }
+        setIsStopping(false);
+      }
+      else if (action === "restart") {
+        const restart = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/restart_instance`, {
+          instance_id: instanceId,
+          user_type: user?.role === 'user' || labDetails?.assessment ? 'user' : 'lab'
+        });
+        let cloudInstanceDetails;
 
-            if (startResponse.data.success) {
-               setIsConnecting(false);
-              const backData = startResponse.data.data;
-            
+        if (restart.data.success) {
+          if (user?.role === 'user' || labDetails?.assessment) {
+            cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
+              user_id: labDetails?.user_id,
+              lab_id: labDetails?.lab_id || labDetails?.labid,
+            })
+          }
+          else {
+            cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/awsCreateInstanceDetails`, {
+              lab_id: labDetails?.lab_id || labDetails?.labid,
+            });
+          }
+          if (cloudInstanceDetails?.data?.success) {
+            const ip =
+              cloudInstanceDetails?.data?.data?.public_ip ??
+              cloudInstanceDetails?.data?.result?.public_ip;
+            const password =
+              cloudInstanceDetails?.data?.data?.password ??
+              cloudInstanceDetails?.data?.result?.password;
+
+            if (!ip || !password) {
+              throw new Error("VM public_ip not available yet");
+
+            }
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/runSoftwareOrStop`, {
+              os_name: labDetails?.os,
+              instance_id: instanceId,
+              hostname: ip,
+              password: password,
+              buttonState: 'Start Lab'
+            });
+            if (response.data.success) {
+              //update database that the instance is started
+              // await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
+              //   lab_id:labDetails?.lab_id || labDetails?.labid,
+              //   user_id:labDetails?.user_id,
+              //   state:true,
+              //   isStarted:true,
+              //   type:'org'
+              // })
+              if (user?.role === 'user' || labDetails?.assessment) {
+                await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`, {
+                  lab_id: labDetails?.lab_id || labDetails?.labid,
+                  user_id: labDetails?.user_id,
+                  state: true,
+                  isStarted: true,
+                  type: user?.role === 'user' ? 'user' : 'org'
+                })
+              }
+
+              else {
+                await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstance`, {
+                  lab_id: labDetails?.lab_id || labDetails?.labid,
+                  state: true,
+                  isStarted: true
+                });
+              }
+              const Data = JSON.parse(response.data.response.result);
+              const userName = Data.username;
+              const protocol = Data.protocol;
+              const port = Data.port;
               const resp = await axios.post(
+                `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                {
+                  protocol: protocol,
+                  hostname: ip,
+                  port: port,
+                  username: userName,
+                  password: password,
+                }
+              );
+              if (resp.data.success) {
+                const wsPath = resp.data.wsPath;
+                const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                const hostPort = `${window.location.hostname}:3002`;
+                const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+
+                reconnectWithGuacUrl(wsUrl); //  THIS is the fix
+              }
+
+            }
+          }
+
+        }
+      }
+
+    }
+    else if (labDetails?.type === 'singlevm-proxmox') {
+      if (action === "restart") {
+        setIsConnecting(true);
+        const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
+          lab_id: labDetails?.labid,
+          vmid: labDetails?.vmid,
+          node: labDetails?.node,
+          type: user?.role === 'user' ? 'user' : labDetails?.assessment ? 'org' : 'sup',
+          userid: user?.id,
+          purchased: labDetails?.purchased ? true : false,
+        });
+
+        if (startResponse.data.success) {
+          setIsConnecting(false);
+          const backData = startResponse.data.data;
+
+          const resp = await axios.post(
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
             {
               protocol: backData.protocol,
               hostname: backData.hostname,
               port: backData.port,
-              username:labDetails?.username,
+              username: labDetails?.username,
               password: labDetails?.password,
             }
           );
-      
+
           if (resp.data.success) {
             const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
             // Build full ws url for guacamole-common-js
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-            const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+            const hostPort = `${window.location.hostname}:${3002}`; // adapt if backend on different port
             const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-                  reconnectWithGuacUrl(wsUrl);
+            reconnectWithGuacUrl(wsUrl);
 
           }
-            } else {
-              throw new Error(startResponse.data.message || 'Failed to start VM');
-            }
-          
-          }
-          else if(action === "shutdown"){
-            setIsStopping(true);
-            const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/stopVM`, {
-              lab_id: labDetails?.labid,
-              vmid: labDetails?.vmid,
-              node: labDetails?.node,
-              type: user?.role === 'user' ? 'user' : labDetails?.assessment ? 'org' : 'sup',
-              userid:user?.id,
-              purchased:labDetails?.purchased ? true : false,
-              vmDetailsId:labDetails?.vmdetails_id || null
-            });
+        } else {
+          throw new Error(startResponse.data.message || 'Failed to start VM');
+        }
 
-            if (stopResponse.data.success) {
-                setIsStopping(false);
-            } 
-            else{
-              throw new Error(stopResponse.data.message || 'Failed to stop VM');
-            }
-            
-          }
-       }
+      }
+      else if (action === "shutdown") {
+        setIsStopping(true);
+        const stopResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/stopVM`, {
+          lab_id: labDetails?.labid,
+          vmid: labDetails?.vmid,
+          node: labDetails?.node,
+          type: user?.role === 'user' ? 'user' : labDetails?.assessment ? 'org' : 'sup',
+          userid: user?.id,
+          purchased: labDetails?.purchased ? true : false,
+          vmDetailsId: labDetails?.vmdetails_id || null
+        });
+
+        if (stopResponse.data.success) {
+          setIsStopping(false);
+        }
+        else {
+          throw new Error(stopResponse.data.message || 'Failed to stop VM');
+        }
+
+      }
+    }
   };
   const port = labDetails?.type === "vm-cluster" ? 3007 : 3002;
   // ---------------------------------------
@@ -612,26 +718,27 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-wrap gap-2 justify-between items-center">
+        <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+            className="p-2 hover:bg-dark-300/50 rounded-lg transition-colors flex-shrink-0"
           >
             <ArrowLeft className="h-5 w-5 text-gray-400" />
           </button>
-          <h1 className="text-2xl font-display font-bold">
+          <h1 className="text-lg sm:text-2xl font-display font-bold truncate">
             <GradientText>{vmTitle || "VM Session"}</GradientText>
           </h1>
           {isGroupConnection && (
-            <div className="flex items-center space-x-2 text-sm text-gray-400">
+            <div className="flex items-center space-x-1 sm:space-x-2 text-sm text-gray-400 flex-shrink-0">
               <Users className="h-4 w-4" />
-              <span>VMs: {credentialsList?.length || 0}</span>
+              <span className="hidden sm:inline">VMs:</span>
+              <span>{credentialsList?.length || 0}</span>
             </div>
           )}
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           {documents.length > 0 && (
             <button
               onClick={() => setShowDocuments((v) => !v)}
@@ -639,13 +746,13 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
             >
               {showDocuments ? (
                 <>
-                  <EyeOff className="h-4 w-4 mr-2" />
-                  Hide Documents
+                  <EyeOff className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Hide Documents</span>
                 </>
               ) : (
                 <>
-                  <Eye className="h-4 w-4 mr-2" />
-                  Show Documents
+                  <Eye className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Show Documents</span>
                 </>
               )}
             </button>
@@ -656,13 +763,13 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           >
             {isFullscreen ? (
               <>
-                <Minimize2 className="h-4 w-4 mr-2" />
-                Exit Fullscreen
+                <Minimize2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Exit Fullscreen</span>
               </>
             ) : (
               <>
-                <Maximize2 className="h-4 w-4 mr-2" />
-                Fullscreen
+                <Maximize2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Fullscreen</span>
               </>
             )}
           </button>
@@ -673,10 +780,42 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
       <div
         className={
           isFullscreen
-            ? "fixed inset-0 z-40 bg-dark-900 flex flex-col"
+            ? "fixed inset-0 z-[60] bg-dark-900 flex flex-col"
             : "glass-panel p-0 overflow-hidden h-[calc(100vh-120px)] flex flex-col"
         }
       >
+        {/* Fullscreen Header Bar — only visible in fullscreen mode */}
+        {isFullscreen && (
+          <div className="flex items-center justify-between px-4 py-2 bg-dark-800 border-b border-primary-500/20 flex-shrink-0">
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => navigate(-1)}
+                className="p-1.5 hover:bg-dark-300/50 rounded-lg transition-colors"
+                title="Go back"
+              >
+                <ArrowLeft className="h-4 w-4 text-gray-400" />
+              </button>
+              <span className="text-sm font-semibold text-white truncate max-w-[200px] sm:max-w-xs">
+                <GradientText>{vmTitle || "VM Session"}</GradientText>
+              </span>
+              {isGroupConnection && (
+                <span className="text-xs text-gray-400">
+                  {credentialsList?.length || 0} VMs
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setIsFullscreen(false)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-dark-600/60 hover:bg-dark-500/60
+                         border border-gray-500/20 hover:border-gray-400/40
+                         rounded-lg transition-all duration-200 text-gray-300 hover:text-white text-sm"
+              title="Exit Fullscreen (Esc)"
+            >
+              <Minimize2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Exit Fullscreen</span>
+            </button>
+          </div>
+        )}
         <Split
           sizes={showDocuments && documents.length > 0 ? [splitRatio, 100 - splitRatio] : [100]}
           minSize={showDocuments && documents.length > 0 ? 300 : 100}
@@ -693,8 +832,8 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
           {/* LEFT: VM PANEL */}
           <div className="h-full w-full flex flex-col bg-dark-200 overflow-hidden relative">
             {/* Toolbar */}
-            <div className="bg-dark-400 p-2 flex justify-between items-center flex-shrink-0">
-              <div className="flex items-center space-x-3">
+            <div className="bg-dark-400 p-2 flex flex-wrap gap-1 justify-between items-center flex-shrink-0">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2 sm:space-x-1">
                 {/* Power menu */}
                 <div className="relative">
                   <button
@@ -722,46 +861,45 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                     </div>
                   )}
                 </div>
-                 {/* Completed */}
-                  {/* Completed Button */}
+                {/* Completed */}
+                {/* Completed Button */}
                 <div className="relative flex items-center space-x-2">
-                    <button
-                      onClick={handleCompletelab}
-                      disabled={isCompleting || labDetails?.status === 'completed' || completeSuccess}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isCompleting ||  labDetails?.status === 'completed' || completeSuccess
-                          ? "text-gray-500 cursor-not-allowed"
-                          // : completeSuccess
-                          // ? "text-green-500"
-                          : "text-green-400 hover:bg-dark-300"
+                  <button
+                    onClick={handleCompletelab}
+                    disabled={isCompleting || labDetails?.status === 'completed' || completeSuccess}
+                    className={`p-2 rounded-lg transition-colors ${isCompleting || labDetails?.status === 'completed' || completeSuccess
+                      ? "text-gray-500 cursor-not-allowed"
+                      // : completeSuccess
+                      // ? "text-green-500"
+                      : "text-green-400 hover:bg-dark-300"
                       }`}
-                     title={labDetails?.status === 'completed' || completeSuccess
-                    ? "Completed"
-                    : "Mark as Completed"}
+                    title={labDetails?.status === 'completed' || completeSuccess
+                      ? "Completed"
+                      : "Mark as Completed"}
 
-                    >
-                      {isCompleting ? (
-                        <Loader className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <CheckCircle className="h-5 w-5" />
-                      )}
-                    </button>
+                  >
+                    {isCompleting ? (
+                      <Loader className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-5 w-5" />
+                    )}
+                  </button>
 
                   {completeSuccess && (
                     <span className="text-sm text-green-400 animate-fade-in">
                       Lab Completed Successfully!
                     </span>
                   )}
-                      </div>
+                </div>
 
                 {/* Resolution */}
                 <div className="relative">
                   <button
                     onClick={() => setIsControlsOpen((v) => !v)}
-                    className="p-2 hover:bg-dark-300 rounded-lg transition-colors flex items-center space-x-2"
+                    className="p-2 hover:bg-dark-300 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2"
                   >
                     <Monitor className="h-5 w-5 text-primary-400" />
-                    <span className="text-sm text-gray-300">{selectedResolution}</span>
+                    <span className="text-sm text-gray-300 hidden sm:inline">{selectedResolution}</span>
                     <ChevronDown className="h-4 w-4 text-gray-400" />
                   </button>
                   {isControlsOpen && (
@@ -770,11 +908,10 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                         <button
                           key={resolution}
                           onClick={() => handleResolutionChange(resolution)}
-                          className={`w-full px-4 py-2 text-left text-sm hover:bg-dark-300/50 transition-colors ${
-                            selectedResolution === resolution
-                              ? "text-primary-400"
-                              : "text-gray-300"
-                          }`}
+                          className={`w-full px-4 py-2 text-left text-sm hover:bg-dark-300/50 transition-colors ${selectedResolution === resolution
+                            ? "text-primary-400"
+                            : "text-gray-300"
+                            }`}
                         >
                           {resolution}
                         </button>
@@ -788,10 +925,10 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                   <div className="relative">
                     <button
                       onClick={() => setVmDropdownOpen((v) => !v)}
-                      className="p-2 hover:bg-dark-300 rounded-lg transition-colors flex items-center space-x-2"
+                      className="p-2 hover:bg-dark-300 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2"
                     >
                       <Server className="h-5 w-5 text-primary-400" />
-                      <span className="text-sm text-gray-300">
+                      <span className="text-sm text-gray-300 hidden sm:inline">
                         {selectedCredential
                           ? selectedCredential.vmData?.vmname || "VM"
                           : "Select VM"}
@@ -804,11 +941,10 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                           <button
                             key={index}
                             onClick={() => handleConnectToCredential(cred)}
-                            className={`w-full px-4 py-2 text-left text-sm hover:bg-dark-300/50 transition-colors ${
-                              selectedCredential?.id === cred.id
-                                ? "text-primary-400 bg-primary-500/10"
-                                : "text-gray-300"
-                            }`}
+                            className={`w-full px-4 py-2 text-left text-sm hover:bg-dark-300/50 transition-colors ${selectedCredential?.id === cred.id
+                              ? "text-primary-400 bg-primary-500/10"
+                              : "text-gray-300"
+                              }`}
                           >
                             {cred.vmData?.vmname || `VM ${index + 1}`}
                           </button>
@@ -828,7 +964,7 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                       <Key className="h-5 w-5 text-primary-400" />
                     </button>
                     {showCredentials && (
-                      <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 p-3 w-96">
+                      <div className="absolute top-full left-0 mt-1 bg-dark-200 rounded-lg shadow-lg border border-primary-500/20 z-50 p-3 w-64 sm:w-96">
                         <div className="space-y-3">
                           {credentialsList?.map((cred: any, index: number) => (
                             <div key={index} className="p-2 bg-dark-300/50 rounded-lg">
@@ -874,6 +1010,16 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                   </div>
                 )}
               </div>
+              {/* Fullscreen Exit — right side of toolbar, only in fullscreen */}
+              {isFullscreen && (
+                <button
+                  onClick={() => setIsFullscreen(false)}
+                  className="p-2 hover:bg-dark-300 rounded-lg transition-colors text-gray-400 hover:text-white"
+                  title="Exit Fullscreen (Esc)"
+                >
+                  <Minimize2 className="h-5 w-5" />
+                </button>
+              )}
             </div>
 
             {/* VM Display area */}
@@ -917,11 +1063,10 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                       <button
                         onClick={handlePrevDocument}
                         disabled={currentDocIndex === 0}
-                        className={`p-1 rounded-lg ${
-                          currentDocIndex === 0
-                            ? "text-gray-500"
-                            : "text-primary-400 hover:bg-primary-500/10"
-                        }`}
+                        className={`p-1 rounded-lg ${currentDocIndex === 0
+                          ? "text-gray-500"
+                          : "text-primary-400 hover:bg-primary-500/10"
+                          }`}
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </button>
@@ -931,11 +1076,10 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                       <button
                         onClick={handleNextDocument}
                         disabled={currentDocIndex === documents.length - 1}
-                        className={`p-1 rounded-lg ${
-                          currentDocIndex === documents.length - 1
-                            ? "text-gray-500"
-                            : "text-primary-400 hover:bg-primary-500/10"
-                        }`}
+                        className={`p-1 rounded-lg ${currentDocIndex === documents.length - 1
+                          ? "text-gray-500"
+                          : "text-primary-400 hover:bg-primary-500/10"
+                          }`}
                       >
                         <ChevronRight className="h-5 w-5" />
                       </button>
@@ -981,11 +1125,10 @@ export const VMSessionPage: React.FC<VMSessionPageProps> = () => {
                     <div
                       key={index}
                       onClick={() => setCurrentDocIndex(index)}
-                      className={`p-2 rounded-lg flex items-center justify-between cursor-pointer ${
-                        currentDocIndex === index
-                          ? "bg-primary-500/20 text-primary-300"
-                          : "bg-dark-300/50 text-gray-300 hover:bg-dark-300"
-                      }`}
+                      className={`p-2 rounded-lg flex items-center justify-between cursor-pointer ${currentDocIndex === index
+                        ? "bg-primary-500/20 text-primary-300"
+                        : "bg-dark-300/50 text-gray-300 hover:bg-dark-300"
+                        }`}
                     >
                       <div className="flex items-center space-x-2 truncate">
                         <FileText className="h-4 w-4 flex-shrink-0" />

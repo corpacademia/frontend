@@ -2,6 +2,9 @@ import React, { useState,useEffect } from 'react';
 import { X, AlertCircle, Check, Loader } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import axios from 'axios';
+import { useAuthStore } from '../../../store/authStore';
+import { useSubscription } from '../../labs/hooks/useSubscription';
+import { ROLE_TO_FEATURE } from '../../labs/hooks/useSubscription';
 
 interface AddTeamMemberModalProps {
   isOpen: boolean;
@@ -22,6 +25,8 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
     password: '',
     role: 'user'
   });
+  const {canUse} = useSubscription();
+  const {user,orgUsers} = useAuthStore();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,7 +58,6 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
     }
     return true;
   };
-
   const resetForm = () => {
     setFormData({
       name: '',
@@ -67,7 +71,18 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (user?.role !== 'superadmin') {
+              const featureKey = ROLE_TO_FEATURE[formData.role]; // e.g. 'trainers', 'students', 'labadmins'
+              if (featureKey) {
+                const currentCount = orgUsers?.filter(u => u.role === formData.role).length;
+                
+                if (!canUse(featureKey, currentCount)) {
+                  const label = { labadmins: 'Lab Admin', trainers: 'Trainer', students: 'Student' }[featureKey] ?? 'User';
+                  alert(`${label} limit reached on your current plan. Please upgrade to add more.`);
+                  return;
+                }
+              }
+         }
     if (!validateForm()) {
       return;
     }

@@ -52,17 +52,15 @@ export const CloudSlicePage: React.FC = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setUser(response.data.user);
         const responseOrg = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
                 if (responseOrg.data.success) {
                   setOrganizations(responseOrg.data.data);
                 }
-        if(response.data.user.role === 'labadmin' || response.data.user.role === 'orgsuperadmin'){
+        if(user?.role === 'labadmin' || user?.role === 'orgsuperadmin'){
            const orgLabStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
             
-              orgId: response.data.user.org_id,
-              admin_id: responseOrg.data.data.find((org)=>org.id === response.data.user.org_id)?.org_admin || null
+              orgId: user?.org_id,
+              admin_id: responseOrg.data.data.find((org)=>org.id === user?.org_id)?.org_admin || null
             
            })
         if(orgLabStatus.data.success){
@@ -93,7 +91,7 @@ export const CloudSlicePage: React.FC = () => {
         .map(u => u.id);
       if(user.role === 'superadmin' || user.role === 'orgsuperadmin' || user.role === 'labadmin') {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlices`, {
-          params: { userId:user.role === 'superadmin' ? 'superadmin' : user?.role === 'orgsuperadmin' ? ids : user.id }
+          params: { userId:user.role === 'superadmin' ? 'superadmin' : user?.role === 'orgsuperadmin' ? ids : (user?.impersonating ? user?.impersonatedUserId : user?.id) }
         });
        if (response.data.success) {
           const userSlices = response.data.data || [];
@@ -188,7 +186,7 @@ export const CloudSlicePage: React.FC = () => {
 
   const handleEditSlice = (slice: CloudSlice) => {
     // Only allow editing if the user is not an labadmin or if they created the slice
-    if (user?.role !== 'labadmin' || slice.createdby === user.id) {
+    if (user?.role !== 'labadmin' || slice.createdby === (user?.impersonating ? user?.impersonatedUserId : user?.id)) {
       setEditSlice(slice);
     }
   };
@@ -431,7 +429,7 @@ export const CloudSlicePage: React.FC = () => {
                         onSelect={handleSelectSlice}
                         userRole={user?.role}
                         orgStatus = {orgStatus}
-                        onAssignUsers={user?.role === 'labadmin' && slice.createdby && slice.createdby !== user.id ? handleAssignUsers : undefined}
+                        onAssignUsers={user?.role === 'labadmin' && slice.createdby && slice.createdby !== (user?.impersonating ? user?.impersonatedUserId : user?.id) ? handleAssignUsers : undefined}
                       />
                     ))}
                   </div>

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Clock, 
-  User, 
-  BookOpen, 
-  Star, 
+import {
+  Clock,
+  User,
+  BookOpen,
+  Star,
   Calendar,
   Play,
   Edit,
@@ -50,17 +50,23 @@ interface PublicCatalogueCardProps {
   isDeleteModalOpen?: boolean;
   cartItems?: any;
   enrolled?: boolean;
+  available?: any;
+  currency?: 'INR' | 'USD';
+  convertPrice?: (price: number) => string;
 }
 
-export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({ 
-  course, 
-  onEdit, 
-  onDelete, 
+export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
+  course,
+  onEdit,
+  onDelete,
   onView,
   currentUser,
   isDeleting = false,
   cartItems,
-  enrolled
+  enrolled,
+  available,
+  currency = 'INR',
+  convertPrice,
 }) => {
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
@@ -69,23 +75,32 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const [isDeleteModalOpenn, setIsDeleteModalOpen] = useState(false);
   const [loadingEnroll, setLoadingEnroll] = useState(false);
   const [enrollMessage, setEnrollMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+
   const isSuperAdmin = (currentUser || user)?.role === 'superadmin';
   const isOrgSuperAdmin = (currentUser || user)?.role === 'orgsuperadmin';
-  const isOrgLabAdmin =(currentUser || user)?.role === 'labadmin';
+  const isOrgLabAdmin = (currentUser || user)?.role === 'labadmin';
   const isAvailable = (course.software || '').toLowerCase() === 'available';
-  
+
   const [isOrgAssignModalOpen, setIsOrgAssignModalOpen] = useState(false);
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [selectedOrg, setSelectedOrg] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
   const [assignError, setAssignError] = useState<string | null>(null);
   const [assignSuccess, setAssignSuccess] = useState<string | null>(null);
- 
+
+  // Reset local cart state when cart is cleared or item is removed
+  useEffect(() => {
+    const handleCartRefresh = () => {
+      setIsInCart(false);
+    };
+    window.addEventListener('cartRefresh', handleCartRefresh);
+    return () => window.removeEventListener('cartRefresh', handleCartRefresh);
+  }, []);
+
   useEffect(() => {
     const fetchOrganizations = async () => {
       if (!isSuperAdmin) return;
-      
+
       try {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`);
         if (response.data.success) {
@@ -102,11 +117,11 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const canEditDelete = () => {
     if (isSuperAdmin) return true;
     if (
-      isOrgSuperAdmin && 
-      ( course?.user_id === (currentUser || user)?.id)
+      isOrgSuperAdmin &&
+      (course?.user_id === (currentUser || user)?.id)
     ) return true;
-    else if(isOrgLabAdmin && 
-      ( course?.user_id === (currentUser || user)?.id)) return true;
+    else if (isOrgLabAdmin &&
+      (course?.user_id === (currentUser || user)?.id)) return true;
     return false;
   };
   const checkCartExist = (labid: string): boolean => {
@@ -138,15 +153,21 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
     }
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/addToCart`, {
-        labId: course.id, 
-        name: course.title, 
-        description: course.description, 
-        duration: course.duration, 
-        price: course.price || 0, 
-        quantity: 1, 
-        userId: user?.id || currentUser?.id
+        labId: course.id,
+        name: course.title,
+        description: course.description,
+        duration: course.duration,
+        number_hours_day: course?.number_hours_day,
+        price: course.price || 0,   // always store raw INR price in the cart
+        currency: currency,          // pass selected currency for reference
+        quantity: 1,
+        userId: user?.id || currentUser?.id,
+        credsId: course?.type === "singlevmdatacenter" && user?.role === "user" ? available[0]?.id ?? null : course?.type === "singlevmdatacenter" && available[0]?.id || null,
+        availability: course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter"
+          ? available?.length || 0
+          : null
       });
-      
+
       if (response.data.success) {
         setIsInCart(true);
         window.dispatchEvent(new CustomEvent('cartUpdated'));
@@ -173,7 +194,8 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
           userId: user?.id || currentUser?.id,
           duration: course.duration,
           labType: course.type,
-          userName:user?.name
+          userName: user?.name,
+          number_hours_day: course?.number_hours_day,
         }
       );
 
@@ -222,14 +244,14 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
       }
 
       let response;
-      
+
       if (course.type === 'cloudslice') {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/cloudSliceOrgAssignment`, {
           sliceId: course.id,
           organizationId: selectedOrg,
           userId: (currentUser || user)?.id,
           startDate: new Date().toISOString(),
-          admin_id:org_details.data.data.org_admin,
+          admin_id: org_details.data.data.org_admin,
           endDate: course.expiresIn || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
         });
       } else if (course.type === 'singlevm') {
@@ -289,18 +311,18 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
-    
-    navigate(`/dashboard/labs/details/${course.id}`, { 
-      state: { 
+
+    navigate(`/dashboard/labs/details/${course.id}`, {
+      state: {
         labType: course?.type,
-        labDetails: course 
-      } 
+        labDetails: course
+      }
     });
   };
 
   return (
     <>
-      <div 
+      <div
         className="relative group bg-gradient-to-br from-red-600/20 to-red-800/20 backdrop-blur-sm 
                    rounded-xl border border-red-500/20 hover:border-red-400/40 
                    transition-all duration-300 hover:shadow-xl hover:shadow-red-500/10 
@@ -311,9 +333,8 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
       >
         {/* Admin Controls */}
         {canEditDelete() && onEdit && onDelete && (
-          <div className={`absolute top-4 right-4 flex space-x-2 transition-opacity duration-300 z-10 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
-          }`}>
+          <div className={`absolute top-4 right-4 flex space-x-2 transition-opacity duration-300 z-10 ${isHovered ? 'opacity-100' : 'opacity-0'
+            }`}>
             {isSuperAdmin && (
               <button
                 onClick={(e) => {
@@ -342,7 +363,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
             </button>
           </div>
         )}
-      
+
         <div className="relative p-6 h-full flex flex-col">
           {/* Header */}
           <div className="flex justify-between items-start mb-4">
@@ -387,13 +408,12 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
             </div>
             <div className="flex items-center text-gray-400 col-span-2">
               <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  isAvailable
-                    ? 'bg-green-500/20 text-green-300'
-                    : 'bg-red-500/20 text-red-300'
-                }`}
+                className={`px-3 py-1 rounded-full text-xs font-medium ${!isAvailable || ((course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter") && !available)
+                  ? 'bg-red-500/20 text-red-300'
+                  : 'bg-green-500/20 text-green-300'
+                  }`}
               >
-                {isAvailable ? 'Available' : 'Not Available'}
+                {!isAvailable || ((course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter") && !available) ? 'Not Available' : 'Available'}
               </span>
             </div>
           </div>
@@ -405,10 +425,12 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
                 {course.isfree ? (
                   <span className="text-green-400 font-semibold">Free</span>
                 ) : (
-                  <span className="text-white font-semibold">${course.price}</span>
+                  <span className="text-white font-semibold">
+                    {convertPrice ? convertPrice(Number(course.price)) : `₹${course.price}`}
+                  </span>
                 )}
               </div>
-              
+
               <div className="flex space-x-2">
                 {onView && (
                   <button
@@ -425,7 +447,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
                   <button
                     onClick={() =>
                       navigate(`/dashboard/labs/details/${course.id}`, {
-                        state: { labDetails: course ,labType:course.type},
+                        state: { labDetails: course, labType: course.type },
                       })
                     }
                     className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-500
@@ -454,7 +476,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
                   </button>
                 ) : (
                   <>
-                    {!isAvailable ? (
+                    {!isAvailable || ((course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter") && !available) ? (
                       <button
                         disabled
                         title="Not available"
@@ -495,11 +517,10 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
 
             {enrollMessage && (
               <div
-                className={`text-sm font-medium px-3 py-2 rounded-lg ${
-                  enrollMessage.type === 'success'
-                    ? 'text-green-300 bg-green-500/20'
-                    : 'text-red-300 bg-red-500/20'
-                }`}
+                className={`text-sm font-medium px-3 py-2 rounded-lg ${enrollMessage.type === 'success'
+                  ? 'text-green-300 bg-green-500/20'
+                  : 'text-red-300 bg-red-500/20'
+                  }`}
               >
                 {enrollMessage.text}
               </div>

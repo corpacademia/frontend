@@ -7,9 +7,11 @@ import { LabTypeOverview } from '../components/admin/LabTypeOverview';
 import { LabManagementTabs } from '../components/admin/LabManagementTabs';
 import { LabType } from '../types';
 import axios from 'axios';
+import { useAuthStore } from '../../../store/authStore';
 
 export const LabsPage: React.FC = () => {
   const navigate = useNavigate();
+  const {user} = useAuthStore();
   const [selectedType, setSelectedType] = useState<LabType | null>(null);
   const [activeTab, setActiveTab] = useState('settings');
   const [loading, setLoading] = useState(false);
@@ -96,11 +98,8 @@ export const LabsPage: React.FC = () => {
     const fetchLabCounts = async () => {
       setLoading(true);
       try {
-        // Simulate an API call to fetch lab counts
-        const user_profile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`); // Replace with actual API endpoint
-
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCountoflabs/${user_profile.data.user.id}`,{
-          user : user_profile.data.user
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getCountoflabs/${user?.impersonating ? user?.impersonatedUserId : user?.id}`,{
+          user :user
         }); // Replace with actual API endpoint
 
         setLabCounts((prev) => ({

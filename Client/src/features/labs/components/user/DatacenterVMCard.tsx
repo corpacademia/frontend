@@ -29,15 +29,18 @@ interface DatacenterVMCardProps {
     protocol: string;
     startdate: string;
     enddate: string;
-    status: 'started' | 'expired' | 'not-started';
+    status: 'started' | 'expired' | 'not-started' | 'completed';
     creds_id: string;
     isrunning: boolean;
     software?: string[];
     userscredentials?:any[];
     guacamole_url?: string;
     userguide?: string;
+    purchased?:boolean;
+    number_hours_day?:string,
+    duration?:string
   };
-  onDelete: (labId: string) => void;
+  onDelete: (labId: string,purchased:boolean) => void;
 }
 
 export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelete }) => {
@@ -81,9 +84,10 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
 
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
-           isrunning: false,
+          isrunning: false,
           userId:lab.userscredentials[0].assigned_to,
-          labId: lab.lab_id
+          labId: lab.lab_id,
+          purchased:lab?.purchased
         });
 
         if (response.data.success) {
@@ -106,30 +110,38 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
         setIsStopping(false);
         setTimeout(() => setNotification(null), 3000);
       }
-    } else {
+    } 
+    else {
       // Start the lab
       setIsLaunching(true);
       setNotification(null);
 
       try {
           try {
-                          if(lab?.batch_id &&  lab?.status !== 'started'){
-                          const updateLabStartCount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserBatchLabs`,{
-                            batchId:lab?.batch_id,
-                            userId:lab?.user_id,
-                            labId:lab?.lab_id
-                          })}
-                        } catch (error) {
-                          console.log('Error updating lab status')
-                        }
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
+                if(lab?.batch_id &&  lab?.status !== 'started'){
+                    const updateLabStartCount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserBatchLabs`,{
+                    batchId:lab?.batch_id,
+                    userId:lab?.user_id,
+                    labId:lab?.lab_id
+                    })}
+                    } catch (error) {
+                      console.log('Error updating lab status')
+                    }
+            let response;
+            if(lab?.status !== 'completed'){
+               response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
 
           isrunning: true,
           userId:lab.userscredentials[0].assigned_to,
-          labId: lab.lab_id
+          labId: lab.lab_id,
+          purchased:lab?.purchased,
+          hoursPerDay:lab?.number_hours_day,
+          duration:lab?.duration
         });
+            }
+        
 
-        if (response.data.success) {
+        if (response?.data.success || lab?.status === "completed") {
           setNotification({
             type: 'success',
             message: 'Lab started successfully'
@@ -137,41 +149,17 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
 
           // Update local state
           lab.isrunning = true;
-          // Navigate to VM session page
-      //   const tokenResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/connectToDatacenterVm`, {
-      //   Protocol: lab.protocol || 'RDP',
-      //   VmId:lab.userscredentials[0].id,
-      //   Ip: lab.userscredentials[0].ip,
-      //   userName: lab.userscredentials[0].username,
-      //   password: lab.userscredentials[0].password,
-      //   port: lab.userscredentials[0].port,
-
-      // });
-
-      // if (tokenResponse.data.success && tokenResponse.data.token) {
-      //   // Then connect to VM using the token
-      //   const guacUrl = `${lab?.guacamole_url}?token=${tokenResponse.data.token.result}`;
-      //     navigate(`/dashboard/labs/vm-session/${lab.lab_id}`, {
-      //       state: { 
-      //         guacUrl,
-      //         vmTitle: lab.title,
-      //         vmId: lab.lab_id,
-      //         doc:lab.userguide,
-      //         credentials:lab.userscredentials
-      //       }
-      //     });
-      //   } 
-       const resp = await axios.post(
+          const resp = await axios.post(
                            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
                            {
-                             protocol: lab.protocol  || 'RDP',
-                             hostname:lab.userscredentials[0].ip,
-                             port:lab.userscredentials[0].port,
-                             username: lab.userscredentials[0].username,
-                             password:lab.userscredentials[0].password,
+                             protocol: lab?.protocol  || 'RDP',
+                             hostname:lab?.userscredentials[0].ip,
+                             port:lab?.userscredentials[0].port,
+                             username: lab?.userscredentials[0].username,
+                             password:lab?.userscredentials[0].password,
                            }
-                         );
-                         if (resp.data.success) {
+                );
+                if (resp.data.success) {
                            const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
                            // Build full ws url for guacamole-common-js
                            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -183,11 +171,11 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
                             vmTitle: lab.title,
                             vmId: lab.lab_id,
                             doc:lab.userguide,
-                            credentials:lab.userscredentials[0],
+                            credentials:[lab?.userscredentials[0]],
                             labDetails:lab
                            }
                          });
-                         }
+                }
         else {
           throw new Error(response.data.message || 'Failed to start lab');
         }}
@@ -208,7 +196,7 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ lab, onDelet
     setIsDeleting(true);
 
     try {
-      await onDelete(lab.lab_id);
+      await onDelete(lab.lab_id,lab?.purchased);
     } catch (error) {
       console.error('Error deleting lab:', error);
       setNotification({

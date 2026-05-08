@@ -50,7 +50,6 @@ const GST_RATE = 0.18;          // 18 % GST
 // ── Helpers ─────────────────────────────────────────────────────────────────
 const calcSubtotal = (days: number, users: number, catalogue: any,existingUsers:any) => {
   if (!catalogue) return 0;
-
   const perDayPrice = catalogue.price / catalogue.duration;
 
   return (
@@ -80,7 +79,7 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
   const [step, setStep] = useState<'details' | 'payment'>('details');
 
   // ── Form fields ───────────────────────────────────────────────────────────
-  const [additionalDays, setAdditionalDays] = useState<number>(30);
+  const [additionalDays, setAdditionalDays] = useState<number>(0);
   const [additionalUsers, setAdditionalUsers] = useState<number>(0);
   const [reason, setReason] = useState('');
 
@@ -92,7 +91,6 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
     message: string;
   } | null>(null);
   const [catalogue, setCatalogue] = useState<any>(null);
-
  useEffect(() => {
   if (!catalogues || !purchasedLab) return;
 
@@ -169,15 +167,12 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
 
       if (response.data.success) {
         // ── Path A: backend returns a Stripe session ID ──────────────────
-        const sessionId = response.data.sessionId;
-        if (sessionId) {
-          const stripe = await stripePromise;
-          if (stripe) {
-            await stripe.redirectToCheckout({ sessionId });
-            // Page navigates away; no further UI update needed.
-            return;
-          }
-        }
+         const cashfree = Cashfree({ mode: "sandbox" });
+         const data = response?.data;
+            cashfree.checkout({
+              paymentSessionId: data.payment_session_id,
+              redirectTarget: "_self",
+            });
 
         // ── Path B: backend handled payment internally (e.g. already paid) ─
         setNotification({

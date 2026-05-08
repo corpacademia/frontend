@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <body style="margin:0; padding:0; background:#f4f4f7; font-family: Arial, sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px;">
+      <tr>
+        <td align="center">
+
+          <!-- Container -->
+          <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #e5e7eb;">
+
+            <!-- Header -->
+            <tr>
+              <td style="background:#6366f1; padding:24px; text-align:center;">
+                <h1 style="margin:0; color:#ffffff; font-size:22px;">
+                  GoLabing.ai
+                </h1>
+                <p style="margin:6px 0 0; color:#e0e7ff; font-size:13px;">
+                  Your License Key is Ready
+                </p>
+              </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+              <td style="padding:30px;">
+
+                <p style="font-size:15px; color:#111827;">
+                  Hi <strong>{{name}}</strong>,
+                </p>
+
+                <p style="font-size:14px; color:#374151; line-height:1.6;">
+                  Your subscription has been successfully activated.  
+                  Below is your license key:
+                </p>
+
+                <!-- License Key Box -->
+                <div style="
+                  margin:20px 0;
+                  padding:18px;
+                  background:#111827;
+                  border-radius:10px;
+                  text-align:center;
+                  border:2px dashed #6366f1;
+                ">
+                  <span style="
+                    font-size:18px;
+                    letter-spacing:2px;
+                    color:#a5b4fc;
+                    font-weight:bold;
+                    font-family: monospace;
+                  ">
+                    {{licenseKey}}
+                  </span>
+                </div>
+
+                <!-- Plan Details -->
+                <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
+                  <tr>
+                    <td style="padding:8px 0; font-size:14px; color:#374151;">Plan</td>
+                    <td style="padding:8px 0; font-size:14px; color:#111827; font-weight:bold;">{{planName}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px 0; font-size:14px; color:#374151;">Billing</td>
+                    <td style="padding:8px 0; font-size:14px; color:#111827;">{{billingCycle}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px 0; font-size:14px; color:#374151;">Amount</td>
+                    <td style="padding:8px 0; font-size:14px; color:#111827;">₹{{amount}}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:8px 0; font-size:14px; color:#374151;">Expires On</td>
+                    <td style="padding:8px 0; font-size:14px; color:#111827;">{{expiryDate}}</td>
+                  </tr>
+                </table>
+
+                <!-- CTA -->
+                <div style="text-align:center; margin-top:30px;">
+                  <a href="{{dashboardUrl}}" style="
+                    background:#6366f1;
+                    color:#ffffff;
+                    padding:12px 24px;
+                    text-decoration:none;
+                    border-radius:8px;
+                    font-size:14px;
+                    font-weight:bold;
+                    display:inline-block;
+                  ">
+                    Go to Dashboard
+                  </a>
+                </div>
+
+                <!-- Note -->
+                <p style="margin-top:25px; font-size:13px; color:#6b7280; line-height:1.5;">
+                  ⚠️ Keep this license key secure. You’ll need it to activate your subscription in your dashboard.
+                </p>
+
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background:#f9fafb; padding:20px; text-align:center; font-size:12px; color:#9ca3af;">
+                Need help? Contact us at 
+                <a href="mailto:support@golabing.ai" style="color:#6366f1; text-decoration:none;">
+                  support@golabing.ai
+                </a>
+                <br><br>
+                © 2026 GoLabing.ai
+              </td>
+            </tr>
+
+          </table>
+
+        </td>
+      </tr>
+    </table>
+
+  </body>
+</html>

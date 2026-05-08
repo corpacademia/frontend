@@ -4,6 +4,7 @@ import { X, AlertCircle, CheckCircle } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import { useAuthStore } from '../../../store/authStore';
 import { useBatchStore } from '../../../store/batchStore';
+import { useSubscription } from '../../labs/hooks/useSubscription';
 
 interface CreateBatchModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
   onSuccess
 }) => {
   const { user } = useAuthStore();
+  const {license,updateUsage} = useSubscription();
   const { createBatch } = useBatchStore();
   const [formData, setFormData] = useState({
     batchName: '',
@@ -50,6 +52,7 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
       });
 
       if (result.success) {
+        await updateUsage(license.id,'batches',1);
         setSuccess('Batch created successfully!');
         setTimeout(() => {
           onSuccess();

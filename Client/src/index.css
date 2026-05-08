@@ -1,5 +1,51 @@
-
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+
+    /* ── Hide native scrollbar (keep scroll functionality) ── */
+    .scrollbar-none {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .scrollbar-none::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* ── Thin custom scrollbar for deliberate use ── */
+    .scrollbar-thin-custom {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(12, 142, 231, 0.3) transparent;
+    }
+
+    .scrollbar-thin-custom::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .scrollbar-thin-custom::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .scrollbar-thin-custom::-webkit-scrollbar-thumb {
+        background: rgba(12, 142, 231, 0.35);
+        border-radius: 9999px;
+    }
+
+    .scrollbar-thin-custom::-webkit-scrollbar-thumb:hover {
+        background: rgba(12, 142, 231, 0.6);
+    }
+
+    /* ── Bottom fade mask — hints overflow content ── */
+    .scroll-fade-bottom {
+        mask-image: linear-gradient(to bottom,
+                black 0%,
+                black calc(100% - 3.5rem),
+                transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom,
+                black 0%,
+                black calc(100% - 3.5rem),
+                transparent 100%);
+    }
+}

@@ -60,7 +60,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
     if (isOpen) {
       fetchAvailableLabs(user?.id,user?.org_id,user?.role);
       if (user?.org_id) {
-        fetchAvailableTrainers(user.org_id);
+        fetchAvailableTrainers(user?.org_id);
       }
       if (editLab) {
         setFormData({

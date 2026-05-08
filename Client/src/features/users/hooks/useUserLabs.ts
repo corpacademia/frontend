@@ -1,32 +1,17 @@
 import { useState, useEffect } from 'react';
 import { UserLab } from '../types';
 import axios from 'axios';
+import { useAuthStore } from '../../../store/authStore';
 
 export const useUserLabs = (userId: string,user:any) => {
   const [labs, setLabs] = useState<UserLab[]>([]);
   const [labStatus, setLabStatus] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [admin, setAdmin] = useState<any>(null);
-
-  
-  // First useEffect: Fetch admin details
-  useEffect(() => {
-    const getUserDetails = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`, {
-          withCredentials: true,
-        });
-        setAdmin(response.data.user);
-      } catch (error) {
-        console.error('Failed to fetch admin details', error);
-      }
-    };
-    getUserDetails();
-  }, []);
+  const {user:userData} = useAuthStore();
 
   // Second useEffect: Fetch labs when admin is available and userId changes
   useEffect(() => {
-  if (!admin || !admin.id) return;
+  if (!userData || !userData.id) return;
 
   let fetchLabs: (() => Promise<void>) | undefined;
 
@@ -235,7 +220,7 @@ export const useUserLabs = (userId: string,user:any) => {
         // 1. Fetch base labs
         const [cataloguesResponse, labsResponse] = await Promise.all([
           axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
-            admin_id: admin.id,
+            admin_id: userData?.impersonating ? userData?.impersonatedUserId : userData?.id,
           }),
           axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAssignedLabs`, {
             userId,
@@ -433,7 +418,7 @@ export const useUserLabs = (userId: string,user:any) => {
 
   // Call the fetchLabs function
   if (fetchLabs) fetchLabs();
-}, [userId, admin]);
+}, [userId, userData]);
 
-  return { labs, labStatus, isLoading,admin };
+  return { labs, labStatus, isLoading,userData };
 };

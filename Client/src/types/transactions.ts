@@ -10,6 +10,7 @@ export interface Transaction {
   description?: string;
   payment_method?: string;
   products: { id: string; name: string; price: number; quantity: number }[];
+  refund_status?:string;
 }
 
 export interface TransactionFilter {

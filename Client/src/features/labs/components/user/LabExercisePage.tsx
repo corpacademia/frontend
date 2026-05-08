@@ -15,6 +15,7 @@ import {
   Square
 } from 'lucide-react';
 import axios from 'axios';
+import { useAuthStore } from '../../../../store/authStore';
 
 
 
@@ -37,7 +38,7 @@ export const LabExercisePage: React.FC = () => {
   const [labStarted, setLabStarted] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [user, setUser] = useState<any>();
+  const {user} = useAuthStore();
   // const [resources, setResources] = useState<any[]>(mockResources);
   const [notes, setNotes] = useState('');
   const [accountCreated, setAccountCreated] = useState(false);
@@ -50,20 +51,18 @@ export const LabExercisePage: React.FC = () => {
     const checkAccountStatus = async () => {
       try {
         setIsCheckingAccount(true);
-        const userResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setUser(userResponse.data.user);
         
         // Check if IAM account is already created
         let accountStatusResponse;
         let accountData;
         if(labDetails.purchased){
           accountStatusResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlicePurchasedLabs`,{
-              userId:userResponse.data.user.id
+              userId:user?.impersonating ? user?.impersonatedUserId : user?.id
             });
          accountData = accountStatusResponse.data.data.find((lab)=>lab.labid === labDetails.labid);
         }
         else{
-          accountStatusResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${userResponse.data.user.id}`);
+          accountStatusResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${user?.impersonating ? user?.impersonatedUserId : user?.id}`);
          accountData = accountStatusResponse.data.data.find((lab)=>lab.labid === labDetails.labid);
         }
          
@@ -111,11 +110,11 @@ export const LabExercisePage: React.FC = () => {
       if (!accountCreated) {
         // Create IAM user account if not already created
         const createIamResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/createIamUser`, {
-          userName: user.name,
+          userName: user?.name,
           services: exercise?.services || [],
-          role: user.role,
+          role: user?.role,
           labid: labDetails?.labid,
-          user_id:user.id,
+          user_id:user?.impersonating ? user?.impersonatedUserId : user?.id,
           purchased:labDetails?.purchased || false
         });
         
@@ -128,7 +127,7 @@ export const LabExercisePage: React.FC = () => {
               isrunning: true,
               status: 'in-progress',
               completed_in: 0,
-              user_id: user.id,
+              user_id: user?.impersonating ? user?.impersonating : user?.id,
             }
           );
 
@@ -136,13 +135,13 @@ export const LabExercisePage: React.FC = () => {
           if(labDetails.purchased){
             
             const accountDetailsResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlicePurchasedLabs`,{
-              userId:user.id
+              userId:user?.impersonating ? user?.impersonatedUserId : user?.id
             });
             setCredentials(accountDetailsResponse.data.data.find((lab)=>lab.labid === labDetails.labid));
             setAccountCreated(true);
           }
           else{
-            const accountDetailsResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${user.id}`);
+            const accountDetailsResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus/${user?.impersonating ? user?.impersonatedUserId : user?.id}`);
             setCredentials(accountDetailsResponse.data.data.find((lab)=>lab.labid === labDetails.labid));
             setAccountCreated(true);
           }
@@ -154,7 +153,7 @@ export const LabExercisePage: React.FC = () => {
             launched: true,
             isRunning: true,
             labId: labDetails?.labid,
-            userId: user.id,
+            userId: user?.impersonating ? user?.impersonatedUserId : user?.id,
             purchased:labDetails?.purchased || false
           });
           
@@ -174,14 +173,14 @@ export const LabExercisePage: React.FC = () => {
             isrunning: true,
             status: 'in-progress',
             completed_in: 0,
-            user_id: user.id,
+            user_id: user?.impersonating ? user?.impersonatedUserId : user?.id,
           }
         );
         // Resume lab that was previously stopped
         await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser`, {
           isRunning: true,
           labId: labDetails?.labid,
-          userId: user?.id,
+          userId: user?.impersonating ? user?.impersonatedUserId : user?.id,
           purchased:labDetails?.purchased || false
         });
         const editAwsServices = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/addAwsServices`,{
@@ -214,7 +213,7 @@ export const LabExercisePage: React.FC = () => {
       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudSliceRunningStateOfUser`, {
         isRunning: false,
         labId: labDetails?.labid,
-        userId: user?.id,
+        userId: user?.impersonating ? user?.impersonatedUserId : user?.id,
         purchased:labDetails?.purchased || false
       });
       
@@ -255,7 +254,7 @@ export const LabExercisePage: React.FC = () => {
           isrunning: true,
           status: 'completed',
           completed_in: completedIn,
-          user_id: user.id,
+          user_id: user?.impersonating ? user?.impersonatedUserId : user?.id,
         }
       );
   

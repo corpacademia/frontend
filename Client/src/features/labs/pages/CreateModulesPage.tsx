@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import axios from 'axios';
+import { useAuthStore } from '../../../store/authStore';
 
 interface Option {
   id: string;
@@ -113,7 +114,7 @@ export const CreateModulesPage: React.FC = () => {
     type: 'success' | 'error';
     message: string;
   } | null>(null);
-
+  const {user} = useAuthStore();
   // Service selection state
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [availableCategories, setAvailableCategories] = useState<Record<string, Service[]>>({});
@@ -661,15 +662,11 @@ export const CreateModulesPage: React.FC = () => {
     setNotification(null);
 
     try {
-      // Get the current user
-      const userResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      const userId = userResponse.data.user.id;
-
       // Prepare data for submission
       const submissionData = {
         labConfig,
         modules,
-        createdBy: userId
+        createdBy: user?.impersonating ? user?.impersonatedUserId : user?.id
       };
 
       // Create FormData for file uploads

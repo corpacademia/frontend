@@ -38,6 +38,7 @@ interface DeleteModalProps {
   labTitle: string;
   userId: string;
   purchased:boolean;
+  onDelete: (labId: string) => void;
 }
 
 interface LabDetails {
@@ -48,7 +49,7 @@ interface LabDetails {
   password: string;
 }
 
-const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, labId, labTitle, userId,purchased }) => {
+const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, labId, labTitle, userId,purchased,onDelete }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   
@@ -94,7 +95,8 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onClose, labId, labTi
       });
       setTimeout(() => {
         onClose();
-        window.location.reload();
+        // window.location.reload();
+        onDelete(labId);
       }, 1500);
           // onDelete(deletedId);
         } else {
@@ -207,12 +209,18 @@ export const MyLabs: React.FC = () => {
     userId: '',
   });
 
+  // In the MyLabs component
+const handleLabDeleted = (deletedLabId: string) => {
+  setLabs(prev => prev.filter(lab => lab.lab_id !== deletedLabId));
+  setFilteredLabs(prev => prev.filter(lab => lab.lab_id !== deletedLabId));
+};
+
+
   const [filters, setFilters] = useState({
     search: '',
     provider: '',
     status: ''
   });
-
   const [user, setUser] = useState({});
 
   useEffect(() => {
@@ -312,8 +320,8 @@ try {
       };
     });
 
-setLabs(updatedLabs);
-setFilteredLabs(updatedLabs);
+    setLabs(updatedLabs);
+    setFilteredLabs(updatedLabs);
 
 
       // Fetch cloud slice labs
@@ -360,46 +368,64 @@ setFilteredLabs(updatedLabs);
          console.error('Error fetching cloud slice purchased labs:', err);
       }
       // Fetch datacenter VMs
-      try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserAssignedSingleVmDatacenterLabs/${user?.id}`
-        );
-        if (res.data.success) {
-          const vmDetails = await Promise.all(
-            res.data.data.map(async (assignment: any) => {
-              try {
-                const vmRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`, {
-                  labId: assignment.labid,
-                });
+     try {
+  const [assignedRes, purchasedRes] = await Promise.all([
+    axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserAssignedSingleVmDatacenterLabs/${user?.id}`
+    ),
+    axios.post(
+      `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserPurchasedSingleVMDatacenterLabs/${user?.id}`
+    )
+  ]);
 
-                if (vmRes.data.success) {
-                  const credsRes = await axios.post(
-                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserAssignedSingleVMDatacenterCredsToUser`,
-                    { labId: assignment.labid, userId: user.id }
-                  );
+  if (assignedRes.data.success || purchasedRes.data.success) {
 
-                  return {
-                    ...vmRes.data.data,
-                    ...assignment,
-                    userscredentials: credsRes.data.success ? credsRes.data.data : [],
-                    type:'singlevm-datacenter'
-                  };
-                }
-              } catch (err) {
-                console.error(`Error fetching VM/creds for lab ${assignment.labid}:`, err);
-              }
-              return null;
-            })
-          );
+    const totalIds = [
+      ...(assignedRes?.data?.data || []),
+      ...(purchasedRes?.data?.data.map((lab:any)=> ({ ...lab, purchased: true })) || [])
+    ];
 
-          const cleanVMs = vmDetails.filter(Boolean);
-          setDatacenterVMs(cleanVMs);
-          setFilteredDatacenterVMs(cleanVMs);
+    const vmDetails = await Promise.all(
+      totalIds.map(async (assignment) => {
+        try {
+
+          const [vmRes, credsRes] = await Promise.all([
+            axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`,
+              { labId: assignment.labid }
+            ),
+            axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserAssignedSingleVMDatacenterCredsToUser`,
+              { labId: assignment.labid, userId: user.id }
+            )
+          ]);
+
+          if (vmRes.data.success) {
+            return {
+              ...vmRes.data.data,
+              ...assignment,
+              userscredentials: credsRes.data?.success ? credsRes.data.data : [],
+              type: "singlevm-datacenter",
+            };
+          }
+
+        } catch (err) {
+          console.error(`Error fetching lab ${assignment.labid}`, err);
         }
-      } catch (err) {
-        console.error('Error fetching datacenter VMs:', err);
-      }
 
+        return null;
+      })
+    );
+
+    const cleanVMs = vmDetails.filter(Boolean);
+
+    setDatacenterVMs(cleanVMs);
+    setFilteredDatacenterVMs(cleanVMs);
+  }
+
+    } catch (err) {
+      console.error("Error fetching datacenter VMs:", err);
+    }
       // Fetch Proxmox VMs
       try {
         const res = await axios.get(
@@ -425,7 +451,10 @@ setFilteredLabs(updatedLabs);
   );
 
   if (res.data.success) {
-    const proxmoxVMList = res.data.data || [];
+    const proxmoxVMList = res?.data?.data.map((data:any)=>({
+            ...data,
+            type:'singlevm-proxmox'}
+          )) || [];
 
     setProxmoxVMs((prev: any[]) => [
       ...prev,
@@ -444,12 +473,21 @@ setFilteredLabs(updatedLabs);
 
       // Fetch cluster VMs
       try {
-        const res = await axios.post(
+        const [result,purchasedResult] =  await Promise.all([
+          axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getUserAssignedClusterLabs/${user.id}`
-        );
-        if (res.data.success) {
+        ),
+          axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getUserPurchasedClusterLabs/${user.id}`
+        ),
+        ])  
+        if (result.data.success  || purchasedResult.data.success) {
+            const totalIds = [
+              ...(result?.data?.data || []),
+              ...(purchasedResult?.data?.data.map((lab:any)=> ({ ...lab, purchased: true })) || [])
+            ];
           const clusterDetails = await Promise.all(
-            res.data.data.map(async (assignment: any) => {
+            totalIds.map(async (assignment: any) => {
               try {
                 const clusterRes = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabOnId`, {
                   labId: assignment.labid,
@@ -1031,16 +1069,17 @@ setFilteredLabs(updatedLabs);
     }
   };
   
-  const handleDeleteDatacenterVM = async (labId: string) => {
+  const handleDeleteDatacenterVM = async (labId: string,purchased:boolean) => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVmDatacenterUserAssignment`, {
         labId: labId,
-        userId: user.id
+        userId: user?.id,
+        purchased:purchased
       });
       
       if (response.data.success) {
-        setDatacenterVMs(prev => prev.filter(vm => vm.labid !== labId));
-        setFilteredDatacenterVMs(prev => prev.filter(vm => vm.labid !== labId));
+        setDatacenterVMs(prev => prev.filter(vm => vm?.labid !== labId));
+        setFilteredDatacenterVMs(prev => prev.filter(vm => vm?.labid !== labId));
         return response.data;
       } else {
         throw new Error(response.data.message || 'Failed to delete datacenter VM');
@@ -1050,14 +1089,14 @@ setFilteredLabs(updatedLabs);
       throw error;
     }
   };
-  if (isLoading) {
+   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <Loader className="h-8 w-8 text-primary-400 animate-spin" />
         <span className="ml-2 text-gray-400">Loading labs...</span>
       </div>
     );
-  }
+   }
   return (
     <div className="space-y-6">
       {/* Header and Filters */}
@@ -1329,6 +1368,11 @@ setFilteredLabs(updatedLabs);
                   <ProxmoxUserVMCard 
                     key={vm.id} 
                     vm={vm}
+                    onDelete={() =>
+                      setProxmoxVMs((prev) =>
+                        prev.filter((item) => item.labid !== vm.labid)
+                      )
+                    }
                   />
                 ))}
               </div>
@@ -1363,6 +1407,8 @@ setFilteredLabs(updatedLabs);
         labId={deleteModal.labId}
         labTitle={deleteModal.labTitle}
         userId={deleteModal.userId}
+        purchased={deleteModal.purchased}
+        onDelete={handleLabDeleted}
       />
     </div>
   );

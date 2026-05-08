@@ -24,6 +24,7 @@ interface CloudVM {
 
 interface DatacenterVM {
   id: string;
+  lab_id:string;
   title: string;
   description: string;
   platform: string;
@@ -42,6 +43,7 @@ interface DatacenterVM {
 
 interface ProxmoxVM {
   id: string;
+  vmdetails_id: string;
   title: string;
   description: string;
   platform: string;
@@ -73,7 +75,7 @@ export const AdminCloudVMsPage: React.FC = () => {
     status: '',
     type: 'all' // new filter for VM type (cloud, datacenter, or proxmox)
   });
-
+ console.log(user)
   useEffect(() => {
   const fetchCloudVMs = async () => {
   try {
@@ -271,7 +273,7 @@ const fetchDatacenterVMs = async () => {
 
   try {
     const orgId = admin?.org_id;
-    const createdBy = admin.id;
+    const createdBy = admin?.impersonatedUserId ? admin.impersonatedUserId : admin?.id;
 
     // 1️⃣ Fetch org-assigned + admin-created VMs in parallel
     const [orgDatacenterResponse, datacenterResponse] = await Promise.all([
@@ -287,6 +289,20 @@ const fetchDatacenterVMs = async () => {
         { adminId: createdBy }
       ),
     ]);
+    const labAdminsResponse :any[] = []
+      if(admin.role === 'orgsuperadmin'){
+    const ids = orgUsers
+        .filter((u:any) => u.role === "labadmin")
+        .map((u:any) => u.id);
+        if(ids?.length){
+           const labAdminsLab = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabsOfLabadmins`,{
+            adminIds:ids
+           })
+            labAdminsResponse.push(...labAdminsLab?.data?.data.map((lab:any)=>({...lab,assessment:false})));
+        }
+       
+      }
+    
 
     // 2️⃣ Merge both responses safely
     const mergedAssignments = [
@@ -296,6 +312,7 @@ const fetchDatacenterVMs = async () => {
       ...(datacenterResponse.data?.success
         ? datacenterResponse.data.data
         : []),
+        ...labAdminsResponse
     ];
 
     // 3️⃣ Fetch VM details + credentials
@@ -435,7 +452,7 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
   if (admin.id) {
     fetchCloudVMs();
     fetchDatacenterVMs();
-    fetchProxmoxVMs(admin?.org_id,admin?.id);
+    fetchProxmoxVMs(admin?.org_id,admin?.impersonating ? admin?.impersonatedUserId : admin?.id);
   }
 }, [admin.id]);
  
@@ -614,7 +631,7 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredVMs.map((vm) => (
-                      <CloudVMCard key={vm.id} vm={vm} />
+                      <CloudVMCard key={vm.id} vm={vm} onDelete={() => setVMs(prev => prev.filter(v => v.id !== vm.id))} />
                     ))}
                   </div>
                 </div>
@@ -632,7 +649,7 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredDatacenterVMs.map((vm) => (
-                      <DatacenterVMCard key={vm.id} vm={vm} />
+                      <DatacenterVMCard key={vm.id} vm={vm} onDelete={() => setDatacenterVMs(prev => prev.filter(v => v.lab_id !== vm.lab_id))}/>
                     ))}
                   </div>
                 </div>
@@ -650,7 +667,7 @@ const fetchProxmoxVMs = async (orgId: string, userId: string) => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredProxmoxVMs.map((vm) => (
-                      <ProxmoxVMCard key={vm.id} vm={vm} canEdit = {canEditContent(vm)}/>
+                      <ProxmoxVMCard key={vm.id} vm={vm} canEdit = {canEditContent(vm)} onDelete={() => setProxmoxVMs(prev => prev.filter(v => v.vmdetails_id !== vm.vmdetails_id))}/>
                     ))}
                   </div>
                 </div>

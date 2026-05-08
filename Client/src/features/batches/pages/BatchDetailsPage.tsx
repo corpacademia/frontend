@@ -58,8 +58,6 @@ interface BatchLab {
   trainer_name?: string;
 }
 
-
-
 export const BatchDetailsPage: React.FC = () => {
   const { batchId } = useParams<{ batchId: string }>();
   const navigate = useNavigate();

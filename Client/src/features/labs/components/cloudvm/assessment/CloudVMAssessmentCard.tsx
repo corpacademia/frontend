@@ -33,7 +33,7 @@ interface CloudVMAssessmentProps {
     provider: string;
     instance: string;
     instance_id?: string;
-    status: 'active' | 'inactive' | 'pending';
+    status: 'active' | 'inactive' | 'pending' | 'expired';
     cpu: number;
     ram: number;
     storage: number;
@@ -42,6 +42,7 @@ interface CloudVMAssessmentProps {
     config_details?: any;
     lab_id: string;
   };
+  onDelete?:()=>void;
 }
 
 interface org {
@@ -69,7 +70,7 @@ interface LabDetails {
   description: string;
 }
 
-export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assessment }) => {
+export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assessment,onDelete }) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -99,7 +100,6 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
   //   getUserDetails();
   // }, []);
   
-
   useEffect(() => {
     const fetchOrg = async () => {
       if (assessment.config_details?.organizationId) {
@@ -116,7 +116,7 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
     const fetchUsers = async () => {
       try {
         const user_cred = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      setAdmin(user_cred.data.user);
+        setAdmin(user_cred.data.user);
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user_cred?.data?.user?.org_id}`);
          const users = response.data?.data || [];
 
@@ -492,7 +492,8 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
       
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Assessment deleted successfully' });
-        setTimeout(() => window.location.reload(), 1500);
+        // setTimeout(() => window.location.reload(), 1500);
+        onDelete?.();
       } else {
         throw new Error(response.data.message || 'Failed to delete assessment');
       }
@@ -531,8 +532,8 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
         
         <div className="absolute top-2 right-2 flex items-center space-x-2">
           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-            assessment.status === 'active' ? 'bg-emerald-500/20 text-emerald-300' :
-            assessment.status === 'inactive' ? 'bg-red-500/20 text-red-300' :
+            assessment.status === 'active'  ? 'bg-emerald-500/20 text-emerald-300' :
+            assessment.status === 'expired'  ? 'bg-red-500/20 text-red-300' :
             'bg-amber-500/20 text-amber-300'
           }`}>
             {assessment.status}

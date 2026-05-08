@@ -4,6 +4,7 @@ import { ClusterVMCard } from './ClusterVMCard';
 import { Search, Filter, AlertCircle, FolderX } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface ClusterVM {
   id: string;
@@ -36,6 +37,7 @@ interface ClusterVM {
 }
 
 export const ClusterList: React.FC = () => {
+  const {user} = useAuthStore();
   const [clusters, setClusters] = useState<ClusterVM[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,15 +54,14 @@ export const ClusterList: React.FC = () => {
   try {
     setLoading(true);
 
-    const userProfileRes = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`
-    );
-    if (!userProfileRes.data) {
-      setError("Failed to fetch user profile");
-      return;
-    }
+    // const userProfileRes = await axios.get(
+    //   `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`
+    // );
+    // if (!userProfileRes.data) {
+    //   setError("Failed to fetch user profile");
+    //   return;
+    // }
 
-    const user = userProfileRes.data.user;
     setCurrentUser(user);
 
     let clusterLabs = [];
@@ -78,7 +79,7 @@ export const ClusterList: React.FC = () => {
       promises.push(
         axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabs`,
-          { userId: user.id }
+          { userId: user?.impersonating ? user?.impersonatedUserId : user?.id }
         )
       );
     }
@@ -90,7 +91,7 @@ export const ClusterList: React.FC = () => {
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,
           {
             orgId: user.org_id,
-            admin_id: user.id,
+            admin_id: user?.impersonating ? user?.impersonatedUserId : user?.id,
           }
         )
       );
@@ -107,7 +108,16 @@ export const ClusterList: React.FC = () => {
     }
 
     // Merge both results safely
-    const mergedLabs = [...clusterLabs, ...orgLabs];
+    const mergedLabs = [
+      ...clusterLabs,
+      ...orgLabs.map((org: any) => ({
+        ...org,
+        lab: {
+          ...org.lab,
+          assessment: true
+        }
+      }))
+    ];
     if (mergedLabs.length > 0) {
       setClusters(mergedLabs);
     } else {
@@ -224,7 +234,7 @@ export const ClusterList: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredClusters.map((cluster) => (
-              <ClusterVMCard key={cluster.id} vm={cluster} />
+              <ClusterVMCard key={cluster.id} vm={cluster} onDelete={()=>setClusters(prev => prev.filter(v=>v.lab?.labid !== cluster?.lab?.labid))}/>
             ))}
           </div>
         </>

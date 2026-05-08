@@ -122,7 +122,8 @@ export const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({
         axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`, {
           labId: lab?.lab_id || lab?.labid,
           orgId: user?.orgassigned,
-          userId: user.user_id
+          userId: user.user_id,
+          purchased:lab?.purchased
         })
       );
 

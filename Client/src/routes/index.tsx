@@ -65,6 +65,8 @@ import { BatchesPage } from '../features/batches/pages/BatchesPage';
 import { BatchDetailsPage } from '../features/batches/pages/BatchDetailsPage';
 import VmSession from '../features/labs/components/vmsession';
 import { CloudSettings } from '../features/dashboard/pages/CloudSettings';
+import { SuperAdminSubscriptionsPage } from '../features/subscriptions/pages/SuperAdminSubscriptionsPage';
+import { OrgBillingPage } from '../features/subscriptions/pages/OrgBillingPage';
 // Assume TransactionsPage and CloudUsage are correctly imported from their respective modules
 // import { TransactionsPage } from '../features/dashboard/pages/TransactionsPage';
 
@@ -162,9 +164,19 @@ export const AppRoutes: React.FC = () => {
             <SuperAdminCataloguePurchasesPage />
           </PrivateRoute>
         } />
+        <Route path="subscriptions" element={
+          <PrivateRoute allowedRoles={['superadmin']}>
+            <SuperAdminSubscriptionsPage />
+          </PrivateRoute>
+        } />
         <Route path="my-purchases" element={
           <PrivateRoute allowedRoles={['orgsuperadmin']}>
             <OrgSuperAdminPurchasesPage />
+          </PrivateRoute>
+        } />
+        <Route path="billing" element={
+          <PrivateRoute allowedRoles={['orgsuperadmin']}>
+            <OrgBillingPage />
           </PrivateRoute>
         } />
         <Route path="assessments" element={<Assessments />} />

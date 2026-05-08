@@ -11,6 +11,7 @@ import { ClusterConfig } from './steps/ClusterConfig';
 import { ProxmoxConfig } from './steps/ProxmoxConfig';
 import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
 import axios from 'axios';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface VMClusterWorkflowProps {
   onBack: () => void;
@@ -19,7 +20,7 @@ interface VMClusterWorkflowProps {
 export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) => {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<any>({});
+  const {user} = useAuthStore();
   const [selectedCloudType, setSelectedCloudType] = useState<'global' | 'organization'>('global');
   const [selectedCloudId, setSelectedCloudId] = useState<string>('');
   const [organizationClouds, setOrganizationClouds] = useState<any[]>([]);
@@ -58,11 +59,6 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
 
   useEffect(() => {
     const getUserDetails = async () => {  
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setUser(response.data.user);
-        
-        if (response.data.user?.org_id) {
           try {
             const cloudsResponse = await axios.get(
               `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_credentials/organization/${response.data.user.org_id}`
@@ -73,10 +69,7 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
           } catch (err) {
             console.error('Error fetching organization clouds:', err);
           }
-        }
-      } catch (err) {
-        console.error('Error fetching user profile:', err);
-      }
+      
     }
     getUserDetails();
   }, []);
@@ -183,7 +176,7 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
         // Make API call for datacenter platform
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/createVMClusterDatacenterLab`, {
           data: data,
-          userId: user.id
+          userId: user?.impersonating ? user?.impersonatedUserId : user?.id
         });
 
         if (response.data.success) {
@@ -240,45 +233,39 @@ export const VMClusterWorkflow: React.FC<VMClusterWorkflowProps> = ({ onBack }) 
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Cloud Type
+                      Select Lab Credentials
                     </label>
                     <select
-                      value={selectedCloudType}
-                      onChange={(e) => handleCloudTypeChange(e.target.value as 'global' | 'organization')}
+                      value={selectedCloudId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedCloudId(val);
+                        if (!val) {
+                          setSelectedCloudType('global');
+                        } else {
+                          setSelectedCloudType('organization');
+                        }
+                      }}
                       className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     >
-                      <option value="global">Global Cloud (GoLab Cloud)</option>
-                      {organizationClouds.length > 0 && (
-                        <option value="organization">Organization Cloud</option>
+                      <option value="">GoLab Cloud (Default)</option>
+                      {organizationClouds.filter((c: any) =>
+                        !config.cloudProvider || c.provider?.toLowerCase() === config.cloudProvider?.toLowerCase()
+                      ).length > 0 && (
+                        <optgroup label="Organization Credentials">
+                          {organizationClouds
+                            .filter((c: any) =>
+                              !config.cloudProvider || c.provider?.toLowerCase() === config.cloudProvider?.toLowerCase()
+                            )
+                            .map((cloud: any) => (
+                              <option key={cloud.id} value={cloud.id}>
+                                {cloud.name} ({cloud.provider?.toUpperCase()})
+                              </option>
+                            ))}
+                        </optgroup>
                       )}
                     </select>
                   </div>
-                  {config.cloudProvider && getFilteredCloudsByProvider().length > 0 && (
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Select Cloud Configuration
-                      </label>
-                      <select
-                        value={selectedCloudId}
-                        onChange={(e) => setSelectedCloudId(e.target.value)}
-                        className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      >
-                        <option value="">Use GoLab Cloud (Default)</option>
-                        {getFilteredCloudsByProvider().map((cloud: any) => (
-                          <option key={cloud.id} value={cloud.id}>
-                            {cloud.name} ({cloud.provider.toUpperCase()})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  {config.cloudProvider && getFilteredCloudsByProvider().length === 0 && selectedCloudType === 'organization' && (
-                    <div className="mt-4 p-4 bg-yellow-900/20 rounded-lg border border-yellow-500/20">
-                      <p className="text-sm text-yellow-200">
-                        No organization clouds configured for {config.cloudProvider?.toUpperCase()}. Using GoLab Cloud.
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
               <CloudProviderSelector 

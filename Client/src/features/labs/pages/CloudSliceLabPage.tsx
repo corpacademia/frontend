@@ -22,6 +22,7 @@ import {
   Eye
 } from 'lucide-react';
 import axios from 'axios';
+import { useAuthStore } from '../../../store/authStore';
 
 interface ServiceCategory {
   name: string;
@@ -55,6 +56,7 @@ export const CloudSliceLabPage: React.FC = () => {
   const [categorySearch, setCategorySearch] = useState('');
   const [serviceSearch, setServiceSearch] = useState('');
   const [fetching , setFetching] = useState(false);
+  const {user} = useAuthStore();
   
   // Documents state
   const [documents, setDocuments] = useState<string[]>([]);
@@ -72,12 +74,11 @@ export const CloudSliceLabPage: React.FC = () => {
     const fetchCurrentUser = async () => {
       try {
         setFetching(true);
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setCurrentUser(response.data.user);
-        if(response?.data?.user?.role === 'labadmin' || response?.data?.user?.role === 'orgsuperadmin'){
+        setCurrentUser(user);
+        if(user?.role === 'labadmin' || user?.role === 'orgsuperadmin'){
           const orgLabDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getOrgAssignedLabs`,{
-            orgId: response.data.user.org_id,
-            admin_id: response.data.user.id
+            orgId: user?.org_id,
+            admin_id: user?.impersonating ? user?.impersonatedUserId : user?.id
           })
           if(orgLabDetails.data.success){
             console.log(orgLabDetails.data.data)
@@ -200,8 +201,8 @@ export const CloudSliceLabPage: React.FC = () => {
     if (currentUser.role === 'superadmin') return true;
     
     // Org admin can only edit content they created
-    if (currentUser?.role === 'labadmin' || currentUser?.role === 'superadmin' && !sliceDetails?.assessment) {
-      return sliceDetails.createdby === currentUser.id;
+    if (currentUser?.role === 'labadmin' || currentUser?.role === 'orgsuperadmin' && !sliceDetails?.assessment) {
+      return sliceDetails.createdby === (currentUser?.impersonating ? currentUser?.impersonatedUserId : currentUser?.id);
     }
     
     return false;
@@ -643,8 +644,8 @@ export const CloudSliceLabPage: React.FC = () => {
                 <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
                   {currentUser?.role === 'superadmin' || (currentUser?.role === 'orgsuperadmin' && (
                 !orgLabStatus?.admin_id ||
-                currentUser?.id === orgLabStatus?.admin_id
-                )) || currentUser?.id === sliceDetails?.createdby ? sliceDetails?.username : orgLabStatus?.username || 'Not available'}
+              ( currentUser?.impersonating ? currentUser?.impersonatedUserId : currentUser?.id) === orgLabStatus?.admin_id
+                )) ||   ( currentUser?.impersonating ? currentUser?.impersonatedUserId : currentUser?.id) === sliceDetails?.createdby ? sliceDetails?.username : orgLabStatus?.username || 'Not available'}
                 </p>
               </div>
               
@@ -656,8 +657,8 @@ export const CloudSliceLabPage: React.FC = () => {
                 <p className="text-sm font-mono bg-dark-400/50 p-2 rounded border border-primary-500/10 text-gray-300">
                 {currentUser.role === 'superadmin' ||(currentUser.role === 'orgsuperadmin' && (
                     !orgLabStatus?.admin_id ||
-                    currentUser?.id === orgLabStatus?.admin_id
-                  )) || currentUser?.id === sliceDetails?.createdby  ? sliceDetails?.password : orgLabStatus?.password || 'Not available'}
+                      ( currentUser?.impersonating ? currentUser?.impersonatedUserId : currentUser?.id) === orgLabStatus?.admin_id
+                  )) ||   ( currentUser?.impersonating ? currentUser?.impersonatedUserId : currentUser?.id) === sliceDetails?.createdby  ? sliceDetails?.password : orgLabStatus?.password || 'Not available'}
                 </p>
               </div>
               

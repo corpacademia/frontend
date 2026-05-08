@@ -368,9 +368,9 @@ export const ClusterUserListModal: React.FC<ClusterUserListModalProps> = ({
                           navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
                           state: {
                             guacUrl:wsUrl,
-                            vmTitle: vm.title,
+                            vmTitle: vm?.title,
                             vmId: vmId,
-                            doc: vm.lab?.labguide,
+                            doc: vm?.lab?.labguide,
                             credentials: [vmData]
                           }
                         });

@@ -141,25 +141,42 @@ export const OrgSuperAdminPurchasesPage: React.FC = () => {
     const [isExtensionModalOpen, setIsExtensionModalOpen] = useState(false);
 
     //get the real time data
-    useEffect(() => {
-    if (!user?.id || !user?.org_id) return;
+  useEffect(() => {
+  if (!user?.id || !user?.org_id) return;
 
-    const socket = initSocket(user?.id, user?.org_id,user?.role);
-    socket.on("cataloguePurchase", (data) => {
-        console.log("Data:",data);
-        setPurchases(prev =>
-            prev.map(p =>
-                p.purchased_id === data.purchased_id 
-                    ? { ...data }
-                    : p
-            )
-        );
-    });
-    return () => {
-        socket.off("cataloguePurchase");
-    };
+  const socket = initSocket(user?.id, user?.org_id, user?.role);
+
+  socket.on("cataloguePurchase", (data) => {
+    console.log("Catalogue:", data);
+    setPurchases(prev =>
+      prev.map(p =>
+        p.purchased_id === data.purchased_id ? { ...data } : p
+      )
+    );
+  });
+
+  socket.on("extensionRequest", (data) => {
+    console.log("Extension:", data);
+setMyRequests(prev => {
+  const exists = prev.some(p => p.request_id === data.request_id);
+
+  if (exists) {
+    return prev.map(p =>
+      p.request_id === data.request_id
+        ? { ...p, ...data }
+        : p
+    );
+  } else {
+    return [data, ...prev]; 
+  }
+});
+  });
+
+  return () => {
+    socket.off("cataloguePurchase");
+    socket.off("extensionRequest");
+  };
 }, [user]);
-
     const fetchPurchases = useCallback(async () => {
         setIsLoading(true);
         try {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Minus, AlertCircle, Calendar, Loader, Check, Clock } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface ConvertToCatalogueModalProps {
   isOpen: boolean;
@@ -146,12 +147,12 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   const [Org_details, setOrg_details] = useState<org | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isCleanupModalOpen, setIsCleanupModalOpen] = useState(false);
-
+  const {user} = useAuthStore();
   const [admin,setAdmin] = useState({});
   useEffect(() => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      setAdmin(response.data.user);
+      setAdmin(user);
     };
     getUserDetails();
   }, []);
@@ -280,12 +281,13 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 level: formData.level,
                 category: formData.category,
                 price: formData.price,
+                hoursPerDay:formData.hoursPerDay,
             })
             if(labUpdate.data.success){
               const orgAssignmentPayload = {
                 labId: vmId,
                 orgId: admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId, 
-                assignedBy: admin.id,
+                assignedBy: admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
                 startDate: labUpdate?.data?.data?.startdate,
                 endDate: labUpdate?.data?.data?.enddate,
                 admin_id:organizations.find((org)=>org.id === formData.organizationId)?.org_admin || null
@@ -301,7 +303,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 const credAssignmentPayload = {
                 labId: vmId,
                 orgAssigned: admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId, 
-                assignedBy: admin.id,
+                assignedBy: admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
                 
               };
 
@@ -334,12 +336,13 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 level: formData.level,
                 category: formData.category,
                 price: formData.price,
+                hoursPerDay:formData.hoursPerDay,
               })
           if(updateCatalogueDetails?.data?.success){
             const clusterAssignmentPayload = {
               labId: vmId,
               orgId: admin.role === 'orgsuperadmin' ? admin.org_id : formData.organizationId,
-              assignedBy: admin?.id,
+              assignedBy: admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
               startDate: updateCatalogueDetails?.data?.data?.startdate,
               endDate: updateCatalogueDetails?.data?.data?.enddate,
               admin_id:organizations.find((org)=>org.id === formData.organizationId)?.org_admin || null
@@ -382,7 +385,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 lab_id: vmId,
                 admin_id: admin.role === 'orgsuperadmin' ? formData.organizationId : org_details.data.data.org_admin,
                 org_id: admin.role === 'orgsuperadmin' ? admin.org_id : org_details.data.data.id,
-                configured_by: admin?.id,
+                configured_by: admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
                 enddate: formData.expiresIn
               };
 
@@ -392,7 +395,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
         if (batch?.data.success) {
           const updateLabConfig = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateConfigOfLabs`, {
             lab_id: vmId,
-            admin_id: admin?.id,
+            admin_id: admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
             config_details: {
               ...formData,
               numberOfInstances: formData.hoursPerDay // Map hoursPerDay to numberOfInstances
@@ -429,6 +432,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 level: formData.level,
                 category: formData.category,
                 price: formData.price,
+                hoursPerDay:formData.hoursPerDay,
             });
             if(labUpdate.data.success){
               setSuccess("Successfully converted to catalogue");
@@ -452,6 +456,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 level: formData.level,
                 category: formData.category,
                 price: formData.price,
+                hoursPerDay:formData.hoursPerDay,
               })
               if(updateCatalogueDetails.data.success){
                 setSuccess("Successfully updated catalogue");
@@ -589,9 +594,10 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
               </div>
             </div>
 
-            {(!isDatacenterVM && !isClusterDatacenterVM) && (
+           
               <>
                 <div className="grid grid-cols-2 gap-4">
+                   {(!isDatacenterVM && !isClusterDatacenterVM) && (
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Number of Days
@@ -606,6 +612,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                              text-gray-300 focus:border-primary-500/40 focus:outline-none"
                     />
                   </div>
+                   )}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Hours per Day
@@ -622,7 +629,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                     />
                   </div>
                 </div>
-
+              {(!isDatacenterVM && !isClusterDatacenterVM) && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
                     Expires In
@@ -640,8 +647,9 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                     <Calendar className="absolute right-3 top-2.5 h-5 w-5 text-gray-500 pointer-events-none" />
                   </div>
                 </div>
+                )}
               </>
-            )}
+            
              <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">

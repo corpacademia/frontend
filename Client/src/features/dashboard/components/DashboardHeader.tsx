@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../store/authStore';
-import { Bell, Settings, LogOut, User, ChevronDown, ShoppingCart, X, Edit, CreditCard, Building2 } from 'lucide-react';
+import { Bell, Settings, LogOut, User, ChevronDown, ShoppingCart, X, Edit, CreditCard, Building2, Menu } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import { OrganizationSwitcher } from './OrganizationSwitcher';
 import axios from 'axios';
@@ -11,9 +11,15 @@ import { useCartStore } from '../../../store/useCartStore';
 import { NotificationDropdown } from '../../../components/notifications/NotificationDropdown';
 import { SettingsModal } from '../../../components/modals/SettingsModal';
 import { ThemeToggle } from '../../../components/ui/ThemeToggle';
+import { useSubscription } from '../../labs/hooks/useSubscription';
 
-export const DashboardHeader: React.FC = () => {
+interface DashboardHeaderProps {
+  onMenuClick?: () => void;
+}
+
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick }) => {
   const { user, logout, isAuthenticated } = useAuthStore();
+  const {canUse,license} = useSubscription();
   const navigate = useNavigate();
   const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
@@ -47,12 +53,12 @@ export const DashboardHeader: React.FC = () => {
   useEffect(() => {
     const fetchOrganizationData = async () => {
       if (!isAuthenticated || !user?.organization) return;
-      
+
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
           org_id: user?.org_id
         });
-        
+
         if (response.data.success) {
           setOrganizationData(response.data.data);
         }
@@ -120,10 +126,10 @@ export const DashboardHeader: React.FC = () => {
   //     console.error('Error clearing cart:', error);
   //   }
   // };
-
-  const handleUpdate = async (cartItemId: string, updates: { duration?: string; quantity?: number, defaultDuration?: number, price?: number }) => {
+ 
+  const handleUpdate = async (cartItemId: string, updates: { duration?: string; quantity?: number, defaultDuration?: number, price?: number,defaulthours?: number,number_hours_day?: number }) => {
     try {
-      const response = await updateCartItem(cartItemId,updates);
+      const response = await updateCartItem(cartItemId, updates);
       if (response) {
         setEditingCartItem(null);
       }
@@ -133,21 +139,22 @@ export const DashboardHeader: React.FC = () => {
   };
 
   const handleCheckout = async () => {
-  if (cartItems.length === 0) return;
+    if (cartItems.length === 0) return;
 
-  try {
-    await proceedToCheckout(
-      {
-      userId: user?.id,
-      catalogues,
-      org:user?.role === 'orgsuperadmin' 
-      }
-    );
-  } catch (error) {
-    console.error('Error during Stripe checkout:', error);
-    alert('Checkout failed. Please try again.');
-  }
-};
+    try {
+      
+      await proceedToCheckout(
+        {
+          userId: user?.id,
+          catalogues,
+          org: user?.role === 'orgsuperadmin'
+        }
+      );
+    } catch (error) {
+      console.error('Error during Stripe checkout:', error);
+      alert('Checkout failed. Please try again.');
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -189,10 +196,10 @@ export const DashboardHeader: React.FC = () => {
   // }, [isAuthenticated]);
 
   useEffect(() => {
-  if (user?.id && catalogues.length > 0) {
-    fetchCartItems(user.id);
-  }
-}, [user?.id, catalogues.length]);
+    if (user?.id && catalogues.length > 0) {
+      fetchCartItems(user.id);
+    }
+  }, [user?.id, catalogues.length]);
 
 
   const handleLogout = () => {
@@ -215,25 +222,34 @@ export const DashboardHeader: React.FC = () => {
     <header className="fixed top-0 left-0 right-0 z-40 bg-dark-200 border-b border-dark-300 h-16">
       <div className="flex items-center justify-between h-full px-4 sm:px-6">
         <div className="flex items-center space-x-2 sm:space-x-4">
-          {/* Organization Logo */}
+          {/* Hamburger – mobile only */}
+          {onMenuClick && (
+            <button
+              onClick={onMenuClick}
+              className="lg:hidden p-2 rounded-lg text-gray-400 hover:text-primary-300 hover:bg-dark-100/50 transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
           {isAuthenticated && organizationData?.logo && (
-            <div 
+            <div
               className="flex items-center space-x-2 px-3 py-1.5 rounded-lg border"
               style={{
-                borderColor: organizationData.branding_primary_color 
-                  ? `${organizationData.branding_primary_color}40` 
+                borderColor: organizationData.branding_primary_color
+                  ? `${organizationData.branding_primary_color}40`
                   : 'rgba(139, 92, 246, 0.2)',
-                backgroundColor: organizationData.branding_primary_color 
-                  ? `${organizationData.branding_primary_color}10` 
+                backgroundColor: organizationData.branding_primary_color
+                  ? `${organizationData.branding_primary_color}10`
                   : 'rgba(139, 92, 246, 0.1)'
               }}
             >
-              <img 
+              <img
                 src={`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/uploads/${extractFileName(organizationData.logo)}`}
                 alt={organizationData.organization_name}
                 className="h-8 w-8 object-contain rounded"
               />
-              <span 
+              <span
                 className="text-sm font-medium hidden md:block"
                 style={{
                   color: organizationData.branding_primary_color || '#8b5cf6'
@@ -243,7 +259,7 @@ export const DashboardHeader: React.FC = () => {
               </span>
             </div>
           )}
-          
+
           <h1 className="text-lg sm:text-xl font-bold">
             <GradientText>Dashboard</GradientText>
           </h1>
@@ -414,24 +430,44 @@ export const DashboardHeader: React.FC = () => {
                                     type="number"
                                     min="1"
                                     defaultValue={item.duration}
-                                    onChange={(e) => setEditingCartItem({...editingCartItem, duration: e.target.value})}
+                                    onChange={(e) => setEditingCartItem({ ...editingCartItem, duration: e.target.value })}
                                     className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
                                   />
                                 </div>
-                                 {user?.role !== 'user' && (
+                                {user?.role !== 'user' && (
                                   <div>
-                                  <label className="block text-xs text-gray-400 mb-1">Quantity</label>
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    defaultValue={item.quantity}
-                                    onChange={(e) => setEditingCartItem({...editingCartItem, quantity: parseInt(e.target.value)})}
-                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
+                                    <label className="block text-xs text-gray-400 mb-1">Quantity</label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      defaultValue={item.quantity}
+                                      onChange={(e) => setEditingCartItem({ ...editingCartItem, quantity: parseInt(e.target.value) })}
+                                      className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
-                                  />
-                                </div>
+                                    />
+                                  </div>
                                 )}
+                              </div>
+
+                              {/* Additional Hours — new field, no existing logic changed */}
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Number of Hours/Day</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  defaultValue={item.number_hours_day ?? 4}
+                                  onChange={(e) =>
+                                    setEditingCartItem({
+                                      ...editingCartItem,
+                                      number_hours_day: parseInt(e.target.value) || 0,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg
+                                           text-white text-sm focus:border-primary-500 focus:outline-none"
+                                  placeholder="0"
+                                />
+                                <p className="text-[10px] text-gray-500 mt-1">Daily lab duration (hours per day)</p>
                               </div>
                               <div className="flex space-x-2">
                                 <button
@@ -439,7 +475,9 @@ export const DashboardHeader: React.FC = () => {
                                     duration: editingCartItem.duration || item.duration,
                                     quantity: editingCartItem.quantity || item.quantity,
                                     defaultDuration: item.defaultduration || 1,
-                                    price: item.defaultprice
+                                    price: item.defaultprice,
+                                    defaulthours:item.defaulthours,
+                                    number_hours_day: editingCartItem.number_hours_day ?? item.number_hours_day ?? 0,
                                   })}
                                   className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-300
                                            rounded text-sm transition-colors"
@@ -458,12 +496,12 @@ export const DashboardHeader: React.FC = () => {
                           ) : (
                             <div className="flex items-center space-x-4 mt-2">
                               <span className="text-xs text-primary-400">{item.lab_category || item.category}</span>
-                              <span className="text-xs text-gray-500">{item.duration} days</span>
+                              <span className="text-xs text-gray-500">{item.duration} days {item.number_hours_day > 0 ? ` + ${item.number_hours_day}h` : `4h`}</span>
                               <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
 
-                                  <span className="font-semibold text-white">
-                                    ₹{item.price}
-                                  </span>
+                              <span className="font-semibold text-white">
+                                ₹{item.price}
+                              </span>
                             </div>
                           )}
                         </div>
@@ -510,7 +548,7 @@ export const DashboardHeader: React.FC = () => {
                     </p>
                   </div>
                   <button
-                    onClick={()=>clearCart(user?.id)}
+                    onClick={() => clearCart(user?.id)}
                     className="text-sm text-red-400 hover:text-red-300 underline"
                   >
                     Clear Cart
@@ -526,6 +564,8 @@ export const DashboardHeader: React.FC = () => {
                     Continue Shopping
                   </button>
                   <button
+                   disabled={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues)}
+                   title={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues) ? 'Upgrade/Activate plan to create more labs' : ''}
                     onClick={handleCheckout}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
                              hover:from-primary-400 hover:to-secondary-400

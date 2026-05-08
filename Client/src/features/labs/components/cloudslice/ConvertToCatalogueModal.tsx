@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Check, Loader } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface ConvertToCatalogueModalProps {
   isOpen: boolean;
@@ -14,24 +15,25 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
   onClose,
   sliceId
 }) => {
+  const {user} = useAuthStore();
   const [catalogueName, setCatalogueName] = useState('');
   const [organization, setOrganization] = useState('');
   const [isPublic, setIsPublic] = useState('no');
   const [level, setLevel] = useState('');
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState(0);
+  const [hoursPerDay, setHoursPerDay] = useState(0);      
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
-
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
         // Get current user details
-        const userResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        const user = userResponse.data.user;
+        // const userResponse = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
+        // let user = userResponse.data.user;
         setCurrentUser(user);
         
         if (user?.role === 'orgsuperadmin') {
@@ -81,6 +83,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
               level: level,
               category: category,
               price: price,
+              hoursPerDay: hoursPerDay,
            })
            if(updateCatalogue?.data?.success){
             setSuccess("Successfully updated catalogue");
@@ -108,7 +111,7 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
     }
    else{
      try {
-      const user_profile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
+      // const user_profile = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       const updateCatalogue =  await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/updateCloudsliceCatalogueDetails`,{
         catalogueName:catalogueName,
         catalogueType:isPublic ? 'public' :'private',
@@ -116,11 +119,13 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
         level: level,
         category: category,
         price: price,
+        hoursPerDay: hoursPerDay,
       })
       let credAssignmentPayload ={
               sliceId:sliceId,
               organizationId: organization,
-              userId: user_profile.data.user.id,
+              // userId: user_profile.data.user.id,
+              userId:user?.impersonating ? user?.impersonatedUserId : user?.id,
               startDate:updateCatalogue?.data?.data?.startdate,
               endDate:updateCatalogue?.data?.data?.enddate,
               admin_id:organizations.find((org)=>org.id === organization )?.org_admin || null
@@ -128,7 +133,8 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
       if(currentUser?.role === 'orgsuperadmin'){
         credAssignmentPayload = {
           ...credAssignmentPayload,
-          organizationId:user_profile.data.user.org_id,
+          // organizationId:user_profile.data.user.org_id,
+          organizationId:user?.org_id,
           admin_id: organization
         };
       } 
@@ -254,6 +260,20 @@ export const ConvertToCatalogueModal: React.FC<ConvertToCatalogueModalProps> = (
                 min="0"
                 step="0.01"
                 placeholder="0.00"
+                className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                           text-gray-300 focus:border-primary-500/40 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Hours per day
+              </label>
+              <input
+                type="number"
+                value={hoursPerDay}
+                onChange={(e) => setHoursPerDay(Number(e.target.value))}
+                min="1"
+                max="24"
                 className="w-full px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                            text-gray-300 focus:border-primary-500/40 focus:outline-none"
               />

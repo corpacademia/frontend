@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Brain, Check, DollarSign, Globe } from 'lucide-react';
 import { GradientText } from '../../../../../components/ui/GradientText';
 import axios from 'axios';
+import { useAuthStore } from '../../../../../store/authStore';
 
 interface AIRecommendationsProps {
   config: any;
@@ -10,18 +11,20 @@ interface AIRecommendationsProps {
 
 export const AIRecommendations: React.FC<AIRecommendationsProps> = ({ config, onConfirm }) => {
   const [recommendations, setRecommendations] = useState([]);
+  const {user} = useAuthStore();
   const [user_cred, setUser] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false); // Loading state
   useEffect(() => {
-    const getUserDetails = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setUser(response.data.user);
-      } catch (err) {
-        console.error('Error fetching user profile:', err);
-      }
-    };
-    getUserDetails();
+    // const getUserDetails = async () => {
+    //   try {
+    //     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
+    //     setUser(response.data.user);
+    //   } catch (err) {
+    //     console.error('Error fetching user profile:', err);
+    //   }
+    // };
+    // getUserDetails();
+    setUser(user)
   }, []);
 
   useEffect(() => {

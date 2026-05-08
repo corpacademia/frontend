@@ -85,7 +85,7 @@ export const LabDetailsPage: React.FC = () => {
   useEffect(() => {
     if (labId) {
       fetchLabDetails(labId, labType);
-      fetchUserLabDetails(labId,labType)
+      // fetchUserLabDetails(labId,labType);
       fetchReviews(labId);
       
       // Check lab status for singlevm-aws
@@ -99,7 +99,7 @@ export const LabDetailsPage: React.FC = () => {
     };
   }, [labId, labType]);
 
-  const checkLabStatus = async (labId: string) => {
+const checkLabStatus = async (labId: string) => {
     if(labType === 'singlevm-aws'){
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/checkLabStatus`, {
@@ -121,8 +121,7 @@ export const LabDetailsPage: React.FC = () => {
         console.error('Error checking lab status:', error);
       }}
     };
-
-   function formatDateAndTime(inputDate: Date) {
+function formatDateAndTime(inputDate: Date) {
     const date = new Date(inputDate);
     return date.toISOString().slice(0, 19).replace('T', ' ');
   }
@@ -484,11 +483,11 @@ export const LabDetailsPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex items-center text-gray-400">
                   <Network className="h-5 w-5 mr-3 text-primary-400" />
-                  <span>Network: {selectedLab.platform}</span>
+                  <span>Network: {selectedLab.platform ||  selectedLab[0].lab.platform}</span>
                 </div>
                 <div className="flex items-center text-gray-400">
                   <Server className="h-5 w-5 mr-3 text-primary-400" />
-                  <span>Provider: {selectedLab.provider}</span>
+                  <span>Provider: {selectedLab.provider ||  selectedLab[0].lab.provider}</span>
                 </div>
               </div>
             </div>
@@ -519,7 +518,6 @@ export const LabDetailsPage: React.FC = () => {
      const currentLabDetails = userLabDetails?.find((lab:any)=>lab?.user_id === user?.id) || null;
      setIsLaunching(true);
      setNotification(null);
-     
      if(currentLabDetails?.status === 'expired') {
        setNotification({
          type: 'error',
@@ -686,6 +684,78 @@ export const LabDetailsPage: React.FC = () => {
                 });
                 setTimeout(() => setNotification(null), 3000);
               }
+      }
+      else if(labType === "singlevmdatacenter"){
+        const credRes = await axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserAssignedSingleVMDatacenterCredsToUser`,
+              { labId: userLabStatus.labid, userId: userLabStatus?.user_id }
+            )
+            const credentials = credRes.data.data[0];
+
+         if(credentials?.disabled){
+         setNotification({
+          type: 'error',
+          message: 'The VM is disabled.'
+        });
+        setTimeout(()=>{
+          setNotification(null);
+        },3000)
+        return;
+         }
+         if(currentLabDetails?.isrunning){
+           const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
+          isrunning: false,
+          userId:credentials?.assigned_to,
+          labId: currentLabDetails?.labid,
+          purchased:currentLabDetails?.purchased
+        });
+         }
+         else{
+             try {
+                  if(currentLabDetails?.batch_id &&  currentLabDetails?.status !== 'started'){
+                      const updateLabStartCount = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUserBatchLabs`,{
+                            batchId:currentLabDetails?.batch_id,
+                            userId:currentLabDetails?.user_id,
+                            labId:currentLabDetails?.lab_id
+                            })}
+                             } catch (error) {
+                              console.log('Error updating lab status')
+                            }
+                    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateSingleVmDatacenterUserAssignment`, {
+            
+                      isrunning: true,
+                      userId:credentials?.assigned_to,
+                      labId: currentLabDetails?.labid,
+                      purchased:currentLabDetails?.purchased
+                    });
+                    const resp = await axios.post(
+                           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+                           {
+                             protocol: credentials?.protocol || 'RDP',
+                             hostname:credentials?.ip,
+                             port:credentials?.port,
+                             username: credentials?.username,
+                             password:credentials?.password,
+                           }
+                         );
+                         if (resp.data.success) {
+                           const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+                           // Build full ws url for guacamole-common-js
+                           const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+                           const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
+                           const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+                           navigate(`/dashboard/labs/vm-session/${currentLabDetails?.labid}`, {
+                           state: {
+                             guacUrl:wsUrl,
+                            vmTitle: currentLabDetails?.title,
+                            vmId: currentLabDetails?.labid,
+                            doc:selectedLab?.userguide,
+                            credentials:[credentials],
+                            labDetails:selectedLab
+                           }
+                         });
+                         }
+         }
       }
      } catch (error: any) {
        console.error("Launch error:", error); // Log the full error
@@ -889,7 +959,6 @@ const handleStartStopLab = async () => {
         },3000)
       }
     };
-
   if (isLoadingDetails) {
     return (
       <div className="min-h-screen bg-dark-100 flex items-center justify-center">
@@ -923,7 +992,7 @@ const handleStartStopLab = async () => {
   const averageRating = reviews.length > 0 ? 
     reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length : 
     selectedLab.rating || 0;
-
+  
   return (
     <div className="min-h-screen bg-dark-100">
       {/* Header */}
@@ -982,7 +1051,7 @@ const handleStartStopLab = async () => {
               <div className="bg-dark-200/80 backdrop-blur-sm rounded-xl border border-primary-500/10 p-6">
                 <div className="text-center mb-6">
                   <h1 className="text-xl font-bold mb-2">
-                    <GradientText>{selectedLab.title}</GradientText>
+                    <GradientText>{selectedLab?.title || selectedLab[0].lab?.title}</GradientText>
                   </h1>
                   <div className="flex items-center justify-center space-x-4 text-sm text-gray-400">
                     <div className="flex items-center">
@@ -991,11 +1060,11 @@ const handleStartStopLab = async () => {
                     </div>
                     <div className="flex items-center">
                       <Users className="h-4 w-4 mr-1 text-primary-400" />
-                      <span>{selectedLab.total_enrollments || 0}</span>
+                      <span>{selectedLab?.total_enrollments || selectedLab[0]?.lab?.total_enrollments || 0}</span>
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-1 text-secondary-400" />
-                      <span>{selectedLab?.number_days || getDays(selectedLab?.startdate,selectedLab?.enddate) || getDays(selectedLab?.start_date,selectedLab?.end_date)}D</span>
+                      <span>{selectedLab?.number_days || getDays(selectedLab?.startdate || selectedLab[0].lab?.startdate,selectedLab?.enddate || selectedLab[0].lab?.enddate) || getDays(selectedLab?.start_date,selectedLab?.end_date)}D</span>
                     </div>
                   </div>
                 </div>
@@ -1007,25 +1076,25 @@ const handleStartStopLab = async () => {
                       <span className="text-primary-300">{selectedLab.difficulty}</span>
                     </div>
                   )}
-                  {selectedLab.type && (
+                  {(selectedLab?.type || selectedLab[0]?.lab?.type) && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Type:</span>
-                      <span className="text-primary-300">{selectedLab.type}</span>
+                      <span className="text-primary-300">{selectedLab?.type || selectedLab[0]?.lab?.type}</span>
                     </div>
                   )}
-                  {selectedLab.price && (
+                  {(selectedLab?.price || selectedLab[0]?.lab?.price) && (
                     <div className="flex justify-between">
                       <span className="text-gray-400">Price:</span>
-                      <span className="text-emerald-300">${selectedLab.price}</span>
+                      <span className="text-emerald-300">₹{selectedLab?.price || selectedLab[0]?.lab?.price}</span>
                     </div>
                   )}
                 </div>
 
-                {((selectedLab.technologies && selectedLab.technologies.length > 0) || (selectedLab.key_technologies && selectedLab.key_technologies.length > 0)) && (
+                {((selectedLab?.technologies && selectedLab?.technologies?.length > 0) || (selectedLab?.key_technologies  && selectedLab?.key_technologies?.length > 0 ) || (selectedLab[0]?.lab?.key_technologies && selectedLab[0]?.lab?.key_technologies.length > 0)) && (
                   <div className="mb-6">
                     <h4 className="text-sm font-medium text-gray-400 mb-2">Technologies:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {(selectedLab.technologies || selectedLab.key_technologies || []).map((tech, index) => (
+                      {(selectedLab?.technologies || selectedLab?.key_technologies || selectedLab[0]?.lab?.key_technologies || []).map((tech, index) => (
                         <span key={index} className="px-2 py-1 text-xs bg-dark-400/50 text-primary-300 rounded-full">
                           {tech}
                         </span>
@@ -1111,7 +1180,7 @@ const handleStartStopLab = async () => {
                     ) : (
                       <>
                         <Play className="h-4 w-4" />
-                        <span>Start Lab</span>
+                        <span>Start Lab </span>
                       </>
                     )}
                   </button>
@@ -1125,54 +1194,54 @@ const handleStartStopLab = async () => {
             {/* Description */}
             <div className="bg-dark-200/80 backdrop-blur-sm rounded-xl border border-primary-500/10 p-6">
               <h2 className="text-xl font-semibold mb-4 text-gray-300">About This Lab</h2>
-              <p className="text-gray-400 leading-relaxed mb-6">{selectedLab.description}</p>
+              <p className="text-gray-400 leading-relaxed mb-6">{selectedLab.description || selectedLab[0].lab.description}</p>
               
               {/* Learning Objectives */}
               {(selectedLab.learningObjectives || selectedLab.learning_objectives) && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">What You'll Learn</h3>
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <p className="text-gray-400 leading-relaxed">{selectedLab.learningObjectives || selectedLab.learning_objectives}</p>
+                    <p className="text-gray-400 leading-relaxed">{selectedLab.learningObjectives || selectedLab.learning_objectives ||  selectedLab[0].lab.learning_objectives}</p>
                   </div>
                 </div>
               )}
 
               {/* Additional Details */}
-              {selectedLab.additional_details && (
+              {(selectedLab?.additional_details ||  selectedLab[0]?.lab?.additional_details) && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">Additional Details</h3>
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <p className="text-gray-400 leading-relaxed">{selectedLab.additional_details}</p>
+                    <p className="text-gray-400 leading-relaxed">{selectedLab.additional_details ||  selectedLab[0].lab.additional_details}</p>
                   </div>
                 </div>
               )}
 
               {/* Prerequisites */}
-              {selectedLab.prerequisites && (
+              {(selectedLab?.prerequisites ||  selectedLab[0]?.lab?.prerequisites) && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">Prerequisites</h3>
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <p className="text-gray-400 leading-relaxed">{selectedLab.prerequisites}</p>
+                    <p className="text-gray-400 leading-relaxed">{selectedLab.prerequisites ||  selectedLab[0].lab.prerequisites}</p>
                   </div>
                 </div>
               )}
 
               {/* Target Audience */}
-              {(selectedLab.targetAudience || selectedLab.target_audience) && (
+              {(selectedLab?.targetAudience || selectedLab?.target_audience ||  selectedLab[0]?.lab?.target_audience) && (
                 <div className="mb-6">
                   <h3 className="text-lg font-medium mb-3 text-gray-300">Who This Lab Is For</h3>
                   <div className="bg-dark-300/50 rounded-lg p-4">
-                    <p className="text-gray-400">{selectedLab.targetAudience || selectedLab.target_audience}</p>
+                    <p className="text-gray-400">{selectedLab.targetAudience || selectedLab.target_audience ||  selectedLab[0].lab.target_audience}</p>
                   </div>
                 </div>
               )}
 
               {/* Course Metadata */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {selectedLab.category && (
+                {(selectedLab?.category ||  selectedLab[0]?.lab?.category) && (
                   <div className="bg-dark-300/50 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-400 mb-1">Category</h4>
-                    <p className="text-primary-300">{selectedLab.category}</p>
+                    <p className="text-primary-300">{selectedLab.category ||  selectedLab[0].lab.category}</p>
                   </div>
                 )}
                 {selectedLab.estimatedDuration && (

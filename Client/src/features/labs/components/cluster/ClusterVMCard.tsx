@@ -74,6 +74,7 @@ interface ClusterVM {
 
 interface ClusterVMCardProps {
   vm: ClusterVM;
+  onDelete?:() => void;
 }
 
 interface UserCredential {
@@ -168,7 +169,8 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
   );
 };
 
-export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
+export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm,onDelete }) => {
+  const {user} = useAuthStore();
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false); // State for UserInstancesModal
   const [isVMClusterUserListModalOpen, setIsVMClusterUserListModalOpen] = useState(false); // State for VMClusterUserListModal
@@ -226,31 +228,21 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
 
     return `${year}-${month}-${day} ${hours}:${minutes} ${ampm}`;
   }
-
   // Fetch current user details
   useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`,
-        );
-        setCurrentUser(response.data.user);
-      } catch (error) {
-        console.error("Failed to fetch current user:", error);
-      }
-    };
-    fetchCurrentUser();
+    setCurrentUser(user);
   }, []);
-
+  
   const handleDelete = async () => {
     setIsDeleting(true);
+    
     if(!canEditContent()){
       try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteFromOrganization`,{
           labId: vm?.lab?.labid,
           orgId: currentUser?.org_id,
-          adminId: currentUser?.id
+          adminId: currentUser?.impersonating ? currentUser?.impersonatedUserId : currentUser?.id
         }
       );
 
@@ -259,9 +251,10 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
           type: "success",
           message: "Cluster VM deleted successfully",
         });
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
+        setTimeout(()=>{
+          setNotification(null);
+        },2000)
+        onDelete?.();
       } else {
         throw new Error(response.data.message || "Failed to delete cluster VM");
       }
@@ -290,9 +283,10 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
           type: "success",
           message: "Cluster VM deleted successfully",
         });
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
+        setTimeout(()=>{
+          setNotification(null);
+        },2000)
+        onDelete?.();
       } else {
         throw new Error(response.data.message || "Failed to delete cluster VM");
       }
@@ -644,10 +638,9 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
     const match = filePath.match(/[^\\\/]+$/);
     return match ? match[0] : null;
   }
-
   // Check if current user can edit content
   const canEditContent = () => {
-    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin' || currentUser?.id === vm?.lab?.user_id;
+    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin' && !vm?.lab?.assessment || currentUser?.id === vm?.lab?.user_id;
   };
 
   // Group credentials by VM name for better organization
@@ -796,7 +789,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm }) => {
               User List
             </button>
 
-            {!canEditContent() && currentUser?.role === "labadmin" ? (
+            {!canEditContent() && (currentUser?.role === "labadmin" || currentUser?.role === "orgsuperadmin")  ? (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsAssignModalOpen(true)}

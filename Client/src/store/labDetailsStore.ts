@@ -81,7 +81,10 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
   fetchLabDetails: async (labId: string, labType: string) => {
     set({ isLoadingDetails: true, error: null });
     try {
+      labType = labType?.trim();
       let response;
+      console.log("LabType:", labType, "Length:", labType?.length);
+      console.log("LabType JSON:", JSON.stringify(labType));
       switch (labType) {
         case 'cloudslice':
           response = await axios.post(
@@ -103,11 +106,11 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
           break;
         case 'vmclusterdatacenter':
           response = await axios.post(
-            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getClusterOnId`,
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabOnId`,
             { labId }
           );
           break;
-           case 'singlevm-proxmox':
+        case 'singlevm-proxmox':
           response = await axios.get(
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${labId}`,
           );
@@ -147,6 +150,11 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
         break;
         case 'singlevm-proxmox':
       response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserSingleVMProxmoxLab/${labId}`,);
+        break;
+        case 'singlevmdatacenter':
+        response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserPurchasedSingleVmDatacenterLabs`,{
+          labId:labId
+        })
         break;
         default:
           throw new Error(`Unsupported lab type:${labType}`)

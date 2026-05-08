@@ -15,6 +15,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import axios from 'axios';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface Module {
   id: string;
@@ -45,25 +46,12 @@ export const ModularLabPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
-  const [user, setUser] = useState<any>(null);
+  const {user} = useAuthStore();
   const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
   const [labExercises, setLabExercises] = useState<Record<string, any>>({});
   const [quizExercises, setQuizExercises] = useState<Record<string, any>>({});
   const [isLoadingExercises, setIsLoadingExercises] = useState(false);
 
-  // Fetch user details
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setUser(response.data.user);
-      } catch (error) {
-        console.error('Failed to fetch user profile:', error);
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
 
   // Fetch lab details if not provided in location state
   useEffect(() => {
@@ -113,7 +101,7 @@ export const ModularLabPage: React.FC = () => {
             const quizPromise = axios
               .post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserQuizData`, {
                 moduleId: module.id,
-                userId: user.id
+                userId: user?.impersonating ? user?.impersonatedUserId : user?.id
               })
               .then((r) => r.data.data)
               .catch(() => []);
@@ -122,7 +110,7 @@ export const ModularLabPage: React.FC = () => {
             const labPromise = axios
               .post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserLabStatus`, {
                 moduleId: module.id,
-                userId: user.id
+                userId: user?.impersonating ? user?.impersonatedUserId : user?.id
               })
               .then((r) => r.data.data)
               .catch(() => []);

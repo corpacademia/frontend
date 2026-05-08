@@ -39,7 +39,6 @@ export const PurchaseHistoryPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-
   useEffect(() => {
     if (user?.id) {
       fetchUserTransactions(user.id, 1); // Fetch user-specific transactions
@@ -49,8 +48,8 @@ export const PurchaseHistoryPage: React.FC = () => {
   const categorizeTransactions = (transactions: Transaction[]): Record<PurchaseCategory, Transaction[]> => {
     return {
       labs: transactions.filter(t => 
-        t.description?.toLowerCase().includes('lab') && t.status !== 'refunded'|| 
-        t.description?.toLowerCase().includes('course')  && t.status !== 'refunded'
+        (t.description?.toLowerCase().includes('lab') || t.status !== 'refunded')|| 
+        (t.description?.toLowerCase().includes('course')  || t.status !== 'refunded')
       ),
       subscription: transactions.filter(t => 
         t.description?.toLowerCase().includes('subscription') || 
@@ -59,7 +58,7 @@ export const PurchaseHistoryPage: React.FC = () => {
         t.description?.toLowerCase().includes('premium')
       ),
       refund: transactions.filter(t => 
-        t.status === 'refunded' || 
+        t.refund_status === 'SUCCESS' || 
         t.description?.toLowerCase().includes('refund') ||
         t.amount < 0
       )
@@ -67,6 +66,7 @@ export const PurchaseHistoryPage: React.FC = () => {
   };
 
   const categorizedTransactions = categorizeTransactions(transactions);
+  console.log(categorizedTransactions)
   const currentTransactions = categorizedTransactions[activeCategory];
 
   const filteredTransactions = currentTransactions.filter(transaction => {
@@ -98,7 +98,7 @@ export const PurchaseHistoryPage: React.FC = () => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency.toUpperCase()
-    }).format(Math.abs(amount) / 100);
+    }).format(Math.abs(amount) );
   };
 
   const formatDate = (timestamp: string) => {
@@ -314,7 +314,7 @@ export const PurchaseHistoryPage: React.FC = () => {
                 <tbody>
                   {filteredTransactions.map((transaction, index) => (
                     <tr
-                      key={transaction.id}
+                      key={transaction?.id}
                       className={`border-b border-primary-500/10 hover:bg-dark-300/50 transition-colors ${
                         index === filteredTransactions.length - 1 ? 'border-b-0' : ''
                       }`}
@@ -322,7 +322,7 @@ export const PurchaseHistoryPage: React.FC = () => {
                       <td className="py-4 pl-6">
                         <div>
                           <div className="font-medium text-white">
-                            {transaction.products[0].name || `Transaction ${transaction.id.substring(0, 8)}`}
+                            {transaction?.products[0]?.name || `Transaction ${transaction?.id?.substring(0, 8)}`}
                           </div>
                           <div className="text-sm text-gray-400 font-mono">
                             ID: {transaction.id.substring(0, 12)}...

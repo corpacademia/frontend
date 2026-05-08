@@ -8,6 +8,7 @@ import { BatchCard } from '../components/BatchCard';
 import { DeleteBatchModal } from '../components/DeleteBatchModal';
 import { useAuthStore } from '../../../store/authStore';
 import { useBatchStore } from '../../../store/batchStore';
+import { useSubscription } from '../../labs/hooks/useSubscription';
 
 interface Batch {
   id: string;
@@ -100,6 +101,7 @@ export const BatchesPage: React.FC = () => {
     clearSelection,
     deleteSelectedBatches
   } = useBatchStore();
+  const { canUse,updateUsage,license } = useSubscription();
   const [filteredBatches, setFilteredBatches] = useState<Batch[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -171,7 +173,7 @@ export const BatchesPage: React.FC = () => {
       if (!result.success) {
         throw new Error(result.message || 'Failed to delete batch');
       }
-      
+      await updateUsage(license?.id,'batches',-1)
       setDeleteModal({ isOpen: false, batchId: '', batchName: '' });
     } catch (error: any) {
       console.error('Error deleting batch:', error);
@@ -265,6 +267,8 @@ export const BatchesPage: React.FC = () => {
                 Select
               </button>
               <button
+                disabled={!canUse('batches', batches?.length) && user?.role !=='superadmin'}
+               title={(!canUse('batches', batches?.length) && user?.role !=='superadmin') ? 'Upgrade/Activate plan to create more labs' : ''}
                 onClick={() => setIsCreateModalOpen(true)}
                 className="btn-primary text-gray-200"
               >
@@ -320,7 +324,10 @@ export const BatchesPage: React.FC = () => {
               : 'Create your first batch to get started'}
           </p>
           {!searchTerm && filterStatus === 'all' && (
-            <button onClick={() => setIsCreateModalOpen(true)} className="btn-primary text-gray-200">
+            <button  disabled={!canUse('batches', batches?.length)}
+               title={!canUse('batches', batches?.length) ? 'Upgrade/Activate plan to create more labs' : ''}
+              
+             onClick={() => setIsCreateModalOpen(true)} className="btn-primary text-gray-200">
               <Plus className="h-4 w-4 mr-2 text-gray-200" />
               Create Your First Batch
             </button>

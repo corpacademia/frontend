@@ -199,16 +199,28 @@ export const SuperAdminCataloguePurchasesPage: React.FC = () => {
         const socket = initSocket(user?.id, user?.org_id,user?.role);
         socket.on("cataloguePurchase", (data) => {
             console.log("Data:",data);
-            setPurchases(prev =>
-                prev.map(p =>
-                    p.purchased_id === data.purchased_id 
-                        ? { ...data }
-                        : p
-                )
+            setPurchases(prev =>[...prev,data]
             );
+        });
+
+         socket.on("extensionRequest", (data) => {
+            setExtensionRequests(prev => {
+        const exists = prev.some(p => p.request_id === data.request_id);
+
+        if (exists) {
+            return prev.map(p =>
+            p.request_id === data.request_id
+                ? { ...p, ...data } 
+                : p
+            );
+        } else {
+            return [data, ...prev]; 
+        }
+});
         });
         return () => {
             socket.off("cataloguePurchase");
+            socket.off("extensionRequest");
         };
     }, [user]);
 

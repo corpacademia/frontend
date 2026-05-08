@@ -1,7 +1,8 @@
 
 import { create } from 'zustand';
 import axios from 'axios';
-import { stripePromise } from '../utils/stripe'; 
+import { stripePromise } from '../utils/stripe';
+import { Currency } from 'lucide-react';
 
 interface CartItem {
   id: string;
@@ -10,6 +11,7 @@ interface CartItem {
   quantity: number;
   price: number;
   duration: number;
+  number_of_days?: number;
   [key: string]: any;
 }
 
@@ -29,7 +31,7 @@ interface CartStore {
   removeFromCart: (cartItemId: string) => Promise<void>;
   clearCart: (userId: string) => Promise<void>;
   updateCartItem: (cartItemId: string, updates: Partial<CartItem>) => Promise<boolean>;
-  proceedToCheckout: (params: { userId: string; catalogues: Catalogue[];org:boolean }) => Promise<void>;
+  proceedToCheckout: (params: { userId: string; catalogues: Catalogue[]; org: boolean }) => Promise<void>;
 }
 
 export const useCartStore = create<CartStore>((set, get) => ({
@@ -102,7 +104,8 @@ export const useCartStore = create<CartStore>((set, get) => ({
     return false;
   },
 
-  proceedToCheckout: async ({ userId, catalogues,org }) => {
+  proceedToCheckout: async ({ userId, catalogues, org }) => {
+
     const cartItems = get().cartItems;
     if (cartItems.length === 0) return;
     try {
@@ -115,14 +118,17 @@ export const useCartStore = create<CartStore>((set, get) => ({
           name: item.name,
           quantity: item.quantity,
           price: item.price,
+          currency: item?.currency,
           duration: item.duration,
           level: lab?.level,
           category: lab?.category,
           by: lab?.provider,
-          type:lab?.type,
-          user_id:lab?.user_id
+          type: lab?.type,
+          user_id: lab?.user_id,
+          hoursPerDay:item?.number_hours_day
         };
       });
+       
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/create-checkout-session`,
         {
@@ -131,17 +137,30 @@ export const useCartStore = create<CartStore>((set, get) => ({
           org
         }
       );
-      const sessionId = response.data.sessionId;
-      const stripe = await stripePromise;
-      if (stripe) {
-        await stripe.redirectToCheckout({ sessionId });
-      }
+      // const sessionId = response.data.sessionId;
+      // const stripe = await stripePromise;
+      // if (stripe) {
+      //   await stripe.redirectToCheckout({ sessionId });
+      // }
+
+      //  const res = await fetch("/api/cashfree-checkout", {
+      //   method: "POST",
+      //   body: JSON.stringify({ userId, cartItems, org }),
+      // });
+
+  const cashfree = Cashfree({ mode: "sandbox" });
+  const data = response?.data;
+    cashfree.checkout({
+      paymentSessionId: data.payment_session_id,
+      redirectTarget: "_self",
+    });
+
     } catch (error) {
       console.error('Checkout error:', error);
       alert('Checkout failed. Please try again.');
     }
   },
-  
+
   //  proceedToCheckout: async ({ userId, catalogues }) => {
   //   const cartItems = get().cartItems;
   //   if (cartItems.length === 0) return;
@@ -178,6 +197,6 @@ export const useCartStore = create<CartStore>((set, get) => ({
   //     alert('Checkout failed. Please try again.');
   //   }
   // },
-  
+
 
 }));

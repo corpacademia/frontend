@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { useAuthStore } from '../../../store/authStore';
 
 interface FormData {
   name: string;
@@ -30,14 +31,8 @@ export const useUserForm = (
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user_cred,setUser] = useState({});
-
-  useEffect(() => {
-    const getUserDetails = async () => {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      setUser(response.data.user);
-    };
-    getUserDetails();
-  }, []);
+  const {user} = useAuthStore();
+ 
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -77,10 +72,9 @@ export const useUserForm = (
     setIsSubmitting(true);
     try {
       await onSubmit(formData);
-      const user = user_cred;
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addUser`,{
            formData:formData,
-           user:user.id
+           user:user?.impersonating ? user?.impersonatedUserId : user?.id
       })
       if(!result.data.success){
         setErrors(prev => ({

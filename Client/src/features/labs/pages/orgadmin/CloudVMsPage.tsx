@@ -221,7 +221,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     ]);
 
     const allAssignments = [
-      ...(orgResponse.data.success ? orgResponse.data.data : []),
+      ...(orgResponse.data.success ? orgResponse.data.data.map((data)=>({...data,assessment:true})) : []),
       ...(proxmoxResponse.data.success ? proxmoxResponse.data.data : []),
     ];
     //  Fetch detailed lab info for all assignments
@@ -445,7 +445,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
                     {filteredVMs.map((vm) => (
                       canEditContent(vm) ? <CloudVMCard  key={vm.lab_id || vm.assessment_id} vm={vm} /> :
-                      <CloudVMAssessmentCard key={vm.lab_id || vm.assessment_id} assessment={vm} />
+                      <CloudVMAssessmentCard key={vm.lab_id || vm.assessment_id} assessment={vm} onDelete = {setVMs((prev)=>prev.filter(v=>v.id !== vm.id))}/>
                     ))}
                   </div>
                 </div>

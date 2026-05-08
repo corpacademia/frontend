@@ -322,7 +322,6 @@ export const OrgUsersTab: React.FC<OrgUsersTabProps> = ({ orgId }) => {
   useEffect(() => {
     fetchUsers();
   }, [orgId]);
-
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${orgId}`);

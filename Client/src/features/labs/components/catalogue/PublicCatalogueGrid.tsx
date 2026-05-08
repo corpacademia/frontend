@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PublicCatalogueCard } from './PublicCatalogueCard';
 import { Loader } from 'lucide-react';
+import axios from 'axios';
+
 
 interface PublicCatalogueGridProps {
   courses: any[];
@@ -11,27 +13,54 @@ interface PublicCatalogueGridProps {
   currentUser?: any;
   isDeleteModalOpen?: boolean;
   isDeleting?: boolean;
-  cartItems?:any;
-  userPurchased?:any;
+  cartItems?: any;
+  userPurchased?: any;
+  available?: any;
+  currency?: 'INR' | 'USD';
+  convertPrice?: (price: number) => string;
 }
 
-export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({ 
-  courses, 
-  isLoading, 
-  onEdit, 
-  onDelete, 
+export const PublicCatalogueGrid: React.FC<PublicCatalogueGridProps> = ({
+  courses,
+  isLoading,
+  onEdit,
+  onDelete,
   onView,
   currentUser,
   isDeleting = false,
   isDeleteModalOpen = false,
   cartItems,
-  userPurchased
+  userPurchased,
+  currency,
+  convertPrice,
 }) => {
+  const [availabilityMap, setAvailabilityMap] = React.useState<any>({});
   
-const checkPurchased = (labId: string) => {
-  return userPurchased.some(lab => lab.labid === labId);
-};
+  const checkPurchased = (labId: string) => {
+    return userPurchased.some((lab: any) => lab.labid === labId);
+  };
 
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      const map: any = {};
+
+      for (const course of courses) {
+        if (course.type === "singlevmdatacenter" || course.type === "vmclusterdatacenter") {
+          try {
+            const res = await axios.post(
+              `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkLabAvailability`,
+              { course }
+            );
+            map[course.id] = res?.data?.data || false;
+          } catch (err) {
+            map[course.id] = false;
+          }
+        }
+      }
+      setAvailabilityMap(map);
+    };
+    fetchAvailability();
+  }, [courses]);
 
   if (isLoading) {
     return (
@@ -59,10 +88,10 @@ const checkPurchased = (labId: string) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
       {courses.map(course => (
-        <PublicCatalogueCard 
-          key={course.id} 
+        <PublicCatalogueCard
+          key={course.id}
           course={course}
           onEdit={onEdit}
           onDelete={onDelete}
@@ -72,6 +101,9 @@ const checkPurchased = (labId: string) => {
           isDeleteModalOpen={isDeleteModalOpen}
           cartItems={cartItems}
           enrolled={checkPurchased(course.id)}
+          available={availabilityMap[course.id]}
+          currency={currency}
+          convertPrice={convertPrice}
         />
       ))}
     </div>

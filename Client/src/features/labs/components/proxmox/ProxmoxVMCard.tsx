@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  HardDrive, 
-  Plus, 
-  Check, 
-  AlertCircle, 
-  X, 
-  Cpu, 
+import {
+  HardDrive,
+  Plus,
+  Check,
+  AlertCircle,
+  X,
+  Cpu,
   Hash,
   FileCode,
   Server,
   UserPlus,
   Loader,
-  Pencil, 
+  Pencil,
   Trash2,
   Tag,
   Play,
@@ -32,6 +32,7 @@ import { AssignUsersModal } from '../catalogue/AssignUsersModal';
 import { UserInstancesModal } from '../common/UserInstancesModal';
 import Guacamole from "guacamole-common-js";
 import { LabDetails } from '../LabDetails';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface ProxmoxVM {
   id: string;
@@ -64,9 +65,10 @@ interface ProxmoxVM {
 interface ProxmoxVMProps {
   vm: ProxmoxVM;
   canEdit: boolean;
+  onDelete?:() => void;
 }
 
-export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
+export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }) => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLaunchProcessing, setIsLaunchProcessing] = useState(false);
@@ -82,29 +84,21 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
-  const [hasTemplate,setHasTemplate] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [hasTemplate, setHasTemplate] = useState(false);
+  const {user} = useAuthStore();
   const [isConverting, setIsConverting] = useState(false); // Added isConverting state
   // const [isUserListModalOpen, setIsUserListModalOpen] = useState(false); // Assuming this is for a different context and not needed here based on the provided changes.
 
   useEffect(() => {
     checkVMStatus();
     checkTemplateCreated();
-    fetchCurrentUser();
   }, [vm.labid]);
 
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      setCurrentUser(response.data.user);
-    } catch (error) {
-      console.error('Failed to fetch current user:', error);
-    }
-  };
+ 
 
   // Check if current user can edit content
   const canEditContent = () => {
-    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin' && !vm?.assessment  || currentUser?.id === vm?.user_id
+    return user?.role === 'superadmin' || user?.role === 'orgsuperadmin' && !vm?.assessment || (user?.impersonating ? user?.impersonatedUserId : user?.id) === vm?.user_id
   };
   const checkVMStatus = async () => {
     try {
@@ -112,7 +106,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkVMStatus`, {
         labId: vm.labid,
         vmId: vm.vmid,
-        type:vm?.assigned_by ? 'org' :'sup',
+        type: vm?.assigned_by ? 'org' : 'sup',
       });
 
       if (response.data.success) {
@@ -126,8 +120,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
           setButtonLabel('Stop')
         } else if (isLaunched) {
           setVmStatus('stopped');
-        } 
-        else if(isLoading){
+        }
+        else if (isLoading) {
           setIsLaunchProcessing(true);
         }
         else {
@@ -139,7 +133,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
           setButtonLabel("Launch VM");
         } else if (isRunning) {
           setButtonLabel("Stop");
-        } else if(isLaunched && !isRunning) {
+        } else if (isLaunched && !isRunning) {
           setButtonLabel("Start VM");
         }
       }
@@ -147,48 +141,48 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
       console.error('Error checking VM status:', error);
     }
   };
-  const checkTemplateCreated = async()=>{
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getTemplateInformation/${vm.labid}`);
-        if(response.data.success){
-          setHasTemplate(true);
-          setIsProcessing(response.data.data.processing);
-        }
-      } catch (error) {
-         console.log(error);
+  const checkTemplateCreated = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getTemplateInformation/${vm.labid}`);
+      if (response.data.success) {
+        setHasTemplate(true);
+        setIsProcessing(response.data.data.processing);
       }
+    } catch (error) {
+      console.log(error);
+    }
   }
   const handleLaunchVM = async () => {
     setIsLaunchProcessing(true);
     try {
-      if( buttonLabel === 'Launch VM'){
+      if (buttonLabel === 'Launch VM') {
 
-         const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`,{
-          node:vm.node,
-          labid:vm.labid,
-          name:vm.vmname, 
-          cores:vm.cpu,
-          memory:vm.ram,
-          storageType:vm.storagetype,
-          storage:vm.storage,
-          nicModel:vm.nicmodel,
-          networkBridge:vm.networkbridge,
-          firewall:vm.firewall,
-          boot:vm.boot,
-          template:vm?.template_id,
-          type:vm?.assigned_by ? 'org' :'sup',
-          vmdetails_id:vm?.vmdetails_id,
-          userid:currentUser?.id
-         }) 
-         if(launchVM.data.success){
+        const launchVM = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/launchVM`, {
+          node: vm.node,
+          labid: vm.labid,
+          name: vm.vmname,
+          cores: vm.cpu,
+          memory: vm.ram,
+          storageType: vm.storagetype,
+          storage: vm.storage,
+          nicModel: vm.nicmodel,
+          networkBridge: vm.networkbridge,
+          firewall: vm.firewall,
+          boot: vm.boot,
+          template: vm?.template_id,
+          type: vm?.assigned_by ? 'org' : 'sup',
+          vmdetails_id: vm?.vmdetails_id,
+          userid: user?.impersonating ? user?.impersonatedUserId : user?.id
+        })
+        if (launchVM.data.success) {
           setIsLaunchProcessing(false)
-           setButtonLabel('Start VM');
+          setButtonLabel('Start VM');
           setVmStatus('stopped');
           setNotification({
             type: 'success',
             message: 'VM Launched successfully',
           });
-         }
+        }
 
       }
       else if (buttonLabel === 'Stop') {
@@ -197,10 +191,10 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
           lab_id: vm.labid,
           vmid: vm.vmid,
           node: vm.node,
-          userid:vm?.user_id,
-          purchased:vm?.purchased ? true : false,
-          type:vm?.assigned_by ? 'org' :'sup',
-          vmdetails_id:vm?.vmdetails_id
+          userid: vm?.user_id,
+          purchased: vm?.purchased ? true : false,
+          type: vm?.assigned_by ? 'org' : 'sup',
+          vmdetails_id: vm?.vmdetails_id
         });
 
         if (stopResponse.data.success) {
@@ -213,54 +207,54 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
         } else {
           throw new Error(stopResponse.data.message || 'Failed to stop VM');
         }
-      } 
+      }
       else {
         const startResponse = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/startVM`, {
-                             lab_id: vm?.labid,
-                             vmid: vm?.vmid,
-                             node: vm?.node,
-                             type:vm?.assigned_by ? 'org' : 'sup',
-                             userid:vm?.user_id,
-                             purchased:vm?.purchased ? true :false,
-                             vmDetailsId:vm?.vmdetails_id || null
-                           });
+          lab_id: vm?.labid,
+          vmid: vm?.vmid,
+          node: vm?.node,
+          type: vm?.assigned_by ? 'org' : 'sup',
+          userid: vm?.user_id,
+          purchased: vm?.purchased ? true : false,
+          vmDetailsId: vm?.vmdetails_id || null
+        });
 
-                           if (startResponse.data.success) {
-                             setButtonLabel('Stop');
-                             const backData = startResponse.data.data;
-                             const resp = await axios.post(
-                           `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
-                           {
-                             protocol: backData.protocol,
-                             hostname: backData.hostname,
-                             port: backData.port,
-                             username:vm?.username,
-                             password: vm?.password,
-                           }
-                         );
+        if (startResponse.data.success) {
+          setButtonLabel('Stop');
+          const backData = startResponse.data.data;
+          const resp = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
+            {
+              protocol: backData.protocol,
+              hostname: backData.hostname,
+              port: backData.port,
+              username: vm?.username,
+              password: vm?.password,
+            }
+          );
 
-                         if (resp.data.success) {
-                           const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
-                           // Build full ws url for guacamole-common-js
-                           const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-                           const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
-                           const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-                           navigate(`/dashboard/labs/vm-session/${vm?.labid}`, {
-                           state: {
-                             guacUrl: wsUrl,
-                             vmTitle: vm?.title,
-                             doc:vm?.assessment ? vm?.userguide : [...vm?.labguide,...vm?.userguide],
-                             labDetails:vm
-                           }
-                         });
-                         }
-                           } else {
-                             throw new Error(startResponse.data.message || 'Failed to start VM');
-                           }
+          if (resp.data.success) {
+            const wsPath = resp.data.wsPath; // e.g. /rdp?token=...
+            // Build full ws url for guacamole-common-js
+            const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+            const hostPort = `${window.location.hostname}:${3002}`; // adapt if backend on different port
+            const wsUrl = `${protocol}://${hostPort}${wsPath}`;
+            navigate(`/dashboard/labs/vm-session/${vm?.labid}`, {
+              state: {
+                guacUrl: wsUrl,
+                vmTitle: vm?.title,
+                doc: vm?.assessment ? vm?.userguide : [...vm?.labguide, ...vm?.userguide],
+                labDetails: vm
+              }
+            });
+          }
+        } else {
+          throw new Error(startResponse.data.message || 'Failed to start VM');
+        }
 
-       
+
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.log(error)
       setNotification({
         type: 'error',
@@ -298,7 +292,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
       } else {
         throw new Error(response.data.message || 'Failed to create template');
       }
-    } catch (error:any) {
+    } catch (error: any) {
       setNotification({
         type: 'error',
         message: error.response?.data?.message || 'Failed to create template'
@@ -312,18 +306,17 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteProxmoxLab`,{
-        labId:vm.labid,
-        node:vm.node,
-        vmid:vm.vmid,
-        type:currentUser?.id === vm.user_id  ? 'sup' : 'org'
+      
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteProxmoxLab`, {
+        labId: vm.labid,
+        node: vm.node,
+        vmid: vm.vmid,
+        type: user?.impersonating ? user?.impersonatedUserId : user?.id === vm.user_id ? 'sup' : 'org'
       });
 
       if (response.data.success) {
         setNotification({ type: 'success', message: 'VM deleted successfully' });
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
+        onDelete?.();
       } else {
         throw new Error(response.data.message || 'Failed to delete VM');
       }
@@ -348,15 +341,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
   const handleConvertToCatalogue = async () => { // Added this function
     setIsConverting(true);
     try {
-      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/convert-to-catalogue`, {
-        labId: vm.labid,
-      });
-      if (response.data.success) {
-        setNotification({ type: 'success', message: 'Successfully converted to catalogue' });
-        setIsConvertModalOpen(true); // Assuming this should open the modal after success
-      } else {
-        throw new Error(response.data.message || 'Failed to convert to catalogue');
-      }
+      setIsConvertModalOpen(true);
     } catch (error: any) {
       setNotification({
         type: 'error',
@@ -402,9 +387,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
                     transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/10 
                     hover:translate-y-[-2px] group relative">
         {notification && (
-          <div className={`absolute top-2 right-2 px-4 py-2 rounded-lg flex items-center space-x-2 z-50 ${
-            notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
-          }`}>
+          <div className={`absolute top-2 right-2 px-4 py-2 rounded-lg flex items-center space-x-2 z-50 ${notification.type === 'success' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
+            }`}>
             {notification.type === 'success' ? (
               <Check className="h-4 w-4" />
             ) : (
@@ -415,89 +399,91 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
         )}
 
         <div className="p-3 sm:p-4 flex flex-col h-full">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 mb-3">
+          {/* ── Title + controls row ── */}
+          <div className="flex flex-col gap-2 mb-3">
+            {/* Title & description */}
             <div className="flex-1 min-w-0">
               <h3 className="text-base sm:text-lg font-semibold mb-1">
-                <span 
+                <span
                   className="cursor-pointer hover:text-orange-300 transition-colors line-clamp-2"
                   onClick={() => setShowFullTitle(!showFullTitle)}
-                  title={showFullTitle ? "Click to collapse" : "Click to expand"}
+                  title={showFullTitle ? 'Click to collapse' : 'Click to expand'}
                 >
                   <GradientText>
-                    {showFullTitle ? vm.title : (vm.title.length > 30 ? vm.title.substring(0, 30) + '...' : vm.title)}
+                    {showFullTitle ? vm.title : vm.title.length > 30 ? vm.title.substring(0, 30) + '...' : vm.title}
                   </GradientText>
                 </span>
               </h3>
-              <p 
+              <p
                 className="text-xs sm:text-sm text-gray-400 cursor-pointer hover:text-gray-300 transition-colors line-clamp-2"
                 onClick={() => setShowFullDescription(!showFullDescription)}
-                title={showFullDescription ? "Click to collapse" : "Click to expand"}
+                title={showFullDescription ? 'Click to collapse' : 'Click to expand'}
               >
-                {showFullDescription ? vm.description : (vm.description.length > 80 ? vm.description.substring(0, 80) + '...' : vm.description)}
+                {showFullDescription ? vm.description : vm.description.length > 80 ? vm.description.substring(0, 80) + '...' : vm.description}
               </p>
             </div>
-            <div className="flex items-center justify-between sm:justify-start space-x-2 flex-shrink-0">
-              <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(vm.status)}`}>
+
+            {/* Status badges + action icon row — wraps on very small screens */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className={`px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${getStatusColor(vm.status)}`}>
                 {vm.status}
               </span>
-              <div className="flex items-center space-x-1">
-                <div className={`h-2 w-2 rounded-full ${
-                  vmStatus === 'running' ? 'bg-emerald-400' : 
+              <div className="flex items-center gap-1">
+                <div className={`h-2 w-2 rounded-full flex-shrink-0 ${vmStatus === 'running' ? 'bg-emerald-400' :
                   vmStatus === 'stopped' ? 'bg-red-400' : 'bg-amber-400'
-                }`} />
-                <span className="text-xs text-gray-400">
-                  {vmStatus}
-                </span>
+                  }`} />
+                <span className="text-xs text-gray-400">{vmStatus}</span>
               </div>
-              {canEdit && (
-                <>
+              {/* Edit / Delete icon buttons — pushed to the right */}
+              <div className="flex items-center gap-1 ml-auto">
+                {canEdit && (
                   <button
                     onClick={() => setIsEditModalOpen(true)}
-                    className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-dark-300/50 rounded-lg transition-colors"
+                    title="Edit VM"
                   >
-                    <Pencil className="h-3 w-3 sm:h-4 sm:w-4 text-orange-400" />
+                    <Pencil className="h-3.5 w-3.5 text-orange-400" />
                   </button>
-                  </>
-                   )}
-                  <button
-                    onClick={() => setIsDeleteModalOpen(true)}
-                    className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-red-400" />
-                  </button>
-
-
+                )}
+                <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="p-1.5 hover:bg-dark-300/50 rounded-lg transition-colors"
+                  title="Delete VM"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-4">
-            <div className="flex items-center text-xs sm:text-sm text-gray-400">
-              <Cpu className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-400" />
-              <span>{vm.cpu} vCPU</span>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2 mb-4">
+            <div className="flex items-center text-xs text-gray-400 min-w-0">
+              <Cpu className="h-3.5 w-3.5 mr-1.5 text-orange-400 flex-shrink-0" />
+              <span className="truncate">{vm.cpu} vCPU</span>
             </div>
-            <div className="flex items-center text-xs sm:text-sm text-gray-400">
-              <MemoryStick className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-400" />
-              <span>{vm.ram}GB RAM</span>
+            <div className="flex items-center text-xs text-gray-400 min-w-0">
+              <MemoryStick className="h-3.5 w-3.5 mr-1.5 text-orange-400 flex-shrink-0" />
+              <span className="truncate">{vm.ram} GB RAM</span>
             </div>
-            <div className="flex items-center text-xs sm:text-sm text-gray-400">
-              <Server className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-400" />
+            <div className="flex items-center text-xs text-gray-400 min-w-0">
+              <Server className="h-3.5 w-3.5 mr-1.5 text-orange-400 flex-shrink-0" />
               <span className="truncate">Node: {vm.node || 'N/A'}</span>
             </div>
-            <div className="flex items-center text-xs sm:text-sm text-gray-400">
-              <HardDrive className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-400" />
-              <span>Storage: {vm.storage}GB</span>
+            <div className="flex items-center text-xs text-gray-400 min-w-0">
+              <HardDrive className="h-3.5 w-3.5 mr-1.5 text-orange-400 flex-shrink-0" />
+              <span className="truncate">Storage: {vm.storage} GB</span>
             </div>
-            <div className="flex items-center text-xs sm:text-sm text-gray-400 col-span-1 sm:col-span-2">
-              <Hash className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-400" />
+            <div className="flex items-center text-xs text-gray-400 col-span-2 min-w-0">
+              <Hash className="h-3.5 w-3.5 mr-1.5 text-orange-400 flex-shrink-0" />
               <span className="truncate">VM ID: {vm.vmid || 'N/A'}</span>
             </div>
             {vm.templateId && (
-              <div className="flex items-center text-xs sm:text-sm text-gray-400 col-span-1 sm:col-span-2">
-                <FileCode className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 text-orange-400" />
-                <span 
+              <div className="flex items-center text-xs text-gray-400 col-span-2 min-w-0">
+                <FileCode className="h-3.5 w-3.5 mr-1.5 text-orange-400 flex-shrink-0" />
+                <span
                   className="truncate cursor-pointer hover:text-orange-300"
                   onClick={() => setShowFullTemplateId(!showFullTemplateId)}
-                  title={showFullTemplateId ? "Click to collapse" : "Click to expand"}
+                  title={showFullTemplateId ? 'Click to collapse' : 'Click to expand'}
                 >
                   {showFullTemplateId ? vm.templateId : `Template: ${vm.templateId.length > 15 ? vm.templateId.substring(0, 15) + '...' : vm.templateId}`}
                 </span>
@@ -538,37 +524,37 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
                 User List
               </button> */}
 
-              <div className="flex gap-1 sm:gap-2">
-                <button 
+              <div className="flex flex-wrap gap-1.5">
+                <button
                   onClick={handleLaunchVM}
                   disabled={isLaunchProcessing}
-                  className={`flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
-                           ${buttonLabel === 'Stop' 
-                             ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
-                             : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
-                           }
+                  className={`flex-1 min-w-[90px] h-8 px-2 rounded-lg text-xs font-medium
+                           ${buttonLabel === 'Stop'
+                      ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                      : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                    }
                            transition-colors flex items-center justify-center
                            disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isLaunchProcessing ? (
-                    <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                    <Loader className="h-3.5 w-3.5 animate-spin" />
                   ) : buttonLabel === 'Stop' ? (
                     <>
-                      <Square className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">Stop</span>
+                      <Square className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                      <span className="truncate">Stop</span>
                     </>
                   ) : (
                     <>
-                      <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                      <span className="hidden sm:inline">{buttonLabel}</span>
+                      <Play className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                      <span className="truncate">{buttonLabel}</span>
                     </>
                   )}
                 </button>
                 {canEdit && (
-                  <button 
+                  <button
                     onClick={handleCreateTemplate}
                     disabled={isProcessing || vmStatus !== 'stopped' || hasTemplate}
-                    className="flex-1 h-8 sm:h-9 px-2 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
+                    className="flex-1 min-w-[120px] h-8 px-2 rounded-lg text-xs font-medium
                              bg-orange-500/20 text-orange-300 hover:bg-orange-500/30
                              transition-colors flex items-center justify-center
                              disabled:opacity-50 disabled:cursor-not-allowed"
@@ -576,18 +562,19 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
                   >
                     {isProcessing ? (
                       <>
-                        <Loader className="h-3 w-3 sm:h-4 sm:w-4 animate-spin mr-1" />
-                        <span className="hidden sm:inline">Processing...</span>
+                        <Loader className="h-3.5 w-3.5 animate-spin mr-1.5 flex-shrink-0" />
+                        <span className="truncate">Processing…</span>
                       </>
                     ) : (
                       <>
-                        <FileCode className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                        <span className="hidden sm:inline">Create Template</span>
+                        <FileCode className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                        <span className="truncate">Create Template</span>
                       </>
                     )}
                   </button>
                 )}
               </div>
+
 
               {canEdit ? (
                 <div className="flex items-center gap-2">
@@ -660,7 +647,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm , canEdit}) => {
           isOpen={isUserInstancesModalOpen}
           onClose={() => setIsUserInstancesModalOpen(false)}
           lab={vm}
-          orgId={currentUser?.org_id }
+          orgId={user?.org_id}
           labType="singlevm-proxmox"
         />
       )}

@@ -97,7 +97,7 @@ export const OrganizationFilters: React.FC<OrganizationFiltersProps> = ({
           </select>
 
           {/* Date Range Picker */}
-          <div className="relative">
+          <div className="relative ">
             <button
               type="button"
               className="btn-secondary flex items-center justify-center text-xs sm:text-sm py-2 w-full"
@@ -108,7 +108,7 @@ export const OrganizationFilters: React.FC<OrganizationFiltersProps> = ({
             </button>
 
             {showDatePicker && (
-              <div className="absolute z-50 mt-2 right-0">
+              <div className="absolute z-50 mt-2 right-0 ">
                 <DateRange
                   ranges={dateRange}
                   onChange={handleDateChange}

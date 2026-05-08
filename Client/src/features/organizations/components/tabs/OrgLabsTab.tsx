@@ -715,7 +715,8 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`, {
           labId: lab?.lab_id || lab?.labid,
           orgId: orgId,
-          userId: userLab?.user_id || userLab?.userid
+          userId: userLab?.user_id || userLab?.userid,
+          purchased:userLab?.purchased
         })
       }
       else if (lab.type === 'singlevm-aws') {
@@ -1458,7 +1459,8 @@ const VMClusterUserListModal: React.FC<VMClusterUserListModalProps> = ({ isOpen,
         axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/deleteClusterLab`, {
           labId: lab?.lab_id || lab?.labid,
           orgId: organizationId,
-          userId: user.user_id
+          userId: user.user_id,
+          purchased:lab?.purchased
         })
       );
 

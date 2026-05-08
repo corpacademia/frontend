@@ -20,12 +20,15 @@ export interface User {
   profileImage?: string;
   impersonating?: boolean;
   originalRole?: string;
+  originalOrgId?: string;
+  impersonatedUserId?: string;
 }
 
 interface Organization {
   id: string;
   name: string;
-  role?: "labadmin";
+  role?: "labadmin" | "orgsuperadmin";
+  impersonatedUserId?: string;
 }
 
 interface AuthState {
@@ -33,9 +36,9 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   showSessionExpiryModal: boolean;
-  orgusers: User | null;
+  orgUsers: User | null;
 
-  /* 🌍 Global organizations */
+  /* Global organizations */
   organizations: Organization[];
   isOrgLoading: boolean;
 
@@ -49,6 +52,7 @@ interface AuthState {
   fetchOrganizationsUsers: (orgId: string) => Promise<void>;
 
   setSessionExpiryModal: (show: boolean) => void;
+  updateOrganization: (org: Organization) => void;
 }
 
 /* =========================
@@ -59,9 +63,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
   /* =========================
      Initial user fetch (IIFE)
   ========================= */
+
+
   (async () => {
     set({ isLoading: true });
-
+    
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`,
@@ -80,9 +86,11 @@ export const useAuthStore = create<AuthState>((set, get) => {
         showSessionExpiryModal: false,
       });
 
-      // ✅ Fetch organizations globally after login
-      if (user) {
+      //  Fetch organizations globally after login
+       await get().fetchOrganizations(); 
+      if (user && user?.org_id) {
         await get().fetchOrganizationsUsers(user?.org_id);
+         
       }
     } catch (error: any) {
       console.error("Failed to fetch user details on initial load", error);
@@ -113,6 +121,13 @@ export const useAuthStore = create<AuthState>((set, get) => {
     organizations: [],
     isOrgLoading: false,
     orgUsers: [],
+
+   updateOrganization: (updatedOrg) =>
+  set((state) => ({
+    organizations: state.organizations.map((org) =>
+      org.id === updatedOrg.id ? { ...org, ...updatedOrg } : org
+    ),
+  })),
 
     /* ---------- Auth ---------- */
 
@@ -158,13 +173,16 @@ export const useAuthStore = create<AuthState>((set, get) => {
     switchOrganization: (org) => {
       const currentUser = get().user;
       if (!currentUser) return;
-
       set({
         user: {
           ...currentUser,
-          role: org.role || "labadmin",
+          role: org.role || "orgsuperadmin",
           organization: org.name,
-          originalRole: currentUser.role,
+          org_type:org?.org_type,
+          org_id: org.id,
+          originalRole: currentUser.originalRole || currentUser.role,
+          originalOrgId: currentUser.originalOrgId || currentUser.org_id,
+          impersonatedUserId: org?.org_admin,
           impersonating: true,
         },
       });
@@ -177,9 +195,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
       set({
         user: {
           ...currentUser,
-          role: currentUser.originalRole!,
+          role: currentUser.originalRole as User['role'],
           organization: undefined,
+          org_id: currentUser.originalOrgId,
           originalRole: undefined,
+          originalOrgId: undefined,
+          impersonatedUserId: undefined,
           impersonating: false,
         },
       });
@@ -207,7 +228,6 @@ export const useAuthStore = create<AuthState>((set, get) => {
           isLoading: false,
           showSessionExpiryModal: false,
         });
-
         if (user) {
           await get().fetchOrganizations();
           await get().fetchOrganizationsUsers(user?.org_id);
@@ -236,13 +256,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
         set({ isOrgLoading: true });
 
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/org_ms/getOrganizations`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/organizations`,
           {
             withCredentials: true,
             timeout: 10000,
           }
         );
-
         set({
           organizations: response.data?.data || [],
           isOrgLoading: false,

@@ -49,9 +49,10 @@ interface ProxmoxVM {
 
 interface ProxmoxUserVMCardProps {
   vm: ProxmoxVM;
+  onDelete?:()=>void;
 }
 
-export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
+export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm,onDelete }) => {
   const navigate = useNavigate();
   const [isLaunchProcessing, setIsLaunchProcessing] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -116,7 +117,6 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
       console.error('Error checking VM status:', error);
     }
   };
-
   const handleLaunchVM = async () => {
     setIsLaunchProcessing(true);
  
@@ -146,7 +146,9 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
           userid:vm?.user_id,
           type: 'user',
           purchased:vm?.purchased ? true :false,
-          vmdetailsId:vm?.vmdetails_id
+          vmdetailsId:vm?.vmdetails_id,
+          duration:vm?.duration,
+          number_hours_day:vm?.number_hours_day
         });
         
         if (launchVM.data.success) {
@@ -251,9 +253,9 @@ export const ProxmoxUserVMCard: React.FC<ProxmoxUserVMCardProps> = ({ vm }) => {
 
       if (response.data.success) {
         setNotification({ type: 'success', message: 'VM deleted successfully' });
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
+        
+          // window.location.reload();
+          onDelete?.()
       } else {
         throw new Error(response.data.message || 'Failed to delete VM');
       }

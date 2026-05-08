@@ -8,8 +8,14 @@ import { BulkUploadModal } from '../../../features/users/components/BulkUploadMo
 import { User } from '../../../features/users/types';
 import { UserPlus, Upload } from 'lucide-react';
 import axios from 'axios';
+import { ROLE_TO_FEATURE } from '../../labs/hooks/useSubscription';
+import { useAuthStore } from '../../../store/authStore';
+import { useSubscription } from '../../labs/hooks/useSubscription';
+
 
 export const Team: React.FC = () => {
+  const{user:userData,orgUsers} = useAuthStore();
+  const {canUse} = useSubscription();
   const [originalUsers, setOriginalUsers] = useState([]);
   const [users, setUsers] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -22,7 +28,6 @@ export const Team: React.FC = () => {
   });
 
   const [admin,setAdmin] = useState({});
-
 // console.log(User)
   const fetchTeamMembers = async () => {
     try {
@@ -69,13 +74,13 @@ export const Team: React.FC = () => {
   useEffect(() => {
     const filteredUsers = originalUsers.filter((user) => {
       const matchesSearch = !filters.search || 
-        user.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        user.email.toLowerCase().includes(filters.search.toLowerCase());
-      const matchesRole = !filters.role || user.role === filters.role;
-      const matchesStatus = !filters.status || user.status === filters.status;
+        user?.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        user?.email.toLowerCase().includes(filters.search.toLowerCase());
+      const matchesRole = !filters.role || user?.role === filters.role;
+      const matchesStatus = !filters.status || user?.status === filters.status;
       
       if (filters.dateRange) {
-        const userDate = new Date(user.created_at);
+        const userDate = new Date(user?.created_at);
         const [start, end] = filters.dateRange.split(',').map(date => new Date(date));
         if (userDate < start || userDate > end) return false;
       }
@@ -91,6 +96,21 @@ export const Team: React.FC = () => {
 
   const handleBulkUpload = async (uploadedUsers: any[]) => {
     try {
+      for(const user of uploadedUsers){
+        if (userData?.role !== 'superadmin') {
+                      const featureKey = ROLE_TO_FEATURE[user?.role]; // e.g. 'trainers', 'students', 'labadmins'
+                      if (featureKey) {
+                        const currentCount = orgUsers?.filter(u => u.role === user.role).length;
+                        
+                        if (!canUse(featureKey, currentCount)) {
+                          const label = { labadmins: 'Lab Admin', trainers: 'Trainer', students: 'Student' }[featureKey] ?? 'User';
+                          alert(`${label} limit reached on your current plan. Please upgrade to add more.`);
+                          return;
+                        }
+                      }
+                    }
+      }
+
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadOrgUsers`, {
         users: uploadedUsers,
         organizationId: admin.org_id,

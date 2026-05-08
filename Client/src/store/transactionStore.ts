@@ -33,26 +33,23 @@ export const useTransactionStore = create<TransactionStore>((set, get) => ({
 
   fetchTransactions: async (orgId, page = 1, limit = 10) => {
     set({ isLoading: true, error: null });
-    
     try {
       const { filters } = get();
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
+        orgId:orgId,
         ...(filters.status && { status: filters.status }),
         ...(filters.search && { search: filters.search }),
         ...(filters.dateRange && {
           start_date: filters.dateRange.start,
-          end_date: filters.dateRange.end
+          end_date: filters.dateRange.end,
+          
         })
       });
 
-      let endpoint = '';
-      if (orgId) {
-        endpoint = `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/organization/${orgId}/transactions?${queryParams}`;
-      } else {
-        endpoint = `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/transactions?${queryParams}`;
-      }
+      let endpoint  = `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/transactions?${queryParams}`;
+     
 
       const response = await axios.post(endpoint, { withCredentials: true });
       if (response.data.success) {

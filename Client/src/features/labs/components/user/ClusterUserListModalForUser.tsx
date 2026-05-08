@@ -130,7 +130,8 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
                     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
                     const hostPort = `${window.location.hostname}:${ 3002}`; // adapt if backend on different port
                     const wsUrl = `${protocol}://${hostPort}${wsPath}`;
-                    navigate(`/dashboard/labs/vm-session/${vm.labid}`, {
+                    console.log("wsurl:",wsUrl);
+                    navigate(`/dashboard/labs/vm-session/${vm?.lab?.labid}`, {
                     state: {
                       guacUrl:wsUrl,
                       vmTitle: vm.title,
@@ -157,11 +158,13 @@ export const ClusterUserListModalForUser: React.FC<ClusterUserListModalForUserPr
   };
 
   const handleConnectGroup = async (vmid: string, usersInGroup: any[]) => {
+    
     if(vm?.lab?.status !== 'started'){
        const updateStatus = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/updateUserVMClusterDatacenterStatus`,{
           labId:vm?.lab?.labid,
           userId:userData.id,
-          status:'started'
+          status:'started',
+          purchased:vm?.lab?.purchased
         });
     try {
         if(vm?.lab?.batch_id &&  vm?.lab?.status !== 'started'){

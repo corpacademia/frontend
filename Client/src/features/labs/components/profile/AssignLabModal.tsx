@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, BookOpen, AlertCircle, Clock, CreditCard, Loader, Check } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface AssignLabModalProps {
   isOpen: boolean;
@@ -23,21 +24,13 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   const [isPaying, setIsPaying] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState<string | null>(null);
-
-  const [admin,setAdmin] = useState({});
-   useEffect(() => {
-    const getUserDetails = async () => {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/user_profile`);
-      setAdmin(response.data.user);
-    };
-    getUserDetails();
-  }, []);
+  const {user} = useAuthStore();
 
   useEffect(() => {
     const fetch = async () => {
       try {
         const data = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
-          admin_id: admin.id
+          admin_id: user?.impersonating ? user?.impersonatedUserId : user?.id
         });
         setAvailableLabs(data.data.data);
       } catch (error) {
@@ -89,7 +82,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
             }
           },
           prefill: {
-            email: admin.email
+            email: user.email
           },
           theme: {
             color: '#0077FF'
@@ -132,7 +125,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
         lab: lab,
         duration: duration,
         userId: userId,
-        assign_admin_id: admin.id
+        assign_admin_id: user?.impersonating ? user?.impersonatedUserId : user?.id
       });
       if (assign.data.success) {
         setIsAssigning(true);

@@ -3,6 +3,8 @@ import { GradientText } from '../../../components/ui/GradientText';
 import { CloudVMAssessmentCard } from '../components/cloudvm/assessment/CloudVMAssessmentCard';
 import { Plus, Search, Filter, AlertCircle, FolderX } from 'lucide-react';
 import axios from 'axios';
+import { useActionData } from 'react-router-dom';
+import { useAuthStore } from '../../../store/authStore';
 
 interface CloudVM {
   id: string;
@@ -18,6 +20,7 @@ interface CloudVM {
 }
 
 export const CloudVMsPage: React.FC = () => {
+  const {user} = useAuthStore();
   const [vms, setVMs] = useState<CloudVM[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,20 +30,13 @@ export const CloudVMsPage: React.FC = () => {
     status: ''
   });
 
-  const [admin,setAdmin] = useState({});
-  useEffect(() => {
-    const getUserDetails = async () => {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/user_profile`);
-      setAdmin(response.data.user);
-    };
-    getUserDetails();
-  }, []);
+ 
 
   useEffect(() => {
     const fetchVMs = async () => {
       try {
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsConfigured`, {
-          admin_id: admin.id
+          admin_id: user?.impersonating ? user?.impersonatedUserId : user?.id
         });
 
         if (response.data.success) {
@@ -177,7 +173,7 @@ export const CloudVMsPage: React.FC = () => {
           {filteredVMs.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredVMs.map((vm) => (
-                <CloudVMAssessmentCard key={vm.id} assessment={vm} />
+                <CloudVMAssessmentCard key={vm.id} assessment={vm} onDelete = {setVMs(prev=>prev.filter(v=>v.id !== vm.id))}/>
               ))}
             </div>
           )}

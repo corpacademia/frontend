@@ -9,6 +9,7 @@ import { UserPlus, Users, Shield, Building2, Upload } from 'lucide-react';
 import { useAuthStore } from '../../../store/authStore';
 import { BulkUploadModal } from '../../users/components/BulkUploadModal';
 import axios from 'axios';
+import { useSubscription, ROLE_TO_FEATURE } from '../../../features/labs/hooks/useSubscription';
 // import { ApproveRejectUserModal } from '../../users/components/ApproveRejectUserModal';
 
 // Placeholder for ApproveRejectUserModal if not imported
@@ -30,7 +31,8 @@ const ApproveRejectUserModal = ({ isOpen, onClose, user, onApprove, onReject }) 
 
 
 export const AllUsersPage: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user,orgUsers } = useAuthStore();
+  const {canUse,updateUsage,license} = useSubscription();
  const [allUsers, setAllUsers] = useState<any[]>([]);
   const [originalUsers, setOriginalUsers] = useState<any[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -107,6 +109,18 @@ export const AllUsersPage: React.FC = () => {
   }, [filters, originalUsers]);
 
   const handleAddUser = async (userData: any) => {
+    // Superadmin adding users to any org is never limited by subscription
+    if (user?.role !== 'superadmin') {
+      const featureKey = ROLE_TO_FEATURE[userData.role]; // e.g. 'trainers', 'students', 'labadmins'
+      if (featureKey) {
+        const currentCount = allUsers.filter(u => u.role === userData.role).length;
+        if (!canUse(featureKey, currentCount)) {
+          const label = { labadmins: 'Lab Admin', trainers: 'Trainer', students: 'Student' }[featureKey] ?? 'User';
+          alert(`${label} limit reached on your current plan. Please upgrade to add more.`);
+          return;
+        }
+      }
+    }
     try {
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addUser`, {
         formData: { ...userData },
@@ -115,6 +129,7 @@ export const AllUsersPage: React.FC = () => {
       });
 
       if (result.data.success) {
+        await updateUsage(license?.key,'students',1)
         // Refresh the users list
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.org_id}`
@@ -145,6 +160,20 @@ export const AllUsersPage: React.FC = () => {
 
   const handleBulkUpload = async (uploadedUsers: any[]) => {
     try {
+      if (user?.role !== 'superadmin') {
+        for(const userData of uploadedUsers){
+           const featureKey = ROLE_TO_FEATURE[userData.role]; // e.g. 'trainers', 'students', 'labadmins'
+                    if (featureKey) {
+                      const currentCount = orgUsers?.filter(u => u.role === userData.role).length;
+                      
+                      if (!canUse(featureKey, currentCount)) {
+                        const label = { labadmins: 'Lab Admin', trainers: 'Trainer', students: 'Student' }[featureKey] ?? 'User';
+                        alert(`${label} limit reached on your current plan. Please upgrade to add more.`);
+                        return;
+                      }
+                    }
+        }
+        }
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadOrgUsers`, {
         users: uploadedUsers,
         organizationId: user?.org_id,
@@ -155,6 +184,9 @@ export const AllUsersPage: React.FC = () => {
       });
 
       if (result.data.success) {
+       for(const user of uploadedUsers){
+       await updateUsage(license?.id,ROLE_TO_FEATURE[user?.role],1)
+      }
         setIsUploadModalOpen(false);
         // Refresh the users list
         // const response = await axios.get(

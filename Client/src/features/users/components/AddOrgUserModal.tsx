@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Check, Loader } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import axios from 'axios';
+import { ROLE_TO_FEATURE, useSubscription } from '../../labs/hooks/useSubscription';
+import { useAuthStore } from '../../../store/authStore';
 
 interface AddOrgUserModalProps {
   isOpen: boolean;
@@ -18,6 +20,8 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
   adminDetails,
   orgId
 }) => {
+  const {user,orgUsers} = useAuthStore()
+  const {canUse} = useSubscription();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,7 +31,6 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -68,7 +71,18 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+     if (user?.role !== 'superadmin') {
+          const featureKey = ROLE_TO_FEATURE['labadmin']; // e.g. 'trainers', 'students', 'labadmins'
+          if (featureKey) {
+            const currentCount = orgUsers.filter(u => u.role === 'labadmin').length;
+            
+            if (!canUse(featureKey, currentCount)) {
+              const label = { labadmins: 'Lab Admin', trainers: 'Trainer', students: 'Student' }[featureKey] ?? 'User';
+              alert(`${label} limit reached on your current plan. Please upgrade to add more.`);
+              return;
+            }
+          }
+        }
     if (!validateForm()) {
       return;
     }

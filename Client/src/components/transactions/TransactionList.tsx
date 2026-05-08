@@ -42,7 +42,6 @@ export const TransactionList: React.FC<TransactionListProps> = ({
   const [showFilters, setShowFilters] = useState(false);
   const [localFilters, setLocalFilters] = useState<TransactionFilter>({});
 
-
   useEffect(() => {
     fetchTransactions(orgId, 1);
   }, [orgId]);
@@ -83,7 +82,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency.toUpperCase()
-    }).format(amount / 100);
+    }).format(amount);
   };
 
   const formatDate = (timestamp: string) => {
@@ -267,7 +266,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       <td className="py-4">
                         <div className="flex items-center text-gray-200">
                           <CreditCard className="h-4 w-4 mr-2 text-primary-400" />
-                          {formatCurrency(transaction.amount, transaction.currency)}
+                          {formatCurrency(transaction?.amount_paid, transaction?.currency)}
                         </div>
                       </td>
                       <td className="py-4">
@@ -281,7 +280,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({
                       <td className="py-4 text-gray-400">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-2" />
-                          {formatDate(transaction.created)}
+                          {formatDate(transaction.created_at)}
                         </div>
                       </td>
                       <td className="py-4">

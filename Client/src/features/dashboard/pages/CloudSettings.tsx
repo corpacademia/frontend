@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Cloud, Plus, Trash2, Edit2, Eye, EyeOff, Loader, Check, X } from 'lucide-react';
 import { GradientText } from '../../../components/ui/GradientText';
 import { useAuthStore } from '../../../store/authStore';
+import { initSocket } from '../../../store/socketService';
 import axios from 'axios';
 
 interface CloudCredential {
@@ -16,7 +17,7 @@ interface CloudCredential {
 }
 
 export const CloudSettings: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user,organizations,updateOrganization } = useAuthStore();
   const [credentials, setCredentials] = useState<CloudCredential[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -33,17 +34,26 @@ export const CloudSettings: React.FC = () => {
     provider: 'aws',
     name: '',
     credentials: {
-      aws: { access_key: '', secret_key: '', region: '' },
+      aws: { access_key: '', secret_key: ''},
       azure: { subscription_id: '', tenant_id: '', client_id: '', client_secret: '' },
       gcp: { project_id: '', credentials_json: '' },
       datacenter: { api_url: '', username: '', password: '' },
       proxmox: { api_url: '', token: '', secret_key: '', node: '' }
     }
   });
-
+  
   useEffect(() => {
     fetchCredentials();
   }, []);
+
+ useEffect(() => {
+     if (!user) return;
+       const socket = initSocket(user?.id, user?.org_id,user?.role);
+       socket.on("bringYourOwnCloud", (data) => {
+         updateOrganization(data);
+       });
+ 
+   }, [user]);
 
   useEffect(() => {
     if (success || error) {
@@ -81,14 +91,28 @@ export const CloudSettings: React.FC = () => {
         provider: formData.provider,
         name: formData.name,
         credentials: formData.credentials[formData.provider],
-        org_id: user?.role === 'orgsuperadmin' ? user?.org_id : undefined
+        org_id: user?.role === 'orgsuperadmin' ? user?.org_id : undefined,
+        createdBy:user?.id
       };
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_ms/add-cloud`,
+      let response;
+      if(user?.role === 'superadmin'){
+        response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/global-cloud`,
         payload
       );
-
+      }
+      else{
+         const currOrg = organizations.find(org=>org.id === user?.org_id);
+         if(!currOrg?.bring_your_own_cloud){
+          setError("No provision to add credential");
+          return;
+         }
+         response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/add-cloud`,
+        payload
+      );
+      }
+      
       if (response.data.success) {
         setSuccess('Cloud credentials added successfully');
         setIsAddModalOpen(false);
@@ -137,7 +161,7 @@ export const CloudSettings: React.FC = () => {
 
     try {
       const response = await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_ms/delete-cloud/${id}`
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/delete-cloud/${id}`
       );
 
       if (response.data.success) {
@@ -174,7 +198,7 @@ export const CloudSettings: React.FC = () => {
       provider: 'aws',
       name: '',
       credentials: {
-        aws: { access_key: '', secret_key: '', region: '' },
+        aws: { access_key: '', secret_key: '' },
         azure: { subscription_id: '', tenant_id: '', client_id: '', client_secret: '' },
         gcp: { project_id: '', credentials_json: '' },
         datacenter: { api_url: '', username: '', password: '' },
@@ -249,22 +273,6 @@ export const CloudSettings: React.FC = () => {
                   }
                 })}
                 className="w-full bg-dark-400/50 border border-primary-500/20 rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Region</label>
-              <input
-                type="text"
-                value={formData.credentials.aws.region}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  credentials: {
-                    ...formData.credentials,
-                    aws: { ...formData.credentials.aws, region: e.target.value }
-                  }
-                })}
-                className="w-full bg-dark-400/50 border border-primary-500/20 rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="us-east-1"
               />
             </div>
           </>
@@ -534,10 +542,6 @@ export const CloudSettings: React.FC = () => {
                     )}
                   </button>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 mb-1">Region</label>
-                <p className="text-gray-300">{creds.region}</p>
               </div>
             </div>
           )}

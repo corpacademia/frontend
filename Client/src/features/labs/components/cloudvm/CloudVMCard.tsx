@@ -27,6 +27,7 @@ import { DeleteModal } from './DeleteModal';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { UserInstancesModal } from '../common/UserInstancesModal';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface CloudVM {
   id: string;
@@ -48,6 +49,7 @@ interface CloudVM {
 
 interface CloudVMProps {
   vm: CloudVM;
+  onDelete?:() => void;
 }
 
 interface Instance {
@@ -67,8 +69,9 @@ interface LabDetails {
   description: string;
 }
 
-export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
+export const CloudVMCard: React.FC<CloudVMProps> = ({ vm,onDelete }) => {
   const navigate = useNavigate();
+  const {user} = useAuthStore()
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -88,17 +91,18 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [admin,setAdmin] = useState({});
+  const [admin,setAdmin] = useState<any>(null);
 
   useEffect(() => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      setAdmin(response.data.user);
+      setAdmin(user);
       setCurrentUser(response.data.user);
     };
     getUserDetails();
   }, []);
-    useEffect(() => {
+   
+  useEffect(() => {
       const checkVmCreated = async () => {
         try {
           const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkvmcreated`, {
@@ -224,7 +228,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
       if(vm?.assessment){
         const isStop = buttonLabel === 'Stop';
           const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
-              user_id: admin?.id,
+              user_id:admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
               lab_id: vm?.lab_id || vm?.labid,
             })
             if (!cloudinstanceDetails.data.success) {
@@ -238,7 +242,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/launchInstance`, {
                       name: admin?.name,
                       ami_id: ami?.data?.result?.ami_id,
-                      user_id: admin?.id,
+                      user_id: admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
                       lab_id: vm?.lab_id || vm?.labid,
                       instance_type: vm?.instance,
                       start_date: formatDate(vm?.startdate),
@@ -256,7 +260,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
             }
             try {
               const cloudinstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
-              user_id: admin?.id,
+              user_id:admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
               lab_id: vm?.lab_id || vm?.labid,
             })
               const instanceId = cloudinstanceDetails?.data?.data?.instance_id;
@@ -267,7 +271,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                 if(stop.data.success){
                   await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
                     lab_id:vm?.lab_id || vm?.labid,
-                    user_id:admin?.id,
+                    user_id:admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
                     state:false,
                     isStarted:true,
                     type:'org'
@@ -295,7 +299,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                 if (response.data.response.success && response.data.response.result) {
                   await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
                     lab_id:vm?.lab_id || vm?.labid,
-                    user_id:admin?.id,
+                    user_id:admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
                     state:true,
                     isStarted:false,
                     type:'org'
@@ -350,7 +354,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
           
                 if (restart.data.success ) {
                   const cloudInstanceDetails = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/getAssignedInstance`, {
-                    user_id: admin?.id,
+                    user_id: admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
                     lab_id: vm?.lab_id || vm?.labid,
                   })
                   if(cloudInstanceDetails.data.success){
@@ -365,7 +369,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
                       //update database that the instance is started
                       await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateawsInstanceOfUsers`,{
                         lab_id:vm?.lab_id || vm?.labid,
-                        user_id:admin?.id,
+                        user_id:admin?.impersonating ? admin?.impersonatedUserId : admin?.id,
                         state:true,
                         isStarted:true
                       })
@@ -544,6 +548,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
           const userName = Data.username;
           const protocol = Data.protocol;
           const port = Data.port;
+          console.log("Data:",Data);
            const resp = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/get-guac-url`,
                 {
@@ -649,6 +654,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
+      
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/aws_ms/deletesupervm`, {
         id: vm.lab_id,
         instance_id: instanceDetails?.instance_id,
@@ -657,7 +663,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm }) => {
 
       if (response.data.success) {
         setNotification({ type: 'success', message: 'VM deleted successfully' });
-        setTimeout(() => window.location.reload(), 1500);
+        onDelete?.();
       } else {
         throw new Error(response.data.message || 'Failed to delete VM');
       }

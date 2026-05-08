@@ -8,26 +8,21 @@ import { AddUserModal } from '../components/AddUserModal';
 import { User } from '../types';
 import { Upload, UserPlus } from 'lucide-react';
 import axios from 'axios';
+import { useAuthStore } from '../../../store/authStore';
 
 export const UsersPage: React.FC = () => {
   const [originalUsers, setOriginalUsers] = useState<any[]>([]);
   const [users, setUsers] = useState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [admin,setAdmin] = useState({});  
+  const {user} = useAuthStore(); 
   const [mockStats, setMockStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
     trainers: 0,
     organizations: 0
   });
-  useEffect(() => {
-    const getUserDetails = async () => {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      setAdmin(response.data.user);
-    };
-    getUserDetails();
-  }, []);
+  
   useEffect(() => {
     const getUsers = async () => {
       try {
@@ -97,7 +92,7 @@ export const UsersPage: React.FC = () => {
     try {
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addUser`, {
         formData: userData,
-        user: admin
+        user: user
       });
 
       if (result.data.success) {
@@ -116,10 +111,10 @@ export const UsersPage: React.FC = () => {
     try {
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/bulkUploadOrgUsers`, {
         users: uploadedUsers,
-        organizationId: admin?.org_id,
-        createdBy: admin?.id,
-        orgName:admin?.organization,
-        orgType:admin?.organization_type,
+        organizationId: user?.org_id,
+        createdBy: user?.impersonating ? user?.impersonatedUserId : user?.id,
+        orgName:user?.organization,
+        orgType:user?.org_type,
         role:'user'
       });
 
@@ -191,7 +186,7 @@ export const UsersPage: React.FC = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddUser}
-        user={admin}
+        user={user}
       />
     </div>
   );

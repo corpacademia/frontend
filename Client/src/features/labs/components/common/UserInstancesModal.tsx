@@ -130,7 +130,8 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
           {
             labId: labId,
             orgId: orgId || user?.org_id,
-            userId: userInstance.user_id || userInstance.userid
+            userId: userInstance.user_id || userInstance.userid,
+            purchased:userInstance?.purchased
           }
         );
       } else if (labType === 'singlevm-proxmox') {

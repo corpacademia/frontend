@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { X, Plus, Minus, AlertCircle, Calendar, Loader, Check, Clock } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface ProxmoxConvertToCatalogueModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ interface FormData {
   level: string;
   category: string;
   price: string;
+  hoursPerDay: number;
 }
 
 interface CleanupModalProps {
@@ -120,6 +122,7 @@ const initialFormData: FormData = {
   level: '',
   category: '',
   price: '',
+  hoursPerDay:1
 };
 
 export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueModalProps> = ({
@@ -135,21 +138,12 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
   const [Org_details, setOrg_details] = useState<org | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [isCleanupModalOpen, setIsCleanupModalOpen] = useState(false);
-  const [admin, setAdmin] = useState<any>({});
-
-  useEffect(() => {
-    const getUserDetails = async () => {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-      setAdmin(response.data.user);
-    };
-    getUserDetails();
-  }, []);
-
+ const {user} = useAuthStore();
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        if (admin?.role === 'orgsuperadmin') {
-          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${admin.org_id}`);
+        if (user?.role === 'orgsuperadmin') {
+          const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user.org_id}`);
           if (response.data.success) {
             const orgAdmins = response.data.data.filter((user: any) => user.role === 'labadmin');
             setOrganizations(orgAdmins.map((admin: any) => ({
@@ -171,10 +165,10 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
       }
     };
 
-    if (isOpen && admin?.id) {
+    if (isOpen && user?.id) {
       fetchOrganizations();
     }
-  }, [isOpen, admin]);
+  }, [isOpen, user]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -213,6 +207,10 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
       setError('Catalogue name is required');
       return false;
     }
+    if (formData.hoursPerDay < 1 || formData.hoursPerDay > 24) {
+  setError('Hours per day must be between 1 and 24');
+  return false;
+}
     return true;
   };
 
@@ -231,11 +229,13 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
         level: formData.level,
         category: formData.category,
         price: formData.price,
+        hoursPerDay: formData.hoursPerDay,
+
       });
 
       if (formData.organizationId && updateCatalogueDetails.data.success) {
         let org_details = null;
-        if (admin.role !== 'orgsuperadmin') {
+        if (user.role !== 'orgsuperadmin') {
           org_details = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/getOrgDetails`, {
             org_id: formData.organizationId
           });
@@ -247,9 +247,9 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
         }
 
         const batchAssignmentPayload: any = {
-          user_id: admin.role === 'orgsuperadmin' ? formData.organizationId : org_details?.data.data.org_admin,
-          orgId: admin.role === 'orgsuperadmin' ? admin.org_id : org_details?.data.data.id,
-          assigned_by: admin?.id,
+          user_id: user?.role === 'orgsuperadmin' ? formData.organizationId : org_details?.data.data.org_admin,
+          orgId: user?.role === 'orgsuperadmin' ? user?.org_id : org_details?.data.data.id,
+          assigned_by: user?.impersonating ? user?.impersonatedUserId : user?.id,
           labId:vmId,
           startDate:updateCatalogueDetails?.data?.data?.startdate,
           endDate:updateCatalogueDetails?.data?.data?.enddate,
@@ -321,7 +321,8 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
               />
             </div>
 
-            <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
                 Price
               </label>
@@ -333,12 +334,27 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
                 className="w-full px-3 sm:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
               />
+              </div>
+              <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Hours per day
+              </label>
+              <input
+                type="number"
+                name="hoursPerDay"
+                value={formData.hoursPerDay}
+                onChange={handleInputChange}
+                className="w-full px-3 sm:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                       text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
+              />
+              </div>
             </div>
+            
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  {admin?.role === 'orgsuperadmin' ? 'Assign to Org Admin' : 'Organization'}
+                  {user?.role === 'orgsuperadmin' ? 'Assign to Org Admin' : 'Organization'}
                 </label>
                 <select
                   name="organizationId"
@@ -348,7 +364,7 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
                          text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
                 >
                   <option value="">
-                    {admin?.role === 'orgsuperadmin' ? 'Select an org admin' : 'Select an organization'}
+                    {user?.role === 'orgsuperadmin' ? 'Select an org admin' : 'Select an organization'}
                   </option>
                   {organizations.map(org => (
                     <option key={org.id} value={org.id}>

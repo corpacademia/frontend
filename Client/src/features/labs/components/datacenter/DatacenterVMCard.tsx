@@ -65,6 +65,7 @@ interface DatacenterVM {
 
 interface DatacenterVMCardProps {
   vm: DatacenterVM;
+  onDelete?: () => void;
 }
 
 interface DeleteConfirmationModalProps {
@@ -152,8 +153,9 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 };
 
 
-export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
+export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm,onDelete }) => {
   const navigate = useNavigate();
+  const {user} = useAuthStore();
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -166,7 +168,6 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
   const [showFullStartDate, setShowFullStartDate] = useState(false);
   const [showFullEndDate, setShowFullEndDate] = useState(false);
   const [vmUsers, setVmUsers] = useState<Array<any>>(vm.userscredentials || []);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [software, setSoftware] = useState<string[]>(vm.software || []);
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
   // Edit lab modal states
@@ -185,6 +186,8 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
   const [editNotification, setEditNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [labGuideFile, setLabGuideFile] = useState<File | null>(null);
   const [userGuideFile, setUserGuideFile] = useState<File | null>(null);
+  
+ 
   function formatDate(dateString:string) {
     const date = new Date(dateString);
 
@@ -203,17 +206,17 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm }) => {
   }
 
   // Fetch current user details
-  useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setCurrentUser(response.data.user);
-      } catch (error) {
-        console.error('Failed to fetch current user:', error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+  // useEffect(() => {
+  //   const fetchCurrentUser = async () => {
+  //     try {
+  //       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
+  //       setCurrentUser(response.data.user);
+  //     } catch (error) {
+  //       console.error('Failed to fetch current user:', error);
+  //     }
+  //   };
+  //   fetchCurrentUser();
+  // }, []);
 
   // Initialize edit form data with user credentials
   useEffect(() => {
@@ -456,13 +459,12 @@ if (userGuideFile) {
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
+     
       const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVMDatacenterLab/${vm.lab_id}`);
 
       if (response.data.success) {
         setNotification({ type: 'success', message: 'VM deleted successfully' });
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
+        onDelete?.();
       } else {
         throw new Error(response.data.message || 'Failed to delete VM');
       }
@@ -484,7 +486,7 @@ if (userGuideFile) {
       // Different API endpoint for users who didn't create the VM
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteAssignedSingleVMDatacenterLab`,{
         labId:vm.lab_id,
-        orgId:currentUser.org_id
+        orgId:user.org_id
       });
 
       if (response.data.success) {
@@ -519,7 +521,7 @@ if (userGuideFile) {
 
   // Check if current user can edit content
   const canEditContent = () => {
-    return currentUser?.role === 'superadmin' || currentUser?.role === 'orgsuperadmin' || currentUser?.id === vm?.user_id ;
+    return user?.role === 'superadmin' || user?.role === 'orgsuperadmin' || (user?.impersonating ? user?.impersonatedUserId : user?.id) === vm?.user_id ;
   };
 
   return (
@@ -642,7 +644,7 @@ if (userGuideFile) {
               User List
             </button>
 
-            {!canEditContent() && currentUser?.role === "labadmin" ? (
+            {!canEditContent() && user?.role === "labadmin" ? (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsAssignModalOpen(true)}
@@ -769,7 +771,7 @@ if (userGuideFile) {
         isOpen={isUserInstancesModalOpen}
         onClose={() => setIsUserInstancesModalOpen(false)}
         lab={vm}
-        orgId={currentUser?.org_id}
+        orgId={user?.org_id}
         labType="singlevm-datacenter"
       />
 

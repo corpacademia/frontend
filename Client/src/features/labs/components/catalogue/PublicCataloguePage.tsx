@@ -5,18 +5,20 @@ import { PublicCatalogueFilters } from './PublicCatalogueFilters';
 import { EditCourseModal } from './EditCourseModal';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { useAuthStore } from '../../../../store/authStore';
-import { Plus, BookOpen, Users, Award, TrendingUp, ShoppingCart, LogOut, LogIn, X, Edit, LayoutDashboard } from 'lucide-react';
+import { Plus, BookOpen, Users, Award, TrendingUp, ShoppingCart, LogOut, LogIn, X, Edit, LayoutDashboard, ArrowLeftRight } from 'lucide-react';
 import axios from 'axios';
 import { DeleteModal } from '../cloudvm/DeleteModal';
 
 import { loadStripe } from '@stripe/stripe-js';
 import { useCartStore } from '../../../../store/useCartStore';
+import { useSubscription } from '../../hooks/useSubscription';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
 
 export const PublicCataloguePage: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
+  const {canUse,license} = useSubscription();
   const location = useLocation();
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [courses, setCourses] = useState<any[]>([]);
@@ -39,53 +41,82 @@ export const PublicCataloguePage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [usdRate, setUsdRate] = useState(90);
   const navigate = useNavigate();
+
+  // Currency toggle: 'INR' | 'USD'
+  const [currency, setCurrency] = useState<'INR' | 'USD'>('INR');
+  //   useEffect(() => {
+  //   const fetchRate = async () => {
+  //     try {
+  //       const res = await axios.get("https://open.er-api.com/v6/latest/USD");
+  //       const rate = res.data?.rates?.INR;
+  //       if (rate) {
+  //         setUsdRate(rate);
+  //       }
+  //     } catch (err) {
+  //       console.error("Failed to fetch USD rate", err);
+  //     }
+  //   };
+
+  //   fetchRate();
+
+  //   // optional: refresh every 1 hour
+  //   const interval = setInterval(fetchRate, 3600000);
+
+  //   return () => clearInterval(interval);
+  // }, []);
+  const USD_RATE = usdRate; //
+  console.log(USD_RATE)
+  const convertPrice = (priceInRupees: number) =>
+    currency === 'USD'
+      ? `$${(priceInRupees / USD_RATE).toFixed(2)}`
+      : `₹${priceInRupees}`;
 
   const isSuperAdmin = user?.role === 'superadmin';
   const isOrgSuperAdmin = user?.role === 'orgsuperadmin';
   const isOrgLabAdmin = user?.role === 'labadmin';
- 
 
   // Check if accessed from dashboard
   const isFromDashboard = location.pathname.includes('/dashboard/labs/catalogue');
   const {
-      cartItems,
-      isLoadingCart,
-      fetchCartItems,
-      removeFromCart,
-      clearCart,
-      updateCartItem,
-      proceedToCheckout,
-    } = useCartStore();
+    cartItems,
+    isLoadingCart,
+    fetchCartItems,
+    removeFromCart,
+    clearCart,
+    updateCartItem,
+    proceedToCheckout,
+  } = useCartStore();
 
-  const [userPurchased,setUserPurchased] = useState([]);
-  useEffect(()=>{
-    const checkEnrolled =async()=>{
+  const [userPurchased, setUserPurchased] = useState([]);
+  useEffect(() => {
+    const checkEnrolled = async () => {
       try {
-         const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllUserPurchasedLabs`,{
-        userId:user?.id
-      })
-      if(result.data.success){
-        const data = result.data.data;
+        const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllUserPurchasedLabs`, {
+          userId: user?.id
+        })
+        if (result.data.success) {
+          const data = result.data.data;
 
-        setUserPurchased(data);
-      }
+          setUserPurchased(data);
+        }
       } catch (error) {
         console.log(error);
       }
-     
+
     }
     checkEnrolled();
-      
-  },[user?.id])
+
+  }, [user?.id])
 
   useEffect(() => {
     const fetchCatalogues = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues`,{
-          user:user
-        } );
+        const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues`, {
+          user: user
+        });
         setCourses(response.data.data);
         setFilteredCourses(response.data.data);
       } catch (error) {
@@ -102,7 +133,7 @@ export const PublicCataloguePage: React.FC = () => {
 
     // Listen for cart updates
     const handleCartUpdate = () => {
-    
+
       if (isAuthenticated) {
         fetchCartItems(user?.id);
       }
@@ -119,7 +150,7 @@ export const PublicCataloguePage: React.FC = () => {
       }
     };
 
-  
+
 
     window.addEventListener('cartUpdated', handleCartUpdate);
     window.addEventListener('openCartModal', handleOpenCartModal);
@@ -133,9 +164,10 @@ export const PublicCataloguePage: React.FC = () => {
       // window.removeEventListener('checkout',proceedToCheckout)
     };
   }, [isAuthenticated]);
-   const handleUpdate = async (cartItemId: string, updates: { duration?: string; quantity?: number, defaultDuration?: number, price?: number }) => {
+
+  const handleUpdate = async (cartItemId: string, updates: { duration?: string; quantity?: number, defaultDuration?: number, price?: number, defaulthours?:number , number_hours_day?: number }) => {
     try {
-      const response = await updateCartItem(cartItemId,updates);
+      const response = await updateCartItem(cartItemId, updates);
       if (response) {
         setEditingCartItem(null);
       }
@@ -144,22 +176,23 @@ export const PublicCataloguePage: React.FC = () => {
     }
   };
 
-    const handleCheckout = async () => {
-  if (cartItems.length === 0) return;
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
 
-  try {
-    
-    await proceedToCheckout(
-      {userId: user?.id,
-       catalogues:courses,
-      org:user?.role === 'orgsuperadmin' 
-      }
-    );
-  } catch (error) {
-    console.error('Error during Stripe checkout:', error);
-    alert('Checkout failed. Please try again.');
-  }
-};
+    try {
+
+      await proceedToCheckout(
+        {
+          userId: user?.id,
+          catalogues: courses,
+          org: user?.role === 'orgsuperadmin'
+        }
+      );
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      alert('Checkout failed. Please try again.');
+    }
+  };
   const handleLogin = () => {
     window.location.href = '/login';
   };
@@ -233,37 +266,37 @@ export const PublicCataloguePage: React.FC = () => {
       filtered = filtered.filter(course => course.level === filters.level);
     }
 
-   if (filters.duration && filters.duration !== 'Any') {
-  const durationFilter = filters.duration.trim().toLowerCase().replace(/\s+/g, '');
+    if (filters.duration && filters.duration !== 'Any') {
+      const durationFilter = filters.duration.trim().toLowerCase().replace(/\s+/g, '');
 
-  filtered = filtered.filter(course => {
-    const days = Number(course.duration);
-    if (isNaN(days)) return false;
+      filtered = filtered.filter(course => {
+        const days = Number(course.duration);
+        if (isNaN(days)) return false;
 
-    if (durationFilter === '1week') {
-      return days >= 1 && days <= 7;
+        if (durationFilter === '1week') {
+          return days >= 1 && days <= 7;
+        }
+
+        if (durationFilter === '2weeks') {
+          return days >= 8 && days <= 14;
+        }
+
+        if (durationFilter === '2+weeks' || durationFilter === '2weeks+') {
+          return days >= 15;
+        }
+
+        if (durationFilter.includes('-')) {
+          const [minStr, maxStr] = durationFilter.split('-');
+          const min = parseInt(minStr, 10);
+          const max = parseInt(maxStr, 10);
+          return days >= min && days <= max;
+        }
+
+        // Exact match like "1", "2", etc.
+        const exact = parseInt(durationFilter, 10);
+        return days === exact;
+      });
     }
-
-    if (durationFilter === '2weeks') {
-      return days >= 8 && days <= 14;
-    }
-
-    if (durationFilter === '2+weeks' || durationFilter === '2weeks+') {
-      return days >= 15;
-    }
-
-    if (durationFilter.includes('-')) {
-      const [minStr, maxStr] = durationFilter.split('-');
-      const min = parseInt(minStr, 10);
-      const max = parseInt(maxStr, 10);
-      return days >= min && days <= max;
-    }
-
-    // Exact match like "1", "2", etc.
-    const exact = parseInt(durationFilter, 10);
-    return days === exact;
-  });
-}
 
     if (filters.free) {
       if (filters.free === 'free') {
@@ -293,14 +326,14 @@ export const PublicCataloguePage: React.FC = () => {
         setCourses(prev => prev.filter(course => course.id !== courseId));
         setFilteredCourses(prev => prev.filter(course => course.id !== courseId));
       }
-      else{
+      else {
 
         console.error('Failed to delete course:', update.data.message);
       }
     } catch (error) {
       console.error('Error deleting course:', error);
     }
-    finally{
+    finally {
       setIsDeleting(false);
       setIsDeleteModalOpen(false);
     }
@@ -341,98 +374,98 @@ export const PublicCataloguePage: React.FC = () => {
     averageRating: (courses.reduce((sum, course) => sum + course.rating, 0) / courses.length).toFixed(1),
     freeCourses: courses.filter(course => course.isfree).length
   };
-if(isLoading) {
+  if (isLoading) {
     return <div className="text-center text-gray-500">Loading courses...</div>;
-  } 
+  }
   return (
     <div className={isFromDashboard ? "min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300" : "min-h-screen bg-gradient-to-br from-dark-100 via-dark-200 to-dark-300"}>
       {/* Header with Auth and Cart - Always show when not from dashboard */}
       {!isFromDashboard && (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-3xl font-bold">
-              <GradientText>Lab Catalogue</GradientText>
-            </h1>
-          </div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-wrap gap-3 justify-between items-center mb-6 sm:mb-8">
+            <div className="flex items-center">
+              <h1 className="text-2xl sm:text-3xl font-bold">
+                <GradientText>Lab Catalogue</GradientText>
+              </h1>
+            </div>
 
-          <div className="flex items-center space-x-4">
-            {/* Cart Button */}
-            <button
-              onClick={() => setIsCartModalOpen(true)}
-              className="relative p-3 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
+              {/* Cart Button */}
+              <button
+                onClick={() => setIsCartModalOpen(true)}
+                className="relative p-2.5 sm:p-3 bg-gradient-to-r from-primary-500/20 to-secondary-500/20 
                        hover:from-primary-500/30 hover:to-secondary-500/30
                        border border-primary-500/20 hover:border-primary-500/40 
                        rounded-xl transition-all duration-300 group"
-            >
-              <ShoppingCart className="h-6 w-6 text-primary-400 group-hover:text-primary-300" />
-              {cartItems.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-gradient-to-r from-primary-500 to-secondary-500 
-                               text-white text-xs rounded-full h-6 w-6 flex items-center justify-center 
-                               font-semibold shadow-lg shadow-primary-500/20">
-                  {cartItems.reduce((total, item) => total + Number(item.quantity), 0)}
-                </span>
-              )}
-            </button>
-
-            {/* Auth Buttons */}
-            {isAuthenticated ? (
-              <div className="flex items-center space-x-3">
-                <span className="text-gray-300 hidden sm:block">Welcome, {user?.name}</span>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 
-                           border border-red-500/20 hover:border-red-500/40 
-                           rounded-lg transition-all duration-300 text-red-300 hover:text-red-200"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleLogin}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
-                         hover:from-primary-400 hover:to-secondary-400
-                         rounded-lg transition-all duration-300 text-white font-semibold
-                         shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
               >
-                <LogIn className="h-5 w-5" />
-                <span>Login</span>
+                <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-primary-400 group-hover:text-primary-300" />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-gradient-to-r from-primary-500 to-secondary-500 
+                               text-white text-xs rounded-full h-5 w-5 flex items-center justify-center 
+                               font-semibold shadow-lg shadow-primary-500/20">
+                    {cartItems.reduce((total, item) => total + Number(item.quantity), 0)}
+                  </span>
+                )}
               </button>
-            )}
-             <button
-    onClick={() => navigate('/dashboard')}
-    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 
-               hover:from-primary-400 hover:to-secondary-400 
-               rounded-lg transition-all duration-300 text-white font-semibold shadow-lg"
-  >
-    <LayoutDashboard className="h-5 w-5" />
-    <span>Go to Dashboard</span>
-  </button>
+
+              {/* Auth Buttons */}
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <span className="text-gray-300 hidden sm:block text-sm truncate max-w-[120px]">Welcome, {user?.name}</span>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-1.5 px-3 py-2 sm:px-4 bg-red-500/20 hover:bg-red-500/30 
+                           border border-red-500/20 hover:border-red-500/40 
+                           rounded-lg transition-all duration-300 text-red-300 hover:text-red-200 text-sm"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="hidden sm:inline">Logout</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleLogin}
+                  className="flex items-center space-x-1.5 px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-primary-500 to-secondary-500
+                         hover:from-primary-400 hover:to-secondary-400
+                         rounded-lg transition-all duration-300 text-white font-semibold text-sm
+                         shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
+                >
+                  <LogIn className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span>Login</span>
+                </button>
+              )}
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center space-x-1.5 px-3 py-2 sm:px-4 bg-gradient-to-r from-primary-500 to-secondary-500 
+                         hover:from-primary-400 hover:to-secondary-400 
+                         rounded-lg transition-all duration-300 text-white font-semibold text-sm shadow-lg"
+              >
+                <LayoutDashboard className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Go to Dashboard</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
       )}
 
       {/* Hero Section - Only show when not from dashboard */}
       {!isFromDashboard && (
-      <div className="relative py-16 text-center mb-12">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-2xl"></div>
-        <div className="relative z-10">
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Discover and enroll in our comprehensive lab courses designed to enhance your skills
-          </p>
+        <div className="relative py-16 text-center mb-12">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-2xl"></div>
+          <div className="relative z-10">
+            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+              Discover and enroll in our comprehensive lab courses designed to enhance your skills
+            </p>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Main Content */}
       <div className={`${isFromDashboard ? 'px-0' : 'container mx-auto px-4 sm:px-6 lg:px-8 py-8'}`}>
-        
+
         {(isSuperAdmin || isOrgSuperAdmin) && (
-          <div className={`flex justify-between items-center mb-8 ${isFromDashboard ? 'px-6' : ''}`}>
-            <h2 className="text-2xl font-bold text-white">Manage Labs</h2>
+          <div className={`flex flex-wrap gap-3 justify-between items-center mb-6 sm:mb-8 ${isFromDashboard ? 'px-4 sm:px-6' : ''}`}>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">Manage Labs</h2>
             <button
               onClick={handleAddNewCourse}
               className="btn-primary flex items-center space-x-2"
@@ -448,14 +481,31 @@ if(isLoading) {
           <PublicCatalogueFilters
             onFilterChange={handleFilterChange}
             filters={filters}
-            
+
           />
 
-          {/* Results Count */}
-          <div className="mb-6">
+          {/* Results Count + Currency Toggle */}
+          <div className="flex items-center justify-between mb-6">
             <p className="text-gray-400">
               Showing {filteredCourses.length} of {courses.length} Labs
             </p>
+            {/* Currency Toggle - visible on all views */}
+            {/* <button
+              onClick={() => setCurrency(prev => prev === 'INR' ? 'USD' : 'INR')}
+              title={`Switch to ${currency === 'INR' ? 'USD' : 'INR'}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500/20 to-yellow-500/20
+                         hover:from-amber-500/30 hover:to-yellow-500/30
+                         border border-amber-500/20 hover:border-amber-500/40
+                         rounded-xl transition-all duration-300 group"
+            >
+              <span className="text-amber-300 font-bold text-xs group-hover:text-amber-200 transition-colors">
+                {currency === 'INR' ? '₹ INR' : '$ USD'}
+              </span>
+              <ArrowLeftRight className="h-3 w-3 text-amber-400 group-hover:text-amber-300 transition-colors" />
+              <span className="text-amber-300 font-bold text-xs group-hover:text-amber-200 transition-colors">
+                {currency === 'INR' ? 'USD' : 'INR'}
+              </span>
+            </button> */}
           </div>
         </div>
 
@@ -465,12 +515,14 @@ if(isLoading) {
             courses={filteredCourses}
             isLoading={isLoading}
             onEdit={(isSuperAdmin || isOrgSuperAdmin || isOrgLabAdmin) ? handleEditCourse : undefined}
-              onDelete={(isSuperAdmin || isOrgSuperAdmin ||isOrgLabAdmin) ? handleDeleteCourse : undefined}
+            onDelete={(isSuperAdmin || isOrgSuperAdmin || isOrgLabAdmin) ? handleDeleteCourse : undefined}
             currentUser={user}
             isDeleting={isDeleting}
             isDeleteModalOpen={isDeleteModalOpen}
             cartItems={cartItems}
             userPurchased={userPurchased}
+            currency={currency}
+            convertPrice={convertPrice}
           />
         </div>
       </div>
@@ -485,9 +537,9 @@ if(isLoading) {
 
       {/* Modern Cart Modal */}
       {isCartModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-dark-200 to-dark-300 rounded-2xl border border-primary-500/20 
-                          max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl shadow-primary-500/10">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-gradient-to-br from-dark-200 to-dark-300 rounded-t-2xl sm:rounded-2xl border border-primary-500/20 
+                          w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[80vh] overflow-hidden shadow-2xl shadow-primary-500/10 flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b border-primary-500/20">
               <div className="flex items-center space-x-3">
@@ -508,7 +560,7 @@ if(isLoading) {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6">
+            <div className="p-4 sm:p-6 flex-1 overflow-y-auto scrollbar-none">
               {isLoadingCart ? (
                 <div className="text-center py-12">
                   <div className="animate-spin h-8 w-8 border-2 border-primary-500 border-t-transparent rounded-full mx-auto mb-4"></div>
@@ -521,7 +573,7 @@ if(isLoading) {
                   <p className="text-gray-500">Add some labs to get started!</p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                <div className="space-y-4 max-h-[45vh] sm:max-h-[400px] overflow-y-auto scrollbar-none">
                   {cartItems.map(item => (
                     <div key={item.id} className="p-4 bg-dark-400/30 rounded-xl border border-primary-500/10 
                                                    hover:border-primary-500/20 transition-colors">
@@ -539,33 +591,61 @@ if(isLoading) {
                                     type="number"
                                     min="1"
                                     defaultValue={item.duration}
-                                    onChange={(e) => setEditingCartItem({...editingCartItem, duration: e.target.value})}
+                                    onChange={(e) => setEditingCartItem({ ...editingCartItem, duration: e.target.value })}
                                     className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
                                   />
                                 </div>
                                 {user?.role !== 'user' && (
                                   <div>
-                                  <label className="block text-xs text-gray-400 mb-1">Quantity</label>
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    defaultValue={item.quantity}
-                                    onChange={(e) => setEditingCartItem({...editingCartItem, quantity: parseInt(e.target.value)})}
-                                    className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
+                                    <label className="block text-xs text-gray-400 mb-1">Quantity</label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      max={item.defaultavailability !== null ? item.defaultavailability : undefined}
+                                      defaultValue={item.quantity}
+                                      title={
+                                        editingCartItem?.quantity >= item.defaultavailability
+                                          ? "Max availability reached"
+                                          : ""
+                                      }
+                                      onChange={(e) => setEditingCartItem({ ...editingCartItem, quantity: parseInt(e.target.value) })}
+                                      className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg 
                                              text-white text-sm focus:border-primary-500 focus:outline-none"
-                                  />
-                                </div>
+                                    />
+                                  </div>
                                 )}
-                                
+
+                              </div>
+
+                              {/* Additional Hours — new field, no existing logic changed */}
+                              <div>
+                                <label className="block text-xs text-gray-400 mb-1">Number of Hours/Day</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  defaultValue={item.number_hours_day ?? 4}
+                                  onChange={(e) =>
+                                    setEditingCartItem({
+                                      ...editingCartItem,
+                                      number_hours_day: parseInt(e.target.value) || 0,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 bg-dark-500/50 border border-gray-500/20 rounded-lg
+                                           text-white text-sm focus:border-primary-500 focus:outline-none"
+                                  placeholder="0"
+                                />
+                                <p className="text-[10px] text-gray-500 mt-1">Daily lab duration (hours per day)</p>
                               </div>
                               <div className="flex space-x-2">
                                 <button
                                   onClick={() => handleUpdate(item.id, {
                                     duration: editingCartItem.duration || item.duration,
                                     quantity: editingCartItem.quantity || item.quantity,
-                                    defaultDuration : item.defaultduration || 1,
-                                    price:item.defaultprice
+                                    defaultDuration: item.defaultduration || 1,
+                                    price: item.defaultprice,
+                                    defaulthours:item.defaulthours,
+                                    number_hours_day: editingCartItem.number_hours_day ?? item.number_hours_day ?? 0,
                                   })}
                                   className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 text-green-300 
                                            rounded text-sm transition-colors"
@@ -584,12 +664,12 @@ if(isLoading) {
                           ) : (
                             <div className="flex items-center space-x-4 mt-2">
                               <span className="text-xs text-primary-400">{item.lab_category || item.category}</span>
-                              <span className="text-xs text-gray-500">{item.duration} days</span>
+                              <span className="text-xs text-gray-500">{item.duration} days {item.number_hours_day > 0 ? ` + ${item.number_hours_day}h` : `4h`}</span>
                               <span className="text-xs text-gray-500">Qty: {item.quantity}</span>
-                              
-                                    <span className="font-semibold text-white">
-                                      ₹{item.price}
-                                    </span>
+
+                              <span className="font-semibold text-white">
+                                {convertPrice(Number(item.price))}
+                              </span>
 
                             </div>
                           )}
@@ -607,7 +687,7 @@ if(isLoading) {
                             </button>
                           )}
                           <button
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => (item.id)}
                             className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 
                                      rounded-lg transition-colors"
                             title="Remove from cart"
@@ -624,40 +704,41 @@ if(isLoading) {
 
             {/* Modal Footer */}
             {cartItems.length > 0 && !isLoadingCart && (
-              <div className="p-6 border-t border-primary-500/20 bg-dark-400/20">
-                <div className="flex items-center justify-between mb-4">
+              <div className="p-4 sm:p-6 border-t border-primary-500/20 bg-dark-400/20 flex-shrink-0">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <div>
-                   <span className="text-lg font-semibold text-white">
-                    Total: ₹{cartItems.reduce((total, item) => {
-                      return total + Number(item.price);
-                    }, 0).toFixed(2)}
-                  </span>
-
+                    <span className="text-base sm:text-lg font-semibold text-white">
+                      Total: {convertPrice(cartItems.reduce((total, item) => {
+                        return total + Number(item.price);
+                      }, 0))}
+                    </span>
                     <p className="text-sm text-gray-400">
                       {cartItems.reduce((total, item) => total + Number(item.quantity), 0)} item(s)
                     </p>
                   </div>
                   <button
-                    onClick={()=>clearCart(user?.id)}
+                    onClick={() => clearCart(user?.id)}
                     className="text-sm text-red-400 hover:text-red-300 underline"
                   >
                     Clear Cart
                   </button>
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button
                     onClick={() => setIsCartModalOpen(false)}
-                    className="flex-1 px-6 py-3 bg-dark-400/50 hover:bg-dark-400/70 
+                    className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 bg-dark-400/50 hover:bg-dark-400/70 
                              border border-gray-500/20 hover:border-gray-500/40 
-                             rounded-lg transition-all duration-300 text-gray-300 hover:text-white"
+                             rounded-lg transition-all duration-300 text-gray-300 hover:text-white text-sm sm:text-base"
                   >
                     Continue Shopping
                   </button>
                   <button
+                    disabled={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues)}
+                    title={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues) ? 'Upgrade/Activate plan to create more labs' : ''}
                     onClick={handleCheckout}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
+                    className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-primary-500 to-secondary-500
                              hover:from-primary-400 hover:to-secondary-400
-                             rounded-lg transition-all duration-300 text-white font-semibold
+                             rounded-lg transition-all duration-300 text-white font-semibold text-sm sm:text-base
                              shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
                   >
                     Proceed to Checkout

@@ -41,6 +41,7 @@ interface OrganizationDetails {
   createdAt: string;
   status: 'active' | 'inactive' | 'suspended' | 'pending';
   logo?: string;
+  bring_your_own_cloud?:boolean;
   contact: {
     name: string;
     email: string;
@@ -341,29 +342,36 @@ export const OrganizationOverview: React.FC = () => {
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                checked={organization.bring_your_own_cloud || false}
+                checked={organization?.bring_your_own_cloud || false}
                 onChange={async (e) => {
-                  try {
-                    const response = await axios.post(
-                      `${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/updateBringYourOwnCloud`,
-                      {
-                        org_id: orgId,
-                        bring_your_own_cloud: e.target.checked
-                      }
-                    );
-                    if (response.data.success) {
-                      setOrganization({
-                        ...organization,
-                        bring_your_own_cloud: e.target.checked
-                      });
-                      setSuccess('Cloud configuration updated successfully');
-                      setTimeout(() => setSuccess(null), 3000);
-                    }
-                  } catch (err) {
+                const newValue = e.target.checked;
+
+                setOrganization(prev => ({
+                  ...prev,                          
+                  bring_your_own_cloud: newValue
+                }));
+
+                try {
+                  const response = await axios.post(
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/organization_ms/updateBringYourOwnCloud`,
+                    { orgId: orgId, bring_your_own_cloud: newValue }
+                  );
+                  if (response.data.success) {
+                    setSuccess('Cloud configuration updated successfully');
+                    setTimeout(() => setSuccess(null), 3000);
+                  } else {
+                    
+                    setOrganization(prev => ({ ...prev, bring_your_own_cloud: !newValue }));
                     setError('Failed to update cloud configuration');
                     setTimeout(() => setError(null), 3000);
                   }
+                } catch (err) {
+                  setOrganization(prev => ({ ...prev, bring_your_own_cloud: !newValue }));
+                  setError('Failed to update cloud configuration');
+                  setTimeout(() => setError(null), 3000);
+                }
                 }}
+
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-500/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>

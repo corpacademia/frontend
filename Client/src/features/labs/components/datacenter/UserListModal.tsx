@@ -3,6 +3,7 @@ import { X, Pencil, Link as LinkIcon, Power, Eye, EyeOff } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface UserListModalProps {
   isOpen: boolean;
@@ -31,25 +32,16 @@ export const UserListModal: React.FC<UserListModalProps> = ({
   vm,
   onEditUser
 }) => {
+  const {user} = useAuthStore();
   const [users, setUsers] = useState<Array<any>>(initialUsers);
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [disablingUser, setDisablingUser] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const navigate = useNavigate();
-  // Fetch current user to check permissions
-  React.useEffect(() => {
-    const fetchCurrentUser = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setCurrentUser(response.data.user);
-      } catch (error) {
-        console.error('Failed to fetch current user:', error);
-      }
-    };
-    fetchCurrentUser();
-  }, []);
+
+  React.useEffect(() => { setUsers(initialUsers); }, [initialUsers]);
+
 
   const togglePasswordVisibility = (userId: string) => {
     setShowPasswords(prev => ({
@@ -193,10 +185,10 @@ export const UserListModal: React.FC<UserListModalProps> = ({
 
   // Check if current user can edit content
   const canEditContent = () => {
-    if (!currentUser || !vmId) return false;
+    if (!user || !vmId) return false;
     // Check if the VM was created by the current user
-    return vm.user_id === currentUser.id;
-  };
+    return vm.user_id === (user?.impersonating ? user?.impersonatedUserId : user?.id)
+  }
 
   if (!isOpen) return null;
 
