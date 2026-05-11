@@ -28,6 +28,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { UserInstancesModal } from '../common/UserInstancesModal';
 import { useAuthStore } from '../../../../store/authStore';
+import { useSubscription } from '../../hooks/useSubscription';
 
 interface CloudVM {
   id: string;
@@ -71,7 +72,8 @@ interface LabDetails {
 
 export const CloudVMCard: React.FC<CloudVMProps> = ({ vm,onDelete }) => {
   const navigate = useNavigate();
-  const {user} = useAuthStore()
+  const {user} = useAuthStore();
+  const {license,updateUsage} = useSubscription();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -650,7 +652,6 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm,onDelete }) => {
       setTimeout(() => setNotification(null), 3000);
     }
   };
-
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
@@ -662,6 +663,10 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm,onDelete }) => {
       });
 
       if (response.data.success) {
+        if(vm?.assessment && vm?.purchased){
+          await updateUsage(license?.id,'catalogues',-1);
+        }
+        
         setNotification({ type: 'success', message: 'VM deleted successfully' });
         onDelete?.();
       } else {

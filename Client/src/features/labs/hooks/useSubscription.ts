@@ -53,6 +53,7 @@ export const useSubscription = (): SubscriptionState => {
   };
 
   const updateUsage = async (licenseKey , feature:FeatureKey ,quantity=0)=>{
+    
     if(!licenseKey || !feature) return false;
       const update = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/updateUsage`,{
        licenseKey,featureKey:feature,quantity 

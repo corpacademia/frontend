@@ -16,7 +16,10 @@ const AppContent: React.FC = () => {
   const { user, isAuthenticated } = useAuthStore();
   const {addNotification} = useNotificationStore();
   const { setBrandingColors } = useBrandingStore();
-  const { mode, setMode } = useThemeStore();
+  // Use a selector — only get setMode (stable fn), NOT mode.
+  // Subscribing to mode here would make AppContent re-render on every theme
+  // change, cascading through the entire route tree and wiping page state.
+  const setMode = useThemeStore((state) => state.setMode);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,18 +75,23 @@ const AppContent: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
+// Tiny isolated component — only THIS re-renders when theme changes, not the whole tree
+const ThemeDebugBadge: React.FC = () => {
   const mode = useThemeStore((state) => state.mode);
-  
+  return (
+    <div className="fixed top-0 left-0 z-[9999] px-3 py-1 text-xs font-bold
+                    dark:bg-yellow-500 dark:text-black
+                    light:bg-blue-500 light:text-white
+                    bg-blue-500 text-white">
+      Current Theme: {mode}
+    </div>
+  );
+};
+
+const App: React.FC = () => {
   return (
     <Router>
-      {/* Debug indicator - remove after testing */}
-      <div className="fixed top-0 left-0 z-[9999] px-3 py-1 text-xs font-bold
-                      dark:bg-yellow-500 dark:text-black
-                      light:bg-blue-500 light:text-white
-                      bg-blue-500 text-white">
-        Current Theme: {mode}
-      </div>
+      <ThemeDebugBadge />
       <AppContent />
     </Router>
   );

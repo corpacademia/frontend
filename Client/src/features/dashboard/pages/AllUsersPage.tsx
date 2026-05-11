@@ -107,7 +107,6 @@ export const AllUsersPage: React.FC = () => {
     });
     setAllUsers(filteredUsers);
   }, [filters, originalUsers]);
-
   const handleAddUser = async (userData: any) => {
     // Superadmin adding users to any org is never limited by subscription
     if (user?.role !== 'superadmin') {
@@ -129,7 +128,7 @@ export const AllUsersPage: React.FC = () => {
       });
 
       if (result.data.success) {
-        await updateUsage(license?.key,'students',1)
+        await updateUsage(license?.id,ROLE_TO_FEATURE[userData?.role],1)
         // Refresh the users list
         const response = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user?.org_id}`
@@ -180,13 +179,11 @@ export const AllUsersPage: React.FC = () => {
         createdBy: user?.id,
         orgName:user?.organization,
         orgType:user?.organization_type,
-        role:'user'
+        role:'user',
+        license:license
       });
 
       if (result.data.success) {
-       for(const user of uploadedUsers){
-       await updateUsage(license?.id,ROLE_TO_FEATURE[user?.role],1)
-      }
         setIsUploadModalOpen(false);
         // Refresh the users list
         // const response = await axios.get(

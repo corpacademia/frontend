@@ -21,7 +21,7 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
   orgId
 }) => {
   const {user,orgUsers} = useAuthStore()
-  const {canUse} = useSubscription();
+  const {canUse,updateUsage,license} = useSubscription();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -103,6 +103,8 @@ export const AddOrgUserModal: React.FC<AddOrgUserModalProps> = ({
       });
 
       if (response.data.success) {
+        const featureKey = ROLE_TO_FEATURE[formData?.role]
+        await updateUsage(license?.id,featureKey,1)
         setSuccess('Team member added successfully');
         setTimeout(() => {
           resetForm();

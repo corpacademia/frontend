@@ -41,6 +41,7 @@ import { UserInstancesModal } from '../common/UserInstancesModal';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { v4 as uuidv4 } from 'uuid';
+import { useSubscription } from '../../hooks/useSubscription';
 
 interface DatacenterVM {
   id: string;
@@ -154,8 +155,10 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
 
 export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm,onDelete }) => {
+
   const navigate = useNavigate();
   const {user} = useAuthStore();
+  const {updateUsage,license} = useSubscription();
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
@@ -187,7 +190,6 @@ export const DatacenterVMCard: React.FC<DatacenterVMCardProps> = ({ vm,onDelete 
   const [labGuideFile, setLabGuideFile] = useState<File | null>(null);
   const [userGuideFile, setUserGuideFile] = useState<File | null>(null);
   
- 
   function formatDate(dateString:string) {
     const date = new Date(dateString);
 
@@ -463,6 +465,7 @@ if (userGuideFile) {
       const response = await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVMDatacenterLab/${vm.lab_id}`);
 
       if (response.data.success) {
+        await updateUsage(license?.id,'catalogues',-1)
         setNotification({ type: 'success', message: 'VM deleted successfully' });
         onDelete?.();
       } else {

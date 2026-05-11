@@ -29,7 +29,7 @@ interface CloudSlice {
 
 export const CloudSlicePage: React.FC = () => {
   const navigate = useNavigate();
-  const {orgUsers} = useAuthStore();
+  const { orgUsers, user } = useAuthStore();   // user comes from global store, not local state
   const [isCreating, setIsCreating] = useState(false);
   const [cloudSlices, setCloudSlices] = useState<CloudSlice[]>([]);
   const [filteredSlices, setFilteredSlices] = useState<CloudSlice[]>([]);
@@ -42,7 +42,6 @@ export const CloudSlicePage: React.FC = () => {
   });
   const [editSlice, setEditSlice] = useState<CloudSlice | null>(null);
   const [deleteSlice, setDeleteSlice] = useState<{ id: string; name: string } | null>(null);
-  const [user, setUser] = useState<any>(null);
   const [selectedSlices, setSelectedSlices] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -76,8 +75,6 @@ export const CloudSlicePage: React.FC = () => {
     fetchUserProfile();
   }, []);
 
-
-
   const fetchCloudSlices = async () => {
     if (!user) return;
     setIsLoading(true);
@@ -91,7 +88,7 @@ export const CloudSlicePage: React.FC = () => {
         .map(u => u.id);
       if(user.role === 'superadmin' || user.role === 'orgsuperadmin' || user.role === 'labadmin') {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getCloudSlices`, {
-          params: { userId:user.role === 'superadmin' ? 'superadmin' : user?.role === 'orgsuperadmin' ? ids : (user?.impersonating ? user?.impersonatedUserId : user?.id) }
+          params: { userId:user?.role === 'superadmin' ? 'superadmin' : user?.role === 'orgsuperadmin' ? ids : (user?.impersonating ? user?.impersonatedUserId : user?.id) }
         });
        if (response.data.success) {
           const userSlices = response.data.data || [];
@@ -113,7 +110,6 @@ export const CloudSlicePage: React.FC = () => {
             orgId: user.org_id,
             admin_id:responseOrg.data.data.find((org)=>org.id === user.org_id)?.org_admin || null 
           });
-
           if (getOrgAssignedSlices.data.success) {
             const orgSlices = [];
             
@@ -132,7 +128,6 @@ export const CloudSlicePage: React.FC = () => {
                 console.error(`Error fetching details for slice ${slice.labid}:`, error);
               }
             }
-            
             // Process org slices and add them to allSlices
             const processedOrgSlices = orgSlices.map(slice => ({
               ...slice,
@@ -150,10 +145,8 @@ export const CloudSlicePage: React.FC = () => {
       // Set the combined, deduplicated list of slices
       setCloudSlices(allSlices);
       setFilteredSlices(allSlices);
-      setOrgStatus((prevOrgStatus:any)=>[
-        ...allSlices,
-        prevOrgStatus
-      ])
+      // Only set orgStatus from the actual org-assigned lab response, not from allSlices
+      // (spreading slices into orgStatus was corrupting the shape of the data)
       
     } catch (error) {
       console.error('Error fetching cloud slices:', error);

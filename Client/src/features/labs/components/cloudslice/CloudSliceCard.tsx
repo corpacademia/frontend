@@ -33,6 +33,8 @@ import { EditModal } from './EditModal';
 import { DeleteModal } from './DeleteModal';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../../../store/authStore';
+import { useSubscription } from '../../hooks/useSubscription';
 
 interface CloudSlice {
   id: string;
@@ -80,10 +82,12 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   orgStatus,
   onAssignUsers
 }) => {
+  const {license,updateUsage} = useSubscription();
   const [isLaunching, setIsLaunching] = useState(false);
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  // Use global auth store — avoids a redundant API call and null-user crash on mount
+  const { user } = useAuthStore();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
@@ -94,25 +98,13 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   const [deletingInstanceId, setDeletingInstanceId] = useState<string | null>(null);
   const [launchingId,setLaunchingId] = useState<string | null>(null);
   const navigate = useNavigate();
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
-        setUser(response.data.user);
-      } catch (error) {
-        console.error('Failed to fetch user profile:', error);
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
 
 
   const getOrgLabStatus = (labId) => {
     return orgStatus.find(org => org.labid === labId);
   }
 const canEditContent = () => {
-    return user?.role === 'superadmin' || user.role === 'orgsuperadmin' && !slice?.assessment  || user?.id === slice?.createdby ;
+    return user?.role === 'superadmin' || user?.role === 'orgsuperadmin' && !slice?.assessment  || user?.id === slice?.createdby ;
   };
   const handleLaunch = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -545,6 +537,9 @@ const canEditContent = () => {
           orgId: user.org_id
         });
         if (response?.data.success) {
+          if(slice?.purchased){
+            await updateUsage(license?.id,'catalogues',-1)
+          }
           setNotification({
         type: 'success',
         message: response?.data?.message || 'Successfully deleted cloud slice'

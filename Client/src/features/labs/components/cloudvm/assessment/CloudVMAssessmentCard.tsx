@@ -24,6 +24,7 @@ import { GradientText } from '../../../../../components/ui/GradientText';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { UserInstancesModal } from '../../common/UserInstancesModal';
+import { useSubscription } from '../../../hooks/useSubscription';
 
 interface CloudVMAssessmentProps {
   assessment: {
@@ -72,6 +73,7 @@ interface LabDetails {
 
 export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assessment,onDelete }) => {
   const navigate = useNavigate();
+  const {license,updateUsage} = useSubscription();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isUserInstancesModalOpen,setIsUserInstancesModalOpen] = useState(false);
@@ -481,7 +483,6 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
       setIsLoading(false);
     }
   };
-
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
@@ -491,6 +492,9 @@ export const CloudVMAssessmentCard: React.FC<CloudVMAssessmentProps> = ({ assess
       });
       
       if (response.data.success) {
+        if(assessment?.purchased){
+          await updateUsage(license?.id,"catalogues",-1)
+        }
         setNotification({ type: 'success', message: 'Assessment deleted successfully' });
         // setTimeout(() => window.location.reload(), 1500);
         onDelete?.();

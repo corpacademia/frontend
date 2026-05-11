@@ -40,6 +40,7 @@ import { AssignUsersModal } from "../catalogue/AssignUsersModal";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { v4 as uuidv4 } from "uuid";
+import { useSubscription } from "../../hooks/useSubscription";
 
 
 interface ClusterVM {
@@ -171,6 +172,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
 export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm,onDelete }) => {
   const {user} = useAuthStore();
+  const {updateUsage,license} = useSubscription();
   const [isUserListModalOpen, setIsUserListModalOpen] = useState(false);
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false); // State for UserInstancesModal
   const [isVMClusterUserListModalOpen, setIsVMClusterUserListModalOpen] = useState(false); // State for VMClusterUserListModal
@@ -232,7 +234,6 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm,onDelete }) => 
   useEffect(() => {
     setCurrentUser(user);
   }, []);
-  
   const handleDelete = async () => {
     setIsDeleting(true);
     
@@ -247,6 +248,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm,onDelete }) => 
       );
 
       if (response.data.success) {
+        await updateusage(license?.id,'catalogues',-1)
         setNotification({
           type: "success",
           message: "Cluster VM deleted successfully",

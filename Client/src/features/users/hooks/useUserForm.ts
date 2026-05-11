@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../../store/authStore';
+import { ROLE_TO_FEATURE,useSubscription } from '../../labs/hooks/useSubscription';
 
 interface FormData {
   name: string;
@@ -27,11 +28,11 @@ export const useUserForm = (
     role: initialData.role || 'user',
     organization: initialData.organization || ''
   });
-
+  const {canUse,updateUsage,license} = useSubscription();
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user_cred,setUser] = useState({});
-  const {user} = useAuthStore();
+  const {user,orgUsers} = useAuthStore();
  
 
   const validateForm = (): boolean => {
@@ -71,12 +72,25 @@ export const useUserForm = (
     
     setIsSubmitting(true);
     try {
+       if (user?.role !== 'superadmin') {
+            const featureKey = ROLE_TO_FEATURE[formData?.role]; // e.g. 'trainers', 'students', 'labadmins'
+            if (featureKey) {
+              const currentCount = orgUsers.filter(u => u.role === formData?.role).length;
+              if (!canUse(featureKey, currentCount)) {
+                const label = { labadmins: 'Lab Admin', trainers: 'Trainer', students: 'Student' }[featureKey] ?? 'User';
+                alert(`${label} limit reached on your current plan. Please upgrade to add more.`);
+                return;
+              }
+            }
+          }
       await onSubmit(formData);
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addUser`,{
            formData:formData,
            user:user?.impersonating ? user?.impersonatedUserId : user?.id
       })
       if(!result.data.success){
+        const featureKey = ROLE_TO_FEATURE[formData?.role]; 
+        await updateUsage(license?.id,featureKey,1)
         setErrors(prev => ({
           ...prev,
           submit: 'Failed to add user. Please try again.'

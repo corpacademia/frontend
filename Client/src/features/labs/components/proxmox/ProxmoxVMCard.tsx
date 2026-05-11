@@ -33,6 +33,7 @@ import { UserInstancesModal } from '../common/UserInstancesModal';
 import Guacamole from "guacamole-common-js";
 import { LabDetails } from '../LabDetails';
 import { useAuthStore } from '../../../../store/authStore';
+import { useSubscription } from '../../hooks/useSubscription';
 
 interface ProxmoxVM {
   id: string;
@@ -70,6 +71,7 @@ interface ProxmoxVMProps {
 
 export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }) => {
   const navigate = useNavigate();
+  const {license,updateUsage} = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLaunchProcessing, setIsLaunchProcessing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -302,7 +304,6 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
       setTimeout(() => setNotification(null), 3000);
     }
   };
-
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
@@ -315,6 +316,8 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
       });
 
       if (response.data.success) {
+        if( vm?.purchased){
+        await updateUsage(license.id,'catalogues',-1)}
         setNotification({ type: 'success', message: 'VM deleted successfully' });
         onDelete?.();
       } else {

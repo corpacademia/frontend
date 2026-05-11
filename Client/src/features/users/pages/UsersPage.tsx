@@ -9,8 +9,10 @@ import { User } from '../types';
 import { Upload, UserPlus } from 'lucide-react';
 import axios from 'axios';
 import { useAuthStore } from '../../../store/authStore';
+import { ROLE_TO_FEATURE,useSubscription } from '../../labs/hooks/useSubscription';
 
 export const UsersPage: React.FC = () => {
+  const {canUse,updateUsage,license} = useSubscription();
   const [originalUsers, setOriginalUsers] = useState<any[]>([]);
   const [users, setUsers] = useState([]);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -87,7 +89,6 @@ export const UsersPage: React.FC = () => {
   const handleViewDetails = (user: User) => {
     // Navigation is handled by the UserList component
   };
-
   const handleAddUser = async (userData: Omit<User, 'id' | 'lastActive' | 'createdAt'>) => {
     try {
       const result = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/addUser`, {

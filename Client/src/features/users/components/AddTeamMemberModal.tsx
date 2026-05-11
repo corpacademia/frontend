@@ -25,7 +25,7 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
     password: '',
     role: 'user'
   });
-  const {canUse} = useSubscription();
+  const {canUse,updateUsage,license} = useSubscription();
   const {user,orgUsers} = useAuthStore();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -106,6 +106,8 @@ export const AddTeamMemberModal: React.FC<AddTeamMemberModalProps> = ({
       });
 
       if (response.data.success) {
+         const featureKey = ROLE_TO_FEATURE[formData.role]
+        await updateUsage(license?.id,featureKey,1)
         setSuccess('Team member added successfully');
         setTimeout(() => {
           resetForm();
