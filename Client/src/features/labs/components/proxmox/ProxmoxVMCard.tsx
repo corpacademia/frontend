@@ -28,6 +28,7 @@ import { useNavigate } from 'react-router-dom';
 import { ProxmoxDeleteModal } from './ProxmoxDeleteModal';
 import { ProxmoxEditModal } from './ProxmoxEditModal';
 import { ProxmoxConvertToCatalogueModal } from './ProxmoxConvertToCatalogueModal';
+import { ProxmoxConvertToTemplateModal } from './ProxmoxConvertToTemplateModal';
 import { AssignUsersModal } from '../catalogue/AssignUsersModal';
 import { UserInstancesModal } from '../common/UserInstancesModal';
 import Guacamole from "guacamole-common-js";
@@ -70,6 +71,7 @@ interface ProxmoxVMProps {
 }
 
 export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }) => {
+
   const navigate = useNavigate();
   const {license,updateUsage} = useSubscription();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -85,18 +87,18 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [isConvertToTemplateModalOpen, setIsConvertToTemplateModalOpen] = useState(false);
   const [isUserInstancesModalOpen, setIsUserInstancesModalOpen] = useState(false);
   const [hasTemplate, setHasTemplate] = useState(false);
   const {user} = useAuthStore();
   const [isConverting, setIsConverting] = useState(false); // Added isConverting state
   // const [isUserListModalOpen, setIsUserListModalOpen] = useState(false); // Assuming this is for a different context and not needed here based on the provided changes.
-
+  
   useEffect(() => {
     checkVMStatus();
     checkTemplateCreated();
   }, [vm.labid]);
 
- 
 
   // Check if current user can edit content
   const canEditContent = () => {
@@ -147,6 +149,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
     try {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getTemplateInformation/${vm.labid}`);
       if (response.data.success) {
+        console.log(response.data)
         setHasTemplate(true);
         setIsProcessing(response.data.data.processing);
       }
@@ -307,17 +310,19 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteProxmoxLab`, {
         labId: vm.labid,
         node: vm.node,
         vmid: vm.vmid,
-        type: user?.impersonating ? user?.impersonatedUserId : user?.id === vm.user_id ? 'sup' : 'org'
+        type: user?.impersonating ? user?.impersonatedUserId : (user?.id === vm.user_id ||user?.role === 'superadmin') ? 'sup' : 'org',
+        orgId:user?.org_id || "",
+        adminId:vm?.user_id
       });
 
       if (response.data.success) {
         if( vm?.purchased){
-        await updateUsage(license.id,'catalogues',-1)}
+        await updateUsage(license.id,'catalogues',-1)
+        }
         setNotification({ type: 'success', message: 'VM deleted successfully' });
         onDelete?.();
       } else {
@@ -381,7 +386,6 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
         return 'bg-gray-500/20 text-gray-300';
     }
   };
-
   return (
     <>
       <div className="flex flex-col min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] xl:min-h-[320px] 
@@ -449,6 +453,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
                   </button>
                 )}
                 <button
+                  disabled = {user?.role === 'trainer'}
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="p-1.5 hover:bg-dark-300/50 rounded-lg transition-colors"
                   title="Delete VM"
@@ -553,10 +558,10 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
                     </>
                   )}
                 </button>
-                {canEdit && (
+                {(canEdit || (user?.role === 'orgsuperadmin' && vm?.assessment)) && (
                   <button
-                    onClick={handleCreateTemplate}
-                    disabled={isProcessing || vmStatus !== 'stopped' || hasTemplate}
+                    onClick={() => setIsConvertToTemplateModalOpen(true)}
+                    disabled={isProcessing || (vmStatus !== 'stopped') || (!vm?.assessment ? hasTemplate : false)}
                     className="flex-1 min-w-[120px] h-8 px-2 rounded-lg text-xs font-medium
                              bg-orange-500/20 text-orange-300 hover:bg-orange-500/30
                              transition-colors flex items-center justify-center
@@ -616,6 +621,7 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
               ) : (
                 <div className="flex items-center gap-2">
                   <button
+                    disabled = {user?.role === 'trainer'}
                     onClick={() => setIsAssignModalOpen(true)}
                     className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                              bg-gradient-to-r from-orange-500 to-red-500
@@ -674,6 +680,17 @@ export const ProxmoxVMCard: React.FC<ProxmoxVMProps> = ({ vm, canEdit,onDelete }
         isOpen={isConvertModalOpen}
         onClose={() => setIsConvertModalOpen(false)}
         vmId={vm.labid}
+      />
+
+      <ProxmoxConvertToTemplateModal
+        isOpen={isConvertToTemplateModalOpen}
+        onClose={() => setIsConvertToTemplateModalOpen(false)}
+        vm={vm}
+        onSuccess={() => {
+          setHasTemplate(true);
+          setNotification({ type: 'success', message: 'Template created successfully' });
+          setTimeout(() => setNotification(null), 3000);
+        }}
       />
 
       <AssignUsersModal

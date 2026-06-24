@@ -30,7 +30,6 @@ export const CloudVMsPage: React.FC = () => {
     status: ''
   });
 
- 
 
   useEffect(() => {
     const fetchVMs = async () => {

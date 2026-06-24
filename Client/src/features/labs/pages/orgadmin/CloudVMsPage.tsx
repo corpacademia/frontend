@@ -6,6 +6,9 @@ import { DatacenterVMCard } from '../../components/datacenter/DatacenterVMCard';
 import { ProxmoxVMCard } from '../../components/proxmox/ProxmoxVMCard';
 import { Plus, Search, Filter, AlertCircle, FolderX, Server, HardDrive } from 'lucide-react';
 import axios from 'axios';
+import { useBatchStore } from '../../../../store/batchStore';
+import { useSubscription } from '../../hooks/useSubscription';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface CloudVM {
   lab_id?: string;
@@ -22,6 +25,7 @@ interface CloudVM {
   os: string;
   software: string[];
   config_details?: any;
+  vmdetails_id?: string;
 }
 
 interface DatacenterVM {
@@ -85,6 +89,8 @@ interface User{
 
 export const OrgAdminCloudVMsPage: React.FC = () => {
   const [vms, setVMs] = useState<CloudVM[]>([]);
+  const {user} = useAuthStore()
+  const {trainerBatchLabs,fetchTrainerBatchLabs} = useBatchStore();
   const [datacenterVMs, setDatacenterVMs] = useState<DatacenterVM[]>([]);
   const [proxmoxVMs, setProxmoxVMs] = useState<ProxmoxVM[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,9 +106,12 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
       setAdmin(response.data.user);
+       fetchTrainerBatchLabs(response.data.user?.id);
     };
     getUserDetails();
+   
   }, []);
+  
  useEffect(() => {
   const fetchAssessmentVMs = async (orgId: string,admin: string) => {
     try {
@@ -262,6 +271,36 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
     setError("Failed to fetch Proxmox VMs");
     setTimeout(() => setError(null), 2000);
   }
+  };
+  //trainer data
+ const fetchTrainerLabs = async (trainerBatchLabs: { lab_id: string, type: string }[]) => {
+  const cloudLabs      = trainerBatchLabs.filter(l => l.type === 'singlevm-cloud');
+  const datacenterLabs = trainerBatchLabs.filter(l => l.type === 'singlevm-datacenter');
+  const proxmoxLabs    = trainerBatchLabs.filter(l => l.type === 'singlevm-proxmox');
+
+  await Promise.allSettled([
+    // cloud
+    Promise.all(cloudLabs.map(l =>
+      axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId`, { labId: l.lab_id })
+        .then(r => r.data.success ? r.data.data : null).catch(() => null)
+    )).then(res => setVMs(res.filter(Boolean))),
+
+    // datacenter
+    Promise.all(datacenterLabs.map(async l => {
+      const vm = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getSingleVmDatacenterLabOnId`, { labId: l.lab_id });
+      if (!vm.data.success) return null;
+      const creds = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getDatacenterLabCreds`, { labId: l.lab_id });
+      return { ...vm.data.data, userscredentials: creds.data.success ? creds.data.data : [] };
+    })).then(res => setDatacenterVMs(res.filter(Boolean))),
+
+    // proxmox
+    Promise.all(proxmoxLabs.map(l =>
+      axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${l.lab_id}`)
+        .then(r => r.data.success ? { ...r.data.data, type: 'singlevm-proxmox' } : null).catch(() => null)
+    )).then(res => setProxmoxVMs(res.filter(Boolean))),
+  ]);
+
+  setIsLoading(false);
 };
 
   const fetchAllVMs = async () => {
@@ -284,8 +323,11 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  fetchAllVMs();
+  if(user?.role === 'trainer')
+     fetchTrainerLabs(trainerBatchLabs);
+  else
+    fetchAllVMs();
+ 
 }, []);
    // Check if current user can edit content
   const canEditContent = (vm) => {
@@ -481,7 +523,7 @@ export const OrgAdminCloudVMsPage: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
                     {filteredProxmoxVMs.map((vm) => (
-                      <ProxmoxVMCard key={vm.id} vm={vm} canEdit = {canEditContent(vm)} />
+                      <ProxmoxVMCard key={vm.id} vm={vm} canEdit = {canEditContent(vm)} onDelete={() => setProxmoxVMs(prev => prev.filter(v => v?.vmdetails_id !== vm?.vmdetails_id))}/>
                     ))}
                   </div>
                 </div>

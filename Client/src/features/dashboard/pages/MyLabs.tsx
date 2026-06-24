@@ -10,6 +10,7 @@ import { CloudSliceCard } from '../../labs/components/user/CloudSliceCard';
 import { DatacenterVMCard } from '../../labs/components/user/DatacenterVMCard';
 import { VMClusterSingleVMCard } from '../../labs/components/user/VMClusterSingleVMCard';
 import { ProxmoxUserVMCard } from '../../labs/components/proxmox/ProxmoxUserVMCard';
+import { ProxmoxClusterUserCard } from '../../labs/components/proxmox/ProxmoxClusterUserCard';
 import { useNavigate } from 'react-router-dom';
 
 interface Instance {
@@ -187,11 +188,13 @@ export const MyLabs: React.FC = () => {
   const [datacenterVMs, setDatacenterVMs] = useState([]);
   const [clusterVMs, setClusterVMs] = useState([]);
   const [proxmoxVMs, setProxmoxVMs] = useState([]);
+  const [proxmoxCluster,setProxmoxCluster] = useState([]);
   const [filteredLabs, setFilteredLabs] = useState([]);
   const [filteredCloudSliceLabs, setFilteredCloudSliceLabs] = useState([]);
   const [filteredDatacenterVMs, setFilteredDatacenterVMs] = useState([]);
   const [filteredClusterVMs, setFilteredClusterVMs] = useState([]);
   const [filteredProxmoxVMs, setFilteredProxmoxVMs] = useState([]);
+  const [filteredProxmoxCluster,setFilteredProxmoxCluster] = useState([]);
   const [labStatus, setLabStatus] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [cloudInstanceDetails, setCloudInstanceDetails] = useState<LabDetails | undefined>(undefined);
@@ -466,9 +469,22 @@ try {
       ...proxmoxVMList
     ]);
   }
-} catch (err) {
-  console.error('Error fetching Proxmox VMs:', err);
-}
+    } catch (err) {
+        console.error('Error fetching Proxmox VMs:', err);
+      }
+
+      // Fetch proxmox cluster labs (independent fetch)
+      try {
+        const getUserLabs = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserProxmoxClusterLabs`,{
+          userId:user?.id
+        });
+        if(getUserLabs?.data.success){
+          setProxmoxCluster(getUserLabs.data.data);
+          setFilteredProxmoxCluster(getUserLabs.data.data);
+        }
+      } catch (error) {
+        console.log("Error in fetching the proxmox cluster labs");
+      }
 
 
       // Fetch cluster VMs
@@ -633,6 +649,27 @@ try {
     }
     
     setFilteredClusterVMs(clusterResult);
+
+    // Filter cluster Proxmox VMs
+    let proxmoxClusterResult = [...proxmoxCluster];
+    
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      proxmoxClusterResult = proxmoxClusterResult.filter(lab => 
+        lab.lab?.title?.toLowerCase().includes(searchTerm) ||
+        lab.title?.toLowerCase().includes(searchTerm) ||
+        (lab.lab?.description && lab.lab.description.toLowerCase().includes(searchTerm)) ||
+        (lab.description && lab.description.toLowerCase().includes(searchTerm))
+      );
+    }
+    
+    if (filters.status) {
+      proxmoxClusterResult = proxmoxClusterResult.filter(lab => 
+        lab.lab?.status === filters.status || lab.status === filters.status
+      );
+    }
+    
+    setFilteredProxmoxCluster(proxmoxClusterResult);
 
     // Filter Proxmox VMs
     let proxmoxResult = [...proxmoxVMs];
@@ -1056,7 +1093,8 @@ try {
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
           userId: user.id,
           labId: labId,
-          purchased:accountDetails?.purchased || false
+          purchased:accountDetails?.purchased || false,
+          orgId:user?.org_id
         })
         if (response.data.success) {
           setCloudSliceLabs(prev => prev.filter(lab => lab.labid !== labId));
@@ -1159,18 +1197,18 @@ try {
       </div>
 
       {/* Lab Cards */}
-      {filteredLabs.length === 0 && filteredCloudSliceLabs.length === 0 && filteredDatacenterVMs.length === 0 && filteredClusterVMs.length === 0 && filteredProxmoxVMs.length === 0 ? (
+      {filteredLabs.length === 0 && filteredCloudSliceLabs.length === 0 && filteredDatacenterVMs.length === 0 && filteredClusterVMs.length === 0 && filteredProxmoxVMs.length === 0 && filteredProxmoxCluster.length === 0 ? (
         <div className="flex flex-col items-center justify-center min-h-[400px] glass-panel">
           <FolderX className="h-16 w-16 text-gray-400 mb-4" />
           <h2 className="text-xl font-semibold mb-2">
             <GradientText>No Labs Found</GradientText>
           </h2>
           <p className="text-gray-400 text-center max-w-md mb-6">
-            {labs.length === 0 && cloudSliceLabs.length === 0 && datacenterVMs.length === 0 && clusterVMs.length === 0 && proxmoxVMs.length === 0
+            {labs.length === 0 && cloudSliceLabs.length === 0 && datacenterVMs.length === 0 && clusterVMs.length === 0 && proxmoxVMs.length === 0 && proxmoxCluster.length === 0
               ? "You haven't been assigned any labs yet. Check out our lab catalogue to get started."
               : "No labs match your current filters. Try adjusting your search criteria."}
           </p>
-          {labs.length === 0 && cloudSliceLabs.length === 0 && datacenterVMs.length === 0 && clusterVMs.length === 0 && proxmoxVMs.length === 0 && (
+          {labs.length === 0 && cloudSliceLabs.length === 0 && datacenterVMs.length === 0 && clusterVMs.length === 0 && proxmoxVMs.length === 0 && proxmoxCluster.length === 0 && (
             <a 
               href="/dashboard/labs/catalogue"
               className="btn-primary text-gray-200"
@@ -1373,6 +1411,29 @@ try {
                         prev.filter((item) => item.labid !== vm.labid)
                       )
                     }
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Proxmox Cluster Labs */}
+          {filteredProxmoxCluster.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">
+                <GradientText>Proxmox Cluster Labs</GradientText>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProxmoxCluster.map((item) => (
+                  <ProxmoxClusterUserCard
+                    key={item.assignment?.id}
+                    assignment={item.assignment}
+                    lab={item.lab}
+                    vms={item.vms || []}
+                    onDelete={() => {
+                      setProxmoxCluster((prev: any[]) => prev.filter((u: any) => u.assignment?.id !== item.assignment?.id));
+                      setFilteredProxmoxCluster((prev: any[]) => prev.filter((u: any) => u.assignment?.id !== item.assignment?.id));
+                    }}
                   />
                 ))}
               </div>

@@ -13,6 +13,8 @@ import {
 import { GradientText } from '../../../../components/ui/GradientText';
 import { Lab } from '../../types';
 import axios from 'axios';
+import { useBatchStore } from '../../../../store/batchStore';
+import { useAuthStore } from '../../../../store/authStore';
 
 interface AssignUsersModalProps {
   isOpen: boolean;
@@ -27,6 +29,8 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
   lab,
   type
 }) => {
+  const {quantity,fetchPurchasedLabQty} = useBatchStore();
+  const {user} = useAuthStore();
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -36,6 +40,10 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
   const [paymentSuccess, setPaymentSuccess] = useState(true);
   const [admin,setAdmin] = useState({});
   // const admin = JSON.parse(localStorage.getItem('auth') ?? '{}').result || {};
+ 
+  useEffect(()=>{
+    fetchPurchasedLabQty(lab?.labid,user?.org_id);
+  },[])
   useEffect(() => {
     const getUserDetails = async () => {
       const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`);
@@ -49,9 +57,9 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
         let response;
         if(admin.role === 'orgsuperadmin') {
           // Fetch organization admins for orgsuperadmin
-          response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getOrganizationAdmins`, {
-            org_id: admin.org_id
-          });
+          response =await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${admin.org_id}`
+        );
         }
         else if (admin.role === "labadmin") {
         const usersData = await axios.get(
@@ -86,7 +94,7 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
     if(admin.id) {
       fetchUsers();
     }
-  }, [admin.id, admin.role, admin.org_id]);
+  }, [admin?.id, admin?.role, admin?.org_id]);
 
   const handlePayment = async () => {
     if (selectedUsers.length === 0) {
@@ -119,7 +127,10 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
   };
 
   const handleAssignUsers = async () => {
-    console.log(type)
+     if(quantity !== -1 && quantity < selectedUsers.length){
+      setNotification({type : 'error',message:`Only ${quantity} seats left`})
+      return
+     }
     if (selectedUsers.length === 0) {
       setNotification({ type: 'error', message: 'Please select at least one user' });
       return;
@@ -187,6 +198,27 @@ export const AssignUsersModal: React.FC<AssignUsersModalProps> = ({
       });
       if (response.data.success) {
         setNotification({ type: 'success', message: 'Lab assigned successfully' });
+        setTimeout(() => {
+          setNotification(null);
+          onClose();
+          setSelectedUsers([]);
+        }, 3000);
+      } else {
+        throw new Error(response.data.message || 'Failed to assign lab');
+      }
+    }
+
+    else if(type === 'proxmox-cluster'){
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/assignProxmoxClusterToUser`, {
+        labId: lab?.labid,
+        userIds: selectedUsers,
+        assignedBy: admin.id,
+        startDate: lab?.startdate,
+        endDate: lab?.enddate,
+        assignmentType: 'direct'
+      });
+      if (response.data.success) {
+        setNotification({ type: 'success', message: 'Proxmox cluster lab assigned successfully' });
         setTimeout(() => {
           setNotification(null);
           onClose();

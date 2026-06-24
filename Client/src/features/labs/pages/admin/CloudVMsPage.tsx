@@ -85,7 +85,6 @@ export const AdminCloudVMsPage: React.FC = () => {
   useEffect(() => {
     orgUsersRef.current = orgUsers;
   }, [orgUsers]);
-
   useEffect(() => {
         const fetchProxmoxVMs = async (orgId: string, userId: string) => {
       try {
@@ -132,7 +131,7 @@ export const AdminCloudVMsPage: React.FC = () => {
           })) : []),
           ...labAdminsResponse
         ];
-        // 🔁 Fetch lab details
+        //  Fetch lab details
         const vmDetails = await Promise.all(
           allAssignments.map(async (assignment: any) => {
             try {
@@ -421,7 +420,7 @@ export const AdminCloudVMsPage: React.FC = () => {
 
 
   const allFilteredVMs = [...filteredVMs, ...filteredDatacenterVMs, ...filteredProxmoxVMs];
-
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -593,6 +592,7 @@ export const AdminCloudVMsPage: React.FC = () => {
                   </div>
                 </div>
               )}
+
             </>
           )}
         </>

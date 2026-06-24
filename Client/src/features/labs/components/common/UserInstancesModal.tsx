@@ -112,7 +112,8 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
             {
               labId: userInstance.labid || userInstance.lab_id,
               userId: userInstance.user_id,
-              purchased: false
+              purchased: false,
+              orgId:user?.org_id
             }
           );
         }
@@ -135,8 +136,10 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
           }
         );
       } else if (labType === 'singlevm-proxmox') {
-        response = await axios.delete(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteUserProxmoxInstance/${userInstance.id}`
+        response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/deleteSingleVMProxmoxUser`,{
+            labId,userId,purchased,node,vmid
+          }
         );
       }
       else if(labType === 'singlevm-aws'){
@@ -273,6 +276,7 @@ export const UserInstancesModal: React.FC<UserInstancesModalProps> = ({
                 userid: userInstance?.user_id,
                 type: 'user',
                 purchased: userInstance?.purchased ? true : false,
+                duration:userInstance?.duration,
                 vmdetailsId:userInstance?.vmdetails_id
               }
             );

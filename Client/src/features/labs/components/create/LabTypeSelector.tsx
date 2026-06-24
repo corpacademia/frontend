@@ -1,5 +1,5 @@
 import React from 'react';
-import { Server, Cpu, Network, Cloud, Terminal, GitBranch } from 'lucide-react';
+import { Server, Cpu, Network, Cloud, Terminal, GitBranch, Layers } from 'lucide-react';
 import { LabType } from '../../types';
 
 interface LabTypeOption {
@@ -45,6 +45,12 @@ const labTypes: LabTypeOption[] = [
     title: 'Hybrid Lab',
     description: 'Combined physical and virtual resources',
     icon: GitBranch
+  },
+  {
+    type: 'proxmox-cluster',
+    title: 'Proxmox VM Cluster',
+    description: 'Multi-VM Proxmox labs — each user gets their own set of cloned VMs',
+    icon: Layers
   }
 ];
 

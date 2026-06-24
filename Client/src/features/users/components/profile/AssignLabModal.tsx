@@ -32,7 +32,7 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-
+  
   useEffect(() => {
     if (isOpen) {
       fetchLabs(user);
@@ -98,6 +98,25 @@ export const AssignLabModal: React.FC<AssignLabModalProps> = ({
     if (endTime <= startTime) {
       setError('End time must be after start time');
       return;
+    }
+
+    // Check available seats before proceeding with assignment
+    try {
+      const labId = selectedLabDetails?.lab_id ?? selectedLabDetails?.labid;
+      const orgId = user?.org_id;
+      const qtyRes = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkQuantity`,
+        { labId, orgId }
+      );
+      if (qtyRes.data.success) {
+        const qty = Number(qtyRes.data.data.quantity);
+        if (qty !== -1 && qty <= 0) {
+          setError('No seats available for this lab');
+          return;
+        }
+      }
+    } catch (qtyError) {
+      console.log('Could not verify quantity:', qtyError);
     }
 
     if(userDetails?.user?.role === 'labadmin'){

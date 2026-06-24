@@ -105,7 +105,7 @@ export const OrganizationOverview: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const [orgUserCount, setOrgUserCount] = useState<number>(0);
+  const [orgUserCount, setOrgUserCount] = useState<{ users: number; admins: number }>({ users: 0, admins: 0 });
   const [worspacecount, setWorkspaceCount] = useState<number>(0);
 
 
@@ -236,7 +236,7 @@ export const OrganizationOverview: React.FC = () => {
     }
   };
 
-  console.log("user",user)
+
   const renderOverviewTab = () => (
     <div className="space-y-4 sm:space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
@@ -246,10 +246,10 @@ export const OrganizationOverview: React.FC = () => {
             <Users className="h-5 w-5 text-primary-400" />
           </div>
           <p className="text-2xl font-semibold text-gray-200">
-            {orgUserCount.users}
+            {orgUserCount.users ?? '—'}
           </p>
           <p className="text-sm text-gray-400 mt-1">
-            {orgUserCount.admins} admins
+            {orgUserCount.admins ?? 0} admins
           </p>
         </div>
 
@@ -269,7 +269,10 @@ export const OrganizationOverview: React.FC = () => {
             <CreditCard className="h-5 w-5 text-accent-400" />
           </div>
           <p className="text-2xl font-semibold text-gray-200">
-            ${organization.stats.monthlyUsage.toLocaleString()}
+            {organization.stats?.monthlyUsage != null && organization.stats.monthlyUsage > 0
+              ? `$${organization.stats.monthlyUsage.toLocaleString()}`
+              : '—'
+            }
           </p>
         </div>
 
@@ -279,10 +282,16 @@ export const OrganizationOverview: React.FC = () => {
             <Shield className="h-5 w-5 text-emerald-400" />
           </div>
           <p className="text-2xl font-semibold text-gray-200">
-            {organization.subscription.plan}
+            {(organization as any).subscription_plan
+              || organization.subscription?.plan
+              || '—'
+            }
           </p>
           <p className="text-sm text-gray-400 mt-1">
-            Next billing: {new Date(organization.subscription.nextBilling).toLocaleDateString()}
+            {(organization as any).next_billing_date || organization.subscription?.nextBilling
+              ? `Next billing: ${new Date((organization as any).next_billing_date || organization.subscription?.nextBilling).toLocaleDateString()}`
+              : 'No billing info'
+            }
           </p>
         </div>
       </div>
@@ -381,6 +390,7 @@ export const OrganizationOverview: React.FC = () => {
       )}
     </div>
   );
+  
   return (
     <div className="space-y-4 sm:space-y-6 p-2 sm:p-0">
       {/* Header */}

@@ -12,7 +12,7 @@ import { useAuthStore } from '../../../store/authStore';
 /* ─── Types ─────────────────────────────────────────── */
 interface PlanFeatures { labadmins: number; trainers: number; students: number; batches: number; labs: number; catalogues: number; }
 interface Plan { id: string; tier: string; styleKey?: string; name: string; description: string; monthly_price: number; annual_monthly_price: number; annual_discount: number; features: PlanFeatures; trial_days?: number; is_popular: boolean; is_active: boolean; }
-interface LicenseKey { id: string; key: string; orgName: string; orgId: string; planTier: string; planName: string; billingCycle: 'monthly'|'annual'; status: 'active'|'expired'|'suspended'; features: PlanFeatures; issuedAt: string; expiresAt: string; }
+interface LicenseKey { id: string; key: string; orgName: string; orgId: string; planTier: string; planName: string; billingCycle: 'monthly'|'annual'; status: 'active'|'expired'|'suspended'; features: PlanFeatures; usage?: PlanFeatures; issuedAt: string; expiresAt: string; }
 interface Offer { id: string; name: string; code: string; discountPercent: number; applicablePlans: string[]; validFrom: string; validUntil: string; usageLimit: number; usedCount: number; is_active: boolean; }
 
 /* ─── Constants ─────────────────────────────────────── */
@@ -736,7 +736,7 @@ const [deleting, setDeleting] = useState(false);
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead><tr className="text-left text-xs text-gray-500 border-b border-primary-500/10 bg-dark-300/20">
-                {['Organization','License Key','Plan','Billing','Status','Expires','Actions'].map(h => <th key={h} className="px-4 py-3">{h}</th>)}
+                {['Organization','License Key','Plan','Billing','Status','Expires','Usage','Actions'].map(h => <th key={h} className="px-4 py-3">{h}</th>)}
               </tr></thead>
               <tbody className="divide-y divide-primary-500/5">
                 {filteredKeys?.map(k => (
@@ -747,6 +747,24 @@ const [deleting, setDeleting] = useState(false);
                     <td className="px-4 py-3"><span className="text-xs text-gray-400 capitalize">{k?.billing_cycle}</span></td>
                     <td className="px-4 py-3"><StatusBadge status={k.status} /></td>
                     <td className="px-4 py-3"><span className="text-xs text-gray-400 flex items-center gap-1"><Calendar className="h-3 w-3" />{k.expires_at}</span></td>
+                    <td className="px-4 py-3">
+                      <div className="grid grid-cols-3 gap-x-2 gap-y-1">
+                        {(Object.keys(FEATURE_ICONS) as (keyof PlanFeatures)[]).map(fk => {
+                          const Icon = FEATURE_ICONS[fk];
+                          const used = k.usage?.[fk] ?? 0;
+                          const limit = k.features?.[fk] ?? 0;
+                          const isUnlimited = limit === -1;
+                          const pct = (!isUnlimited && limit > 0) ? Math.round((used / limit) * 100) : 0;
+                          const valColor = isUnlimited ? 'text-emerald-400' : pct >= 90 ? 'text-red-400' : pct >= 70 ? 'text-amber-400' : 'text-gray-300';
+                          return (
+                            <span key={fk} title={FEATURE_LABELS[fk]} className="flex items-center gap-0.5 text-[9px]">
+                              <Icon className="h-2.5 w-2.5 text-primary-400/70 flex-shrink-0" />
+                              <span className={valColor}>{used}{isUnlimited ? '/∞' : `/${limit}`}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </td>
                     <td className="px-4 py-3"><div className="flex items-center gap-1">
                       <button onClick={()=>setEditKey(k)} className="p-1.5 hover:bg-primary-500/10 rounded-lg transition-colors" title="Edit features"><Edit2 className="h-3.5 w-3.5 text-primary-400" /></button>
                       <button onClick={()=>setDeleteConfirm({type:'key',id:k.id})} className="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors" title="Revoke key"><Trash2 className="h-3.5 w-3.5 text-red-400" /></button>
@@ -769,6 +787,22 @@ const [deleting, setDeleting] = useState(false);
                   <code className="text-xs text-primary-300 font-mono flex-1 truncate">{k.key}</code>
                   <button onClick={()=>handleCopy(k.key)}>{copiedKey===k.key ? <CheckCircle className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4 text-gray-500" />}</button>
                 </div>
+                 <div className="grid grid-cols-3 gap-x-3 gap-y-1 bg-dark-400/20 rounded-lg px-3 py-2">
+                   {(Object.keys(FEATURE_ICONS) as (keyof PlanFeatures)[]).map(fk => {
+                     const Icon = FEATURE_ICONS[fk];
+                     const used = k.usage?.[fk] ?? 0;
+                     const limit = k.features?.[fk] ?? 0;
+                     const isUnlimited = limit === -1;
+                     const pct = (!isUnlimited && limit > 0) ? Math.round((used / limit) * 100) : 0;
+                     const valColor = isUnlimited ? 'text-emerald-400' : pct >= 90 ? 'text-red-400' : pct >= 70 ? 'text-amber-400' : 'text-gray-300';
+                     return (
+                       <span key={fk} title={FEATURE_LABELS[fk]} className="flex items-center gap-1 text-[9px]">
+                         <Icon className="h-2.5 w-2.5 text-primary-400/70 flex-shrink-0" />
+                         <span className={valColor}>{used}{isUnlimited ? '/∞' : `/${limit}`}</span>
+                       </span>
+                     );
+                   })}
+                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-400">
                   <span className="capitalize">{k.billingCycle} · Expires {k.expiresAt}</span>
                   <div className="flex gap-1">

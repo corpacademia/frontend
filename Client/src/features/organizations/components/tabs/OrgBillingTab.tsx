@@ -50,7 +50,15 @@ const useTransactionStore = create<TransactionState>((set, get) => ({
       
       // Map the API response to the Transaction interface if necessary
       // For now, assuming the API response matches the Transaction interface directly
-      set({ transactions: response.data }); // Assuming response.data is already an array of Transaction
+      const raw = response.data;
+      const list: Transaction[] = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw?.data)
+          ? raw.data
+          : Array.isArray(raw?.transactions)
+            ? raw.transactions
+            : [];
+      set({ transactions: list });
     } catch (err) {
       console.error("Error fetching transactions:", err);
       set({ error: 'Failed to fetch transactions. Please try again later.' });
@@ -315,6 +323,10 @@ const TransactionList: React.FC<TransactionListProps> = ({ orgId, title }) => {
 };
 
 // The original OrgBillingTab component is now refactored to use TransactionList
+interface OrgBillingTabProps {
+  orgId: string;
+}
+
 export const OrgBillingTab: React.FC<OrgBillingTabProps> = ({ orgId }) => {
   return (
     <div>

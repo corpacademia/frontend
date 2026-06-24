@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp, Plus, Minus, Server, HardDrive, Cpu, Network, Power, MemoryStick } from 'lucide-react';
 import { GradientText } from '../../../../../components/ui/GradientText';
 import axios from 'axios';
+import { LabBuilder } from '../../../../dashboard/pages/LabBuilder';
 
 interface ProxmoxConfigProps {
   config: ProxmoxConfigData;
@@ -30,6 +31,7 @@ interface ProxmoxConfigData {
   endDate: string;
   username?: string; // Added username
   password?: string; // Added password
+  credential_id?: string;
 }
 
 interface BackendData {
@@ -55,10 +57,9 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     cpuModels:[],
     networkBridges: []
   });
-  console.log(backendData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
+ 
   useEffect(() => {
     fetchProxmoxData();
   }, []);
@@ -77,10 +78,9 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
   const fetchProxmoxData = async () => {
   try {
     setLoading(true);
-
     // Step 1: Fetch nodes first
     const nodesRes = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/nodes`
+      `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/nodes/${localConfig?.credential?.id}`
     );
 
     const nodes = nodesRes?.data?.nodes || nodesRes?.data?.data || [];
@@ -93,16 +93,16 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     // Step 2: Fetch dependent resources for the node
     const [templatesRes, storageRes, cpuRes, networkRes] = await Promise.all([
       axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/templates`, {
-        NODE: firstNode,
+        NODE: firstNode,credentialId:localConfig?.credential?.id
       }),
       axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/storages`, {
-        NODE: firstNode,
+        NODE: firstNode,credentialId:localConfig?.credential?.id
       }),
       axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/cpu-models`, {
-        NODE: firstNode,
+        NODE: firstNode,credentialId:localConfig?.credential?.id
       }),
       axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/network-bridges`, {
-        NODE: firstNode,
+        NODE: firstNode,credentialId:localConfig?.credential?.id
       }),
     ]);
     // Step 3: Update state
@@ -125,7 +125,9 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
 
   const fetchVMId = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/next-vm-id`);
+      const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/next-vm-id`,{
+        credentialId:localConfig?.credential?.id
+      });
       if (response.data.data) {
         updateConfig('vmId', response.data.data);
       }
@@ -161,7 +163,8 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/isos`, {
         storage: localConfig.storage,
-        NODE: localConfig.node
+        NODE: localConfig.node,
+        credentialId:localConfig?.credential?.id
       });
       setBackendData(prev => ({
         ...prev,
@@ -176,7 +179,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     if(!localConfig.node) return;
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/templates`, {
-        NODE: localConfig.node
+        NODE: localConfig.node, credentialId:localConfig?.credential?.id
       });
 
       setBackendData(prev => ({
@@ -192,7 +195,7 @@ export const ProxmoxConfig: React.FC<ProxmoxConfigProps> = ({ config, onChange }
     if(!localConfig.node) return;
     try {
       const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/storages`, {
-        NODE: localConfig.node
+        NODE: localConfig.node , credentialId:localConfig?.credential?.id
       });
       setBackendData(prev => ({
         ...prev,

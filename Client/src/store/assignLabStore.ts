@@ -102,6 +102,24 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
           );
         }
 
+        // Proxmox Cluster labs
+        try {
+          const proxmoxClusterRes = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxClusterLabs`,
+            { userId: user.id, role: user.role }
+          );
+          if (proxmoxClusterRes.data.success) {
+            allLabs.push(
+              ...(proxmoxClusterRes.data.data || []).map((lab: any) => ({
+                ...lab,
+                lab_id: lab.labid,
+                id:     lab.labid,
+                type:   'proxmox-cluster',
+              }))
+            );
+          }
+        } catch (e) { /* non-fatal */ }
+
         set({ availableLabs: allLabs, filteredLabs: allLabs, isLoading: false });
       } else {
         const [standardResult, cloudResult, singleVMDatacenter, vmClusterDatacenter,singlevmProxmox] = await Promise.allSettled([
@@ -175,7 +193,6 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
             });
           });
         }
-        console.log(singlevmProxmox.value.data)
          if(singlevmProxmox.status === 'fulfilled' && singlevmProxmox.value.data.success){
           allLabs.push(
             ...singlevmProxmox.value.data.data.map((lab:any)=>({
@@ -184,6 +201,28 @@ export const useAssignLabStore = create<AssignLabStore>((set, get) => ({
             }))
           )
         }
+
+        // Proxmox Cluster labs (org-assigned)
+        try {
+          const pxClusterRes = await axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getOrgProxmoxClusterLabs`,
+            { orgId: user?.org_id }
+          );
+          if (pxClusterRes.data.success) {
+            (pxClusterRes.data.data || []).forEach((item: any) => {
+              if (item.lab?.labid) {
+                allLabs.push({
+                  ...item.lab,
+                  lab_id: item.lab.labid,
+                  id:     item.lab.labid,
+                  vmConfigs: item.vmConfigs || [],
+                  type:   'proxmox-cluster',
+                });
+              }
+            });
+          }
+        } catch (e) { /* non-fatal */ }
+
         set({ availableLabs: allLabs, filteredLabs: allLabs, isLoading: false });
       }
     } catch (err) {

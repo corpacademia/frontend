@@ -79,7 +79,6 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
   const isSuperAdmin = (currentUser || user)?.role === 'superadmin';
   const isOrgSuperAdmin = (currentUser || user)?.role === 'orgsuperadmin';
   const isOrgLabAdmin = (currentUser || user)?.role === 'labadmin';
-  const isAvailable = (course.software || '').toLowerCase() === 'available';
 
   const [isOrgAssignModalOpen, setIsOrgAssignModalOpen] = useState(false);
   const [organizations, setOrganizations] = useState<any[]>([]);
@@ -408,12 +407,12 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
             </div>
             <div className="flex items-center text-gray-400 col-span-2">
               <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${!isAvailable || ((course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter") && !available)
+                className={`px-3 py-1 rounded-full text-xs font-medium ${ ((course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter") && !available)
                   ? 'bg-red-500/20 text-red-300'
                   : 'bg-green-500/20 text-green-300'
                   }`}
               >
-                {!isAvailable || ((course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter") && !available) ? 'Not Available' : 'Available'}
+                { ((course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter") && !available) ? 'Not Available' : 'Available'}
               </span>
             </div>
           </div>
@@ -476,7 +475,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
                   </button>
                 ) : (
                   <>
-                    {!isAvailable || ((course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter") && !available) ? (
+                    { ((course?.type === "singlevmdatacenter" || course?.type === "vmclusterdatacenter") && !available) ? (
                       <button
                         disabled
                         title="Not available"

@@ -40,7 +40,7 @@ const countByDay = (
   last7.forEach(({ isoDate }) => (counts[isoDate] = 0));
 
   records.forEach((r) => {
-    const raw = r.created_at || r.createdAt || r.createddate || r.created_date;
+    const raw = r.created_at || r.createdAt || r.createddate || r.created_date || r.purchased_at || r.enrolled_at || r.assigned_at;
     if (!raw) return;
     const isoDate = new Date(raw).toISOString().split('T')[0];
     if (isoDate in counts) {

@@ -62,10 +62,10 @@ export const BatchDetailsPage: React.FC = () => {
   const { batchId } = useParams<{ batchId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { 
-    deleteBatch, 
-    fetchBatchDetails, 
-    removeUserFromBatch, 
+  const {
+    deleteBatch,
+    fetchBatchDetails,
+    removeUserFromBatch,
     removeLabFromBatch,
     currentBatch,
     batchUsers,
@@ -76,6 +76,7 @@ export const BatchDetailsPage: React.FC = () => {
   const [isEditBatchModalOpen, setIsEditBatchModalOpen] = useState(false);
   const [isAddUsersModalOpen, setIsAddUsersModalOpen] = useState(false);
   const [selectedLab, setSelectedLab] = useState<BatchLab | null>(null);
+  
   // Delete modals state
   const [deleteUserModal, setDeleteUserModal] = useState<{ isOpen: boolean; userId: string; userName: string }>({
     isOpen: false,
@@ -98,16 +99,16 @@ export const BatchDetailsPage: React.FC = () => {
     }
   }, [batchId]);
 
-  
+
 
   const handleRemoveUser = async () => {
     if (!batchId) return;
-    
+
     setIsDeletingUser(true);
     try {
-      const labIds = batchLabs.map(lab=>lab.lab_id)
-      const result = await removeUserFromBatch(batchId,labIds, deleteUserModal.userId);
-      
+      const labIds = batchLabs.map(lab => lab.lab_id)
+      const result = await removeUserFromBatch(batchId, labIds, deleteUserModal.userId);
+
       if (result.success) {
         setDeleteUserModal({ isOpen: false, userId: '', userName: '' });
       } else {
@@ -127,7 +128,7 @@ export const BatchDetailsPage: React.FC = () => {
     setIsDeletingLab(true);
     try {
       const result = await removeLabFromBatch(batchId, deleteLabModal.labId);
-      
+
       if (result.success) {
         fetchBatchDetails(batchId)
         setDeleteLabModal({ isOpen: false, labId: '', labName: '' });
@@ -146,15 +147,15 @@ export const BatchDetailsPage: React.FC = () => {
 
   const handleDeleteBatch = async () => {
     if (!batchId) return;
-    
+
     setIsDeletingBatch(true);
     try {
       const result = await deleteBatch(batchId);
-      
+
       if (!result.success) {
         throw new Error(result.message || 'Failed to delete batch');
       }
-      
+
       // Navigate back to batches page after successful deletion
       navigate('/dashboard/batches');
     } catch (error: any) {
@@ -307,7 +308,7 @@ export const BatchDetailsPage: React.FC = () => {
         <h3 className="text-lg font-semibold mb-4">
           <GradientText>Assigned Labs</GradientText>
         </h3>
-        
+
         {batchLabs.length === 0 ? (
           <div className="text-center py-8">
             <BookOpen className="h-12 w-12 mx-auto text-gray-500 mb-3" />
@@ -355,11 +356,10 @@ export const BatchDetailsPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          lab.remaining_days > 0
+                        className={`px-2 py-1 rounded-full text-xs ${lab.remaining_days > 0
                             ? 'bg-emerald-500/20 text-emerald-300'
                             : 'bg-red-500/20 text-red-300'
-                        }`}
+                          }`}
                       >
                         {lab.remaining_days > 0 ? 'Active' : 'Expired'}
                       </span>

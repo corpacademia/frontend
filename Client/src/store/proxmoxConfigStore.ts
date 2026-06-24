@@ -34,9 +34,9 @@ interface ProxmoxConfigState {
   nicModels: NICModel[];
   isLoading: boolean;
   error: string | null;
-  fetchStorages: (node: string) => Promise<void>;
-  fetchISOs: (node: string, storage: string) => Promise<void>;
-  fetchNetworkBridges: (node: string) => Promise<void>;
+  fetchStorages: (node: string , crdentialId: string) => Promise<void>;
+  fetchISOs: (node: string, storage: string, credentialId:string) => Promise<void>;
+  fetchNetworkBridges: (node: string, credentialId:string) => Promise<void>;
   fetchNICModels: () => Promise<void>;
   clearData: () => void;
 }
@@ -54,12 +54,12 @@ export const useProxmoxConfigStore = create<ProxmoxConfigState>((set) => ({
   isLoading: false,
   error: null,
 
-  fetchStorages: async (node: string) => {
+  fetchStorages: async (node: string, credentialId: string) => {
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/storages`,
-        { NODE: node }
+        { NODE: node , credentialId : credentialId }
       );
       set({ storages: response.data.data || [], isLoading: false });
     } catch (error: any) {
@@ -71,12 +71,12 @@ export const useProxmoxConfigStore = create<ProxmoxConfigState>((set) => ({
     }
   },
 
-  fetchISOs: async (node: string, storage: string) => {
+  fetchISOs: async (node: string, storage: string, credentialId:string) => {
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/isos`,
-        { NODE: node, storage: storage }
+        { NODE: node, storage: storage, credentialId }
       );
       set({ isos: response.data.isos || [], isLoading: false });
     } catch (error: any) {
@@ -88,12 +88,12 @@ export const useProxmoxConfigStore = create<ProxmoxConfigState>((set) => ({
     }
   },
 
-  fetchNetworkBridges: async (node: string) => {
+  fetchNetworkBridges: async (node: string,credentialId: string) => {
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/network-bridges`,
-        { NODE: node }
+        { NODE: node , credentialId:credentialId }
       );
       set({ networkBridges: response.data.networkBridges || [], isLoading: false });
     } catch (error: any) {

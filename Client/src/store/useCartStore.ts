@@ -4,6 +4,8 @@ import axios from 'axios';
 import { stripePromise } from '../utils/stripe';
 import { Currency } from 'lucide-react';
 
+const GST_RATE = Number(import.meta.env.VITE_GST_AMOUNT ?? 18);
+
 interface CartItem {
   id: string;
   labid: string;
@@ -113,6 +115,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
         const lab = catalogues.find(
           (c) => c.id === item.labid || c.id === item.labid
         );
+        const gstAmount = Math.round(Number(item.price) * (GST_RATE / 100));
         return {
           lab_id: item.labid,
           name: item.name,
@@ -125,10 +128,13 @@ export const useCartStore = create<CartStore>((set, get) => ({
           by: lab?.provider,
           type: lab?.type,
           user_id: lab?.user_id,
-          hoursPerDay:item?.number_hours_day
+          hoursPerDay: item?.number_hours_day,
+          gstRate: GST_RATE,
+          gstAmount,
+          totalAmount: Number(item.price) + gstAmount,
         };
       });
-       
+        
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/create-checkout-session`,
         {

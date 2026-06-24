@@ -71,7 +71,7 @@ const computeTrend = (records: any[]): { value: number; isPositive: boolean } =>
   let lastWeek = 0;
 
   records.forEach((r) => {
-    const raw = r.created_at || r.createdAt || r.created_date;
+    const raw = r.created_at || r.createdAt || r.created_date || r.purchased_at || r.enrolled_at || r.assigned_at;
     if (!raw) return;
     const d = new Date(raw);
     if (d >= thisWeekStart) thisWeek++;

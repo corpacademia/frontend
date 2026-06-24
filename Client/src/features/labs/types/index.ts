@@ -1,12 +1,13 @@
 // Lab Types
-export type LabType = 
+export type LabType =
   | 'workspace'
-  | 'catalogue' 
+  | 'catalogue'
   | 'cloud-vm'
   | 'cloud-slice'
   | 'dedicated-vm'
   | 'cluster'
-  | 'emulator';
+  | 'emulator'
+  | 'proxmox-cluster';
 
 export type CloudProvider = 
   | 'aws'

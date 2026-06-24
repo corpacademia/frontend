@@ -13,6 +13,8 @@ import { SettingsModal } from '../../../components/modals/SettingsModal';
 import { ThemeToggle } from '../../../components/ui/ThemeToggle';
 import { useSubscription } from '../../labs/hooks/useSubscription';
 
+const GST_RATE = Number(import.meta.env.VITE_GST_AMOUNT ?? 18);
+
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
 }
@@ -534,49 +536,60 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick })
             </div>
 
             {/* Modal Footer */}
-            {cartItems.length > 0 && !isLoadingCart && (
-              <div className="p-6 border-t border-primary-500/20 bg-dark-400/20">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <span className="text-lg font-semibold text-white">
-                      Total: ₹{cartItems.reduce((total, item) => {
-                        return Number(total + Number(item.price));
-                      }, 0)}
-                    </span>
-                    <p className="text-sm text-gray-400">
-                      {cartItems.reduce((total, item) => total + Number(item.quantity), 0)} item(s)
-                    </p>
+            {cartItems.length > 0 && !isLoadingCart && (() => {
+              const subtotal = cartItems.reduce((total, item) => total + Number(item.price), 0);
+              const gstAmount = Math.round(subtotal * (GST_RATE / 100));
+              
+              const grandTotal = subtotal + gstAmount;
+              return (
+                <div className="p-6 border-t border-primary-500/20 bg-dark-400/20">
+                  {/* Price breakdown */}
+                  <div className="space-y-1.5 mb-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400">Subtotal ({cartItems.reduce((total, item) => total + Number(item.quantity), 0)} item(s))</span>
+                      <span className="text-gray-200">₹{subtotal.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400">GST ({GST_RATE}%)</span>
+                      <span className="text-gray-200">₹{gstAmount.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-primary-500/10 pt-2">
+                      <span className="text-lg font-semibold text-white">Total</span>
+                      <span className="text-lg font-semibold text-primary-300">₹{grandTotal.toLocaleString()}</span>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => clearCart(user?.id)}
-                    className="text-sm text-red-400 hover:text-red-300 underline"
-                  >
-                    Clear Cart
-                  </button>
+                  <div className="flex items-center justify-end mb-3">
+                    <button
+                      onClick={() => clearCart(user?.id)}
+                      className="text-sm text-red-400 hover:text-red-300 underline"
+                    >
+                      Clear Cart
+                    </button>
+                  </div>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setIsCartModalOpen(false)}
+                      className="flex-1 px-6 py-3 bg-dark-400/50 hover:bg-dark-400/70
+                               border border-gray-500/20 hover:border-gray-500/40
+                               rounded-lg transition-all duration-300 text-gray-300 hover:text-white"
+                    >
+                      Continue Shopping
+                    </button>
+                    <button
+                      disabled={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues)}
+                      title={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues) ? 'Upgrade/Activate plan to create more labs' : ''}
+                      onClick={handleCheckout}
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
+                               hover:from-primary-400 hover:to-secondary-400
+                               rounded-lg transition-all duration-300 text-white font-semibold
+                               shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
+                    >
+                      Proceed To Checkout (₹{grandTotal.toLocaleString()})
+                    </button>
+                  </div>
                 </div>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => setIsCartModalOpen(false)}
-                    className="flex-1 px-6 py-3 bg-dark-400/50 hover:bg-dark-400/70
-                             border border-gray-500/20 hover:border-gray-500/40
-                             rounded-lg transition-all duration-300 text-gray-300 hover:text-white"
-                  >
-                    Continue Shopping
-                  </button>
-                  <button
-                   disabled={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues)}
-                   title={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues) ? 'Upgrade/Activate plan to create more labs' : ''}
-                    onClick={handleCheckout}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500
-                             hover:from-primary-400 hover:to-secondary-400
-                             rounded-lg transition-all duration-300 text-white font-semibold
-                             shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
-                  >
-                    Proceed To Checkout
-                  </button>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}

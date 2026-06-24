@@ -4,6 +4,7 @@ import { LabTypeSelector } from '../components/create/LabTypeSelector';
 import { SingleVMWorkflow } from '../components/create/SingleVMWorkflow';
 import { CloudSliceWorkflow } from '../components/create/CloudSliceWorkflow';
 import { VMClusterWorkflow } from '../components/create/VMClusterWorkflow';
+import { ProxmoxClusterWorkflow } from '../components/proxmox/ProxmoxClusterWorkflow';
 import { LabType } from '../types';
 
 export const CreateLabEnvironment: React.FC = () => {
@@ -40,6 +41,12 @@ export const CreateLabEnvironment: React.FC = () => {
       case 'vm-cluster':
         return (
           <VMClusterWorkflow
+            onBack={() => setSelectedType(null)}
+          />
+        );
+      case 'proxmox-cluster':
+        return (
+          <ProxmoxClusterWorkflow
             onBack={() => setSelectedType(null)}
           />
         );

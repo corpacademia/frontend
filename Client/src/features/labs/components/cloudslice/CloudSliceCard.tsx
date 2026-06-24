@@ -25,10 +25,12 @@ import {
   Shield,
   LinkIcon,
   Eye,
-  EyeOff
+  EyeOff,
+  LayoutTemplate
 } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { ConvertToCatalogueModal } from './ConvertToCatalogueModal';
+import { CloudSliceConvertToTemplateModal } from './CloudSliceConvertToTemplateModal';
 import { EditModal } from './EditModal';
 import { DeleteModal } from './DeleteModal';
 import axios from 'axios';
@@ -97,8 +99,8 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({
   const [cloudSliceModal, setCloudSliceModal] = useState<any>(null);
   const [deletingInstanceId, setDeletingInstanceId] = useState<string | null>(null);
   const [launchingId,setLaunchingId] = useState<string | null>(null);
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const navigate = useNavigate();
-
 
   const getOrgLabStatus = (labId) => {
     return orgStatus.find(org => org.labid === labId);
@@ -121,7 +123,7 @@ const canEditContent = () => {
         }
 
         // If already launched, skip creation and status update
-        if (slice.launched) {
+        if (slice?.launched) {
           const targetPath = slice.modules === 'without-modules'
             ? `/dashboard/labs/cloud-slices/${slice.labid}/lab`
             : `/dashboard/labs/cloud-slices/${slice.labid}/modules`;
@@ -352,7 +354,8 @@ const canEditContent = () => {
         await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
           userId: userLab.user_id || userLab.userid,
           labId: userLab.labid || userLab.lab_id,
-          purchased: userLab?.purchased || false
+          purchased: userLab?.purchased || false,
+          orgId:userLab?.orgid || userLab?.org_id
         });
       } else {
         await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/orgAdminDeleteCloudSlice/${userLab.labid || userLab.lab_id}`, {
@@ -611,6 +614,7 @@ const canEditContent = () => {
             <div className="flex items-center space-x-1 flex-shrink-0">
               {!isOrgAdminNotCreator && (
                 <button
+                  disabled = {user?.role === 'trainer'}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEdit(slice);
@@ -621,6 +625,7 @@ const canEditContent = () => {
                 </button>
               )}
               <button
+                disabled = {user?.role === 'trainer'}
                 onClick={handleDeleteClick}
                 className="p-1.5 hover:bg-dark-300/50 rounded-lg transition-colors"
               >
@@ -752,6 +757,7 @@ const canEditContent = () => {
                 </button>
 
                 <button
+                disabled={user?.role === 'trainer'}
                   onClick={(e) => {
                     e.stopPropagation();
                     if (onAssignUsers) {
@@ -780,7 +786,25 @@ const canEditContent = () => {
                 </button>
               </div>
 
-              {(userRole === 'superadmin' || userRole === 'orgsuperadmin' || userRole === 'labadmin') && (
+              {/* Convert to Template — orgsuperadmin only, on purchased assessment CloudSlice labs */}
+              {user?.role === 'orgsuperadmin' && slice?.purchased && slice?.assessment && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsTemplateModalOpen(true);
+                  }}
+                  className="h-8 px-3 rounded-lg text-xs font-medium w-full
+                           bg-amber-500/20 hover:bg-amber-500/30
+                           border border-amber-500/30 hover:border-amber-500/50
+                           text-amber-300
+                           flex items-center justify-center transition-all"
+                >
+                  <LayoutTemplate className="h-3.5 w-3.5 mr-1.5" />
+                  Convert to Template
+                </button>
+              )}
+
+              {(userRole === 'superadmin' || userRole === 'orgsuperadmin' || userRole === 'labadmin' || userRole === 'trainer') && (
                 <button
                   onClick={handlePodsClick}
                   disabled={isLoadingInstances}
@@ -858,6 +882,20 @@ const canEditContent = () => {
           sliceId={slice.labid}
         />
       )}
+
+      {/* Convert to Template Modal — orgsuperadmin, purchased assessment CloudSlice */}
+      <CloudSliceConvertToTemplateModal
+        isOpen={isTemplateModalOpen}
+        onClose={() => setIsTemplateModalOpen(false)}
+        purchase={{
+          lab_id: slice.labid,
+          lab_title: slice.title,
+          catalogue_price: (slice as any).catalogue_price,
+          price: (slice as any).price,
+          credential_id: (slice as any).credential_id,
+        }}
+        onSuccess={() => setIsTemplateModalOpen(false)}
+      />
 
       {/* User Instances Modal */}
       {isUserInstancesModalOpen && (
@@ -942,7 +980,7 @@ const canEditContent = () => {
                                     </button>
                                     <button
                                       onClick={() => handleDeleteUserInstance(userLab)}
-                                      disabled={deletingInstanceId === userLab.id}
+                                      disabled={deletingInstanceId === userLab.id }
                                       className="p-2 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                                       title="Delete Instance"
                                     >

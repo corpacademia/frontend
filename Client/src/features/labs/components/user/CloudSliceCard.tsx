@@ -76,7 +76,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
 
   //find the exact status based on the labid
   const selectedLab = labStatus.find(Userlab=>Userlab.labid === lab.labid );
-
+  
   const handleLaunch = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering card click if clicking launch
     setIsLaunching(true);

@@ -66,7 +66,6 @@ export const PurchaseHistoryPage: React.FC = () => {
   };
 
   const categorizedTransactions = categorizeTransactions(transactions);
-  console.log(categorizedTransactions)
   const currentTransactions = categorizedTransactions[activeCategory];
 
   const filteredTransactions = currentTransactions.filter(transaction => {
@@ -144,6 +143,7 @@ export const PurchaseHistoryPage: React.FC = () => {
     
     return { total, count };
   };
+  console.log(filteredTransactions)
   if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-dark-400 via-dark-300 to-dark-200 p-6">
@@ -325,7 +325,7 @@ export const PurchaseHistoryPage: React.FC = () => {
                             {transaction?.products[0]?.name || `Transaction ${transaction?.id?.substring(0, 8)}`}
                           </div>
                           <div className="text-sm text-gray-400 font-mono">
-                            ID: {transaction.id.substring(0, 12)}...
+                            ID: {transaction?.id?.substring(0, 12)}...
                           </div>
                         </div>
                       </td>

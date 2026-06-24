@@ -106,8 +106,8 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
   }, [vm]);
   useEffect(() => {
     if (isOpen && vm.node) {
-      fetchStorages(vm.node);
-      fetchNetworkBridges(vm.node);
+      fetchStorages(vm.node,vm?.credential_id);
+      (vm.node,vm?.credential_id);
     }
     
     // return () => {
@@ -119,7 +119,7 @@ export const ProxmoxEditModal: React.FC<ProxmoxEditModalProps> = ({
 
   useEffect(() => {
     if (selectedStorage && vm.node) {
-      fetchISOs(vm.node, selectedStorage);
+      fetchISOs(vm.node, selectedStorage,vm?.credential_id);
     }
   }, [selectedStorage, vm.node]);
 

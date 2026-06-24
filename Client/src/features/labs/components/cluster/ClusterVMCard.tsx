@@ -704,6 +704,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm,onDelete }) => 
               )}
 
                 <button
+                  disabled = {currentUser?.role === "trainer"}
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
                 >
@@ -791,9 +792,10 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm,onDelete }) => 
               User List
             </button>
 
-            {!canEditContent() && (currentUser?.role === "labadmin" || currentUser?.role === "orgsuperadmin")  ? (
+            {!canEditContent() && (currentUser?.role === "labadmin" || currentUser?.role === "orgsuperadmin" || currentUser?.role === "trainer")  ? (
               <div className="flex items-center gap-2">
                 <button
+                disabled = {currentUser?.role === "trainer"}
                   onClick={() => setIsAssignModalOpen(true)}
                   className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                            bg-gradient-to-r from-secondary-500 to-accent-500
@@ -805,6 +807,7 @@ export const ClusterVMCard: React.FC<ClusterVMCardProps> = ({ vm,onDelete }) => 
                   <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   Assign Lab
                 </button>
+                
                 <button
                   onClick={() => setIsVMClusterUserListModalOpen(true)}
                   className="h-8 sm:h-9 w-8 sm:w-9 rounded-lg

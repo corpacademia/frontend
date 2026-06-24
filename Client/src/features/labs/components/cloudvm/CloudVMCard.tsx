@@ -103,7 +103,6 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm,onDelete }) => {
     };
     getUserDetails();
   }, []);
-   
   useEffect(() => {
       const checkVmCreated = async () => {
         try {
@@ -750,12 +749,14 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm,onDelete }) => {
                 {vm.status}
               </span>
               <button
+                disabled = {user?.role === 'trainer'}
                 onClick={() => setIsEditModalOpen(true)}
                 className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
               >
                 <Pencil className="h-3 w-3 sm:h-4 sm:w-4 text-primary-400" />
               </button>
               <button
+                disabled = {user?.role === 'trainer'}
                 onClick={() => setIsDeleteModalOpen(true)}
                 className="p-1.5 sm:p-2 hover:bg-dark-300/50 rounded-lg transition-colors"
               >
@@ -841,7 +842,7 @@ export const CloudVMCard: React.FC<CloudVMProps> = ({ vm,onDelete }) => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  disabled={!isConvertEnabled}
+                  disabled={!isConvertEnabled || user?.role === 'trainer'}
                   className="flex-1 h-8 sm:h-9 px-3 sm:px-4 rounded-lg text-xs sm:text-sm font-medium
                            bg-gradient-to-r from-primary-500 to-secondary-500
                            hover:from-primary-400 hover:to-secondary-400

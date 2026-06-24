@@ -5,6 +5,7 @@ import { Search, Filter, AlertCircle, FolderX } from 'lucide-react';
 import { GradientText } from '../../../../components/ui/GradientText';
 import axios from 'axios';
 import { useAuthStore } from '../../../../store/authStore';
+import { useBatchStore } from '../../../../store/batchStore';
 
 interface ClusterVM {
   id: string;
@@ -38,6 +39,7 @@ interface ClusterVM {
 
 export const ClusterList: React.FC = () => {
   const {user} = useAuthStore();
+  const {trainerBatchLabs,fetchTrainerBatchLabs} = useBatchStore();
   const [clusters, setClusters] = useState<ClusterVM[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,34 +49,37 @@ export const ClusterList: React.FC = () => {
   const [currentUser,setCurrentUser] = useState<any>([]);
 
   useEffect(() => {
-    fetchClusters();
-  }, []);
+    fetchTrainerBatchLabs(user?.id);
 
-  const fetchClusters = async () => {
+  }, []);
+// Existing effect — exclude trainer
+useEffect(() => {
+  if (user?.role !== 'trainer') {
+    fetchClusters();
+  }
+}, []);
+
+// Trainer-specific — wait for batch labs
+useEffect(() => {
+  if (user?.role === 'trainer' && trainerBatchLabs?.length > 0) {
+    fetchClusters();
+  }
+}, [trainerBatchLabs]);
+
+const fetchClusters = async () => {
   try {
     setLoading(true);
-
-    // const userProfileRes = await axios.get(
-    //   `${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/user_profile`
-    // );
-    // if (!userProfileRes.data) {
-    //   setError("Failed to fetch user profile");
-    //   return;
-    // }
-
     setCurrentUser(user);
 
-    let clusterLabs = [];
-    let orgLabs = [];
+    let clusterLabs: any[] = [];
+    let orgLabs: any[] = [];
 
-    // Run both in parallel (fastest)
     const promises = [];
 
-    // Superadmin/orgsuperadmin/labadmin → getClusterLabs
     if (
-      user.role === "superadmin" ||
-      user.role === "orgsuperadmin" ||
-      user.role === "labadmin"
+      user?.role === "superadmin" ||
+      user?.role === "orgsuperadmin" ||
+      user?.role === "labadmin"
     ) {
       promises.push(
         axios.post(
@@ -84,45 +89,65 @@ export const ClusterList: React.FC = () => {
       );
     }
 
-    // Org-specific labs → only for labadmin
-    if (user.role === "orgsuperadmin" || user.role === "labadmin") {
+    if (user?.role === "orgsuperadmin" || user?.role === "labadmin") {
       promises.push(
         axios.post(
           `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getOrglabs`,
           {
-            orgId: user.org_id,
-            admin_id: user?.impersonating ? user?.impersonatedUserId : user?.id,
+            orgId: user?.org_id,
+            admin_id: user?.impersonating
+              ? user?.impersonatedUserId
+              : user?.id,
           }
         )
       );
     }
 
-    // Wait for both calls to complete
+    if (user?.role === "trainer") {
+      const trainerLabs = trainerBatchLabs.filter(
+        l => l?.type === "vmcluster-datacenter"
+      );
+      console.log(trainerLabs)
+      trainerLabs.forEach((l) => {
+        promises.push(
+          axios.post(
+            `${import.meta.env.VITE_BACKEND_URL}/api/v1/vmcluster_ms/getClusterLabOnId`,
+            { labId: l?.lab_id }
+          )
+        );
+      });
+    }
+
     const responses = await Promise.allSettled(promises);
+
     for (const res of responses) {
       if (res.status === "fulfilled" && res.value.data.success) {
         const data = res.value.data.data || [];
-        if (res?.value?.config.url.includes("getClusterLabs")) clusterLabs = data;
-        else if (res.value.config.url.includes("getOrglabs")) orgLabs = data;
+
+        if (res.value.config.url.includes("getOrglabs")) {
+          orgLabs = [...orgLabs, ...data];
+        } else {
+          clusterLabs = [...clusterLabs, ...data]; // 🔥 FIX
+        }
       }
     }
 
-    // Merge both results safely
     const mergedLabs = [
       ...clusterLabs,
       ...orgLabs.map((org: any) => ({
         ...org,
         lab: {
           ...org.lab,
-          assessment: true
-        }
-      }))
+          assessment: true,
+        },
+      })),
     ];
-    if (mergedLabs.length > 0) {
-      setClusters(mergedLabs);
-    } else {
-      setError("No cluster labs found");
-    }
+
+    setClusters(prev => {
+      if (!mergedLabs.length) return prev;
+      return mergedLabs;
+    });
+
   } catch (error: any) {
     console.error("Error fetching clusters:", error);
     setError(error.response?.data?.message || "Failed to fetch cluster labs");

@@ -13,6 +13,8 @@ import { loadStripe } from '@stripe/stripe-js';
 import { useCartStore } from '../../../../store/useCartStore';
 import { useSubscription } from '../../hooks/useSubscription';
 
+const GST_RATE = Number(import.meta.env.VITE_GST_AMOUNT ?? 18);
+
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
 
@@ -185,7 +187,7 @@ export const PublicCataloguePage: React.FC = () => {
         {
           userId: user?.id,
           catalogues: courses,
-          org: user?.role === 'orgsuperadmin'
+          org: user?.role === 'orgsuperadmin' || user?.role === 'labadmin'
         }
       );
     } catch (error) {
@@ -573,7 +575,7 @@ export const PublicCataloguePage: React.FC = () => {
                   <p className="text-gray-500">Add some labs to get started!</p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-[45vh] sm:max-h-[400px] overflow-y-auto scrollbar-none">
+                <div className="space-y-4">
                   {cartItems.map(item => (
                     <div key={item.id} className="p-4 bg-dark-400/30 rounded-xl border border-primary-500/10 
                                                    hover:border-primary-500/20 transition-colors">
@@ -703,49 +705,59 @@ export const PublicCataloguePage: React.FC = () => {
             </div>
 
             {/* Modal Footer */}
-            {cartItems.length > 0 && !isLoadingCart && (
-              <div className="p-4 sm:p-6 border-t border-primary-500/20 bg-dark-400/20 flex-shrink-0">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div>
-                    <span className="text-base sm:text-lg font-semibold text-white">
-                      Total: {convertPrice(cartItems.reduce((total, item) => {
-                        return total + Number(item.price);
-                      }, 0))}
-                    </span>
-                    <p className="text-sm text-gray-400">
-                      {cartItems.reduce((total, item) => total + Number(item.quantity), 0)} item(s)
-                    </p>
+            {cartItems.length > 0 && !isLoadingCart && (() => {
+              const subtotal = cartItems.reduce((total, item) => total + Number(item.price), 0);
+              const gstAmount = Math.round(subtotal * (GST_RATE / 100));
+              const grandTotal = subtotal + gstAmount;
+              return (
+                <div className="p-4 sm:p-6 border-t border-primary-500/20 bg-dark-400/20 flex-shrink-0">
+                  {/* Price breakdown */}
+                  <div className="space-y-1.5 mb-3 sm:mb-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400">Subtotal ({cartItems.reduce((total, item) => total + Number(item.quantity), 0)} item(s))</span>
+                      <span className="text-gray-200">{convertPrice(subtotal)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-400">GST ({GST_RATE}%)</span>
+                      <span className="text-gray-200">{convertPrice(gstAmount)}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-primary-500/10 pt-2">
+                      <span className="text-base sm:text-lg font-semibold text-white">Total</span>
+                      <span className="text-base sm:text-lg font-semibold text-primary-300">{convertPrice(grandTotal)}</span>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => clearCart(user?.id)}
-                    className="text-sm text-red-400 hover:text-red-300 underline"
-                  >
-                    Clear Cart
-                  </button>
+                  <div className="flex items-center justify-end mb-2 sm:mb-3">
+                    <button
+                      onClick={() => clearCart(user?.id)}
+                      className="text-sm text-red-400 hover:text-red-300 underline"
+                    >
+                      Clear Cart
+                    </button>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <button
+                      onClick={() => setIsCartModalOpen(false)}
+                      className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 bg-dark-400/50 hover:bg-dark-400/70
+                               border border-gray-500/20 hover:border-gray-500/40
+                               rounded-lg transition-all duration-300 text-gray-300 hover:text-white text-sm sm:text-base"
+                    >
+                      Continue Shopping
+                    </button>
+                    <button
+                      disabled={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues)}
+                      title={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues) ? 'Upgrade/Activate plan to create more labs' : ''}
+                      onClick={handleCheckout}
+                      className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-primary-500 to-secondary-500
+                               hover:from-primary-400 hover:to-secondary-400
+                               rounded-lg transition-all duration-300 text-white font-semibold text-sm sm:text-base
+                               shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
+                    >
+                      Proceed to Checkout ({convertPrice(grandTotal)})
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                  <button
-                    onClick={() => setIsCartModalOpen(false)}
-                    className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 bg-dark-400/50 hover:bg-dark-400/70 
-                             border border-gray-500/20 hover:border-gray-500/40 
-                             rounded-lg transition-all duration-300 text-gray-300 hover:text-white text-sm sm:text-base"
-                  >
-                    Continue Shopping
-                  </button>
-                  <button
-                    disabled={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues)}
-                    title={(license && user?.org_id && user?.role !== 'user') && !canUse('catalogues', license?.usage?.catalogues) ? 'Upgrade/Activate plan to create more labs' : ''}
-                    onClick={handleCheckout}
-                    className="flex-1 px-4 py-2.5 sm:px-6 sm:py-3 bg-gradient-to-r from-primary-500 to-secondary-500
-                             hover:from-primary-400 hover:to-secondary-400
-                             rounded-lg transition-all duration-300 text-white font-semibold text-sm sm:text-base
-                             shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30"
-                  >
-                    Proceed to Checkout
-                  </button>
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
           </div>
         </div>

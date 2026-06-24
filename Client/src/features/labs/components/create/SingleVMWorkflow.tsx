@@ -8,11 +8,12 @@ import { BasicInfoStep } from './steps/BasicInfoStep';
 import { DocumentUploader } from './steps/DocumentUploader';
 import { DatacenterConfig } from './steps/DatacenterConfig';
 import { ProxmoxConfig } from './steps/ProxmoxConfig';
-import { ChevronLeft, ChevronRight, Loader } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader, Building2, Globe, Check } from 'lucide-react';
 import axios from 'axios';
 import { GuacamoleConfig } from './GuacamoleConfig';
 import { GradientText } from '../../../../components/ui/GradientText';
 import { useAuthStore } from '../../../../store/authStore';
+import { useCloudCredentialsStore, CloudCredential } from '../../../../store/cloudCredentialsStore';
 
 interface SingleVMWorkflowProps {
   onBack: () => void;
@@ -26,6 +27,9 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
   const [organizationClouds, setOrganizationClouds] = useState<any[]>([]);
   const [selectedCloudId, setSelectedCloudId] = useState<string>('');
   const [allClouds, setAllClouds] = useState<any[]>([]);
+  const { globalCredentials, orgCredentials, isLoading: credsLoading, fetchGlobalCredentials, fetchOrgCredentials } = useCloudCredentialsStore();
+  const [selectedCred, setSelectedCred] = useState<CloudCredential | null>(null);
+  const [selectedSource, setSelectedSource] = useState<'org' | 'global'>('org');
   const [config, setConfig] = useState({
     title: '',
     description: '',
@@ -98,6 +102,13 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
     };
 
     fetchClouds();
+    // Fetch proxmox credentials for credential picker step
+    if (user?.role === 'superadmin') {
+      fetchGlobalCredentials();
+    } else if (user?.org_id) {
+      fetchGlobalCredentials();
+      fetchOrgCredentials(user.org_id);
+    }
   }, [user?.org_id]);
 
   // useEffect(() => {
@@ -159,20 +170,13 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
   };
 
   const getSelectedCloudCredentials = () => {
-    if (selectedCloudType === 'global' && !selectedCloudId) {
-      return { type: 'golab', credentials: null };
-    }
-
+    if (!selectedCloudId) return null;
     const selectedCloud = allClouds.find(cloud => cloud.id === selectedCloudId);
-    if (selectedCloud) {
-      return {
-        type: 'custom',
-        cloud_id: selectedCloud.id,
-        credentials: selectedCloud.credentials
-      };
-    }
-
-    return { type: 'golab', credentials: null };
+    if (!selectedCloud) return null;
+    return {
+      cloud_id: selectedCloud.id,
+      credentials: selectedCloud.credentials
+    };
   };
 
 
@@ -189,7 +193,7 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       } else if (config.platform === 'datacenter') {
         breadcrumbs.push({ label: 'Datacenter Config', step: 3 });
       } else if (config.platform === 'proxmox') {
-        breadcrumbs.push({ label: 'Proxmox Config', step: 3 });
+        breadcrumbs.push({ label: 'Select Account', step: 3 });
       }
     }
 
@@ -199,7 +203,7 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       } else if (config.platform === 'datacenter') {
         breadcrumbs.push({ label: 'Documents', step: 4 });
       } else if (config.platform === 'proxmox') {
-        breadcrumbs.push({ label: 'Documents', step: 4 });
+        breadcrumbs.push({ label: 'Proxmox Config', step: 4 });
       } else {
         breadcrumbs.push({ label: 'VM Configuration', step: 4 });
       }
@@ -211,7 +215,7 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       } else if (config.platform === 'datacenter') {
         breadcrumbs.push({ label: 'AI Recommendations', step: 5 });
       } else if (config.platform === 'proxmox') {
-        breadcrumbs.push({ label: 'AI Recommendations', step: 5 });
+        breadcrumbs.push({ label: 'Documents', step: 5 });
       } else {
         breadcrumbs.push({ label: 'Documents', step: 5 });
       }
@@ -302,12 +306,11 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
       setIsLoading(true);
       const data = JSON.parse(localStorage.getItem("formData") || "{}");
       try {
-        console.log(data)
-        // Make API call for Proxmox platform
+        // Make API call for Proxmox platform;
         const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/createSingleVmProxmoxLab`, {
           data: data,
           user: user?.impersonating ? user?.impersonatedUserId : user?.id,
-          cloud_credentials: getSelectedCloudCredentials()
+          cloud_credentials: selectedCred ? { cloud_id: selectedCred.id, credentials: selectedCred.credentials } : null
         });
 
         if (response.data.success) {
@@ -497,73 +500,131 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
             </div>
           );
         } else if (config.platform === 'proxmox') {
+          const proxmoxGlobal = globalCredentials.filter(c => c.provider === 'proxmox');
+          const proxmoxOrg = orgCredentials.filter(c => c.provider === 'proxmox');
           return (
-            <div className="space-y-6">
-              {/* Cloud Selection Dropdown */}
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-                <h3 className="text-xl font-semibold mb-4">
-                  <GradientText>Select Cloud Provider</GradientText>
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Select Lab Credentials
-                    </label>
-                    <select
-                      value={selectedCloudId}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setSelectedCloudId(val);
-                        if (!val) {
-                          setSelectedCloudType('global');
-                        } else {
-                          const isOrg = organizationClouds.some((c: any) => c.id === val);
-                          setSelectedCloudType(isOrg ? 'organization' : 'global');
-                        }
-                      }}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-lg px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    >
-                      <option value="">GoLab Cloud (Default)</option>
-                      {organizationClouds.filter((c: any) =>
-                        !config.cloudProvider || c.provider?.toLowerCase() === config.cloudProvider?.toLowerCase()
-                      ).length > 0 && (
-                        <optgroup label="Organization Credentials">
-                          {organizationClouds
-                            .filter((c: any) =>
-                              !config.cloudProvider || c.provider?.toLowerCase() === config.cloudProvider?.toLowerCase()
-                            )
-                            .map((cloud: any) => (
-                              <option key={cloud.id} value={cloud.id}>
-                                {cloud.name} ({cloud.provider?.toUpperCase()})
-                              </option>
-                            ))}
-                        </optgroup>
-                      )}
-                      {allClouds.filter((c: any) =>
-                        !c.org_id &&
-                        (!config.cloudProvider || c.provider?.toLowerCase() === config.cloudProvider?.toLowerCase())
-                      ).length > 0 && (
-                        <optgroup label="GoLab Global Credentials">
-                          {allClouds
-                            .filter((c: any) =>
-                              !c.org_id &&
-                              (!config.cloudProvider || c.provider?.toLowerCase() === config.cloudProvider?.toLowerCase())
-                            )
-                            .map((cloud: any) => (
-                              <option key={cloud.id} value={cloud.id}>
-                                {cloud.name} ({cloud.provider?.toUpperCase()})
-                              </option>
-                            ))}
-                        </optgroup>
-                      )}
-                    </select>
-                  </div>
+            <div className="space-y-5">
+              <div className="flex items-center space-x-4">
+                <button onClick={() => setStep(2)} className="p-2 hover:bg-dark-300 rounded-lg transition-colors">
+                  <ChevronLeft className="h-5 w-5 text-gray-400" />
+                </button>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Select Proxmox Account</h3>
+                  <p className="text-sm text-gray-400 mt-0.5">Choose the account to deploy your lab on</p>
                 </div>
               </div>
-              <ProxmoxConfig
-                config={config.proxmox}
-                onChange={handleProxmoxConfigChange}
-              />
+              {credsLoading ? (
+                <div className="flex justify-center py-8"><Loader className="h-6 w-6 text-primary-400 animate-spin" /></div>
+              ) : (
+                <div className="space-y-4">
+                  {user?.role === 'superadmin' && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Globe className="h-4 w-4 text-amber-400" />
+                        <h4 className="text-sm font-medium text-gray-300">Global Proxmox Credentials</h4>
+                      </div>
+                      {proxmoxGlobal.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4 border border-dashed border-primary-500/20 rounded-lg">No global Proxmox credentials configured.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {proxmoxGlobal.map(cred => (
+                            <button key={cred.id} onClick={() => { setSelectedCred(cred); setSelectedSource('global'); }}
+                              className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedCred?.id === cred.id ? 'border-primary-500/60 bg-primary-500/10' : 'border-primary-500/20 bg-dark-300/40 hover:border-primary-500/40'}`}>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 rounded-lg bg-amber-500/10"><Globe className="h-4 w-4 text-amber-400" /></div>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-200">{cred.name}</p>
+                                    <p className="text-xs text-gray-400 capitalize">{cred.provider}</p>
+                                    {cred.credentials?.api_url && <p className="text-xs text-gray-500 truncate mt-0.5">{cred.credentials.api_url}</p>}
+                                  </div>
+                                </div>
+                                {selectedCred?.id === cred.id && <Check className="h-4 w-4 text-primary-400" />}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {(user?.role === 'orgsuperadmin' || user?.role === 'labadmin') && (
+                    <>
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Building2 className="h-4 w-4 text-primary-400" />
+                          <h4 className="text-sm font-medium text-gray-300">Organization's Credentials</h4>
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/20 text-emerald-300">Free</span>
+                        </div>
+                        {proxmoxOrg.length === 0 ? (
+                          <p className="text-xs text-gray-500 text-center py-3 border border-dashed border-primary-500/20 rounded-lg">No org Proxmox credentials. Add them in Cloud Settings.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {proxmoxOrg.map(cred => (
+                              <button key={cred.id} onClick={() => { setSelectedCred(cred); setSelectedSource('org'); }}
+                                className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedCred?.id === cred.id ? 'border-primary-500/60 bg-primary-500/10' : 'border-primary-500/20 bg-dark-300/40 hover:border-primary-500/40'}`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-primary-500/10"><Building2 className="h-4 w-4 text-primary-400" /></div>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-200">{cred.name}</p>
+                                      <p className="text-xs text-gray-400 capitalize">{cred.provider}</p>
+                                      {cred.credentials?.api_url && <p className="text-xs text-gray-500 truncate mt-0.5">{cred.credentials.api_url}</p>}
+                                    </div>
+                                  </div>
+                                  {selectedCred?.id === cred.id && <Check className="h-4 w-4 text-primary-400" />}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-px bg-primary-500/20" />
+                        <span className="text-xs text-gray-500">or use GoLab Cloud</span>
+                        <div className="flex-1 h-px bg-primary-500/20" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Globe className="h-4 w-4 text-amber-400" />
+                          <h4 className="text-sm font-medium text-gray-300">GoLab Global Credentials</h4>
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-300">⚡ Paid</span>
+                        </div>
+                        {proxmoxGlobal.length === 0 ? (
+                          <p className="text-xs text-gray-500 text-center py-3 border border-dashed border-amber-500/20 rounded-lg">No GoLab global credentials available.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {proxmoxGlobal.map(cred => (
+                              <button key={cred.id} onClick={() => { setSelectedCred(cred); setSelectedSource('global'); }}
+                                className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedCred?.id === cred.id ? 'border-amber-500/60 bg-amber-500/10' : 'border-amber-500/20 bg-dark-300/40 hover:border-amber-500/40'}`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-amber-500/10"><Globe className="h-4 w-4 text-amber-400" /></div>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-200">{cred.name}</p>
+                                      <p className="text-xs text-gray-400 capitalize">{cred.provider}</p>
+                                      {cred.credentials?.api_url && <p className="text-xs text-gray-500 truncate mt-0.5">{cred.credentials.api_url}</p>}
+                                    </div>
+                                  </div>
+                                  {selectedCred?.id === cred.id && <Check className="h-4 w-4 text-amber-400" />}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-primary-500/10">
+                <button onClick={() => setStep(2)} className="flex items-center space-x-2 px-6 py-2 bg-dark-400/50 hover:bg-dark-300/50 text-gray-300 rounded-lg transition-colors">
+                  <ChevronLeft className="h-4 w-4" /><span>Back</span>
+                </button>
+                <button onClick={() => setStep(4)}
+                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-400 hover:to-secondary-400 text-white rounded-lg transition-all">
+                  Next: Configure
+                </button>
+              </div>
             </div>
           );
         } else {
@@ -590,10 +651,9 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
           );
         } else if (config.platform === 'proxmox') {
           return (
-            <DocumentUploader
-              onDocumentsChange={handleDocumentsChange}
-              onUserGuidesChange={handleUserGuidesChange}
-              onNext={handleDocumentUploadNext}
+            <ProxmoxConfig
+              config={{...config.proxmox,credential:selectedCred}}
+              onChange={handleProxmoxConfigChange}
             />
           );
         } else {
@@ -626,12 +686,10 @@ export const SingleVMWorkflow: React.FC<SingleVMWorkflowProps> = ({ onBack }) =>
           );
         } else if (config.platform === 'proxmox') {
           return (
-            <AIRecommendations
-              config={config}
-              onConfirm={(region, responseData) => {
-                const lab_id = responseData?.lab_id;
-                updateConfig({ region, lab_id: lab_id });
-              }}
+            <DocumentUploader
+              onDocumentsChange={handleDocumentsChange}
+              onUserGuidesChange={handleUserGuidesChange}
+              onNext={handleDocumentUploadNext}
             />
           );
         } else {

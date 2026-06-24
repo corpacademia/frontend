@@ -74,6 +74,8 @@ interface BatchState {
   currentBatch: BatchDetails | null;
   batchUsers: BatchUser[];
   batchLabs: BatchLab[];
+  trainerBatchLabs: BatchLab[];
+  quantity:number;
   availableLabs: Lab[];
   availableTrainers: Trainer[];
   availableUsers: AvailableUser[];
@@ -87,7 +89,9 @@ interface BatchState {
 
   // Batch CRUD operations
   fetchBatches: (userIds: string,role:string) => Promise<void>;
+  fetchPurchasedLabQty:(labId:string,orgId:string) => Promise<void>;
   fetchBatchDetails: (batchId: string) => Promise<void>;
+  fetchTrainerBatchLabs:(trainerId: string) => Promise<void>;
   createBatch: (data: {
     batchName: string;
     description?: string;
@@ -148,6 +152,8 @@ export const useBatchStore = create<BatchState>((set, get) => ({
   currentBatch: null,
   batchUsers: [],
   batchLabs: [],
+  trainerBatchLabs:[],
+  quantity:-1,
   availableLabs: [],
   availableTrainers: [],
   availableUsers: [],
@@ -186,7 +192,28 @@ export const useBatchStore = create<BatchState>((set, get) => ({
       });
     }
   },
-
+  fetchPurchasedLabQty:async(labId:string,orgId:string)=>{
+    set({isLoading:true,error:null});
+    try {
+      const getQty = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/checkQuantity`,{
+         labId,
+         orgId
+      })
+      if(getQty.data.success){
+        set({quantity:Number(getQty.data.data.quantity),isLoading:false})
+      }
+      else {
+        throw new Error(getQty.data.message || 'Failed to fetch quantity');
+      }
+    } catch (error) {
+      console.log("Error fetching quantity:",error);
+      set({
+        isLoading:false,
+        
+      })
+    }
+  },
+  
   fetchBatchDetails: async (batchId: string) => {
     set({ isLoadingDetails: true, error: null });
     try {
@@ -302,7 +329,7 @@ export const useBatchStore = create<BatchState>((set, get) => ({
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabs`,
-        {userId,orgId,role},
+        { userId,orgId,role },
         { withCredentials: true }
       );
 
@@ -318,6 +345,23 @@ export const useBatchStore = create<BatchState>((set, get) => ({
         error: error.response?.data?.message || 'Failed to fetch labs'
       });
     }
+  },
+  fetchTrainerBatchLabs: async(trainerId:string)=>{
+   set({ isLoading: true, error: null });
+   try {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabsForTrainers/${trainerId}`);
+    if (response.data.success) {
+        set({ trainerBatchLabs: response.data.data, isLoading: false });
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch trainer batchlabs');
+      }
+   } catch (error:any) {
+    console.error('Error fetching trainer batchlabs:', error);
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to fetch trainer batchlabs'
+      });
+   }
   },
 
   fetchAvailableTrainers: async (orgId: string) => {
@@ -609,6 +653,7 @@ fetchAvailableUsers: async (batchId: string, orgId: string, role: string) => {
     currentBatch: null,
     batchUsers: [],
     batchLabs: [],
+    trainerBatchLabs:[],
     availableLabs: [],
     availableTrainers: [],
     availableUsers: [],

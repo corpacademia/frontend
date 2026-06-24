@@ -698,7 +698,8 @@ const UserLabsModal: React.FC<UserLabsModalProps> = ({ isOpen, onClose, lab, org
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
             labId: userLab?.labid || userLab?.lab_id,
             userId: userLab.user_id,
-            purchased: false
+            purchased: false,
+            orgId:orgId
           }
           );
         }

@@ -79,7 +79,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
       setSelectedLab(lab || null);
     }
   }, [formData.lab_id, availableLabs]);
-
+  
  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!user?.id) return;
@@ -89,15 +89,17 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
   setIsSubmitting(true);
 
   try {
+  
     const selectedLabData = availableLabs.find(l => l.lab_id === formData.lab_id);
     const labTitle = selectedLabData ? selectedLabData.title : '';
     const type = selectedLabData ? selectedLabData?.type : '';
     const selectedTrainerData = availableTrainers.find(t => t.id === formData.trainer_id);
     const trainerName = selectedTrainerData?.name;
     
-    if(selectedLab?.purchased && batchUsers.length > selectedLabData?.quantity) 
+    const qty = Number(selectedLabData?.quantity);
+    if(qty !== -1 && batchUsers.length > qty)
       {
-        setError('The number of users exceed quantity')
+        setError(`Only ${qty} seat${qty === 1 ? '' : 's'} available. This batch has ${batchUsers.length} user${batchUsers.length === 1 ? '' : 's'}.`)
         return;
       }
     //  Convert datetime-local (which is local) into "YYYY-MM-DD HH:mm:ss"
@@ -197,7 +199,7 @@ const formatDate = (dateValue: string | Date | null) => {
               disabled={!!editLab || isLoadingLabs}
             >
               <option value="">Choose a lab...</option>
-              {availableLabs.map((lab) => (
+              {availableLabs.filter((lab) => lab.status !== 'expired').map((lab) => (
                 <option key={lab.lab_id} value={lab.lab_id}>
                   {lab.title}
                   {lab.purchased ? ` (Purchased - ${lab.quantity} licenses)` : ' (Not Purchased)'}
@@ -206,7 +208,7 @@ const formatDate = (dateValue: string | Date | null) => {
             </select>
             
             {selectedLab && (
-              <div className="mt-2 p-3 bg-dark-400/30 rounded-lg">
+              <div className="mt-2 p-3 bg-dark-400/30 rounded-lg space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-300">Purchase Status:</span>
                   <span
@@ -219,11 +221,25 @@ const formatDate = (dateValue: string | Date | null) => {
                     {selectedLab.purchased ? 'Purchased' : 'Not Purchased'}
                   </span>
                 </div>
-                {selectedLab.purchased && (
-                  <div className="mt-2 text-sm text-gray-400">
-                    Available Licenses: <span className="text-white font-semibold">{selectedLab.quantity}</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-400">
+                    {selectedLab.purchased ? 'Available Licenses:' : 'Available Seats:'}
+                  </span>
+                  {selectedLab.quantity === -1 ? (
+                    <span className="text-emerald-300 font-semibold">Unlimited</span>
+                  ) : (
+                    <span className={`font-semibold ${
+                      selectedLab.quantity < batchUsers.length ? 'text-red-400' : 'text-white'
+                    }`}>
+                      {selectedLab.quantity}
+                      {selectedLab.quantity < batchUsers.length && (
+                        <span className="ml-2 text-xs text-red-400">
+                          (batch needs {batchUsers.length})
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>

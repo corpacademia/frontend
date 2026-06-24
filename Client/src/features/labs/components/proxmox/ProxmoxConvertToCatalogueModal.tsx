@@ -35,6 +35,7 @@ interface FormData {
   category: string;
   price: string;
   hoursPerDay: number;
+  numberOfSeats: number;
 }
 
 interface CleanupModalProps {
@@ -122,7 +123,8 @@ const initialFormData: FormData = {
   level: '',
   category: '',
   price: '',
-  hoursPerDay:1
+  hoursPerDay: 1,
+  numberOfSeats: 0,
 };
 
 export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueModalProps> = ({
@@ -208,9 +210,13 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
       return false;
     }
     if (formData.hoursPerDay < 1 || formData.hoursPerDay > 24) {
-  setError('Hours per day must be between 1 and 24');
-  return false;
-}
+      setError('Hours per day must be between 1 and 24');
+      return false;
+    }
+    if (formData.numberOfSeats < 0) {
+      setError('Number of seats cannot be negative');
+      return false;
+    }
     return true;
   };
 
@@ -230,7 +236,8 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
         category: formData.category,
         price: formData.price,
         hoursPerDay: formData.hoursPerDay,
-
+        // 0 → unlimited (own lab, quantity=-1); positive → seat limit
+        numberOfSeats: formData.numberOfSeats > 0 ? formData.numberOfSeats : -1,
       });
 
       if (formData.organizationId && updateCatalogueDetails.data.success) {
@@ -323,31 +330,59 @@ export const ProxmoxConvertToCatalogueModal: React.FC<ProxmoxConvertToCatalogueM
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Price
-              </label>
-              <input
-                type="text"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="w-full px-3 sm:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
-                       text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
-              />
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Price
+                </label>
+                <input
+                  type="text"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  className="w-full px-3 sm:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
+                />
               </div>
               <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Hours per day
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Hours per day
+                </label>
+                <input
+                  type="number"
+                  name="hoursPerDay"
+                  value={formData.hoursPerDay}
+                  onChange={handleInputChange}
+                  className="w-full px-3 sm:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
+                         text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
+                />
+              </div>
+            </div>
+
+            {/* Number of Seats — for global cloud labs */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Number of Seats
+                <span className="ml-2 text-xs text-gray-500">(leave 0 for unlimited / own infrastructure)</span>
               </label>
               <input
                 type="number"
-                name="hoursPerDay"
-                value={formData.hoursPerDay}
+                name="numberOfSeats"
+                min="0"
+                value={formData.numberOfSeats}
                 onChange={handleInputChange}
+                placeholder="e.g. 30"
                 className="w-full px-3 sm:px-4 py-2 bg-dark-400/50 border border-primary-500/20 rounded-lg
                        text-gray-300 focus:border-primary-500/40 focus:outline-none text-sm sm:text-base"
               />
-              </div>
+              {formData.numberOfSeats > 0 && (
+                <p className="mt-1 text-xs text-emerald-400">
+                  ✓ {formData.numberOfSeats} seat{formData.numberOfSeats !== 1 ? 's' : ''} will be allocated. Assignment will stop when all seats are used.
+                </p>
+              )}
+              {formData.numberOfSeats === 0 && (
+                <p className="mt-1 text-xs text-gray-500">
+                  No seat limit — this lab will behave as an own-infrastructure lab.
+                </p>
+              )}
             </div>
             
 

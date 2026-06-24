@@ -6,7 +6,9 @@ import { CloudSliceConfig } from './steps/CloudSliceConfig';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { DocumentUploader } from './steps/DocumentUploader';
 import { ReviewAndSubmit } from './steps/ReviewAndSubmit';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Building2, Globe, Loader, Check } from 'lucide-react';
+import { useAuthStore } from '../../../../store/authStore';
+import { useCloudCredentialsStore, CloudCredential } from '../../../../store/cloudCredentialsStore';
 
 interface CloudSliceWorkflowProps {
   onBack: () => void;
@@ -48,6 +50,10 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
   const [selectedCloudType, setSelectedCloudType] = useState<'global' | 'organization'>('global');
   const [selectedCloudId, setSelectedCloudId] = useState<string>('');
   const [organizationClouds, setOrganizationClouds] = useState<any[]>([]);
+  const { user: authUser } = useAuthStore();
+  const { globalCredentials, orgCredentials, isLoading: credsLoading, fetchGlobalCredentials, fetchOrgCredentials } = useCloudCredentialsStore();
+  const [selectedCred, setSelectedCred] = useState<CloudCredential | null>(null);
+  const [selectedSource, setSelectedSource] = useState<'org' | 'global'>('org');
 
 
   const [config, setConfig] = useState({
@@ -96,11 +102,12 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
 
     if (!labDetails?.isModular) {
       breadcrumbs.push({ label: 'Documents', step: 5 });
+      breadcrumbs.push({ label: 'Select Account', step: 6 });
     }
 
     breadcrumbs.push({ 
       label: 'Review & Submit', 
-      step: labDetails?.isModular ? 5 : 6 
+      step: labDetails?.isModular ? 5 : 7 
     });
 
     return breadcrumbs.slice(0, step + 1);
@@ -239,7 +246,142 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
           return null;
         }
       case 6:
-        // Review step for non-modular labs only
+        // Credential picker — non-modular labs only
+        if (!labDetails?.isModular) {
+          const cloudGlobal = globalCredentials.filter(c =>
+            !c.org_id && (config.cloudProvider ? c.provider?.toLowerCase() === config.cloudProvider?.toLowerCase() : true)
+          );
+          const cloudOrg = orgCredentials.filter(c =>
+            config.cloudProvider ? c.provider?.toLowerCase() === config.cloudProvider?.toLowerCase() : true
+          );
+          return (
+            <div className="space-y-5">
+              <div className="flex items-center space-x-4">
+                <button onClick={handlePrevious} className="p-2 hover:bg-dark-300 rounded-lg transition-colors">
+                  <ChevronLeft className="h-5 w-5 text-gray-400" />
+                </button>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Select Cloud Account</h3>
+                  <p className="text-sm text-gray-400 mt-0.5">Choose the account to provision your cloud slice on</p>
+                </div>
+              </div>
+              {credsLoading ? (
+                <div className="flex justify-center py-8"><Loader className="h-6 w-6 text-primary-400 animate-spin" /></div>
+              ) : (
+                <div className="space-y-4">
+                  {authUser?.role === 'superadmin' && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Globe className="h-4 w-4 text-amber-400" />
+                        <h4 className="text-sm font-medium text-gray-300">Global Credentials</h4>
+                      </div>
+                      {cloudGlobal.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4 border border-dashed border-primary-500/20 rounded-lg">No global credentials configured.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {cloudGlobal.map(cred => (
+                            <button key={cred.id} onClick={() => { setSelectedCred(cred); setSelectedSource('global'); }}
+                              className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedCred?.id === cred.id ? 'border-primary-500/60 bg-primary-500/10' : 'border-primary-500/20 bg-dark-300/40 hover:border-primary-500/40'}`}>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 rounded-lg bg-amber-500/10"><Globe className="h-4 w-4 text-amber-400" /></div>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-200">{cred.name}</p>
+                                    <p className="text-xs text-gray-400 uppercase">{cred.provider}</p>
+                                  </div>
+                                </div>
+                                {selectedCred?.id === cred.id && <Check className="h-4 w-4 text-primary-400" />}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {(authUser?.role === 'orgsuperadmin' || authUser?.role === 'labadmin') && (
+                    <>
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Building2 className="h-4 w-4 text-primary-400" />
+                          <h4 className="text-sm font-medium text-gray-300">Organization's Credentials</h4>
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-500/20 text-emerald-300">Free</span>
+                        </div>
+                        {cloudOrg.length === 0 ? (
+                          <p className="text-xs text-gray-500 text-center py-3 border border-dashed border-primary-500/20 rounded-lg">No org credentials. Add them in Cloud Settings.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {cloudOrg.map(cred => (
+                              <button key={cred.id} onClick={() => { setSelectedCred(cred); setSelectedSource('org'); }}
+                                className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedCred?.id === cred.id ? 'border-primary-500/60 bg-primary-500/10' : 'border-primary-500/20 bg-dark-300/40 hover:border-primary-500/40'}`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-primary-500/10"><Building2 className="h-4 w-4 text-primary-400" /></div>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-200">{cred.name}</p>
+                                      <p className="text-xs text-gray-400 uppercase">{cred.provider}</p>
+                                    </div>
+                                  </div>
+                                  {selectedCred?.id === cred.id && <Check className="h-4 w-4 text-primary-400" />}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-px bg-primary-500/20" />
+                        <span className="text-xs text-gray-500">or use GoLab Cloud</span>
+                        <div className="flex-1 h-px bg-primary-500/20" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Globe className="h-4 w-4 text-amber-400" />
+                          <h4 className="text-sm font-medium text-gray-300">GoLab Global Credentials</h4>
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-amber-500/20 text-amber-300">⚡ Paid</span>
+                        </div>
+                        {cloudGlobal.length === 0 ? (
+                          <p className="text-xs text-gray-500 text-center py-3 border border-dashed border-amber-500/20 rounded-lg">No GoLab global credentials available.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {cloudGlobal.map(cred => (
+                              <button key={cred.id} onClick={() => { setSelectedCred(cred); setSelectedSource('global'); }}
+                                className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${selectedCred?.id === cred.id ? 'border-amber-500/60 bg-amber-500/10' : 'border-amber-500/20 bg-dark-300/40 hover:border-amber-500/40'}`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-lg bg-amber-500/10"><Globe className="h-4 w-4 text-amber-400" /></div>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-200">{cred.name}</p>
+                                      <p className="text-xs text-gray-400 uppercase">{cred.provider}</p>
+                                    </div>
+                                  </div>
+                                  {selectedCred?.id === cred.id && <Check className="h-4 w-4 text-amber-400" />}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-primary-500/10">
+                <button onClick={handlePrevious}
+                  className="flex items-center space-x-2 px-6 py-2 bg-dark-400/50 hover:bg-dark-300/50 text-gray-300 rounded-lg transition-colors">
+                  <ChevronLeft className="h-4 w-4" /><span>Back</span>
+                </button>
+                <button onClick={handleNext}
+                  className="px-6 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 hover:from-primary-400 hover:to-secondary-400 text-white rounded-lg transition-all">
+                  Continue to Review
+                </button>
+              </div>
+            </div>
+          );
+        }
+        return null;
+
+      case 7:
+        // Review & Submit — non-modular labs
         return (
           <ReviewAndSubmit
             data={{ ...labDetails, ...config, ...labData }}
@@ -268,7 +410,7 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
         ...labData,
         documents: documents,
         userGuides: userGuides,
-        cloudCredentials: selectedCloud || { type: 'global' }
+        cloudCredentials: selectedCred || { type: 'global' }
       };
 
       // For modular labs, navigate to modules creation page
@@ -359,6 +501,13 @@ export const CloudSliceWorkflow: React.FC<CloudSliceWorkflowProps> = ({ onBack }
       }
     }
     getUserDetails();
+    // Fetch cloud credentials for credential picker
+    if (authUser?.role === 'superadmin') {
+      fetchGlobalCredentials();
+    } else if (authUser?.org_id) {
+      fetchGlobalCredentials();
+      fetchOrgCredentials(authUser.org_id);
+    }
   },[])
 
   return (

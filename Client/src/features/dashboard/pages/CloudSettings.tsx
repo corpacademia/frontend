@@ -38,7 +38,7 @@ export const CloudSettings: React.FC = () => {
       azure: { subscription_id: '', tenant_id: '', client_id: '', client_secret: '' },
       gcp: { project_id: '', credentials_json: '' },
       datacenter: { api_url: '', username: '', password: '' },
-      proxmox: { api_url: '', token: '', secret_key: '', node: '' }
+      proxmox: { api_url: '', username: '', token: '', secret_key: '', node: '' }
     }
   });
   
@@ -202,7 +202,7 @@ export const CloudSettings: React.FC = () => {
         azure: { subscription_id: '', tenant_id: '', client_id: '', client_secret: '' },
         gcp: { project_id: '', credentials_json: '' },
         datacenter: { api_url: '', username: '', password: '' },
-        proxmox: { api_url: '', token: '', secret_key: '', node: '' }
+        proxmox: { api_url: '', username: '', token: '', secret_key: '', node: '' }
       }
     });
   };
@@ -447,6 +447,22 @@ export const CloudSettings: React.FC = () => {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
+              <input
+                type="text"
+                value={formData.credentials.proxmox.username}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  credentials: {
+                    ...formData.credentials,
+                    proxmox: { ...formData.credentials.proxmox, username: e.target.value }
+                  }
+                })}
+                placeholder="e.g. root@pam"
+                className="w-full bg-dark-400/50 border border-primary-500/20 rounded-lg px-4 py-2 text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Token</label>
               <input
                 type="text"
@@ -644,6 +660,10 @@ export const CloudSettings: React.FC = () => {
               <div>
                 <label className="block text-xs text-gray-400 mb-1">API URL</label>
                 <p className="text-gray-300 font-mono text-sm">{creds.api_url}</p>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Username</label>
+                <p className="text-gray-300">{creds.username}</p>
               </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Token</label>

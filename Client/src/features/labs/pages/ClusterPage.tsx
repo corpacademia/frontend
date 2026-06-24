@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom'
 import { ClusterList } from '../components/cluster/ClusterList';
+import { ProxmoxClusterList } from '../components/proxmox/ProxmoxClusterList';
 import { GradientText } from '../../../components/ui/GradientText';
 import { Plus } from 'lucide-react';
 
@@ -28,6 +29,18 @@ export const ClusterPage: React.FC = () => {
       </div>
 
       <ClusterList />
+
+      <div className="mt-10">
+        <div className="mb-6">
+          <h2 className="text-2xl font-display font-bold">
+            <GradientText>Proxmox VM Cluster Labs</GradientText>
+          </h2>
+          <p className="mt-1 text-gray-400">
+            Multi-VM Proxmox environments — each user gets their own set of cloned VMs
+          </p>
+        </div>
+        <ProxmoxClusterList />
+      </div>
     </div>
   );
 };

@@ -14,7 +14,7 @@ interface UserLabsSectionProps {
 }
 
 export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user}) => {
-  const { labs, labStatus, isLoading, admin } = useUserLabs(userId,user);
+  const { labs, labStatus, isLoading, userData } = useUserLabs(userId,user);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLab, setEditingLab] = useState<any>(null);
@@ -91,7 +91,8 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
         // Delete cloud slice lab
         response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/deleteUserCloudSlice`, {
           userId: userId,
-          labId: lab.labid
+          labId: lab.labid,
+          orgId:user?.user?.org_id,
         });
       } else if(lab.type === 'singlevm') {
         // Delete standard lab
@@ -517,7 +518,7 @@ export const UserLabsSection: React.FC<UserLabsSectionProps> = ({ userId ,user})
         isOpen={isAssignModalOpen}
         onClose={() => setIsAssignModalOpen(false)}
         userId={userId}
-        user={admin}
+        user={userData}
         userDetails={user}
       />
 
