@@ -148,15 +148,18 @@ const CashfreePaymentModal: React.FC<{
   plan: Plan; annual: boolean; activeTier: string;
   onClose: () => void; onSuccess: () => void;
 }> = ({ plan, annual, activeTier, onClose, onSuccess }) => {
+  
   const [step, setStep] = useState<'summary' | 'redirecting' | 'success'>('summary');
   const {user,organizations} = useAuthStore();
+
+  
+
   // GST rate from environment variable (e.g. VITE_GST_AMOUNT=18)
   const gstPercent = Number(import.meta.env.VITE_GST_AMOUNT ?? 18);
 
   const baseAmount = annual ? plan.annual_monthly_price * 12 : plan.monthly_price;
   const gstAmount  = parseFloat(((baseAmount * gstPercent) / 100).toFixed(2));
   const grandTotal = parseFloat((baseAmount + gstAmount).toFixed(2));
-
   const isUpgrade = TIER_ORDER[plan.tier] > TIER_ORDER[activeTier];
   const s = PLAN_STYLES[plan.tier] ?? PLAN_STYLES['starter'];
 
@@ -168,19 +171,30 @@ const CashfreePaymentModal: React.FC<{
 
   return `GOLAB-${tier.toLocaleUpperCase()}-${randomBlock()}-${randomBlock()}`;
 };  
-
-  const handleProceed = async() => {
+  const handleProceed = async () => {
     setStep('redirecting');
+    if(plan.tier === 'free_trial'){
+      const generate = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/generateAndMailKey`,{
+      key: generateKey(plan?.tier),
+      planId:plan?.id,
+      billingCycle:annual,
+      orgId:user?.org_id,
+      organization:user?.organization,
+      userId:user?.id,
+      orgEmail:organizations.find(org=>org.id === user?.org_id)?.org_email || ""
+    })
+    }
     // In production: call backend → get payment_session_id → load Cashfree SDK → redirect
     const data = {
-        key : generateKey(plan?.tier),planName: plan?.name, planTier: plan?.tier,
-  billingCycle: annual, monthly_price:plan?.monthly_price, annual_monthly_price: plan?.annual_monthly_price, annual_discount: plan?.annual_discount,
-  features: plan?.features,
-  usage:    { labadmins: 0,  trainers: 0,  students: 0,  batches: 0,  labs: 0, catalogues: 0 },
-  planId:plan?.id,
-  user:user,
-  total:grandTotal
-    }
+            key : generateKey(plan?.tier),planName: plan?.name, planTier: plan?.tier,
+      billingCycle: annual, monthly_price:plan?.monthly_price, annual_monthly_price: plan?.annual_monthly_price, annual_discount: plan?.annual_discount,
+      features: plan?.features,
+      usage:    { labadmins: 0,  trainers: 0,  students: 0,  batches: 0,  labs: 0, catalogues: 0 },
+      planId:plan?.id,
+      user:user,
+      total:grandTotal
+        }
+   
     const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/subscriptionCheckout`,{
       data
     })
@@ -320,7 +334,6 @@ const CashfreePaymentModal: React.FC<{
     </div>
   );
 };
-
 /* ─── Plan Option Card ───────────────────────────────────────── */
 const PlanOptionCard: React.FC<{
   plan: Plan; annual: boolean; isCurrent: boolean;
@@ -449,9 +462,9 @@ export const OrgBillingPage: React.FC = () => {
   const daysLeft = license?.expires_at
     ? Math.ceil((new Date(license.expires_at).getTime() - Date.now()) / 86_400_000)
     : 0;
-  const s = PLAN_STYLES[license?.planTier ?? 'default'] ?? PLAN_STYLES['default'];
+  const s = PLAN_STYLES[license?.plan_tier ?? 'default'] ?? PLAN_STYLES['default'];
   const PlanIcon = s?.icon ?? PLAN_STYLES.default.icon;
-  const tierStat = TIER_STAT_COLORS[license?.planTier ?? 'default'] ?? TIER_STAT_COLORS['default'];
+  const tierStat = TIER_STAT_COLORS[license?.plan_tier ?? 'default'] ?? TIER_STAT_COLORS['default'];
 
   const TABS = [
     { id: 'overview' as const, label: 'Billing Overview', icon: CreditCard },
@@ -470,7 +483,6 @@ export const OrgBillingPage: React.FC = () => {
       </div>
     );
   }
-  console.log(!license)
   /* ── No active license — show plans so user can purchase ── */
   if (!license) {
     return (
@@ -559,7 +571,7 @@ export const OrgBillingPage: React.FC = () => {
           <CashfreePaymentModal
             plan={paymentPlan}
             annual={annual}
-            activeTier="free_trial"
+            activeTier={license?.plan_name}
             onClose={() => setPaymentPlan(null)}
             onSuccess={() => setPaymentPlan(null)}
           />
@@ -721,8 +733,8 @@ export const OrgBillingPage: React.FC = () => {
             {plans?.map(plan => (
               <PlanOptionCard
                 key={plan.id} plan={plan} annual={annual}
-                isCurrent={plan.tier === license.planTier}
-                activeTier={license.planTier}
+                isCurrent={plan.tier === license.plan_tier}
+                activeTier={license.plan_tier}
                 onPurchase={setPaymentPlan}
               />
             ))}
