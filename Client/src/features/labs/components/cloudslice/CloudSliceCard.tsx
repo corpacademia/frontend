@@ -606,7 +606,7 @@ const canEditContent = () => {
               )}
               <div className="min-w-0 flex-1">
                 <h3 className="text-sm sm:text-base font-semibold mb-1 line-clamp-2">
-                  <GradientText>{slice.title}</GradientText>
+                  <GradientText>{slice?.purchased ? slice.cataloguename :slice.title}</GradientText>
                 </h3>
                 <p className="text-xs text-gray-400 line-clamp-2 sm:line-clamp-1">{slice.description}</p>
               </div>

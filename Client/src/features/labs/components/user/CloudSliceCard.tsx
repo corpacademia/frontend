@@ -73,7 +73,7 @@ export const CloudSliceCard: React.FC<CloudSliceCardProps> = ({ lab, onDelete, l
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeleteModalOpen , setIsDeleteModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false); // Added for future use or if needed for expansion
-
+ console.log(lab)
   //find the exact status based on the labid
   const selectedLab = labStatus.find(Userlab=>Userlab.labid === lab.labid );
   
