@@ -25,34 +25,44 @@ export const UsersPage: React.FC = () => {
     organizations: 0
   });
   
-  useEffect(() => {
-    const getUsers = async () => {
-      try {
+  const fetchUsers = async () => {
+    try {
+      let allData: any[] = [];
+      if (user?.role === 'superadmin') {
         const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/allUsers`);
-        setOriginalUsers(response.data.data);
-        setUsers(response.data.data);
-        let totalUsers = response.data.data.length;
-        let activeUsers = response.data.data.filter((u) => u.status === 'active').length;
-        let trainers = response.data.data.filter((u) => u.role === 'trainer').length;
-        const distinctOrganizations = new Set(
-          response.data.data
-            .map(org => org.organization)
-            .filter(name => name !== null && name !== undefined)
-        );
-        let organizations = distinctOrganizations.size;
-        
-        setMockStats({
-          totalUsers,
-          activeUsers,
-          trainers,
-          organizations
-        });
-      } catch (error) {
-        console.error('Error fetching users:', error);
+        allData = response.data.data || [];
+      } else if (user?.org_id) {
+        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/getUsersFromOrganization/${user.org_id}`);
+        allData = response.data.data || [];
+        if (user?.role === 'trainer') {
+          allData = allData.filter((u: any) => u.role === 'user');
+        }
       }
-    };
-    getUsers();
-  }, []);
+
+      setOriginalUsers(allData);
+      setUsers(allData);
+
+      const totalUsers = allData.length;
+      const activeUsers = allData.filter((u: any) => u.status === 'active').length;
+      const trainers = allData.filter((u: any) => u.role === 'trainer').length;
+      const distinctOrganizations = new Set(
+        allData.map((u: any) => u.organization).filter(Boolean)
+      );
+
+      setMockStats({
+        totalUsers,
+        activeUsers,
+        trainers,
+        organizations: distinctOrganizations.size,
+      });
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, [user?.role, user?.org_id]);
 
   const [filters, setFilters] = useState({
     search: "",
@@ -98,10 +108,7 @@ export const UsersPage: React.FC = () => {
 
       if (result.data.success) {
         setIsAddModalOpen(false);
-        // Refresh the user list
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/allUsers`);
-        setOriginalUsers(response.data.data);
-        setUsers(response.data.data);
+        await fetchUsers();
       }
     } catch (error) {
       console.error('Error adding user:', error);
@@ -121,10 +128,7 @@ export const UsersPage: React.FC = () => {
 
       if (result.data.success) {
         setIsUploadModalOpen(false);
-        // Refresh the user list
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/user_ms/allUsers`);
-        setOriginalUsers((prevData)=>[...prevData,...response.data.data]);
-        setUsers((prevData)=>[...prevData,...response.data.data]);
+        await fetchUsers();
       }
     } catch (error) {
       console.error('Error bulk uploading users:', error);

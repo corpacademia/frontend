@@ -115,6 +115,11 @@ export const useLabDetailsStore = create<LabDetailsState>((set, get) => ({
             `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getLabOnId/${labId}`,
           );
           break;
+        case 'proxmox-cluster':
+          response = await axios.post(`
+            ${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getProxmoxClusterLabOnId`
+             ,{labId:labId})
+          break;
         default:
           throw new Error(`Unsupported lab type: ${labType}`);
       }

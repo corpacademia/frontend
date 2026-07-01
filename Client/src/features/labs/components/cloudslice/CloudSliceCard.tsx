@@ -641,18 +641,18 @@ const canEditContent = () => {
                     : slice.status === 'inactive'
                     ? 'bg-gray-500/20 text-gray-300'
                     : 'bg-amber-500/20 text-amber-300'
-                  : getOrgLabStatus(slice.labid).status === 'active'
+                  : getOrgLabStatus(slice?.labid)?.status === 'active'
                   ? 'bg-emerald-500/20 text-emerald-300'
-                  : getOrgLabStatus(slice.labid).status === 'expired'
+                  : getOrgLabStatus(slice.labid)?.status === 'expired'
                   ? 'bg-red-500/20 text-red-300'
-                  : getOrgLabStatus(slice.labid).status === 'inactive'
+                  : getOrgLabStatus(slice.labid)?.status === 'inactive'
                   ? 'bg-gray-500/20 text-gray-300'
                   : 'bg-amber-500/20 text-amber-300'
               }`}
             >
               {userRole === 'superadmin' || ((userRole === 'orgsuperadmin' || userRole === 'labadmin') && !slice?.assessment )
                 ? slice.status
-                : getOrgLabStatus(slice.labid).status}
+                : getOrgLabStatus(slice.labid)?.status}
             </span>
 
             </div>
@@ -740,7 +740,7 @@ const canEditContent = () => {
                           Launch Lab
                         </>
                       )
-                    ) : getOrgLabStatus(slice.labid).launched ? (
+                    ) : getOrgLabStatus(slice.labid)?.launched ? (
                       <>
                         <Square className="h-3.5 w-3.5 mr-1.5" />
                         Go to Lab

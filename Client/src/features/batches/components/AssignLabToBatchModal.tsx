@@ -35,7 +35,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
   editLab
 }) => {
   const { user } = useAuthStore();
-  const { 
+  let { 
     fetchAvailableLabs, 
     fetchAvailableTrainers, 
     assignLabToBatch, 
@@ -46,6 +46,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
     isLoadingLabs,
     isLoadingTrainers
   } = useBatchStore();
+  availableLabs = (user?.role  === 'trainer') ? availableLabs.filter(lab=>lab.admin_id === user?.id) : availableLabs;
   const [formData, setFormData] = useState({
     lab_id: '',
     trainer_id: '',
@@ -56,6 +57,7 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
   useEffect(() => {
     if (isOpen) {
       fetchAvailableLabs(user?.id,user?.org_id,user?.role);
@@ -72,14 +74,12 @@ export const AssignLabToBatchModal: React.FC<AssignLabToBatchModalProps> = ({
       }
     }
   }, [isOpen, editLab, user?.org_id]);
-
   useEffect(() => {
     if (formData.lab_id) {
       const lab = availableLabs.find(l => l.lab_id === formData.lab_id);
       setSelectedLab(lab || null);
     }
   }, [formData.lab_id, availableLabs]);
-  
  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!user?.id) return;

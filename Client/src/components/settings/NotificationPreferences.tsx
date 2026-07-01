@@ -35,16 +35,36 @@ export const NotificationPreferences: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
+  const availableNotificationTypes = user?.role ? RoleNotificationTypes[user.role] || [] : [];
+
+  const allChecked = (types: NotificationType[]) =>
+    types.reduce((acc, type) => { acc[type] = true; return acc; }, {} as Record<NotificationType, boolean>);
+
   useEffect(() => {
     fetchPreferences(user?.id || '');
   }, [fetchPreferences]);
+
+  useEffect(() => {
+    if (!preferences && availableNotificationTypes.length > 0) {
+      setLocalPreferences(prev => ({
+        ...prev,
+        emailNotifications: allChecked(availableNotificationTypes),
+        inAppNotifications: allChecked(availableNotificationTypes),
+      }));
+    }
+  }, [availableNotificationTypes.length]);
+
   useEffect(() => {
     if (preferences) {
       setLocalPreferences({
-        emailNotifications: Array.isArray(preferences.emailnotifications) && preferences.emailnotifications.length > 0 ? Object.fromEntries(preferences.emailnotifications.map(k => [k, true])) : {},
-        inAppNotifications: Array.isArray(preferences.inappnotifications) && preferences.inappnotifications.length > 0 ? Object.fromEntries(preferences.inappnotifications.map(k => [k, true])) : {},
+        emailNotifications: Array.isArray(preferences.emailnotifications) && preferences.emailnotifications.length > 0
+          ? Object.fromEntries(preferences.emailnotifications.map(k => [k, true]))
+          : allChecked(availableNotificationTypes),
+        inAppNotifications: Array.isArray(preferences.inappnotifications) && preferences.inappnotifications.length > 0
+          ? Object.fromEntries(preferences.inappnotifications.map(k => [k, true]))
+          : allChecked(availableNotificationTypes),
         digestFrequency: preferences.email_digest || 'daily',
-        quietHours:  {
+        quietHours: {
           enabled: preferences?.quiet_hours_enabled,
           startTime: preferences?.quiet_start || '22:00',
           endTime: preferences?.quiet_end || '08:00'
@@ -53,7 +73,6 @@ export const NotificationPreferences: React.FC = () => {
     }
   }, [preferences]);
 
-  const availableNotificationTypes = user?.role ? RoleNotificationTypes[user.role] || [] : [];
   const handleNotificationToggle = (
     category: 'emailNotifications' | 'pushNotifications' | 'inAppNotifications',
     type: NotificationType,

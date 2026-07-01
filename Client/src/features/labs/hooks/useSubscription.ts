@@ -43,10 +43,12 @@ export const useSubscription = (): SubscriptionState => {
       .finally(() => setIsLoading(false));
   }, [user?.org_id]);
 
-  const hasLicense = !!license && license?.status !== 'expired' && license.status !== 'suspended' && license?.activated;
-  const isExpired  = !!license && license?.status === 'expired';
+  const isSuperAdmin = user?.role === 'superadmin';
+  const hasLicense = isSuperAdmin || (!!license && license?.status !== 'expired' && license.status !== 'suspended' && license?.activated);
+  const isExpired  = !isSuperAdmin && !!license && license?.status === 'expired';
 
   const canUse = (feature: FeatureKey, currentUsage = 0): boolean => {
+    if (user?.role === 'superadmin') return true;
     if (!hasLicense) return false;
     const limit = license!.features[feature];
     return limit === -1 || currentUsage < limit;          // -1 = unlimited

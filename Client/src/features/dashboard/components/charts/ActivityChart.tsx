@@ -40,7 +40,7 @@ const countByDay = (
   last7.forEach(({ isoDate }) => (counts[isoDate] = 0));
 
   records.forEach((r) => {
-    const raw = r.created_at || r.createdAt || r.createddate || r.created_date || r.purchased_at || r.enrolled_at || r.assigned_at;
+    const raw = r.created_at || r.createdAt || r.createddate || r.created_date || r.purchased_at || r.enrolled_at || r.assigned_at || r.start_date;
     if (!raw) return;
     const isoDate = new Date(raw).toISOString().split('T')[0];
     if (isoDate in counts) {
@@ -95,17 +95,36 @@ export const ActivityChart: React.FC = () => {
         userRecords = usersRes.status === 'fulfilled' ? (usersRes.value.data?.data || []) : [];
 
       } else {
-        // Regular user: their enrolled labs (and themselves as single user)
+        // Regular user: labs enrolled + labs completed as sessions
         setLabLabel('Labs Enrolled');
-        setUserLabel('Sessions');
+        setUserLabel('Completed');
 
-        const labsRes = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllUserPurchasedLabs`,
-          { userId: user?.id }
-        ).catch(() => ({ data: { data: [] } }));
+        const [labsRes, cloudRes] = await Promise.allSettled([
+          axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserDashboardLabs`, { userId: user?.id }),
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserCloudSlices/${user?.id}`),
+        ]);
 
-        labRecords = labsRes.data?.data || [];
-        userRecords = []; // not applicable for single user
+        const dashLabs = labsRes.status === 'fulfilled' ? (labsRes.value.data?.data || []) : [];
+        const cloudLabs = cloudRes.status === 'fulfilled'
+          ? (cloudRes.value.data?.data || []).map((l: any) => ({
+              ...l,
+              assigned_at: l.startdate || l.start_date,
+            }))
+          : [];
+
+        // Normalize date to enrollment date (assigned_at/start_date), not lab creation date
+        labRecords = [...dashLabs, ...cloudLabs].map((l: any) => ({
+          ...l,
+          created_at: l.assigned_at || l.enrolled_at || l.start_date || l.startdate,
+        }));
+
+        // Sessions = labs the user completed, counted by completion/update date
+        userRecords = [...dashLabs, ...cloudLabs]
+          .filter((l: any) => l.status === 'completed')
+          .map((l: any) => ({
+            ...l,
+            created_at: l.completed_at || l.updated_at || l.end_date || l.enddate,
+          }));
       }
 
       // ── Count per day using created_at ────────────────────────────────────
@@ -146,7 +165,7 @@ export const ActivityChart: React.FC = () => {
           <h2 className="text-base sm:text-xl font-semibold">
             <GradientText>Weekly Activity</GradientText>
           </h2>
-          <p className="text-xs text-gray-400 mt-0.5">Last 7 days · grouped by creation date</p>
+          <p className="text-xs text-gray-400 mt-0.5">Last 7 days · {user?.role === 'user' ? 'grouped by enrollment date' : 'grouped by creation date'}</p>
         </div>
         <Activity className="h-5 w-5 text-primary-400 flex-shrink-0" />
       </div>

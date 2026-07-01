@@ -10,6 +10,9 @@ import { AddOrganizationModal } from '../components/AddOrganizationModal';
 import axios from 'axios';
 import { TransactionList } from '../../../components/transactions/TransactionList';
 import { useAuthStore } from '../../../store/authStore';
+import { OrganizationsUsersTab } from '../components/OrganizationsUsersTab';
+import { OrganizationsAnalyticsTab } from '../components/OrganizationsAnalyticsTab';
+import { OrgOverviewTab } from '../components/OrgOverviewTab';
 
 export const Organizations: React.FC = () => {
   const { user } = useAuthStore();
@@ -193,25 +196,29 @@ export const Organizations: React.FC = () => {
                     </div>
                   </>
                 ) : (
-                  <div className="overflow-y-auto flex-1">
-                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Organization Overview</h2>
-                    <p className="text-gray-400 text-sm sm:text-base">View organization details and statistics</p>
+                  <div className="flex-1 min-h-0 overflow-hidden">
+                    <OrgOverviewTab orgId={user?.org_id || ''} />
                   </div>
                 )}
               </div>
             )}
 
             {activeTab === 'users' && (
-              <div className="overflow-y-auto">
-                <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Users Management</h2>
-                <p className="text-gray-400 text-sm sm:text-base">Manage organization users and permissions</p>
+              <div className="h-full flex flex-col min-h-0 overflow-hidden">
+                <OrganizationsUsersTab
+                  organizations={filteredOrganizations}
+                  userOrgId={user?.org_id}
+                  isSuperAdmin={user?.role === 'superadmin'}
+                />
               </div>
             )}
 
             {activeTab === 'analytics' && (
-              <div className="overflow-y-auto">
-                <h2 className="text-lg sm:text-xl font-semibold text-white mb-4">Analytics</h2>
-                <p className="text-gray-400 text-sm sm:text-base">View organization performance and usage analytics</p>
+              <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-primary-500/20 scrollbar-track-dark-300">
+                <OrganizationsAnalyticsTab
+                  organizations={organizations}
+                  stats={stats}
+                />
               </div>
             )}
 

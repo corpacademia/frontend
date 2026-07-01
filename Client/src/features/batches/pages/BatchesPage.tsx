@@ -82,8 +82,8 @@ export const BatchesPage: React.FC = () => {
     if (filterStatus !== 'all') {
       const now = new Date();
       filtered = filtered.filter(batch => {
-        if (!batch.end_date) return filterStatus === 'active';
-        const endDate = new Date(batch.end_date);
+        if (!batch.enddate) return filterStatus === 'active';
+        const endDate = new Date(batch.enddate);
         if (filterStatus === 'active') {
           return endDate >= now;
         } else {
@@ -94,7 +94,6 @@ export const BatchesPage: React.FC = () => {
 
     setFilteredBatches(filtered);
   };
-
   const handleBatchCreated = () => {
     if (user?.id) {
       fetchBatches(user?.role === 'orgsuperadmin'  && ids.length ? ids : user?.id,user?.role);
@@ -204,7 +203,7 @@ export const BatchesPage: React.FC = () => {
                 Select
               </button>
               <button
-                disabled={!canUse('batches', batches?.length) && user?.role !=='superadmin'}
+                disabled={(!canUse('batches', batches?.length) && user?.role !== 'superadmin')}
                title={(!canUse('batches', batches?.length) && user?.role !=='superadmin') ? 'Upgrade/Activate plan to create more labs' : ''}
                 onClick={() => setIsCreateModalOpen(true)}
                 className="btn-primary text-gray-200"
@@ -261,8 +260,8 @@ export const BatchesPage: React.FC = () => {
               : 'Create your first batch to get started'}
           </p>
           {!searchTerm && filterStatus === 'all' && (
-            <button  disabled={!canUse('batches', batches?.length)}
-               title={!canUse('batches', batches?.length) ? 'Upgrade/Activate plan to create more labs' : ''}
+            <button  disabled={!canUse('batches', batches?.length) && user?.role !=='superadmin'}
+               title={(!canUse('batches', batches?.length) && user?.role !=='superadmin') ? 'Upgrade/Activate plan to create more labs' : ''}
               
              onClick={() => setIsCreateModalOpen(true)} className="btn-primary text-gray-200">
               <Plus className="h-4 w-4 mr-2 text-gray-200" />

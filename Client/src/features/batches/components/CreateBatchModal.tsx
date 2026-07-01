@@ -34,12 +34,12 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.id || !user?.org_id) return;
+    if (!user?.id ) return;
 
     setError(null);
     setSuccess(null);
     setIsSubmitting(true);
-    if(license?.features?.batches <= license?.usage?.batches){
+    if((( license?.features?.batches !== -1 && license?.features?.batches <= license?.usage?.batches) && user?.role !== 'superadmin')){
       setError("Your Subscription limit has reached...");
       return;
     }
@@ -49,13 +49,14 @@ export const CreateBatchModal: React.FC<CreateBatchModalProps> = ({
         description: formData.description,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        org_id: user?.org_id,
+        org_id: user?.org_id || null,
         role:user?.role,
         createdBy: user.id
       });
 
       if (result.success) {
-        await updateUsage(license.id,'batches',1);
+        if(user?.role !== 'superadmin' ){
+        await updateUsage(license.id,'batches',1);}
         setSuccess('Batch created successfully!');
         setTimeout(() => {
           onSuccess();

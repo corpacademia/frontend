@@ -14,12 +14,16 @@ import { useAuthStore } from '../../../store/authStore';
 interface PlanFeatures { labadmins: number; trainers: number; students: number; batches: number; labs: number; catalogues: number; }
 interface ActiveLicense {
   key: string; plan_name: string;
-  planTier: 'free_trial' | 'starter' | 'standard' | 'enterprise';
-  billingCycle: 'monthly' | 'annual'; monthly_price: number;
+  plan_tier: 'free_trial' | 'starter' | 'standard' | 'enterprise'; // raw backend field
+  planTier:  'free_trial' | 'starter' | 'standard' | 'enterprise'; // camelCase alias (mapLicense)
+  billing_cycle: 'monthly' | 'annual';                              // raw backend field
+  billingCycle:  'monthly' | 'annual';                              // camelCase alias
+  monthly_price: number;
   annual_monthly_price: number; annual_discount: number;
   issued_at: string; expires_at: string;
   status: 'active' | 'expired' | 'suspended';
   features: PlanFeatures; usage: PlanFeatures;
+  [key: string]: any;                                               // allow extra raw fields
 }
 
 /* ─── Map backend snake_case to camelCase ─────────────────────── */
@@ -64,7 +68,7 @@ const TIER_STAT_COLORS: Record<string, { color: string; bg: string }> = {
 const FEATURE_ICONS: Record<string, React.ElementType> = { labadmins: Shield, trainers: GraduationCap, students: Users, batches: Layers, labs: BookOpen, catalogues: FolderOpen };
 const FEATURE_LABELS: Record<string, string> = { labadmins: 'Lab Admins', trainers: 'Trainers', students: 'Students', batches: 'Batches', labs: 'Labs', catalogues: 'Catalogues' };
 const fmt = (v: number) => v === -1 ? '∞' : v.toLocaleString();
-const TIER_ORDER: Record<string, number> = { free_trial: 0, starter: 1, default:3,standard: 2, enterprise: 3 };
+const TIER_ORDER: Record<string, number> = { none: -1, free_trial: 0, starter: 1, default: 3, standard: 2, gold: 3 , enterprise: 4 };
 
 
 
@@ -398,6 +402,486 @@ const PlanOptionCard: React.FC<{
   );
 };
 
+/* ───  Upgrade Prorated Modal  ────────────────────────────────*/
+const UpgradeProratedModal: React.FC<{
+  plan: Plan;
+  annual: boolean;
+  currentLicense: ActiveLicense;
+  currentPlanObj: Plan | undefined;
+  onClose: () => void;
+  onSuccess: () => void;
+}> = ({ plan, annual, currentLicense, currentPlanObj, onClose, onSuccess }) => {
+
+  const [step, setStep] = useState<'summary' | 'redirecting' | 'success'>('summary');
+  const { user } = useAuthStore();
+  const gstPercent = Number(import.meta.env.VITE_GST_AMOUNT ?? 18);
+
+  /* ── Prorated credit from current plan ── */
+  const issuedMs      = new Date(currentLicense.issued_at).getTime();
+  const expiresMs     = new Date(currentLicense.expires_at).getTime();
+  const nowMs         = Date.now();
+  const totalDays     = Math.max(1, Math.ceil((expiresMs - issuedMs) / 86_400_000));
+  const remainingDays = Math.max(0, Math.ceil((expiresMs - nowMs)    / 86_400_000));
+
+  /* current plan credit — must use the ACTUAL billing cycle of the existing
+     license, not the `annual` toggle which only affects the NEW plan */
+  const currentIsAnnual =
+    currentLicense?.billing_cycle === 'annual' ||
+    currentLicense?.billingCycle  === 'annual';
+  const currentPrice = currentIsAnnual
+    ? (currentPlanObj?.annual_monthly_price ?? 0) * 12
+    : (currentPlanObj?.monthly_price ?? 0);
+
+  /* new plan price — correctly uses the user's chosen billing toggle */
+  const newPrice = annual
+    ? plan.annual_monthly_price * 12
+    : plan.monthly_price;
+
+  const creditAmount  = parseFloat(((remainingDays / totalDays) * currentPrice).toFixed(2));
+  const netBeforeGst  = parseFloat(Math.max(0, newPrice - creditAmount).toFixed(2));
+  const gstAmount     = parseFloat(((netBeforeGst * gstPercent) / 100).toFixed(2));
+  const grandTotal    = parseFloat((netBeforeGst + gstAmount).toFixed(2));
+
+  const s = PLAN_STYLES[plan.tier] ?? PLAN_STYLES.default;
+
+  const generateKey = (tier: string) => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const randomBlock = (length = 4) =>
+      Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return `GOLAB-${tier.toUpperCase()}-${randomBlock()}-${randomBlock()}`;
+  };
+
+  const handleProceed = async () => {
+    setStep('redirecting');
+    const data = {
+      key: generateKey(plan.tier),
+      planName: plan.name,
+      planTier: plan.tier,
+      billingCycle: annual,
+      monthly_price: plan.monthly_price,
+      annual_monthly_price: plan.annual_monthly_price,
+      annual_discount: plan.annual_discount,
+      features: plan.features,
+      usage: { labadmins: 0, trainers: 0, students: 0, batches: 0, labs: 0, catalogues: 0 },
+      planId: plan.id,
+      user,
+      total: grandTotal,
+      isUpgrade: true,
+      creditAmount,
+      remainingDays,
+    };
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/subscriptionCheckout`,
+        { data }
+      );
+      if (response.data?.success) {
+        const cashfree = Cashfree({ mode: 'sandbox' });
+        cashfree.checkout({
+          paymentSessionId: response.data.payment_session_id,
+          redirectTarget: '_self',
+        });
+      }
+      setTimeout(() => { setStep('success'); setTimeout(onSuccess, 1800); }, 2500);
+    } catch (err) {
+      console.error('Upgrade checkout error:', err);
+      setStep('summary');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-dark-200 rounded-2xl border border-primary-500/20 shadow-2xl overflow-hidden">
+
+        {/* ── Success ── */}
+        {step === 'success' && (
+          <div className="p-10 text-center space-y-4">
+            <div className="w-16 h-16 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle className="h-8 w-8 text-accent-400" />
+            </div>
+            <p className="text-lg font-bold text-white">Upgrade Successful!</p>
+            <p className="text-sm text-gray-400">
+              Your plan is now <strong className="text-white">{plan.name}</strong>.<br />
+              License key sent to your registered email.
+            </p>
+          </div>
+        )}
+
+        {/* ── Redirecting ── */}
+        {step === 'redirecting' && (
+          <div className="p-10 text-center space-y-4">
+            <div className="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto">
+              <RefreshCw className="h-8 w-8 text-primary-400 animate-spin" />
+            </div>
+            <p className="text-base font-semibold text-white">Redirecting to Cashfree...</p>
+            <p className="text-xs text-gray-400">Please do not close this window</p>
+          </div>
+        )}
+
+        {/* ── Summary ── */}
+        {step === 'summary' && (
+          <>
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-primary-500/10">
+              <div>
+                <h2 className="text-base font-semibold"><GradientText>Upgrade Summary</GradientText></h2>
+                <p className="text-xs text-gray-500 mt-0.5">Prorated credit from your current plan applied</p>
+              </div>
+              <button onClick={onClose} className="p-1.5 hover:bg-dark-300 rounded-lg transition-colors">
+                <XCircle className="h-4 w-4 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4">
+
+              {/* Plan badge */}
+              <div className={`rounded-xl border ${s.border} bg-gradient-to-br ${s.bg} p-4`}>
+                <div className="flex items-center gap-3">
+                  <span className={`p-2 rounded-xl ${s.badge} flex-shrink-0`}>
+                    {React.createElement(s.icon, { className: `h-5 w-5 ${s.iconColor}` })}
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-white">{plan.name} Plan</p>
+                    <p className="text-xs text-gray-400 capitalize">
+                      {annual ? 'Annual billing' : 'Monthly billing'}{' · '}
+                      <span className="text-accent-400">Upgrade</span>
+                    </p>
+                  </div>
+                  {annual && plan.annual_discount > 0 && (
+                    <span className="text-[10px] font-bold text-accent-400 bg-accent-500/10 border border-accent-500/20 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+                      <Percent className="h-2.5 w-2.5" />{plan.annual_discount}% off
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Prorated breakdown */}
+              <div className="bg-dark-300/40 border border-primary-500/10 rounded-xl overflow-hidden">
+                <div className="divide-y divide-primary-500/10">
+                  {/* New plan full price */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-xs text-gray-400">New plan price ({annual ? 'Annual' : 'Monthly'})</span>
+                    <span className="text-sm font-semibold text-white">${newPrice.toLocaleString()}</span>
+                  </div>
+                  {/* Prorated credit */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <Info className="h-3 w-3 text-accent-400" />
+                      Current plan credit ({remainingDays} of {totalDays} days remaining)
+                    </span>
+                    <span className="text-sm font-semibold text-accent-300">−${creditAmount.toLocaleString()}</span>
+                  </div>
+                  {/* GST */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <Info className="h-3 w-3 text-primary-400" />
+                      GST ({gstPercent}%)
+                    </span>
+                    <span className="text-sm font-semibold text-amber-300">+${gstAmount.toLocaleString()}</span>
+                  </div>
+                  {/* Total */}
+                  <div className="flex items-center justify-between px-4 py-3.5 bg-primary-500/5">
+                    <span className="text-sm font-bold text-white">Total Payable</span>
+                    <span className="text-xl font-extrabold text-white">${grandTotal.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Savings callout */}
+              {creditAmount > 0 && (
+                <p className="text-xs text-accent-400 text-center flex items-center justify-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  You save ${creditAmount.toLocaleString()} with prorated credit from your current plan
+                </p>
+              )}
+
+              {/* Security note */}
+              <div className="flex items-center gap-2 text-xs text-gray-500 bg-dark-300/30 rounded-xl p-3">
+                <Lock className="h-3.5 w-3.5 text-accent-400 flex-shrink-0" />
+                <span>256-bit SSL encryption · Secured &amp; powered by <strong className="text-gray-400">Cashfree Payments</strong></span>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 p-5 border-t border-primary-500/10">
+              <button
+                onClick={onClose}
+                className="flex-1 py-2.5 text-sm rounded-xl border border-primary-500/20 text-gray-400 hover:bg-dark-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleProceed}
+                className="flex-1 py-2.5 text-sm font-bold rounded-xl bg-gradient-to-r from-primary-500 to-secondary-500 text-white hover:from-primary-400 hover:to-secondary-400 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-500/20"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Pay ${grandTotal} &amp; Upgrade
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ─── Downgrade Prorated Modal ──────────────────────────────── */
+const DowngradeProratedModal: React.FC<{
+  plan: Plan;
+  annual: boolean;
+  currentLicense: ActiveLicense;
+  currentPlanObj: Plan | undefined;
+  onClose: () => void;
+  onSuccess: () => void;
+}> = ({ plan, annual, currentLicense, currentPlanObj, onClose, onSuccess }) => {
+  const [step, setStep] = useState<'summary' | 'redirecting' | 'success'>('summary');
+  const { user , organizations } = useAuthStore();
+  const gstPercent = Number(import.meta.env.VITE_GST_AMOUNT ?? 18);
+
+  /* ── Prorated credit calculation ── */
+  const issuedMs  = new Date(currentLicense.issued_at).getTime();
+  const expiresMs = new Date(currentLicense.expires_at).getTime();
+  const nowMs     = Date.now();
+  const totalDays     = Math.max(1, Math.ceil((expiresMs - issuedMs)   / 86_400_000));
+  const remainingDays = Math.max(0, Math.ceil((expiresMs - nowMs)      / 86_400_000));
+
+  /* current plan credit — must use the ACTUAL billing cycle of the existing
+     license, not the `annual` toggle which only affects the NEW plan */
+  const currentIsAnnual =
+    currentLicense?.billing_cycle === 'annual' ||
+    currentLicense?.billingCycle  === 'annual';
+  const currentPrice = currentIsAnnual
+    ? (currentPlanObj?.annual_monthly_price ?? 0) * 12
+    : (currentPlanObj?.monthly_price ?? 0);
+
+  /* new plan price — correctly uses the user's chosen billing toggle */
+  const newPrice = annual
+    ? plan.annual_monthly_price * 12
+    : plan.monthly_price;
+
+  const creditAmount  = parseFloat(((remainingDays / totalDays) * currentPrice).toFixed(2));
+  const netBeforeGst  = parseFloat(Math.max(0, newPrice - creditAmount).toFixed(2));
+  const gstAmount     = parseFloat(((netBeforeGst * gstPercent) / 100).toFixed(2));
+  const grandTotal    = parseFloat((netBeforeGst + gstAmount).toFixed(2));
+  const nothingToPay  = grandTotal <= 0;
+
+  const s = PLAN_STYLES[plan.tier] ?? PLAN_STYLES.default;
+
+  const generateKey = (tier: string) => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const randomBlock = (length = 4) =>
+      Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return `GOLAB-${tier.toUpperCase()}-${randomBlock()}-${randomBlock()}`;
+  };
+
+  const handleProceed = async () => {
+    setStep('redirecting');
+    const data = {
+      key: generateKey(plan.tier),
+      planName: plan.name,
+      planTier: plan.tier,
+      billingCycle: annual,
+      monthly_price: plan.monthly_price,
+      annual_monthly_price: plan.annual_monthly_price,
+      annual_discount: plan.annual_discount,
+      features: plan.features,
+      usage: { labadmins: 0, trainers: 0, students: 0, batches: 0, labs: 0, catalogues: 0 },
+      planId: plan.id,
+      user,
+      orgId:user?.org_id,
+      userId:user?.id,
+      organiztion:user?.organization,
+      orgEmail:organizations.find(org=>org.id === user?.org_id)?.org_email || "",
+      total: grandTotal,
+      isDowngrade: true,
+      creditAmount,
+      remainingDays,
+    };
+    try {
+      if (nothingToPay) {
+        /* No payment needed — directly provision the downgrade */
+        await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/generateAndMailKey`, {  key: generateKey(plan.tier),
+      planName: plan.name,
+      planTier: plan.tier,
+      billingCycle: annual,
+      monthly_price: plan.monthly_price,
+      annual_monthly_price: plan.annual_monthly_price,
+      annual_discount: plan.annual_discount,
+      features: plan.features,
+      usage: { labadmins: 0, trainers: 0, students: 0, batches: 0, labs: 0, catalogues: 0 },
+      planId: plan.id,
+      user,
+      orgId:user?.org_id,
+      userId:user?.id,
+      organiztion:user?.organization,
+      orgEmail:organizations.find(org=>org.id === user?.org_id)?.org_email || "",
+      total: grandTotal,
+      isDowngrade: true,
+      creditAmount,
+      remainingDays, });
+        setStep('success');
+        setTimeout(onSuccess, 1800);
+      } else {
+        const response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/subscriptionCheckout`,
+          { data }
+        );
+        if (response.data?.success) {
+          const cashfree = Cashfree({ mode: 'sandbox' });
+          cashfree.checkout({
+            paymentSessionId: response.data.payment_session_id,
+            redirectTarget: '_self',
+          });
+        }
+        setTimeout(() => { setStep('success'); setTimeout(onSuccess, 1800); }, 2500);
+      }
+    } catch (err) {
+      console.error('Downgrade checkout error:', err);
+      setStep('summary');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-dark-200 rounded-2xl border border-amber-500/20 shadow-2xl overflow-hidden">
+
+        {/* ── Success ── */}
+        {step === 'success' && (
+          <div className="p-10 text-center space-y-4">
+            <div className="w-16 h-16 bg-accent-500/20 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle className="h-8 w-8 text-accent-400" />
+            </div>
+            <p className="text-lg font-bold text-white">Plan Downgraded!</p>
+            <p className="text-sm text-gray-400">
+              Your plan has been switched to <strong className="text-white">{plan.name}</strong>.<br />
+              {creditAmount > 0 && `A credit of $${creditAmount.toLocaleString()} was applied from your remaining balance.`}
+            </p>
+          </div>
+        )}
+
+        {/* ── Redirecting ── */}
+        {step === 'redirecting' && (
+          <div className="p-10 text-center space-y-4">
+            <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto">
+              <RefreshCw className="h-8 w-8 text-amber-400 animate-spin" />
+            </div>
+            <p className="text-base font-semibold text-white">
+              {nothingToPay ? 'Processing your downgrade...' : 'Redirecting to Cashfree...'}
+            </p>
+            <p className="text-xs text-gray-400">Please do not close this window</p>
+          </div>
+        )}
+
+        {/* ── Summary ── */}
+        {step === 'summary' && (
+          <>
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-amber-500/10">
+              <div>
+                <h2 className="text-base font-semibold"><GradientText>Downgrade Summary</GradientText></h2>
+                <p className="text-xs text-gray-500 mt-0.5">Prorated credit applied from your current plan</p>
+              </div>
+              <button onClick={onClose} className="p-1.5 hover:bg-dark-300 rounded-lg transition-colors">
+                <XCircle className="h-4 w-4 text-gray-400" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4">
+
+              {/* Plan badge */}
+              <div className={`rounded-xl border ${s.border} bg-gradient-to-br ${s.bg} p-4`}>
+                <div className="flex items-center gap-3">
+                  <span className={`p-2 rounded-xl ${s.badge} flex-shrink-0`}>
+                    {React.createElement(s.icon, { className: `h-5 w-5 ${s.iconColor}` })}
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-white">{plan.name} Plan</p>
+                    <p className="text-xs text-gray-400 capitalize">
+                      {annual ? 'Annual billing' : 'Monthly billing'}{' · '}
+                      <span className="text-amber-400">Downgrade</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Prorated breakdown */}
+              <div className="bg-dark-300/40 border border-amber-500/10 rounded-xl overflow-hidden">
+                <div className="divide-y divide-amber-500/10">
+                  {/* New plan base price */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-xs text-gray-400">New plan price ({annual ? 'Annual' : 'Monthly'})</span>
+                    <span className="text-sm font-semibold text-white">${newPrice.toLocaleString()}</span>
+                  </div>
+                  {/* Prorated credit */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <Info className="h-3 w-3 text-amber-400" />
+                      Prorated credit ({remainingDays} of {totalDays} days remaining)
+                    </span>
+                    <span className="text-sm font-semibold text-amber-300">−${creditAmount.toLocaleString()}</span>
+                  </div>
+                  {/* Net before GST */}
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <Info className="h-3 w-3 text-primary-400" />
+                      GST ({gstPercent}%)
+                    </span>
+                    <span className="text-sm font-semibold text-amber-300">+${gstAmount.toLocaleString()}</span>
+                  </div>
+                  {/* Grand total */}
+                  <div className="flex items-center justify-between px-4 py-3.5 bg-amber-500/5">
+                    <span className="text-sm font-bold text-white">Total Payable</span>
+                    <span className={`text-xl font-extrabold ${nothingToPay ? 'text-accent-400' : 'text-white'}`}>
+                      {nothingToPay ? 'Free' : `$${grandTotal.toLocaleString()}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Credit-covers-all notice */}
+              {nothingToPay && (
+                <div className="flex items-start gap-2 text-xs text-accent-300 bg-accent-500/10 border border-accent-500/20 rounded-xl p-3">
+                  <CheckCircle className="h-3.5 w-3.5 text-accent-400 flex-shrink-0 mt-0.5" />
+                  <span>Your remaining credit fully covers this downgrade. No payment is required — the plan will switch immediately.</span>
+                </div>
+              )}
+
+              {/* Security note */}
+              {!nothingToPay && (
+                <div className="flex items-center gap-2 text-xs text-gray-500 bg-dark-300/30 rounded-xl p-3">
+                  <Lock className="h-3.5 w-3.5 text-accent-400 flex-shrink-0" />
+                  <span>256-bit SSL encryption · Secured &amp; powered by <strong className="text-gray-400">Cashfree Payments</strong></span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 p-5 border-t border-amber-500/10">
+              <button
+                onClick={onClose}
+                className="flex-1 py-2.5 text-sm rounded-xl border border-amber-500/20 text-gray-400 hover:bg-dark-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleProceed}
+                className="flex-1 py-2.5 text-sm font-bold rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-400 hover:to-amber-500 transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+              >
+                {nothingToPay
+                  ? <><CheckCircle className="h-3.5 w-3.5" />Confirm Downgrade</>
+                  : <><ExternalLink className="h-3.5 w-3.5" />Pay ${grandTotal} &amp; Downgrade</>
+                }
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ─── Main Page ──────────────────────────────────────────────── */
 export const OrgBillingPage: React.FC = () => {
   const {user} = useAuthStore();
@@ -411,6 +895,8 @@ export const OrgBillingPage: React.FC = () => {
 
   const [plans, setPlans] = useState<Plan[]>();
   const [paymentData, setPaymentData] = useState<any>();
+
+
   useEffect(() => {
     const getPlans = async () => {
       try {
@@ -466,6 +952,19 @@ export const OrgBillingPage: React.FC = () => {
   const PlanIcon = s?.icon ?? PLAN_STYLES.default.icon;
   const tierStat = TIER_STAT_COLORS[license?.plan_tier ?? 'default'] ?? TIER_STAT_COLORS['default'];
 
+  /* ── Derive current active tier safely ──
+     Use plan_id (same as existing display code at line 1078) to find the
+     plan object, then read .tier from it. Fallback chain handles any
+     field-name mismatch between backend and interface. */
+  const currentActivePlan  = plans?.find(p => p.id === license?.plan_id);
+  const currentActiveTier: string =
+    currentActivePlan?.tier ??
+    currentActivePlan?.plan_tier ??
+    license?.plan_tier ??
+    license?.planTier ??
+    'none';
+
+
   const TABS = [
     { id: 'overview' as const, label: 'Billing Overview', icon: CreditCard },
     { id: 'plans'    as const, label: 'Available Plans',  icon: Award },
@@ -496,7 +995,7 @@ export const OrgBillingPage: React.FC = () => {
           <button
           disabled={license?.activated  }
             onClick={() => setShowKeyModal(true)}
-            
+             
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-xl transition-all text-sm font-semibold hover:from-primary-400 hover:to-secondary-400 self-start sm:self-auto shadow-lg shadow-primary-500/20"
           >
             <Key className="h-4 w-4" />{`${license?.activated  ? "Activated" : "Activate License Key"}`}
@@ -541,7 +1040,7 @@ export const OrgBillingPage: React.FC = () => {
               plan={plan}
               annual={annual}
               isCurrent={false}
-              activeTier="free_trial"
+              activeTier="none"
               onPurchase={setPaymentPlan}
             />
           ))}
@@ -571,7 +1070,7 @@ export const OrgBillingPage: React.FC = () => {
           <CashfreePaymentModal
             plan={paymentPlan}
             annual={annual}
-            activeTier={license?.plan_name}
+            activeTier="none"
             onClose={() => setPaymentPlan(null)}
             onSuccess={() => setPaymentPlan(null)}
           />
@@ -579,6 +1078,7 @@ export const OrgBillingPage: React.FC = () => {
       </div>
     );
   }
+  console.log("PaymentPlan:",paymentPlan);
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -761,12 +1261,51 @@ export const OrgBillingPage: React.FC = () => {
         />
       )}
 
-      {/* Cashfree Payment Modal */}
-      {paymentPlan && (
+      {/* Cashfree Payment Modal — same-tier switches only */}
+      {paymentPlan && (() => {
+        const selectedTier: string = paymentPlan.tier ?? (paymentPlan as any).plan_tier ?? 'none';
+        return TIER_ORDER[selectedTier] === TIER_ORDER[currentActiveTier];
+      })() && (
         <CashfreePaymentModal
           plan={paymentPlan}
           annual={annual}
-          activeTier={license.planTier}
+          activeTier={currentActiveTier}
+          onClose={() => setPaymentPlan(null)}
+          onSuccess={() => {
+            setPaymentPlan(null);
+            setActiveTab('overview');
+          }}
+        />
+      )}
+
+      {/* Upgrade Prorated Modal — higher-tier with existing license */}
+      {paymentPlan && (() => {
+        const selectedTier: string = paymentPlan.tier ?? (paymentPlan as any).plan_tier ?? 'none';
+        return TIER_ORDER[selectedTier] > TIER_ORDER[currentActiveTier];
+      })() && (
+        <UpgradeProratedModal
+          plan={paymentPlan}
+          annual={annual}
+          currentLicense={license}
+          currentPlanObj={currentActivePlan}
+          onClose={() => setPaymentPlan(null)}
+          onSuccess={() => {
+            setPaymentPlan(null);
+            setActiveTab('overview');
+          }}
+        />
+      )}
+
+      {/* Downgrade Prorated Modal — lower-tier switches only */}
+      {paymentPlan && (() => {
+        const selectedTier: string = paymentPlan.tier ?? (paymentPlan as any).plan_tier ?? 'none';
+        return TIER_ORDER[selectedTier] < TIER_ORDER[currentActiveTier];
+      })() && (
+        <DowngradeProratedModal
+          plan={paymentPlan}
+          annual={annual}
+          currentLicense={license}
+          currentPlanObj={currentActivePlan}
           onClose={() => setPaymentPlan(null)}
           onSuccess={() => {
             setPaymentPlan(null);

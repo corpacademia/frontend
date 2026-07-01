@@ -180,25 +180,26 @@ setMyRequests(prev => {
     const fetchPurchases = useCallback(async () => {
         setIsLoading(true);
         try {
-            if (!user?.org_id) {
-                setPurchases(DEMO_PURCHASES);
+            const isTrainer = user?.role === 'trainer';
+            if (!isTrainer && !user?.org_id) {
+                setPurchases([]);
                 return;
             }
             const response = await axios.post(
                 `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllCataloguePurchases`,
-                { role:user?.role , org_id: user.org_id }
+                { role: user?.role, org_id: user?.org_id, user_id: user?.id }
             );
             if (response.data.success && response.data.data?.length > 0) {
                 setPurchases(response.data.data);
             } else {
-                setPurchases(DEMO_PURCHASES);
+                setPurchases([]);
             }
         } catch {
-            setPurchases(DEMO_PURCHASES);
+            setPurchases([]);
         } finally {
             setIsLoading(false);
         }
-    }, [user?.org_id]);
+    }, [user?.org_id, user?.id, user?.role]);
 
     const fetchMyRequests = useCallback(async () => {
         setIsLoadingRequests(true);

@@ -149,7 +149,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onMenuClick })
         {
           userId: user?.id,
           catalogues,
-          org: user?.role === 'orgsuperadmin'
+          org: user?.role === 'orgsuperadmin' || user?.role === 'labadmin' || (user?.role === 'trainer' && !!user?.org_id)
         }
       );
     } catch (error) {

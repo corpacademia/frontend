@@ -355,7 +355,9 @@ const OrgAdminOverview: React.FC = () => {
 // ─────────────────────────────────────────────────────────────────────────────
 const TrainerOverview: React.FC = () => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -367,21 +369,29 @@ const TrainerOverview: React.FC = () => {
           axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllLabCatalogues`, { user }),
         ]);
         const allOrgUsers: any[] = usersRes.status === 'fulfilled' ? (usersRes.value.data?.data || []) : [];
-        const students = allOrgUsers.filter((u: any) => u.role === 'user');
+        const studentList = allOrgUsers.filter((u: any) => u.role === 'user');
         const labList: any[] = labsRes.status === 'fulfilled' ? (labsRes.value.data?.data || []) : [];
 
+        setStudents(
+          studentList.slice(0, 5).map((s: any) => ({
+            initials: (s.name || 'U').slice(0, 2).toUpperCase(),
+            name: s.name || 'Unknown',
+            email: s.email || '',
+          }))
+        );
+
         setStats([
-          { label: 'Students', value: students.length, icon: GraduationCap, gradient: 'from-primary-400 to-primary-600', trend: computeTrend(students) },
+          { label: 'Students', value: studentList.length, icon: GraduationCap, gradient: 'from-primary-400 to-primary-600', trend: computeTrend(studentList) },
           { label: 'Active Labs', value: labList.length, icon: BookOpen, gradient: 'from-secondary-400 to-secondary-600', trend: computeTrend(labList) },
           { label: 'Assessments', value: '—', icon: Award, gradient: 'from-accent-400 to-accent-600' },
-          { label: 'Avg Progress', value: '67%', icon: TrendingUp, gradient: 'from-primary-400 to-accent-600' },
+          { label: 'Avg Progress', value: '—', icon: TrendingUp, gradient: 'from-primary-400 to-accent-600' },
         ]);
       } catch {
         setStats([
           { label: 'Students', value: '—', icon: GraduationCap, gradient: 'from-primary-400 to-primary-600' },
           { label: 'Active Labs', value: '—', icon: BookOpen, gradient: 'from-secondary-400 to-secondary-600' },
           { label: 'Assessments', value: '—', icon: Award, gradient: 'from-accent-400 to-accent-600' },
-          { label: 'Avg Progress', value: '67%', icon: TrendingUp, gradient: 'from-primary-400 to-accent-600' },
+          { label: 'Avg Progress', value: '—', icon: TrendingUp, gradient: 'from-primary-400 to-accent-600' },
         ]);
       } finally {
         setIsLoading(false);
@@ -390,13 +400,9 @@ const TrainerOverview: React.FC = () => {
     fetchStats();
   }, [user?.org_id]);
 
-  const students = [
-    { initials: 'JS', name: 'John Smith', level: 'Advanced Labs', pct: '92%', color: 'text-primary-400' },
-    { initials: 'ED', name: 'Emma Davis', level: 'Intermediate Labs', pct: '78%', color: 'text-secondary-400' },
-  ];
-
   return (
     <>
+      <OrgBanner orgName={user?.organization || 'Your Organization'} subtitle="Trainer Dashboard" />
       {isLoading ? <LoadingCards /> : (
         <StatsGrid>
           {stats.map((stat) => <StatCard key={stat.label} {...stat} />)}
@@ -405,41 +411,42 @@ const TrainerOverview: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <div className="glass-panel">
           <h3 className="text-base sm:text-lg font-semibold mb-4">
-            <GradientText>Student Performance</GradientText>
+            <GradientText>Students</GradientText>
           </h3>
-          <div className="space-y-3">
-            {students.map((s) => (
-              <div key={s.name} className="flex items-center justify-between p-3 bg-dark-300/30 rounded-lg gap-3">
-                <div className="flex items-center space-x-3 min-w-0">
+          {students.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-500">
+              <GraduationCap className="h-8 w-8 opacity-30" />
+              <p className="text-sm">No students in your organization yet</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {students.map((s) => (
+                <div key={s.name} className="flex items-center p-3 bg-dark-300/30 rounded-lg gap-3">
                   <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-xs sm:text-sm font-semibold">{s.initials}</span>
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-200 truncate">{s.name}</p>
-                    <p className="text-xs text-gray-400">{s.level}</p>
+                    <p className="text-xs text-gray-400 truncate">{s.email}</p>
                   </div>
                 </div>
-                <div className="text-right flex-shrink-0">
-                  <p className={`text-sm font-semibold ${s.color}`}>{s.pct}</p>
-                  <p className="text-xs text-gray-400">Completed</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="glass-panel">
           <h3 className="text-base sm:text-lg font-semibold mb-4">
             <GradientText>Quick Actions</GradientText>
           </h3>
           <div className="space-y-2 sm:space-y-3">
-            <button className="w-full btn-secondary justify-start text-sm">
+            <button onClick={() => navigate('/dashboard/users')} className="w-full btn-secondary justify-start text-sm">
               <GraduationCap className="h-4 w-4 mr-2 flex-shrink-0" />View All Students
             </button>
-            <button className="w-full btn-secondary justify-start text-sm">
-              <BookOpen className="h-4 w-4 mr-2 flex-shrink-0" />Create New Lab
+            <button onClick={() => navigate('/dashboard/labs/catalogue')} className="w-full btn-secondary justify-start text-sm">
+              <BookOpen className="h-4 w-4 mr-2 flex-shrink-0" />View Lab Catalogue
             </button>
-            <button className="w-full btn-secondary justify-start text-sm">
-              <Award className="h-4 w-4 mr-2 flex-shrink-0" />Manage Assessments
+            <button onClick={() => navigate('/dashboard/batches')} className="w-full btn-secondary justify-start text-sm">
+              <Award className="h-4 w-4 mr-2 flex-shrink-0" />Manage Batches
             </button>
           </div>
         </div>
@@ -452,22 +459,53 @@ const TrainerOverview: React.FC = () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // User Overview
 // ─────────────────────────────────────────────────────────────────────────────
+const timeProgress = (start: string, end: string): number => {
+  const s = new Date(start).getTime();
+  const e = new Date(end).getTime();
+  const now = Date.now();
+  if (!s || !e || e <= s) return 0;
+  return Math.min(100, Math.max(0, Math.round(((now - s) / (e - s)) * 100)));
+};
+
 const UserOverview: React.FC = () => {
   const { user } = useAuthStore();
   const [stats, setStats] = useState<any[]>([]);
+  const [activeLabs, setActiveLabs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!user?.id) return;
     const fetchStats = async () => {
       setIsLoading(true);
       try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getAllUserPurchasedLabs`,
-          { userId: user?.id }
-        );
-        const enrolledLabs: any[] = res.data?.data || [];
+        const [dashRes, cloudRes] = await Promise.allSettled([
+          axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/v1/lab_ms/getUserDashboardLabs`, { userId: user.id }),
+          axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/v1/cloud_slice_ms/getUserCloudSlices/${user.id}`),
+        ]);
+        const dashLabs: any[] = dashRes.status === 'fulfilled' ? (dashRes.value.data?.data || []) : [];
+        const cloudLabs: any[] = cloudRes.status === 'fulfilled'
+          ? (cloudRes.value.data?.data || []).map((l: any) => ({
+              labid: l.labid || l.lab_id,
+              user_id: user?.id,
+              start_date: l.startdate || l.start_date,
+              end_date: l.enddate || l.end_date,
+              status: l.status || 'active',
+              duration: null,
+              purchased_at: l.startdate || l.start_date,
+              title: l.cataloguename || l.title || 'Cloud Slice Lab',
+              type: 'cloudslice',
+            }))
+          : [];
+        // Deduplicate by labid — dashLabs takes precedence (has status info)
+        const seen = new Set<string>();
+        const enrolledLabs: any[] = [...dashLabs, ...cloudLabs].filter((l: any) => {
+          const key = String(l.labid || l.lab_id);
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
         const completed = enrolledLabs.filter((l: any) => l.status === 'completed').length;
-        const inProgress = enrolledLabs.filter((l: any) => l.status !== 'completed').length;
+        const inProgress = enrolledLabs.filter((l: any) => l.status !== 'completed' && l.status !== 'expired').length;
         const pct = enrolledLabs.length > 0 ? Math.round((completed / enrolledLabs.length) * 100) : 0;
 
         const completedLabs = enrolledLabs.filter((l: any) => l.status === 'completed');
@@ -479,6 +517,22 @@ const UserOverview: React.FC = () => {
           { label: 'Completed', value: completed, icon: CheckCircle, gradient: 'from-secondary-400 to-secondary-600', trend: computeTrend(completedLabs) },
           { label: 'Learning Path', value: `${pct}%`, icon: TrendingUp, gradient: 'from-primary-400 to-accent-600' },
         ]);
+
+        // Build active labs list — exclude completed/expired, show time-based progress
+        const active = enrolledLabs
+          .filter((l: any) => l.status !== 'completed' && l.status !== 'expired')
+          .map((l: any) => {
+            const pct = timeProgress(l.start_date, l.end_date);
+            const statusMap: Record<string, { badge: string; color: string }> = {
+              active:     { badge: 'Active',      color: 'text-green-400 bg-green-500/10' },
+              running:    { badge: 'Running',     color: 'text-primary-400 bg-primary-500/10' },
+              pending:    { badge: 'Pending',     color: 'text-yellow-400 bg-yellow-500/10' },
+              assigned:   { badge: 'Assigned',    color: 'text-secondary-400 bg-secondary-500/10' },
+            };
+            const s = statusMap[l.status] ?? { badge: l.status ?? 'In Progress', color: 'text-primary-400 bg-primary-500/10' };
+            return { name: l.title || 'Lab', pct, badge: s.badge, badgeColor: s.color, type: l.type };
+          });
+        setActiveLabs(active);
       } catch {
         setStats([
           { label: 'Labs Enrolled', value: '—', icon: BookOpen, gradient: 'from-primary-400 to-primary-600' },
@@ -493,16 +547,10 @@ const UserOverview: React.FC = () => {
     fetchStats();
   }, [user?.id]);
 
-  const activeLabs = [
-    { name: 'AWS Cloud Fundamentals', pct: 65, badge: 'In Progress', badgeColor: 'text-primary-400 bg-primary-500/10' },
-    { name: 'Docker & Kubernetes', pct: 40, badge: 'In Progress', badgeColor: 'text-secondary-400 bg-secondary-500/10' },
-  ];
-
   const recommended = [
     { icon: <Brain className="h-7 w-7 sm:h-8 sm:w-8 text-primary-400 flex-shrink-0" />, name: 'AI & Machine Learning', desc: 'Based on your progress' },
     { icon: <Cloud className="h-7 w-7 sm:h-8 sm:w-8 text-secondary-400 flex-shrink-0" />, name: 'Advanced Networking', desc: 'Next in learning path' },
   ];
-
   return (
     <>
       {isLoading ? <LoadingCards /> : (
@@ -515,23 +563,30 @@ const UserOverview: React.FC = () => {
           <h3 className="text-base sm:text-lg font-semibold mb-4">
             <GradientText>My Active Labs</GradientText>
           </h3>
-          <div className="space-y-3 sm:space-y-4">
-            {activeLabs.map((lab) => (
-              <div key={lab.name} className="p-3 sm:p-4 bg-dark-300/30 rounded-lg border border-primary-500/10 hover:border-primary-500/30 transition-colors">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <h4 className="font-medium text-gray-200 text-sm truncate">{lab.name}</h4>
-                  <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${lab.badgeColor}`}>{lab.badge}</span>
+          {activeLabs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-500">
+              <BookOpen className="h-8 w-8 opacity-30" />
+              <p className="text-sm">No active labs at the moment</p>
+            </div>
+          ) : (
+            <div className="space-y-3 sm:space-y-4">
+              {activeLabs.map((lab, i) => (
+                <div key={lab.name + i} className="p-3 sm:p-4 bg-dark-300/30 rounded-lg border border-primary-500/10 hover:border-primary-500/30 transition-colors">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <h4 className="font-medium text-gray-200 text-sm truncate">{lab.name}</h4>
+                    <span className={`text-xs px-2 py-0.5 rounded flex-shrink-0 ${lab.badgeColor}`}>{lab.badge}</span>
+                  </div>
+                  <div className="w-full bg-dark-400 rounded-full h-1.5 sm:h-2 mb-1.5">
+                    <div
+                      className="bg-gradient-to-r from-primary-500 to-secondary-500 h-full rounded-full transition-all duration-700"
+                      style={{ width: `${lab.pct}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400">{lab.pct}% time elapsed</p>
                 </div>
-                <div className="w-full bg-dark-400 rounded-full h-1.5 sm:h-2 mb-1.5">
-                  <div
-                    className="bg-gradient-to-r from-primary-500 to-secondary-500 h-full rounded-full transition-all duration-700"
-                    style={{ width: `${lab.pct}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-400">{lab.pct}% Complete</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="glass-panel">
           <h3 className="text-base sm:text-lg font-semibold mb-4">

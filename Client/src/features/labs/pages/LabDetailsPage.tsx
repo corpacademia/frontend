@@ -1064,7 +1064,7 @@ const handleStartStopLab = async () => {
                     </div>
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-1 text-secondary-400" />
-                      <span>{selectedLab?.number_days || getDays(selectedLab?.startdate || selectedLab[0].lab?.startdate,selectedLab?.enddate || selectedLab[0].lab?.enddate) || getDays(selectedLab?.start_date,selectedLab?.end_date)}D</span>
+                      <span>{selectedLab?.number_days || getDays(selectedLab?.startdate || selectedLab[0]?.lab?.startdate,selectedLab?.enddate || selectedLab[0]?.lab?.enddate) || getDays(selectedLab?.start_date,selectedLab?.end_date)}D</span>
                     </div>
                   </div>
                 </div>

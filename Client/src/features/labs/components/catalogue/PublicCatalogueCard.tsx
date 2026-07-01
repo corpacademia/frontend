@@ -112,7 +112,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
 
     fetchOrganizations();
   }, [isSuperAdmin]);
-
+  
   const canEditDelete = () => {
     if (isSuperAdmin) return true;
     if (
@@ -318,7 +318,6 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
       }
     });
   };
-
   return (
     <>
       <div
@@ -399,7 +398,7 @@ export const PublicCatalogueCard: React.FC<PublicCatalogueCardProps> = ({
             </div>
             <div className="flex items-center text-gray-400">
               <BookOpen className="h-4 w-4 mr-2 text-primary-400" />
-              <span>{course.total_enrollments} enrolled</span>
+              <span>{course?.total_enrollments} enrolled</span>
             </div>
             <div className="flex items-center text-gray-400">
               <Calendar className="h-4 w-4 mr-2 text-primary-400" />

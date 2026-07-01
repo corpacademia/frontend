@@ -170,7 +170,7 @@ export const AppRoutes: React.FC = () => {
           </PrivateRoute>
         } />
         <Route path="my-purchases" element={
-          <PrivateRoute allowedRoles={['orgsuperadmin']}>
+          <PrivateRoute allowedRoles={['orgsuperadmin', 'trainer']}>
             <OrgSuperAdminPurchasesPage />
           </PrivateRoute>
         } />
